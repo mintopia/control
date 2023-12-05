@@ -1,0 +1,19 @@
+FROM 1and1internet/php-build-environment:8.2 AS build
+LABEL maintainer="jessica.smith@digicert.com"
+
+WORKDIR /app/
+USER 1000
+ENV HOME /tmp
+COPY --chown=1000:1000 . /app/
+COPY --chown=1000:1000 docker/production/production.env /app/.env
+
+RUN composer install \
+        --no-dev \
+        --no-progress \
+        --optimize-autoloader \
+        --prefer-dist
+
+FROM ghcr.io/mintopia/php-docker-nginx:latest
+LABEL maintainer="jessica.smith@digicert.com"
+
+COPY --from=build --chown=1000:1000 /app/ /var/www

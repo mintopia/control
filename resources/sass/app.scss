@@ -1,0 +1,33 @@
+@import '~tabler/src/scss/tabler';
+@import url('https://rsms.me/inter/inter.css');
+
+
+:root {
+    --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+}
+
+body {
+    font-feature-settings: "cv03", "cv04", "cv11";
+}
+
+.card {
+    --tblr-card-cap-padding-y: 1rem;
+}
+
+.navbar-brand-image {
+    height: 4rem;
+}
+
+.navbar-vertical.navbar-expand-lg {
+    overflow-y: auto;
+}
+
+.page-title {
+    line-height: var(--tblr-line-height-h2);
+}
+
+.navbar {
+    .breadcrumb {
+        padding-top: 0.4rem;
+    }
+}
