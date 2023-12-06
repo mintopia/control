@@ -5,7 +5,12 @@ trait ToString
 {
     public function __toString(): string
     {
-        $className = get_called_class();
+        if (method_exists($this, 'toStringModelName')) {
+            $className = $this->toStringModelName();
+        } else {
+            $rClass = new \ReflectionClass($this);
+            $className = $rClass->getShortName();
+        }
         $id = $this->id ?? '#';
         $name = '';
         if (method_exists($this, 'toStringName')) {

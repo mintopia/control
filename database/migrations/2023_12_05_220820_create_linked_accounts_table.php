@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('linked_services', function (Blueprint $table) {
+        Schema::create('linked_accounts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('service');
@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('avatar_url')->nullable()->default(null);
             $table->string('access_token')->nullable()->default(null);
             $table->string('refresh_token')->nullable()->default(null);
-            $table->timestamp('refresh_token_expires_at')->nullable()->default(null);
+            $table->timestamp('access_token_expires_at')->nullable()->default(null);
             $table->timestamps();
         });
     }
@@ -30,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('linked_services');
+        Schema::dropIfExists('linked_accounts');
     }
 };
