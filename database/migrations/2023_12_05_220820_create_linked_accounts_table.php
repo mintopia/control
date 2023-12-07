@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('linked_accounts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('email_address_id')->nullable()->default(null)->constrained()->nullOnDelete();
             $table->string('service');
             $table->string('external_id')->nullable()->default(null);
             $table->string('name')->nullable()->default(null);

@@ -38,6 +38,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereUserId($value)
  * @property string|null $access_token_expires_at
  * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereAccessTokenExpiresAt($value)
+ * @property int|null $email_address_id
+ * @property-read \App\Models\EmailAddress|null $email
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereEmailAddressId($value)
  * @mixin \Eloquent
  */
 class LinkedAccount extends Model
@@ -56,5 +59,10 @@ class LinkedAccount extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function email(): BelongsTo
+    {
+        return $this->belongsTo(EmailAddress::class, 'email_address_id');
     }
 }

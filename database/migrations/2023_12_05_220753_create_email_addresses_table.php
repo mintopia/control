@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('email')->unique();
             $table->string('verification_code')->nullable();
+            $table->timestamp('verification_sent_at')->nullable()->default(null);
             $table->timestamp('verified_at')->nullable()->default(null);
             $table->timestamps();
         });

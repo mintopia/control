@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use App\Models\Traits\ToString;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * App\Models\EmailAddress
@@ -28,6 +31,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereUserId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereVerificationCode($value)
  * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereVerifiedAt($value)
+ * @property \Illuminate\Support\Carbon|null $verification_sent_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\LinkedAccount> $linkedAccounts
+ * @property-read int|null $linked_accounts_count
+ * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereVerificationSentAt($value)
  * @mixin \Eloquent
  */
 class EmailAddress extends Model
@@ -36,6 +43,7 @@ class EmailAddress extends Model
 
     protected $casts = [
         'verified_at' => 'datetime',
+        'verification_sent_at' => 'datetime',
     ];
 
     protected function toStringName(): string
@@ -46,5 +54,35 @@ class EmailAddress extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function linkedAccounts(): HasMany
+    {
+        return $this->hasMany(LinkedAccount::class);
+    }
+
+    public function sendVerificationCode(): void
+    {
+        $code = '';
+        $chars = 'ABCDEFGHJKLMNPQRSTUVQXYZ23456789';
+        for ($i = 0; $i < 6; $i++) {
+            $code .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
+        }
+        $this->verification_code = $code;
+        $this->verification_sent_at = Carbon::now();
+        $this->save();
+        // TODO: Dispatch Email
+    }
+
+    public function canDelete(): bool
+    {
+        if ($this->linked_accounts_count > 0) {
+            return false;
+        }
+        if ($this->id === $this->user->primary_email_id) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,10 @@ use Illuminate\Support\Facades\DB;
  * @method static \Illuminate\Database\Eloquent\Builder|User whereUpdatedAt($value)
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\LinkedAccount> $accounts
  * @property-read int|null $accounts_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClanMembership> $clanMemberships
+ * @property-read int|null $clan_memberships_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Clan> $clans
+ * @property-read int|null $clans_count
  * @mixin \Eloquent
  */
 class User extends Authenticatable
@@ -69,12 +74,32 @@ class User extends Authenticatable
         return $this->hasMany(LinkedAccount::class);
     }
 
+    public function clans(): HasManyThrough
+    {
+        return $this->hasManyThrough(Clan::class, ClanMembership::class);
+    }
+
+    public function clanMemberships(): HasMany
+    {
+        return $this->hasMany(ClanMembership::class);
+    }
+
     public function hasRole(string|Role $role): bool
     {
         if ($role instanceof Role) {
             $role = $role->code;
         }
         return (bool)$this->roles()->whereCode($role)->count();
+    }
+
+    public function avatarUrl(): string
+    {
+        foreach ($this->accounts as $acc) {
+            if ($acc->avatar_url) {
+                return $acc->avatar_url;
+            }
+        }
+        return 'https://gravatar.com/avatar/' . hash('sha256', $this->primaryEmail->email);
     }
 
     public static function fromDiscord(\Laravel\Socialite\Two\User $discordUser): ?User
@@ -122,6 +147,7 @@ class User extends Authenticatable
                 $email->verified_at = Carbon::now();
                 $email->user()->associate($account->user);
                 $email->save();
+                $account->email()->associate($email);
             }
 
             // Set user's primary email

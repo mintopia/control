@@ -8,11 +8,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 
-class AuthController extends Controller
+class UserController extends Controller
 {
+    public function profile(Request $request)
+    {
+        return view('users.profile');
+    }
+
     public function login()
     {
-        return view('auth.login');
+        return view('users.login');
     }
 
     public function logout(Request $request)
