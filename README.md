@@ -4,6 +4,24 @@
 
 LAN Party user accounts, ticket management and seat picker.
 
+## Setup
+
+You will need to create a Discord application and have the Client ID and Client Secret available.
+
+```bash
+cp .env.example .env
+docker compose up -d redis db
+docker compose run --rm artisan key:generate
+docker compose run --rm artisan migrate
+docker compose run --rm artisan db:seed
+docker compose run --rm artisan setup:discord
+docker compose up -d
+```
+
+Add the redirect URLs from the `setup:discord` step to your Discord OAuth2 configuration.
+
+You should now be able to login. The first user will be given the admin role.
+
 ## Thanks
 
 This would not exist without the support of the following:

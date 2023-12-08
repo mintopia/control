@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\SocialProvider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -17,7 +17,10 @@ class UserController extends Controller
 
     public function login()
     {
-        return view('users.login');
+        $providers = SocialProvider::whereAuthEnabled(true)->whereEnabled(true)->get();
+        return view('users.login', [
+            'providers' => $providers,
+        ]);
     }
 
     public function logout(Request $request)
@@ -27,20 +30,27 @@ class UserController extends Controller
         return response()->redirectToRoute('home')->with('successMessage', 'You have been logged out');
     }
 
-    public function login_redirect()
+    public function login_redirect(SocialProvider $socialprovider)
     {
-        return Socialite::driver('discord')->redirect();
+        if (!$socialprovider->enabled || !$socialprovider->auth_enabled) {
+            return response()->redirectToRoute('login')->with('errorMessage', 'Unable to login');
+        }
+        return $socialprovider->redirect();
     }
 
-    public function login_return()
+    public function login_return(SocialProvider $socialprovider)
     {
+        if (!$socialprovider->enabled || !$socialprovider->auth_enabled) {
+            return response()->redirectToRoute('login')->with('errorMessage', 'Unable to login');
+        }
         try {
-            $user = User::fromDiscord(Socialite::driver('discord')->user());
+            $user = $socialprovider->user();
             if ($user) {
                 Auth::login($user);
                 return response()->redirectToIntended(route('home'))->with('successMessage', 'You have been logged in');
             }
         } catch (\Exception $ex) {
+            throw $ex;
             Log::error($ex->getMessage());
         }
         return response()->redirectToRoute('login')->with('errorMessage', 'Unable to login');

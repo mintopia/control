@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\EmailVerificationException;
 use App\Http\Requests\EmailAddressRequest;
 use App\Http\Requests\EmailVerifyRequest;
 use App\Models\EmailAddress;
@@ -12,7 +13,7 @@ class EmailAddressController extends Controller
 {
     public function create()
     {
-        return view('emails.create');
+        return view('emailaddresses.create');
     }
 
     public function store(EmailAddressRequest $request)
@@ -38,7 +39,7 @@ class EmailAddressController extends Controller
         if ($emailaddress->verified_at) {
             return response()->redirectToRoute('user.profile')->with('successMessage', 'The email address is verified');
         }
-        return view('emails.verify', [
+        return view('emailaddresses.verify', [
             'email' => $emailaddress,
         ]);
     }
@@ -52,17 +53,23 @@ class EmailAddressController extends Controller
         return response()->redirectToRoute('emails.verify', $emailaddress->id)->with('successMessage', "A verification code has been sent to {$emailaddress->email}");
     }
 
+    public function verify_code(EmailAddress $emailaddress, string $code)
+    {
+        return $this->verifyEmail($emailaddress, $code);
+    }
+
     public function verify_process(EmailVerifyRequest $request, EmailAddress $emailaddress)
     {
-        if ($emailaddress->verified_at) {
-            return response()->redirectToRoute('user.profile')->with('successMessage', 'The email address is verified');
-        }
-        if ($request->input('code') === $emailaddress->verification_code) {
-            $emailaddress->verified_at = Carbon::now();
-            $emailaddress->save();
+        return $this->verifyEmail($emailaddress, $request->input('code'));
+    }
+
+    protected function verifyEmail(EmailAddress $emailaddress, string $code)
+    {
+        try {
+            $emailaddress->verify($code);
             return response()->redirectToRoute('user.profile')->with('successMessage', 'The email address has been verified');
-        } else {
-            return response()->redirectToRoute('emails.verify', $emailaddress->id)->with('errorMessage', 'The code you entered was incorrect');
+        } catch (EmailVerificationException $ex) {
+            return response()->redirectToRoute('emails.verify', $emailaddress->id)->with('errorMessage', $ex->getMessage());
         }
     }
 
@@ -71,7 +78,7 @@ class EmailAddressController extends Controller
         if (!$emailaddress->canDelete()) {
             return response()->redirectToRoute('user.profile')->with('errorMessage', 'It is not possible to remove this email address');
         }
-        return view('emails.delete', [
+        return view('emailaddresses.delete', [
             'email' => $emailaddress,
         ]);
     }

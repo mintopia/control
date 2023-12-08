@@ -21,16 +21,16 @@
         @foreach(Auth::user()->accounts as $account)
             <div class="col-md-6 col-lg-4">
             <div class="card">
-                <div class="ribbon ribbon-top bg-discord">
-                    <i class="icon ti ti-brand-discord-filled"></i>
+                <div class="ribbon ribbon-top bg-{{ $account->provider->code }}">
+                    <i class="icon ti ti-brand-{{ $account->provider->code }}-filled"></i>
                 </div>
                 <div class="row row-0">
                     <div class="col-3">
-                        <img src="{{ $account->avatar_url }}" class="w-100 h-100 object-cover card-img-start" alt="Discord Avatar">
+                        <img src="{{ $account->avatar_url }}" class="w-100 h-100 object-cover card-img-start" alt="{{ $account->provider->name }} Avatar">
                     </div>
                     <div class="col">
                         <div class="card-body p-2">
-                            <h3 class="card-title">Discord</h3>
+                            <h3 class="card-title">{{ $account->provider->name }}</h3>
                             <p class="text-secondary">
                                 {{ $account->name }}<br />
                                 {{ $account->email->email }}
@@ -80,7 +80,7 @@
                                 <td>
                                     <span class="badges-list">
                                         @foreach($email->linkedAccounts as $account)
-                                            <span class="badge bg-discord text-discord-fg">Discord</span>
+                                            <span class="badge bg-{{ $account->provider->code }} text-{{ $account->provider->code }}-fg">{{ $account->provider->name }}</span>
                                         @endforeach
                                     </span>
                                 </td>

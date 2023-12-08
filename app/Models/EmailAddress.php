@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Exceptions\EmailVerificationException;
+use App\Mail\VerifyEmail;
 use App\Models\Traits\ToString;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * App\Models\EmailAddress
@@ -71,7 +74,7 @@ class EmailAddress extends Model
         $this->verification_code = $code;
         $this->verification_sent_at = Carbon::now();
         $this->save();
-        // TODO: Dispatch Email
+        Mail::to($this->email)->send(new VerifyEmail($this));
     }
 
     public function canDelete(): bool
@@ -84,5 +87,23 @@ class EmailAddress extends Model
         }
 
         return true;
+    }
+
+    public function verify(string $code): bool
+    {
+        if (Carbon::now() > $this->getVerificationExpiry()) {
+            throw new EmailVerificationException('The verification code has expired');
+        }
+        if ($code !== $this->verification_code) {
+            throw new EmailVerificationException('The verification code was incorrect');
+        }
+        $this->verified_at = Carbon::now();
+        $this->save();
+        return true;
+    }
+
+    public function getVerificationExpiry(): Carbon
+    {
+        return $this->verification_sent_at->addDays(2);
     }
 }

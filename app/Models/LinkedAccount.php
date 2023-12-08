@@ -41,6 +41,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $email_address_id
  * @property-read \App\Models\EmailAddress|null $email
  * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereEmailAddressId($value)
+ * @property int|null $social_provider_id
+ * @property-read \App\Models\SocialProvider|null $provider
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereSocialProviderId($value)
  * @mixin \Eloquent
  */
 class LinkedAccount extends Model
@@ -54,6 +57,8 @@ class LinkedAccount extends Model
 
     protected $casts = [
         'refresh_token_expires_at' => 'datetime',
+        'access_token' => 'encrypted',
+        'refresh_token' => 'encrypted',
     ];
 
     public function user(): BelongsTo
@@ -64,5 +69,10 @@ class LinkedAccount extends Model
     public function email(): BelongsTo
     {
         return $this->belongsTo(EmailAddress::class, 'email_address_id');
+    }
+
+    public function provider(): BelongsTo
+    {
+        return $this->belongsTo(SocialProvider::class, 'social_provider_id');
     }
 }

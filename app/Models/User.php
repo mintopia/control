@@ -104,6 +104,7 @@ class User extends Authenticatable
 
     public static function fromDiscord(\Laravel\Socialite\Two\User $discordUser): ?User
     {
+        dd($discordUser);
         DB::transaction(function() use ($discordUser) {
             $account = LinkedAccount::whereExternalId($discordUser->id)->with('user')->first();
             if (!$account) {

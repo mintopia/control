@@ -18,12 +18,14 @@
                     <p>
                         Login to manage your event tickets and seats.
                     </p>
-                    <p>
-                        <a href="{{ route('login.discord.redirect') }}" class="btn btn-discord">
-                            <i class="icon ti ti-brand-discord-filled"></i>
-                            Login with Discord
-                        </a>
-                    </p>
+                    @foreach($providers as $provider)
+                        <p>
+                            <a href="{{ route('login.redirect', $provider->code) }}" class="btn btn-{{ $provider->code }}">
+                                <i class="icon ti ti-brand-{{ $provider->code }}-filled"></i>
+                                Login with {{ $provider->name }}
+                            </a>
+                        </p>
+                    @endforeach
                 </div>
             </div>
             <div class="col-12 col-lg-6 col-xl-8 d-none d-lg-block">
