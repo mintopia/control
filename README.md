@@ -11,10 +11,13 @@ You will need to create a Discord application and have the Client ID and Client 
 ```bash
 cp .env.example .env
 docker compose up -d redis db
+docker compose run --rm composer install
 docker compose run --rm artisan key:generate
 docker compose run --rm artisan migrate
 docker compose run --rm artisan db:seed
 docker compose run --rm artisan setup:discord
+docker compose run --rm npm install
+docker compose run --rm npm run build
 docker compose up -d
 ```
 
