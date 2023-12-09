@@ -47,7 +47,12 @@
                                     <div class="d-flex py-1 align-items-center">
                                         <span class="avatar me-2" style="background-image: url('{{ $member->user->avatarUrl() }}')"></span>
                                         <div class="flex-fill">
-                                            <div class="font-weight-medium">{{ $member->user->nickname }}</div>
+                                            <div class="font-weight-medium">
+                                                {{ $member->user->nickname }}
+                                                @if($member->user_id === Auth::user()->id)
+                                                    <i class="icon ti ti-star-filled text-yellow" title="You!"></i>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
@@ -89,7 +94,7 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Invite Code</h3>
+                    <h3 class="card-title">Clan Invite Code</h3>
                 </div>
                 <div class="card-body">
                     <p>
