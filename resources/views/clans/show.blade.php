@@ -29,7 +29,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-8 mb-4">
             <div class="card">
                 <div class="table-responsive">
                     <table class="table table-vcenter card-table">
