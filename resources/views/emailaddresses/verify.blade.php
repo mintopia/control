@@ -1,5 +1,5 @@
 @extends('layouts.app', [
-    'activenav' => 'user.profile',
+    'activenav' => 'profile',
 ])
 
 @section('breadcrumbs')
@@ -22,7 +22,10 @@
             <div class="card-body">
                 <h3 class="card-title">Code</h3>
                 <p class="card-subtitle">Enter the verification code that we sent you.</p>
-                <input type="text" name="code" id="code" value="{{ old('code') }}" class="form-control" placeholder="Verification Code">
+                <input type="text" name="code" id="code" value="{{ old('code') }}" class="form-control @error('code') is-invalid @enderror" placeholder="Verification Code">
+                @error('code')
+                    <p class="invalid-feedback">{{ $message }}</p>
+                @enderror
                 <p class="text-secondary mt-3">
                     If you haven't received a code, we can <a href="{{ route('emails.verify.resend', $email->id) }}">send you a new one</a>.
                 </p>

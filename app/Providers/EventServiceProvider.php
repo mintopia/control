@@ -2,7 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Clan;
+use App\Models\EmailAddress;
 use App\Models\User;
+use App\Observers\ClanObserver;
+use App\Observers\EmailAddressObserver;
 use App\Observers\UserObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -13,6 +17,8 @@ class EventServiceProvider extends ServiceProvider
 {
     protected $observers = [
         User::class => UserObserver::class,
+        EmailAddress::class => EmailAddressObserver::class,
+        Clan::class => ClanObserver::class,
     ];
     /**
      * The event to listener mappings for the application.
@@ -25,6 +31,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         \SocialiteProviders\Manager\SocialiteWasCalled::class => [
             \SocialiteProviders\Discord\DiscordExtendSocialite::class.'@handle',
+            \SocialiteProviders\Steam\SteamExtendSocialite::class.'@handle',
         ],
     ];
 

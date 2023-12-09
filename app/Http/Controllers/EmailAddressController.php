@@ -53,7 +53,7 @@ class EmailAddressController extends Controller
         return response()->redirectToRoute('emails.verify', $emailaddress->id)->with('successMessage', "A verification code has been sent to {$emailaddress->email}");
     }
 
-    public function verify_code(EmailAddress $emailaddress, string $code)
+    public function verify_code(EmailVerifyRequest $request, EmailAddress $emailaddress, string $code)
     {
         return $this->verifyEmail($emailaddress, $code);
     }
@@ -65,12 +65,8 @@ class EmailAddressController extends Controller
 
     protected function verifyEmail(EmailAddress $emailaddress, string $code)
     {
-        try {
-            $emailaddress->verify($code);
-            return response()->redirectToRoute('user.profile')->with('successMessage', 'The email address has been verified');
-        } catch (EmailVerificationException $ex) {
-            return response()->redirectToRoute('emails.verify', $emailaddress->id)->with('errorMessage', $ex->getMessage());
-        }
+        $emailaddress->verify($code);
+        return response()->redirectToRoute('user.profile')->with('successMessage', 'The email address has been verified');
     }
 
     public function delete(EmailAddress $emailaddress)

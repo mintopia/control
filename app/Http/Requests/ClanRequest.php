@@ -2,11 +2,11 @@
 
 namespace App\Http\Requests;
 
-use App\Exceptions\EmailVerificationException;
-use Closure;
+use App\Models\Clan;
 use Illuminate\Foundation\Http\FormRequest;
+use function App\makePermalink;
 
-class EmailVerifyRequest extends FormRequest
+class ClanRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,18 +24,18 @@ class EmailVerifyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => [
+            'name' => [
                 'required',
                 'string',
-                'alpha_num:ascii',
-                function (string $attribute, mixed $value, Closure $fail) {
-                    try {
-                        $this->emailaddress->checkCode($value);
-                    } catch (EmailVerificationException $ex) {
-                        $fail($ex->getMessage());
+                'max:100',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $permalink = makePermalink($value);
+                    $clan = Clan::whereCode($permalink)->first();
+                    if ($clan && (!$this->clan || $clan->id !== $this->clan->id)) {
+                        $fail('The clan name is already in use');
                     }
                 },
-            ],
+            ]
         ];
     }
 }

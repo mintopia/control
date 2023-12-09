@@ -12,7 +12,8 @@
         "laravel/sanctum": "^3.3",
         "laravel/socialite": "^5.11",
         "laravel/tinker": "^2.8",
-        "socialiteproviders/discord": "^4.2"
+        "socialiteproviders/discord": "^4.2",
+        "socialiteproviders/steam": "^4.2"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^2.13",
@@ -29,7 +30,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

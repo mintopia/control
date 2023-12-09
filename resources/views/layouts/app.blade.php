@@ -14,7 +14,7 @@
     </title>
     @stack('head')
 </head>
-<body class="layout-fluid">
+<body>
 <div class="page">
     <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
         <div class="container-fluid">
@@ -40,7 +40,7 @@
                             </span>
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item @if(($activenav ?? null) === 'tickets') active @endif">
                         <a class="nav-link" href="#" >
                             <span class="nav-link-icon d-md-none d-lg-inline-block">
                                 <i class="icon ti ti-ticket"></i>
@@ -50,7 +50,7 @@
                             </span>
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item @if(($activenav ?? null) === 'seatingplans') active @endif">
                         <a class="nav-link" href="#" >
                             <span class="nav-link-icon d-md-none d-lg-inline-block">
                                 <i class="icon ti ti-armchair"></i>
@@ -60,8 +60,8 @@
                             </span>
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" >
+                    <li class="nav-item @if(($activenav ?? null) === 'clans') active @endif">
+                        <a class="nav-link" href="{{ route('clans.index') }}" >
                             <span class="nav-link-icon d-md-none d-lg-inline-block">
                                 <i class="icon ti ti-users-group"></i>
                             </span>
@@ -70,7 +70,7 @@
                             </span>
                         </a>
                     </li>
-                    <li class="nav-item @if(($activenav ?? null) === 'user.profile') active @endif">
+                    <li class="nav-item @if(($activenav ?? null) === 'profile') active @endif">
                         <a class="nav-link" href="{{ route('user.profile') }}" >
                             <span class="nav-link-icon d-md-none d-lg-inline-block">
                                 <i class="icon ti ti-user"></i>
@@ -89,7 +89,7 @@
         <header class="navbar d-print-none">
             <div class="container-xl">
                 <div class="navbar-nav flex-row">
-                    <div class="d-none d-md-flex p-2">
+                    <div class="d-flex p-2">
                         <ol class="breadcrumb" aria-label="breadcrumbs">
                             @yield('breadcrumbs')
                         </ol>

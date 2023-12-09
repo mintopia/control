@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "dfb721967caeeadb0863eb2711eb0caa",
+    "content-hash": "29ebce83455b3e3b85dd313e6d3b3861",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -3591,6 +3591,56 @@
                 "source": "https://github.com/socialiteproviders/manager"
             },
             "time": "2023-08-27T23:46:34+00:00"
+        },
+        {
+            "name": "socialiteproviders/steam",
+            "version": "4.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/SocialiteProviders/Steam.git",
+                "reference": "922f82a26fb7243d7e7ff2ec8ba7e957e7b9eeb7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/SocialiteProviders/Steam/zipball/922f82a26fb7243d7e7ff2ec8ba7e957e7b9eeb7",
+                "reference": "922f82a26fb7243d7e7ff2ec8ba7e957e7b9eeb7",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": "^7.2 || ^8.0",
+                "socialiteproviders/manager": "~4.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SocialiteProviders\\Steam\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christopher Eklund",
+                    "email": "eklundchristopher@gmail.com"
+                }
+            ],
+            "description": "Steam OpenID Provider for Laravel Socialite",
+            "keywords": [
+                "OpenId",
+                "laravel",
+                "provider",
+                "socialite",
+                "steam"
+            ],
+            "support": {
+                "docs": "https://socialiteproviders.com/steam",
+                "issues": "https://github.com/socialiteproviders/providers/issues",
+                "source": "https://github.com/socialiteproviders/providers"
+            },
+            "time": "2022-03-28T22:38:40+00:00"
         },
         {
             "name": "symfony/console",

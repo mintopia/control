@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
+use App\Http\Controllers\ClanController;
+use App\Http\Controllers\ClanMembershipController;
+use App\Http\Controllers\LinkedAccountController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\EmailAddressController;
@@ -27,15 +30,43 @@ Route::middleware('auth')->group(function() {
     Route::post('/profile/emails', [EmailAddressController::class, 'store'])->name('emails.store');
     Route::middleware('can:update,emailaddress')->group(function() {
         Route::get('/profile/emails/{emailaddress}/verify', [EmailAddressController::class, 'verify'])->name('emails.verify');
+        Route::get('/profile/emails/{emailaddress}/verify/resend', [EmailAddressController::class, 'verify_resend'])->name('emails.verify.resend');
         Route::get('/profile/emails/{emailaddress}/verify/{code}', [EmailAddressController::class, 'verify_code'])->name('emails.verify.code');
         Route::post('/profile/emails/{emailaddress}/verify', [EmailAddressController::class, 'verify_process'])->name('emails.verify.process');
-        Route::get('/profile/emails/{emailaddress}/verify/resend', [EmailAddressController::class, 'verify_resend'])->name('emails.verify.resend');
         Route::get('/profile/emails/{emailaddress}/delete', [EmailAddressController::class, 'delete'])->name('emails.delete');
         Route::delete('/profile/emails/{emailaddress}', [EmailAddressController::class, 'destroy'])->name('emails.destroy');
     });
 
-    Route::get('/profile/accounts/link/{socialprovider:code}', [HomeController::class, 'home'])->name('accounts.redirect');
-    Route::get('/profile/accounts/link/{socialprovider:code}/return', [HomeController::class, 'home'])->name('accounts.return');
+    Route::get('/profile/accounts/{socialprovider:code}/link', [LinkedAccountController::class, 'create'])->name('linkedaccounts.create');
+    Route::get('/profile/accounts/{socialprovider:code}/return', [LinkedAccountController::class, 'store'])->name('linkedaccounts.store');
+
+    Route::middleware('can:update,linkedaccount')->group(function() {
+        Route::get('/profile/accounts/{linkedaccount}/delete', [LinkedAccountController::class, 'store'])->name('linkedaccounts.delete');
+        Route::delete('/profile/accounts/{linkedaccount}', [LinkedAccountController::class, 'store'])->name('linkedaccounts.destroy');
+    });
+
+    Route::resource('clans', ClanController::class)->only(['index', 'create', 'store']);
+    Route::middleware('can:view,clan')->group(function() {
+        Route::resource('clans', ClanController::class)->only(['show']);
+    });
+    Route::middleware('can:update,clan')->group(function() {
+        Route::resource('clans', ClanController::class)->only(['edit', 'update', 'destroy']);
+        Route::get('clans/{clan}/delete', [ClanController::class, 'delete'])->name('clans.delete');
+        Route::post('clans/{clan}/regenerate', [ClanController::class, 'regenerate'])->name('clans.regenerate');
+    });
+
+    Route::post('clans/join', [ClanMembershipController::class, 'store'])->name('clans.members.store');
+    Route::prefix('clans/{clan}/members')->name('clans.members.')->group(function() {
+        Route::middleware('can:update,clanmembership')->group(function() {
+            Route::get('{clanmembership}/edit', [ClanMembershipController::class, 'edit'])->name('edit');
+            Route::match(['PUT', 'PATCH'], '{clanmembership}', [ClanMembershipController::class, 'update'])->name('update');
+        });
+        Route::middleware('can:delete,clanmembership')->group(function() {
+            Route::get('{clanmembership}/delete', [ClanMembershipController::class, 'delete'])->name('delete');
+            Route::delete('{clanmembership}', [ClanMembershipController::class, 'destroy'])->name('destroy');
+        });
+    });
+
 
     Route::middleware('can:admin')->name('admin.')->prefix('admin')->group(function() {
         Route::get('/', [AdminHomeController::class, 'dashboard'])->name('dashboard');

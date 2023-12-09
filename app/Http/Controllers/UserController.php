@@ -12,7 +12,16 @@ class UserController extends Controller
 {
     public function profile(Request $request)
     {
-        return view('users.profile');
+        $ids = $request->user()->accounts->pluck('social_provider_id')->toArray();
+        $providers = SocialProvider::whereEnabled(true)
+            ->get()
+            ->filter(function ($provider) use ($ids) {
+                return !in_array($provider->id, $ids);
+            });
+
+        return view('users.profile', [
+            'availableLinks' => $providers,
+        ]);
     }
 
     public function login()

@@ -74,11 +74,6 @@ class User extends Authenticatable
         return $this->hasMany(LinkedAccount::class);
     }
 
-    public function clans(): HasManyThrough
-    {
-        return $this->hasManyThrough(Clan::class, ClanMembership::class);
-    }
-
     public function clanMemberships(): HasMany
     {
         return $this->hasMany(ClanMembership::class);
@@ -100,68 +95,5 @@ class User extends Authenticatable
             }
         }
         return 'https://gravatar.com/avatar/' . hash('sha256', $this->primaryEmail->email);
-    }
-
-    public static function fromDiscord(\Laravel\Socialite\Two\User $discordUser): ?User
-    {
-        dd($discordUser);
-        DB::transaction(function() use ($discordUser) {
-            $account = LinkedAccount::whereExternalId($discordUser->id)->with('user')->first();
-            if (!$account) {
-                $exists = EmailAddress::whereEmail($discordUser->email)->count();
-                if ($exists > 0) {
-                    throw new \Exception('Email address is already in use');
-                }
-                $user = new User();
-                $user->nickname = $discordUser->nickname;
-                $account = new LinkedAccount();
-                $account->service = 'discord';
-                $account->external_id = $discordUser->id;
-                $user->save();
-                $account->user()->associate($user);
-                $account->save();
-
-                // If we're the first user, assign the admin role
-                if (User::count() === 1) {
-                    $role = Role::whereCode('admin')->first();
-                    if ($role) {
-                        $user->roles()->attach($role);
-                    }
-                }
-            }
-
-            // Update user based on discord data
-            $account->user->nickname = $discordUser->nickname;
-
-            // Update linked account based on discord data
-            $account->avatar_url = $discordUser->avatar;
-            $account->refresh_token = $discordUser->refreshToken;
-            $account->access_token = $discordUser->token;
-            $account->name = $discordUser->name;
-            $account->access_token_expires_at = Carbon::now()->addSeconds($discordUser->expiresIn);
-
-            // Update email based on discord data
-            $email = EmailAddress::whereEmail($discordUser->email)->whereUserId($account->user->id)->first();
-            if (!$email) {
-                $email = new EmailAddress();
-                $email->email = $discordUser->email;
-                $email->verified_at = Carbon::now();
-                $email->user()->associate($account->user);
-                $email->save();
-                $account->email()->associate($email);
-            }
-
-            // Set user's primary email
-            if (!$account->user->primaryEmail) {
-                $account->user->primaryEmail()->associate($email);
-            }
-
-            // Save account and user
-            $account->user->save();
-            $account->save();
-        });
-
-        $account = LinkedAccount::whereExternalId($discordUser->id)->with('user')->first();
-        return $account->user;
     }
 }

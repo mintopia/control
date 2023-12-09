@@ -18,14 +18,14 @@
                     <p>
                         Login to manage your event tickets and seats.
                     </p>
-                    @foreach($providers as $provider)
-                        <p>
-                            <a href="{{ route('login.redirect', $provider->code) }}" class="btn btn-{{ $provider->code }}">
-                                <i class="icon ti ti-brand-{{ $provider->code }}-filled"></i>
-                                Login with {{ $provider->name }}
-                            </a>
-                        </p>
-                    @endforeach
+                        @foreach($providers as $provider)
+                            <p class="px-4">
+                                <a href="{{ route('login.redirect', $provider->code) }}" class="d-block ms-auto btn btn-{{ $provider->code }}">
+                                    <i class="icon ti ti-brand-{{ $provider->code }}"></i>
+                                    Login with {{ $provider->name }}
+                                </a>
+                            </p>
+                        @endforeach
                 </div>
             </div>
             <div class="col-12 col-lg-6 col-xl-8 d-none d-lg-block">

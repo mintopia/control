@@ -74,31 +74,34 @@ abstract class AbstractProvider
         if ($this->redirectUrl !== null) {
             return;
         }
-        if (Auth::guest() && $this->provider->auth_enabled) {
+        if (Auth::guest() && $this->provider && $this->provider->auth_enabled) {
             // Probably login
             $this->redirectUrl = route('login.return', $this->code);
         } else {
-            $this->redirectUrl = route('accounts.return', $this->code);
+            $this->redirectUrl = route('linkedaccounts.store', $this->code);
         }
     }
 
 
     public function user(?User $localUser = null)
     {
+        if ($localUser === null) {
+            $localUser = Auth::user();
+        }
         $remoteUser = $this->getSocialiteProvider()->user();
 
         DB::transaction(function() use ($localUser, $remoteUser) {
             // Find the account
             $account = $this->provider->accounts()->whereExternalId($remoteUser->getId())->first();
-            if ($account && ($localUser === null || $localUser->id != $account->user_id)) {
+            if ($account && ($localUser !== null && $localUser->id != $account->user_id)) {
                 throw new \Exception('Account is already associated with another user');
             }
 
             // Find the email
             $email = EmailAddress::whereEmail($remoteUser->getEmail())->first();
-            if ($email && ($localUser === null || $localUser->id !== $email->user_id)) {
+            if ($email && ($localUser !== null && $localUser->id !== $email->user_id)) {
                 if ($email->verified_at !== null) {
-                    throw new \Exception('Account is already associated with another user');
+                    throw new \Exception('Email is already associated with another user');
                 } else {
                     // Unverified email, let's delete it
                     $email->delete();

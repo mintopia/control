@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Mail;
+use function App\makeCode;
 
 /**
  * App\Models\EmailAddress
@@ -66,12 +67,7 @@ class EmailAddress extends Model
 
     public function sendVerificationCode(): void
     {
-        $code = '';
-        $chars = 'ABCDEFGHJKLMNPQRSTUVQXYZ23456789';
-        for ($i = 0; $i < 6; $i++) {
-            $code .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
-        }
-        $this->verification_code = $code;
+        $this->verification_code = makeCode(6);
         $this->verification_sent_at = Carbon::now();
         $this->save();
         Mail::to($this->email)->send(new VerifyEmail($this));
@@ -91,14 +87,20 @@ class EmailAddress extends Model
 
     public function verify(string $code): bool
     {
+        $this->checkCode($code);
+        $this->verified_at = Carbon::now();
+        $this->save();
+        return true;
+    }
+
+    public function checkCode(string $code): bool
+    {
         if (Carbon::now() > $this->getVerificationExpiry()) {
             throw new EmailVerificationException('The verification code has expired');
         }
         if ($code !== $this->verification_code) {
-            throw new EmailVerificationException('The verification code was incorrect');
+            throw new EmailVerificationException('The verification code is incorrect');
         }
-        $this->verified_at = Carbon::now();
-        $this->save();
         return true;
     }
 

@@ -2,11 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Exceptions\EmailVerificationException;
-use Closure;
+use App\Models\Clan;
 use Illuminate\Foundation\Http\FormRequest;
 
-class EmailVerifyRequest extends FormRequest
+class ClanMembershipRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -27,15 +26,12 @@ class EmailVerifyRequest extends FormRequest
             'code' => [
                 'required',
                 'string',
-                'alpha_num:ascii',
-                function (string $attribute, mixed $value, Closure $fail) {
-                    try {
-                        $this->emailaddress->checkCode($value);
-                    } catch (EmailVerificationException $ex) {
-                        $fail($ex->getMessage());
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if (Clan::whereInviteCode(strtoupper($value))->count() === 0) {
+                        $fail('The invite code is invalid');
                     }
                 },
-            ],
+            ]
         ];
     }
 }

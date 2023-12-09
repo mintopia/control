@@ -1,5 +1,5 @@
 @extends('layouts.app', [
-    'activenav' => 'user.profile',
+    'activenav' => 'profile',
 ])
 
 @section('breadcrumbs')
@@ -21,7 +21,10 @@
             <div class="card-body">
                 <h3 class="card-title">Email Address</h3>
                 <p class="card-subtitle">Enter your email address. We will send a verification code to it.</p>
-                <input type="email" name="email" id="email" value="{{ old('email') }}" class="form-control" placeholder="Email Address">
+                <input type="email" name="email" id="email" value="{{ old('email') }}" class="form-control @error('email') is-invalid @enderror" placeholder="Email Address">
+                @error('email')
+                    <p class="invalid-feedback">{{ $message }}</p>
+                @enderror
             </div>
             <div class="card-footer text-end">
                 <div class="d-flex">

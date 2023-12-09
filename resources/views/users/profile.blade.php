@@ -1,5 +1,5 @@
 @extends('layouts.app', [
-    'activenav' => 'user.profile',
+    'activenav' => 'profile',
 ])
 
 @section('breadcrumbs')
@@ -14,33 +14,42 @@
         </div>
     </div>
 
-    <div class="row mb-4">
+    <div class="row row-deck mb-4">
         <div class="col-12">
             <h3>Linked Accounts</h3>
         </div>
         @foreach(Auth::user()->accounts as $account)
-            <div class="col-md-6 col-lg-4">
-            <div class="card">
-                <div class="ribbon ribbon-top bg-{{ $account->provider->code }}">
-                    <i class="icon ti ti-brand-{{ $account->provider->code }}-filled"></i>
-                </div>
-                <div class="row row-0">
-                    <div class="col-3">
-                        <img src="{{ $account->avatar_url }}" class="w-100 h-100 object-cover card-img-start" alt="{{ $account->provider->name }} Avatar">
+            <div class="col-xl-4 col-sm-6 my-2 mh-100">
+                <div class="card">
+                    <div class="ribbon ribbon-top bg-{{ $account->provider->code }}">
+                        <i class="icon ti ti-brand-{{ $account->provider->code }}"></i>
                     </div>
-                    <div class="col">
-                        <div class="card-body p-2">
-                            <h3 class="card-title">{{ $account->provider->name }}</h3>
-                            <p class="text-secondary">
-                                {{ $account->name }}<br />
-                                {{ $account->email->email }}
-                            </p>
+                    <div class="row row-0">
+                        <div class="col-auto w-7">
+                            <img src="{{ $account->avatar_url }}" class="w-100 h-100 mh-100 object-cover card-img-start" alt="{{ $account->provider->name }} Avatar">
+                        </div>
+                        <div class="col">
+                            <div class="card-body p-2">
+                                <h3 class="card-title">{{ $account->provider->name }}</h3>
+                                <p class="text-secondary">
+                                    {{ $account->name }}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            </div>
         @endforeach
+        @if($availableLinks)
+            <div class="col-12">
+                @foreach($availableLinks as $provider)
+                    <a class="btn btn-{{ $provider->code }}" href="{{ route('linkedaccounts.create', $provider->code) }}">
+                        <i class="icon ti ti-brand-{{ $provider->code }}"></i>
+                        Link with {{ $provider->name }}
+                    </a>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     <div class="row">
@@ -101,7 +110,7 @@
     <div class="row mb-4 align-items-center">
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
-                <a href="{{ route('emails.create') }}" class="btn d-none d-sm-inline-block">
+                <a href="{{ route('emails.create') }}" class="btn d-sm-inline-block">
                     <i class="icon ti ti-mail-plus"></i>
                     Add Email Address
                 </a>

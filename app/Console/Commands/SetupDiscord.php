@@ -65,7 +65,7 @@ class SetupDiscord extends Command
             ['OAuth2 Redirect URLs'],
             [
                 [route('login.return', 'discord')],
-                [route('accounts.return', 'discord')],
+                [route('linkedaccounts.store', 'discord')],
             ],
         );
     }

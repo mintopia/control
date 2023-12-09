@@ -43,9 +43,4 @@ class ClanRole extends Model
     {
         return $this->hasMany(ClanMembership::class);
     }
-
-    public function users(): HasManyThrough
-    {
-        return $this->hasManyThrough(User::class, ClanMembership::class);
-    }
 }
