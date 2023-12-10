@@ -4,14 +4,17 @@ use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\ClanController;
 use App\Http\Controllers\ClanMembershipController;
 use App\Http\Controllers\LinkedAccountController;
+use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\EmailAddressController;
+use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 
 // Always available
 Route::get('logout', [UserController::class, 'logout'])->name('logout');
+Route::any('webhooks/tickets/{ticketprovider:code}', [WebhookController::class, 'tickets'])->name('webhooks.tickets');
 
 // Guest-only routes
 Route::middleware('guest')->group(function() {
@@ -31,7 +34,7 @@ Route::middleware('auth')->group(function() {
     Route::middleware('can:update,emailaddress')->group(function() {
         Route::get('/profile/emails/{emailaddress}/verify', [EmailAddressController::class, 'verify'])->name('emails.verify');
         Route::get('/profile/emails/{emailaddress}/verify/resend', [EmailAddressController::class, 'verify_resend'])->name('emails.verify.resend');
-        Route::get('/profile/emails/{emailaddress}/verify/{code}', [EmailAddressController::class, 'verify_code'])->name('emails.verify.code');
+        Route::get('/profile/emails/{emailaddress}/verify/code', [EmailAddressController::class, 'verify_code'])->name('emails.verify.code');
         Route::post('/profile/emails/{emailaddress}/verify', [EmailAddressController::class, 'verify_process'])->name('emails.verify.process');
         Route::get('/profile/emails/{emailaddress}/delete', [EmailAddressController::class, 'delete'])->name('emails.delete');
         Route::delete('/profile/emails/{emailaddress}', [EmailAddressController::class, 'destroy'])->name('emails.destroy');
@@ -67,6 +70,7 @@ Route::middleware('auth')->group(function() {
         });
     });
 
+    Route::get('tickets', [TicketController::class, 'index'])->name('tickets.index');
 
     Route::middleware('can:admin')->name('admin.')->prefix('admin')->group(function() {
         Route::get('/', [AdminHomeController::class, 'dashboard'])->name('dashboard');

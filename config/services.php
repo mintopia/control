@@ -31,4 +31,8 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'tickettailor' => [
+        'endpoint' => env('TICKETTAILOR_ENDPOINT', 'https://api.tickettailor.com'),
+        'verifytls' => env('TICKETTAILOR_VERIFYTLS', true),
+    ],
 ];

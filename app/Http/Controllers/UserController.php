@@ -56,11 +56,11 @@ class UserController extends Controller
             $user = $socialprovider->user();
             if ($user) {
                 Auth::login($user);
+                $user->syncTickets(force: true);
                 return response()->redirectToIntended(route('home'))->with('successMessage', 'You have been logged in');
             }
         } catch (\Exception $ex) {
             throw $ex;
-            Log::error($ex->getMessage());
         }
         return response()->redirectToRoute('login')->with('errorMessage', 'Unable to login');
     }

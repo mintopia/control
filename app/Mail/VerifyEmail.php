@@ -41,7 +41,10 @@ class VerifyEmail extends Mailable
         return new Content(
             markdown: 'emails.verifyemail',
             with: [
-                'url' => route('emails.verify.code', [$this->email->id, $this->email->verification_code]),
+                'url' => route('emails.verify.code', [
+                    'emailaddress' => $this->email->id,
+                    'code' => $this->email->verification_code
+                ]),
                 'email' => $this->email,
             ]
         );

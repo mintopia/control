@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Exceptions\EmailVerificationException;
+use App\Jobs\SyncTicketsForEmailJob;
 use App\Mail\VerifyEmail;
 use App\Models\Traits\ToString;
 use Carbon\Carbon;
@@ -90,6 +91,7 @@ class EmailAddress extends Model
         $this->checkCode($code);
         $this->verified_at = Carbon::now();
         $this->save();
+        $this->syncTickets();
         return true;
     }
 
@@ -107,5 +109,18 @@ class EmailAddress extends Model
     public function getVerificationExpiry(): Carbon
     {
         return $this->verification_sent_at->addDays(2);
+    }
+
+    public function syncTickets(bool $sync = false): void
+    {
+        if ($this->verified_at === null) {
+            return;
+        }
+
+        $method = 'dispatch';
+        if ($sync) {
+            $method = 'dispatchSync';
+        }
+        SyncTicketsForEmailJob::$method($this);
     }
 }

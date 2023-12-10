@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Jobs\SyncTicketsForEmailJob;
+use App\Jobs\SyncTicketsForUserJob;
 use App\Models\Traits\ToString;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -43,11 +45,19 @@ use Illuminate\Support\Facades\DB;
  * @property-read int|null $clan_memberships_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Clan> $clans
  * @property-read int|null $clans_count
+ * @property \Illuminate\Support\Carbon|null $tickets_synced_at
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereTicketsSyncedAt($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
+ * @property-read int|null $tickets_count
  * @mixin \Eloquent
  */
 class User extends Authenticatable
 {
     use HasFactory, Notifiable, ToString;
+
+    protected $casts = [
+        'tickets_synced_at' => 'datetime',
+    ];
 
     protected function toStringName(): string
     {
@@ -79,6 +89,11 @@ class User extends Authenticatable
         return $this->hasMany(ClanMembership::class);
     }
 
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
+    }
+
     public function hasRole(string|Role $role): bool
     {
         if ($role instanceof Role) {
@@ -95,5 +110,18 @@ class User extends Authenticatable
             }
         }
         return 'https://gravatar.com/avatar/' . hash('sha256', $this->primaryEmail->email);
+    }
+
+    public function syncTickets(bool $sync = false, bool $force = false): void
+    {
+        if (!$force && $this->tickets_synced_at && $this->tickets_synced_at > Carbon::now()->subMinutes(5)) {
+            return;
+        }
+
+        $this->tickets_synced_at = Carbon::now();
+        $this->save();
+        foreach ($this->emails as $email) {
+            $email->syncTickets($sync);
+        }
     }
 }

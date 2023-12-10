@@ -26,6 +26,21 @@ services:
       - redis
       - db
 
+  worker:
+    image: 1and1internet/php-build-environment:8.2-xdebug
+    restart: unless-stopped
+    entrypoint: [ "php" ]
+    command: "artisan queue:work"
+    user: "1000"
+    env_file: .env
+    deploy:
+      replicas: 1
+    volumes:
+      - ./:/app
+    depends_on:
+      - db
+      - redis
+
   db:
     image: mariadb:10.5-focal
     restart: unless-stopped
