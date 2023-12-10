@@ -5,7 +5,7 @@ use App\Models\LinkedAccount;
 use Laravel\Socialite\Facades\Socialite;
 use SocialiteProviders\Discord\Provider;
 
-class DiscordProvider extends AbstractProvider
+class DiscordProvider extends AbstractSocialProvider
 {
     protected string $name = 'Discord';
     protected string $code = 'discord';

@@ -5,7 +5,7 @@ use App\Models\LinkedAccount;
 use Laravel\Socialite\Facades\Socialite;
 use SocialiteProviders\Steam\Provider;
 
-class SteamProvider extends AbstractProvider
+class SteamProvider extends AbstractSocialProvider
 {
     protected string $name = 'Steam';
     protected string $code = 'steam';

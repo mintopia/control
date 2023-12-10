@@ -11,22 +11,9 @@ use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class TicketTailorProvider
+class TicketTailorProvider extends AbstractTicketProvider
 {
-    protected ?TicketProvider $provider = null;
     protected ?Client $client = null;
-
-    protected string $code = 'tickettailor';
-    protected string $name = 'Ticket Tailor';
-    protected string $apikey;
-    protected string $webhookSecret;
-
-    public function __construct(?TicketProvider $provider = null)
-    {
-        if ($provider) {
-            $this->setProvider($provider);
-        }
-    }
 
     public function configMapping(): array
     {
@@ -40,32 +27,6 @@ class TicketTailorProvider
                 'validation' => 'sometimes|string|nullable',
             ],
         ];
-    }
-
-    public function install(): TicketProvider
-    {
-        $provider = TicketProvider::whereCode($this->code)->first();
-        if (!$provider) {
-            $provider = new TicketProvider();
-            $provider->name = $this->name;
-            $provider->code = $this->code;
-            $provider->provider_class = get_called_class();
-            $provider->enabled = false;
-            $provider->save();
-        }
-        return $provider;
-    }
-
-    public function setProvider(TicketProvider $provider): void
-    {
-        $this->provider = $provider;
-        $this->loadConfig();
-    }
-
-    public function loadConfig(): void
-    {
-        $this->apikey = $this->provider->apikey;
-        $this->webhookSecret = $this->provider->webhook_secret ?? '';
     }
 
     public function processWebhook(Request $request): bool
@@ -115,14 +76,6 @@ class TicketTailorProvider
         }
         return $this->client;
     }
-
-    /**
-     * Fetch a ticket from the provider with its ticket ID. If the ticket doesn't exist, and we have a local user, it will
-     * be created. Otherwise, we will update the local ticket based on the remote ticket.
-     *
-     * @param string $id
-     * @return ?Ticket
-     */
     public function syncTicket(string $id): ?Ticket
     {
         try {
@@ -165,12 +118,6 @@ class TicketTailorProvider
         }
         return $ticket;
     }
-
-    /**
-     * Fetch tickets for the provided email and create them locally if they exist.
-     * @param EmailAddress $email
-     * @return void
-     */
     public function syncTickets(EmailAddress $email): void
     {
         $valid = [];

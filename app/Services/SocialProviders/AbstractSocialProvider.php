@@ -5,12 +5,14 @@ use App\Models\EmailAddress;
 use App\Models\LinkedAccount;
 use App\Models\SocialProvider;
 use App\Models\User;
+use App\Services\Contracts\SocialProviderContract;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Laravel\Socialite\Facades\Socialite;
 
-abstract class AbstractProvider
+abstract class AbstractSocialProvider implements SocialProviderContract
 {
     protected string $name;
     protected string $code;
@@ -64,7 +66,7 @@ abstract class AbstractProvider
         return Socialite::driver($this->socialiteProviderCode);
     }
 
-    public function redirect()
+    public function redirect(): RedirectResponse
     {
         return $this->getSocialiteProvider()->redirect();
     }
