@@ -40,7 +40,7 @@ class SetupDiscord extends Command
         $provider->client_id = text(
             label: 'Discord Client ID',
             hint: 'This can be found in your Discord Developer OAuth2 settings',
-            default: $provider->client_id
+            default: $provider->client_id ?? ''
         );
 
         if (!$provider->client_secret || confirm('Do you want to change the Client Secret?', false)) {
