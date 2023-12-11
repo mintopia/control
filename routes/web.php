@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\ClanController;
 use App\Http\Controllers\ClanMembershipController;
 use App\Http\Controllers\LinkedAccountController;
+use App\Http\Controllers\SeatingPlanController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\HomeController;
@@ -75,6 +76,9 @@ Route::middleware('auth')->group(function() {
     Route::middleware('can:update,ticket')->group(function() {
         Route::resource('tickets', TicketController::class)->only(['show', 'update']);
     });
+
+    Route::get('seating', [SeatingPlanController::class, 'index'])->name('seatingplans.index');
+    Route::get('seating/{event:code}', [SeatingPlanController::class, 'index'])->name('seatingplans.show');
 
     Route::middleware('can:admin')->name('admin.')->prefix('admin')->group(function() {
         Route::get('/', [AdminHomeController::class, 'dashboard'])->name('dashboard');

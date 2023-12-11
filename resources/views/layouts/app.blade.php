@@ -51,7 +51,7 @@
                         </a>
                     </li>
                     <li class="nav-item @if(($activenav ?? null) === 'seatingplans') active @endif">
-                        <a class="nav-link" href="#" >
+                        <a class="nav-link" href="{{ route('seatingplans.index') }}" >
                             <span class="nav-link-icon d-md-none d-lg-inline-block">
                                 <i class="icon ti ti-armchair"></i>
                             </span>

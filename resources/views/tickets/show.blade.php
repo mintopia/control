@@ -44,7 +44,13 @@
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Seat</div>
                                 <div class="datagrid-content">
-                                    <a href="#">C14</a>
+                                    @if($ticket->seat)
+                                        <a href="{{ route('seatingplans.show', $ticket->event->code) }}#{{ $ticket->seat->label }}">{{ $ticket->seat->label }}</a>
+                                    @elseif($ticket->canPickSeat())
+                                        None - <a href="{{ route('seatingplans.show', $ticket->event->code) }}">Choose Seat</a>
+                                    @else
+                                        <span class="text-muted">None</span>
+                                    @endif
                                 </div>
                             </div>
                         </div>

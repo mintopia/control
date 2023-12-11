@@ -30,6 +30,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereStartsAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereUpdatedAt($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SeatingPlan> $seatingPlans
+ * @property-read int|null $seating_plans_count
  * @mixin \Eloquent
  */
 class Event extends Model
@@ -49,5 +51,10 @@ class Event extends Model
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
+    }
+
+    public function seatingPlans(): HasMany
+    {
+        return $this->hasMany(SeatingPlan::class);
     }
 }

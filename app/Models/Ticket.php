@@ -43,6 +43,9 @@ use function App\makeCode;
  * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereTicketTypeId($value)
  * @property string|null $transfer_code
  * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereTransferCode($value)
+ * @property int|null $seat_id
+ * @property-read \App\Models\Seat|null $seat
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereSeatId($value)
  * @mixin \Eloquent
  */
 class Ticket extends Model
@@ -69,6 +72,11 @@ class Ticket extends Model
         return $this->belongsTo(Event::class);
     }
 
+    public function seat(): BelongsTo
+    {
+        return $this->belongsTo(Seat::class);
+    }
+
     public function generateTransferCode(): void
     {
         $codes = [];
@@ -84,6 +92,16 @@ class Ticket extends Model
         if ($this->event->ends_at < Carbon::now()) {
             return false;
         }
+        // TODO: Check Ticket Type
+        return true;
+    }
+
+    public function canPickSeat(): bool
+    {
+        if (!$this->type->has_seat) {
+            return false;
+        }
+        // TODO: Check Event
         return true;
     }
 }

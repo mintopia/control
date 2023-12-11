@@ -31,6 +31,7 @@
                         <tr>
                             <th>Reference</th>
                             <th>Type</th>
+                            <th>Seat</th>
                             <th>Event</th>
                             <th class="w-1"></th>
                         </tr>
@@ -44,6 +45,15 @@
                                     </a>
                                 </td>
                                 <td>{{ $ticket->type->name }}</td>
+                                <td>
+                                    @if($ticket->seat)
+                                        <a href="{{ route('seatingplans.show', $ticket->event->code) }}#{{ $ticket->seat->label }}">{{ $ticket->seat->label }}</a>
+                                    @elseif($ticket->canPickSeat())
+                                        None - <a href="{{ route('seatingplans.show', $ticket->event->code) }}">Choose Seat</a>
+                                    @else
+                                        <span class="text-muted">None</span>
+                                    @endif
+                                </td>
                                 <td>{{ $ticket->event->name }}</td>
                                 <td></td>
                             </tr>

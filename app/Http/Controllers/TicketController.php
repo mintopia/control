@@ -10,7 +10,7 @@ class TicketController extends Controller
 {
     public function index(Request $request)
     {
-        $tickets = $request->user()->tickets()->with(['event', 'type'])->paginate();
+        $tickets = $request->user()->tickets()->with(['event', 'type', 'seat'])->paginate();
         return view('tickets.index', [
             'tickets' => $tickets,
         ]);
