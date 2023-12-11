@@ -52,4 +52,26 @@ interface TicketProviderContract
      * @return void
      */
     public function syncTickets(EmailAddress $email): void;
+
+
+    /**
+     * Fetches all events on the provider.
+     *
+     * Returns an associative array where the keys are the external ID for the event and the value is the name of the
+     * event.
+     *
+     * @return array
+     */
+    public function getEvents(): array;
+
+    /**
+     * Fetches all ticket types for a specific event external ID.
+     *
+     * Returns an associative array where the keys are the external ID for the ticket type and the value is the name of
+     * the ticket type.
+     *
+     * @param string $eventExternalId
+     * @return array
+     */
+    public function getTicketTypes(string $eventExternalId): array;
 }

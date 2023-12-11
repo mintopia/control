@@ -35,6 +35,10 @@ use Illuminate\Http\Request;
  * @property-read int|null $tickets_count
  * @property string|null $webhook_secret
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereWebhookSecret($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventTicketProvider> $events
+ * @property-read int|null $events_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketTypeTicketProvider> $types
+ * @property-read int|null $types_count
  * @mixin \Eloquent
  */
 class TicketProvider extends Model
@@ -54,6 +58,16 @@ class TicketProvider extends Model
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
+    }
+
+    public function events(): HasMany
+    {
+        return $this->hasMany(EventTicketProvider::class);
+    }
+
+    public function types(): HasMany
+    {
+        return $this->hasMany(TicketTypeTicketProvider::class);
     }
 
     protected function toStringName(): string
@@ -79,5 +93,19 @@ class TicketProvider extends Model
     public function processWebhook(Request $request): bool
     {
         return $this->getProvider()->processWebhook($request);
+    }
+
+    public function getEvents(): array
+    {
+        return $this->getProvider()->getEvents();
+    }
+
+    public function getTicketTypes(Event $event): array
+    {
+        $providerEvent = $this->events()->whereEventId($event->id)->first();
+        if ($providerEvent) {
+            return $this->getProvider()->getTicketTypes($providerEvent->external_id);
+        }
+        return [];
     }
 }

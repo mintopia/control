@@ -3,8 +3,11 @@ namespace App\Services\TicketProviders;
 
 use App\Exceptions\TicketProviderWebhookException;
 use App\Models\EmailAddress;
+use App\Models\Event;
 use App\Models\Ticket;
 use App\Models\TicketProvider;
+use App\Models\TicketType;
+use App\Models\User;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
@@ -109,17 +112,23 @@ class TicketTailorProvider extends AbstractTicketProvider
                 // No email, nothing to do
                 return null;
             }
-            $ticket = new Ticket();
-            $ticket->provider()->associate($this->provider);
-            $ticket->user()->associate($email->user);
-            $ticket->external_id = $data->id;
-            $ticket->save();
-            Log::info("{$this->provider} {$ticket} has been added for {$email}");
+            $event = Event::whereHas('provider', function ($query) use ($data) {
+                $query->whereTicketProviderId($this->provider->id)->whereExternalId($data->event_id);
+            })->first();
+            if (!$event) {
+                Log::info("{$this->provider} {$data->ticket} not added. Unable to find event {$data->event_id}");
+            }
+            $ticket = $this->makeTicket($email->user, $data);
+            if (!$ticket) {
+                Log::info("{$this->provider} {$ticket} has been added for {$email}");
+            }
         }
         return $ticket;
     }
+
     public function syncTickets(EmailAddress $email): void
     {
+        $ticketData = [];
         $valid = [];
         $voided = [];
         $query = [
@@ -134,6 +143,7 @@ class TicketTailorProvider extends AbstractTicketProvider
                 $query['starting_after'] = $ticket->id;
                 if ($ticket->status === 'valid') {
                     $valid[] = $ticket->id;
+                    $ticketData[$ticket->id] = $ticket;
                 } elseif ($ticket->status === 'voided') {
                     $voided[] = $ticket->id;
                 }
@@ -159,12 +169,83 @@ class TicketTailorProvider extends AbstractTicketProvider
         $missing = array_diff($valid, $found);
 
         foreach ($missing as $ticketId) {
-            $ticket = new Ticket;
-            $ticket->provider()->associate($this->provider);
-            $ticket->user()->associate($email->user);
-            $ticket->external_id = $ticketId;
-            $ticket->save();
-            Log::info("{$this->provider} {$ticket} has been added for {$email}");
+            $data = $ticketData[$ticketId];
+            $ticket = $this->makeTicket($email->user, $data);
+            if ($ticket) {
+                Log::info("{$this->provider} {$ticket} has been added for {$email}");
+            }
         }
+    }
+
+    protected function makeTicket(User $user, object $data): ?Ticket
+    {
+        $event = $this->getEvent($data->event_id);
+        if (!$event) {
+            Log::info("{$this->provider} {$data->ticket} not added. Unable to find event {$data->event_id}");
+            return null;
+        }
+        $type = $this->getType($data->ticket_type_id);
+        if (!$type) {
+            Log::info("{$this->provider} {$data->ticket} not added. Unable to find ticket type {$data->ticket_type_id}");
+            return null;
+        }
+        $ticket = new Ticket;
+        $ticket->provider()->associate($this->provider);
+        $ticket->user()->associate($user);
+        $ticket->event()->associate($event);
+        $ticket->type()->associate($type);
+        $ticket->external_id = $data->id;
+        $ticket->name = $data->description;
+        $ticket->reference = $data->barcode;
+        $ticket->qrcode = $this->getQrCode($data);
+        $ticket->save();
+        return $ticket;
+    }
+
+    public function getEvents(): array
+    {
+        $events = [];
+        $query = [];
+        do {
+            $response = $this->getClient()->get('/v1/events', [
+                'query' => $query,
+            ]);
+            $data = json_decode($response->getBody());
+            foreach ($data->data as $event) {
+                $query['starting_after'] = $event->id;
+                $events[$event->id] = $event->name;
+            }
+        } while ($data->links->next !== null);
+        return $events;
+    }
+
+    public function getTicketTypes(string $eventExternalId): array
+    {
+        $types = [];
+        $response = $this->getClient()->get("/v1/events/{$eventExternalId}");
+        $data = json_decode($response->getBody());
+        foreach ($data->ticket_types as $type) {
+            $types[$type->id] = $type->name;
+        }
+        return $types;
+    }
+
+    protected function getType(string $externalId): ?TicketType
+    {
+        return TicketType::whereHas('providers', function($query) use ($externalId) {
+            $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
+        })->first();
+    }
+
+    protected function getEvent(string $externalId): ?Event
+    {
+        return Event::whereHas('providers', function ($query) use ($externalId) {
+            $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
+        })->first();
+    }
+
+    protected function getQrCode(object $data): string
+    {
+        return str_replace(['/st/', '.jpg'], ['/qr/', '.png'], $data->barcode_url);
     }
 }

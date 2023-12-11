@@ -4,14 +4,15 @@ namespace App\Providers;
 
 use App\Models\Clan;
 use App\Models\EmailAddress;
+use App\Models\Event;
 use App\Models\User;
 use App\Observers\ClanObserver;
 use App\Observers\EmailAddressObserver;
+use App\Observers\EventObserver;
 use App\Observers\UserObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Event;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -19,6 +20,7 @@ class EventServiceProvider extends ServiceProvider
         User::class => UserObserver::class,
         EmailAddress::class => EmailAddressObserver::class,
         Clan::class => ClanObserver::class,
+        Event::class => EventObserver::class,
     ];
     /**
      * The event to listener mappings for the application.

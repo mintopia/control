@@ -70,4 +70,13 @@ abstract class AbstractTicketProvider implements TicketProviderContract
     public function syncTickets(EmailAddress $email): void
     {
     }
+
+    public function getEvents(): array
+    {
+        return [];
+    }
+    public function getTicketTypes(string $eventExternalId): array
+    {
+        return [];
+    }
 }
