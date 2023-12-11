@@ -30,16 +30,16 @@
                                 <div class="datagrid-content">{{ $ticket->reference }}</div>
                             </div>
                             <div class="datagrid-item">
+                                <div class="datagrid-title">Type</div>
+                                <div class="datagrid-content">{{ $ticket->type->name }}</div>
+                            </div>
+                            <div class="datagrid-item">
                                 <div class="datagrid-title">Event</div>
                                 <div class="datagrid-content">{{ $ticket->event->name }}</div>
                             </div>
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Date</div>
                                 <div class="datagrid-content">{{ $ticket->event->starts_at->format('gA jS F Y') }}</div>
-                            </div>
-                            <div class="datagrid-item">
-                                <div class="datagrid-title">Type</div>
-                                <div class="datagrid-content">{{ $ticket->type->name }}</div>
                             </div>
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Seat</div>
