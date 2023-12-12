@@ -78,7 +78,7 @@ Route::middleware('auth')->group(function() {
     });
 
     Route::get('seating', [SeatingPlanController::class, 'index'])->name('seatingplans.index');
-    Route::get('seating/{event:code}', [SeatingPlanController::class, 'index'])->name('seatingplans.show');
+    Route::get('seating/{event:code}', [SeatingPlanController::class, 'show'])->name('seatingplans.show');
 
     Route::middleware('can:admin')->name('admin.')->prefix('admin')->group(function() {
         Route::get('/', [AdminHomeController::class, 'dashboard'])->name('dashboard');

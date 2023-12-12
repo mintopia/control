@@ -40,7 +40,7 @@ class TicketController extends Controller
     {
         $ticket = Ticket::whereTransferCode($request->input('code'))->first();
         $ticket->user()->associate($request->user());
-        $ticket->transfer_code = '';
+        $ticket->transfer_code = null;
         $ticket->save();
         return response()->redirectToRoute('tickets.show', $ticket->id)->with('successMessage', 'The ticket has been transferred to your account');
     }

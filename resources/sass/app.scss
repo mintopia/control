@@ -81,3 +81,28 @@ body {
 .text-steam-fg {
     color: var(--tblr-light) !important;
 }
+
+.seating-plan {
+    position: relative;
+
+    .seat {
+        position: absolute;
+        width: 1.9em;
+        height: 1.9em;
+        border: 2px solid var(--tblr-gray);
+        border-radius: 2px;
+        padding: 0;
+        overflow: hidden;
+        cursor: default;
+    }
+
+    .seat.taken {
+        background-color: var(--tblr-primary-darken);
+    }
+
+    .seat.disabled {
+        background-color: var(--tblr-gray);
+    }
+
+
+}
