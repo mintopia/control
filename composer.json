@@ -16,6 +16,7 @@
         "socialiteproviders/steam": "^4.2"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.9",
         "barryvdh/laravel-ide-helper": "^2.13",
         "fakerphp/faker": "^1.9.1",
         "laravel/pint": "^1.0",
