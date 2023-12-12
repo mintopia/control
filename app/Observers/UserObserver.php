@@ -22,6 +22,20 @@ class UserObserver
         }
     }
 
+    public function saved(User $user): void
+    {
+        if ($user->isDirty('nickname')) {
+            $tickets = $user->tickets()->whereNotNull('seat_id')->with(['seat', 'seat.plan'])->get();
+            $plans = [];
+            foreach ($tickets as $ticket) {
+                $plans[$ticket->seat->plan->id] = $ticket->seat->plan;
+            }
+            foreach ($plans as $plan) {
+                $plan->updateRevision();
+            }
+        }
+    }
+
     /**
      * Handle the User "updated" event.
      */

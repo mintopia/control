@@ -10,8 +10,8 @@
 
 @section('content')
     <div class="row g-2 align-items-center mb-4">
-        <div class="col">
-            <h2 class="page-title">{{ $clan->name }}</h2>
+        <div class="col page-header mt-2">
+            <h1>{{ $clan->name }}</h1>
         </div>
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
@@ -52,6 +52,8 @@
                                                 @if($member->user_id === Auth::user()->id)
                                                     <i class="icon ti ti-star-filled text-yellow" title="You!"></i>
                                                 @endif
+                                                <br />
+                                                <span class="text-muted">{{ $member->user->name }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -101,7 +103,7 @@
                         Invite people to join this clan by sharing the invite code.
                     </p>
                     <h2 class="text-center">
-                        <strong>{{ $clan->invite_code }}</strong>
+                        <strong class="user-select-all">{{ $clan->invite_code }}</strong>
                     </h2>
                 </div>
                 @can('update', $clan)

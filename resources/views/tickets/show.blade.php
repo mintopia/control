@@ -13,10 +13,8 @@
 @endsection
 
 @section('content')
-    <div class="row g-2 align-items-center mb-4">
-        <div class="col">
-            <h2 class="page-title">Ticket Details</h2>
-        </div>
+    <div class="page-header mt-0">
+        <h1>Ticket Details</h1>
     </div>
 
     <div class="row">
@@ -76,7 +74,7 @@
                         </p>
                         @if($ticket->transfer_code)
                             <h2 class="text-center">
-                                <strong>{{ $ticket->transfer_code }}</strong>
+                                <strong class="user-select-all">{{ $ticket->transfer_code }}</strong>
                             </h2>
                         @endif
                     @else

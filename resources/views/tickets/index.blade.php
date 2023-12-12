@@ -8,10 +8,8 @@
 @endsection
 
 @section('content')
-    <div class="row g-2 align-items-center mb-4">
-        <div class="col">
-            <h2 class="page-title">Tickets</h2>
-        </div>
+    <div class="page-header mt-0">
+        <h1>Tickets</h1>
     </div>
 
     <p>

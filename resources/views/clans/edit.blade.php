@@ -10,10 +10,8 @@
 @endsection
 
 @section('content')
-    <div class="row g-2 align-items-center mb-4">
-        <div class="col">
-            <h2 class="page-title">Edit {{ $clan->name }}</h2>
-        </div>
+    <div class="page-header mt-0">
+        <h1>Edit {{ $clan->name }}</h1>
     </div>
 
     <div class="col-md-6 offset-md-3">

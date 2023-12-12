@@ -9,7 +9,9 @@
 @section('content')
     <div class="row">
         <div class="col-xl-9 col-sm-8 mb-4">
-            <h2 class="page-title mb-2">Tickets</h2>
+            <div class="page-title mt-0">
+                <h1>Tickets</h1>
+            </div>
             @if ($tickets)
                 <div class="card mb-6">
                     <div class="table-responsive">
@@ -61,7 +63,9 @@
                 </p>
             @endif
 
-            <h2 class="page-title mb-2">Events</h2>
+            <div class="page-title mt-0">
+                <h1>Events</h1>
+            </div>
             @if($events)
                 <div class="card mb-6">
                     <div class="table-responsive">
@@ -110,7 +114,7 @@
                     </div>
                     <div class="card-title mb-1">{{ Auth::user()->nickname }}</div>
                     <div class="text-secondary">
-                        <a href="{{ route('user.profile') }}">Profile</a>
+                        <span class="text-muted">{{ Auth::user()->name }}</span>
                     </div>
                     @if(Auth::user()->clanMemberships)
                         <div class="mt-4">

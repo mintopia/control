@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ProfileUpdateRequest;
+use App\Http\Requests\UserSignupRequest;
 use App\Models\SocialProvider;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -63,5 +66,39 @@ class UserController extends Controller
             throw $ex;
         }
         return response()->redirectToRoute('login')->with('errorMessage', 'Unable to login');
+    }
+
+    public function signup(Request $request)
+    {
+        return view('users.signup', [
+            'user' => $request->user(),
+        ]);
+    }
+
+    public function signup_process(UserSignupRequest $request)
+    {
+        $user = $request->user();
+        $user->nickname = $request->input('nickname');
+        $user->name = $request->input('name');
+        $user->first_login = false;
+        $user->terms_agreed_at = Carbon::now();
+        $user->save();
+        return response()->redirectToRoute('home')->with('successMessage', 'Your account has been created');
+    }
+
+    public function edit(Request $request)
+    {
+        return view('users.edit', [
+            'user' => $request->user(),
+        ]);
+    }
+
+    public function update(ProfileUpdateRequest $request)
+    {
+        $user = $request->user();
+        $user->nickname = $request->input('nickname');
+        $user->name = $request->input('name');
+        $user->save();
+        return response()->redirectToRoute('user.profile')->with('successMessage', 'Your profile has been updated');
     }
 }

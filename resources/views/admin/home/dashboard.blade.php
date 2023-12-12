@@ -8,5 +8,46 @@
 @endsection
 
 @section('content')
-
+    <div class="row row-deck row-cards">
+        <div class="col-sm-6 col-xl-4">
+            <div class="card card-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-primary text-white avatar">
+                                <i class="icon ti ti-user"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium"><a href="{{ route('admin.users.index') }}" class="text-body text-decoration-none stretched-link">{{ $stats->users->total }} Users</a></div>
+                            <div class="text-secondary">
+                                {{ $stats->users->lastWeek }} in the last week
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @foreach($events as $event)
+            <div class="col-sm-6 col-xl-4">
+                <div class="card card-sm">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-auto">
+                            <span class="bg-primary text-white avatar">
+                                <i class="icon ti ti-ticket"></i>
+                            </span>
+                            </div>
+                            <div class="col">
+                                <div class="font-weight-medium"><a href="{{ route('admin.tickets.index', ['event_id' => $event->id]) }}" class="text-body text-decoration-none stretched-link">{{ $event->name }}</a></div>
+                                <div class="text-secondary">
+                                    {{ $event->tickets()->count() }} tickets
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endforeach
+    </div>
 @endsection

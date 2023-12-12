@@ -9,10 +9,8 @@
 @endsection
 
 @section('content')
-    <div class="row g-2 align-items-center mb-4">
-        <div class="col">
-            <h2 class="page-title">{{ $event->name }}</h2>
-        </div>
+    <div class="page-header mt-0">
+        <h1>{{ $event->name }}</h1>
     </div>
     <div class="row">
         <div class="col-md-3">

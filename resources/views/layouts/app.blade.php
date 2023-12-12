@@ -92,9 +92,10 @@
                             </a>
                             <div class="dropdown-menu @if(($activenav ?? null) === 'admin') show @endif" data-bs-popper="static">
                                 <a class="dropdown-item" href="{{ route('admin.dashboard') }}">Dashboard</a>
-                                <a class="dropdown-item" href="{{ route('admin.dashboard') }}">Users</a>
-                                <a class="dropdown-item" href="{{ route('admin.dashboard') }}">Events</a>
-                                <a class="dropdown-item" href="{{ route('admin.dashboard') }}">Settings</a>
+                                <a class="dropdown-item" href="{{ route('admin.users.index') }}">Users</a>
+                                <a class="dropdown-item" href="{{ route('admin.events.index') }}">Events</a>
+                                <a class="dropdown-item" href="{{ route('admin.tickets.index') }}">Tickets</a>
+                                <a class="dropdown-item" href="{{ route('admin.settings.edit') }}">Settings</a>
                             </div>
                         </li>
                     @endcan

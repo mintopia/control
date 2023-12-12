@@ -9,6 +9,7 @@
         "guzzlehttp/guzzle": "^7.2",
         "laravel/framework": "^10.10",
         "laravel/prompts": "*",
+        "laravel/pulse": "^1.0@beta",
         "laravel/sanctum": "^3.3",
         "laravel/socialite": "^5.11",
         "laravel/tinker": "^2.8",
@@ -70,6 +71,6 @@
             "php-http/discovery": true
         }
     },
-    "minimum-stability": "stable",
+    "minimum-stability": "beta",
     "prefer-stable": true
 }

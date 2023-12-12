@@ -6,6 +6,7 @@ use App\Jobs\SyncTicketsForEmailJob;
 use App\Jobs\SyncTicketsForUserJob;
 use App\Models\Traits\ToString;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -60,6 +61,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'tickets_synced_at' => 'datetime',
+        'terms_agreed_at' => 'datetime',
     ];
 
     protected function toStringName(): string
@@ -155,5 +157,14 @@ class User extends Authenticatable
             return $ticket->canPickSeat();
         });
         return $this->pickableTickets;
+    }
+
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            get: function (mixed $value, array $attributes) {
+                return $this->primaryEmail->email ?? null;
+            },
+        );
     }
 }

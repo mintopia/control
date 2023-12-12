@@ -10,10 +10,8 @@
 @endsection
 
 @section('content')
-    <div class="row g-2 align-items-center mb-4">
-        <div class="col">
-            <h2 class="page-title">Verify Email Address</h2>
-        </div>
+    <div class="page-header mt-0">
+        <h1>Verify {{ $email->email }}</h1>
     </div>
 
     <div class="col-md-6 offset-md-3">
