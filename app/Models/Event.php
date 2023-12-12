@@ -32,6 +32,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereUpdatedAt($value)
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SeatingPlan> $seatingPlans
  * @property-read int|null $seating_plans_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketType> $ticketTypes
+ * @property-read int|null $ticket_types_count
+ * @property int $seating_locked
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereSeatingLocked($value)
  * @mixin \Eloquent
  */
 class Event extends Model

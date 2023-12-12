@@ -18,6 +18,9 @@ class SeatingPlanController extends Controller
 
     public function show(Request $request, Event $event)
     {
+        if ($event->seating_locked) {
+            $request->session()->now('infoMessage', 'Seating is locked');
+        }
         // Get clans and tickets (left-hand sidebar)
         $clans = $request->user()->clanMemberships()->with('clan')->get()->pluck('clan');
         $clanIds = $clans->pluck('id');
@@ -37,9 +40,14 @@ class SeatingPlanController extends Controller
         $tickets = [
             0 => [],
         ];
+        $clanSeats = [];
+        $mySeats = [];
         foreach ($allTickets as $ticket) {
             if ($ticket->user->id === $request->user()->id) {
                 $tickets[0][] = $ticket;
+                if ($ticket->seat_id) {
+                    $mySeats[] = $ticket->seat_id;
+                }
                 continue;
             }
             foreach ($ticket->user->clanMemberships as $clanMember) {
@@ -47,22 +55,16 @@ class SeatingPlanController extends Controller
                     $tickets[$clanMember->clan_id] = [];
                 }
                 $tickets[$clanMember->clan_id][] = $ticket;
+                if ($ticket->seat_id) {
+                    $clanSeats[] = $ticket->seat_id;
+                }
             }
         }
 
-        // Now our seat data - TODO: Cache This
+        // Now our seat data
         $seats = [];
-        $planIds = $event->seatingPlans()->pluck('id');
-        $unsortedSeats = Seat::whereIn('seating_plan_id', $planIds)
-            ->with(['ticket', 'ticket.user', 'plan'])
-            ->orderBy('row', 'ASC')
-            ->orderBy('number', 'ASC')
-            ->get();
-        foreach ($unsortedSeats as $seat) {
-            if (!isset($seats[$seat->seating_plan_id])) {
-                $seats[$seat->seating_plan_id] = [];
-            }
-            $seats[$seat->seating_plan_id][] = $seat;
+        foreach ($event->seatingPlans as $plan) {
+            $seats[$plan->id] = $plan->getData();
         }
 
         return view('seatingplans.show', [
@@ -70,6 +72,8 @@ class SeatingPlanController extends Controller
             'tickets' => $tickets,
             'event' => $event,
             'seats' => $seats,
+            'mySeats' => $mySeats,
+            'clanSeats' => $clanSeats,
         ]);
     }
 }

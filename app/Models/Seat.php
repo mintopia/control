@@ -60,4 +60,15 @@ class Seat extends Model
     {
         return $this->label;
     }
+
+    public function canPick(): bool
+    {
+        if ($this->disabled) {
+            return false;
+        }
+        if ($this->plan->event->seating_locked) {
+            return false;
+        }
+        return true;
+    }
 }

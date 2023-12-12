@@ -42,13 +42,35 @@
                             <div class="card-body p-0" style="min-height: {{ (collect($seats[$plan->id] ?? [])->max('y') * 2) + 4 }}em;">
                                 <div class="seating-plan">
                                     @foreach($seats[$plan->id] ?? [] as $seat)
-                                        <div class="seat {{ $seat->class }} {{ $seat->disabled ? 'disabled' : '' }} {{ $seat->ticket ? 'taken' : 'available' }}"
+                                        @php
+                                            $class = 'available';
+                                            $name = 'Available';
+                                            if ($seat->disabled) {
+                                                $class = 'disabled';
+                                                $name = 'Not Available';
+                                            }
+                                            if ($seat->nickname) {
+                                                $name = $seat->nickname;
+                                            }
+                                            if ($seat->ticket) {
+                                                $class = 'taken';
+                                            }
+                                            if (in_array($seat->id, $clanSeats)) {
+                                                $class = 'seat-clan';
+                                            }
+                                            if (in_array($seat->id, $mySeats)) {
+                                                $class = 'seat-mine';
+                                            }
+
+                                        @endphp
+                                        <{{ $seat->canPick ? 'a' : 'div' }} class="d-block seat {{ $seat->class }} {{ $class }}"
+                                             @if($seat->canPick) href="{{ route('seats.edit', $seat->id) }}" @endif
                                              style="left: {{ $seat->x * 2 }}em; top: {{ $seat->y * 2 }}em;"
                                              data-bs-trigger="hover" data-bs-toggle="popover"
                                              data-bs-placement="right"
                                              title="{{ $seat->description }} {{ $seat->label }}"
-                                             data-bs-content="{{ $seat->ticket->user->nickname ?? '' }}"
-                                        ></div>
+                                             data-bs-content="{{ $name }}"
+                                        ></{{ $seat->canPick ? 'a' : 'div' }}>
                                     @endforeach
                                 </div>
                             </div>

@@ -93,15 +93,22 @@ body {
         border-radius: 2px;
         padding: 0;
         overflow: hidden;
-        cursor: default;
+    }
+
+    .seat-clan {
+        background-color: #3d8bfd;
+    }
+
+    .seat-mine {
+        background-color: #ffc107;
     }
 
     .seat.taken {
-        background-color: var(--tblr-primary-darken);
+        background-color: #dc3545;
     }
 
     .seat.disabled {
-        background-color: var(--tblr-gray);
+        background-color: #adb5bd;
     }
 
 

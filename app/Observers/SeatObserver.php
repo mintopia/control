@@ -13,6 +13,13 @@ class SeatObserver
         }
     }
 
+    public function saved(Seat $seat): void
+    {
+        if ($seat->isDirty()) {
+            $seat->plan->updateRevision();
+        }
+    }
+
     /**
      * Handle the Seat "created" event.
      */

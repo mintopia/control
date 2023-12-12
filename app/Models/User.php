@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -54,6 +55,8 @@ use Illuminate\Support\Facades\DB;
 class User extends Authenticatable
 {
     use HasFactory, Notifiable, ToString;
+
+    protected ?Collection $pickableTickets = null;
 
     protected $casts = [
         'tickets_synced_at' => 'datetime',
@@ -123,5 +126,34 @@ class User extends Authenticatable
         foreach ($this->emails as $email) {
             $email->syncTickets($sync);
         }
+    }
+
+    public function getPickableTickets(Event $event): Collection
+    {
+        if ($this->pickableTickets !== null) {
+            return $this->pickableTickets;
+        }
+
+        $clanIds = $this->clanMemberships()->whereHas('role', function ($query) {
+            $query->whereIn('code', ['leader', 'seatmanager']);
+        })->pluck('clan_id');
+
+        // Get eligible tickets for seating
+        $query = Ticket::whereEventId($event->id)->whereUserId($this->id);
+        $query = $query->orWhereHas('user', function ($query) use ($clanIds) {
+            $query->whereHas('clanMemberships', function ($query) use ($clanIds) {
+                $query->whereIn('clan_id', $clanIds);
+            });
+        });
+        $tickets = $query
+            ->with(['user' => function ($query) {
+                $query->orderBy('nickname', 'ASC');
+            }, 'type', 'seat'])
+            ->get();
+
+        $this->pickableTickets = $tickets->filter(function(Ticket $ticket) {
+            return $ticket->canPickSeat();
+        });
+        return $this->pickableTickets;
     }
 }
