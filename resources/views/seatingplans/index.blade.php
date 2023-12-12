@@ -23,7 +23,7 @@
                         <tr>
                             <th>Event</th>
                             <th>Starts</th>
-                            <th class="w-1"></th>
+                            <th></th>
                         </tr>
                         </thead>
                         <tbody>
@@ -35,7 +35,11 @@
                                     </a>
                                 </td>
                                 <td>{{ $event->starts_at->format('gA jS F Y') }}</td>
-                                <td></td>
+                                <td class="text-end">
+                                    @if($event->ends_at > \Carbon\Carbon::now() && $event->boxoffice_url)
+                                        <a href="{{ $event->boxoffice_url }}">Get Tickets</a>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr>

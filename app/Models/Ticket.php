@@ -101,7 +101,12 @@ class Ticket extends Model
         if (!$this->type->has_seat) {
             return false;
         }
-        // TODO: Check Event
+        if ($this->event->ends_at < Carbon::now()) {
+            return false;
+        }
+        if ($this->event->seating_locked) {
+            return false;
+        }
         return true;
     }
 }

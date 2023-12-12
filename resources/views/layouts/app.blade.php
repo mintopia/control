@@ -80,6 +80,24 @@
                             </span>
                         </a>
                     </li>
+                    @can('admin')
+                        <li class="nav-item dropdown @if(($activenav ?? null) === 'admin') active @endif">
+                            <a class="nav-link dropdown-toggle  @if(($activenav ?? null) === 'admin') show @endif" href="#navbar-admin" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button">
+                                <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                    <i class="icon ti ti-settings"></i>
+                                </span>
+                                    <span class="nav-link-title">
+                                    Admin
+                                </span>
+                            </a>
+                            <div class="dropdown-menu @if(($activenav ?? null) === 'admin') show @endif" data-bs-popper="static">
+                                <a class="dropdown-item" href="{{ route('admin.dashboard') }}">Dashboard</a>
+                                <a class="dropdown-item" href="{{ route('admin.dashboard') }}">Users</a>
+                                <a class="dropdown-item" href="{{ route('admin.dashboard') }}">Events</a>
+                                <a class="dropdown-item" href="{{ route('admin.dashboard') }}">Settings</a>
+                            </div>
+                        </li>
+                    @endcan
                 </ul>
             </div>
         </div>

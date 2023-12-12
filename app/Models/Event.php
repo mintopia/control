@@ -36,6 +36,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read int|null $ticket_types_count
  * @property int $seating_locked
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereSeatingLocked($value)
+ * @property string|null $boxoffice_url
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereBoxofficeUrl($value)
  * @mixin \Eloquent
  */
 class Event extends Model
