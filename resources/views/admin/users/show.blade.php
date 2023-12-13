@@ -44,9 +44,11 @@
                         <div class="datagrid-item">
                             <div class="datagrid-title">Roles</div>
                             <div class="datagrid-content">
-                                @foreach($user->roles as $role)
+                                @forelse($user->roles as $role)
                                     <span class="badge bg-primary text-primary-fg">{{ $role->name }}
-                                @endforeach
+                                @empty
+                                    <span class="text-muted">None</span>
+                                @endforelse
                             </div>
                         </div>
                         <div class="datagrid-item">
@@ -132,7 +134,7 @@
                                         <span class="avatar me-2" style="background-image: url('{{ $account->avatar_url }}')"></span>
                                         <div class="flex-fill">
                                             <div class="font-weight-medium">{{ $account->name }}</div>
-                                            <div class="text-secondary">{{ $account->email->email }}</div>
+                                            <div class="text-secondary">{{ $account->email->email ?? '' }}</div>
                                         </div>
                                     </div>
                                 </td>
