@@ -112,7 +112,7 @@ class TicketTailorProvider extends AbstractTicketProvider
                 // No email, nothing to do
                 return null;
             }
-            $event = Event::whereHas('provider', function ($query) use ($data) {
+            $event = Event::whereHas('providers', function ($query) use ($data) {
                 $query->whereTicketProviderId($this->provider->id)->whereExternalId($data->event_id);
             })->first();
             if (!$event) {
