@@ -92,6 +92,8 @@ Route::middleware('auth')->group(function() {
             Route::match(['PUT', 'PATCH'], 'seats/{seat}', [SeatController::class, 'update'])->name('seats.update');
         });
 
+        Route::get('/unimpersonate', [AdminHomeController::class, 'unimpersonate'])->name('admin.unimpersonate');
+
         Route::middleware('can:admin')->name('admin.')->prefix('admin')->group(function() {
             Route::get('/', [AdminHomeController::class, 'dashboard'])->name('dashboard');
             Route::resource('events', AdminEventController::class);
@@ -100,6 +102,7 @@ Route::middleware('auth')->group(function() {
             Route::get('tickets/{ticket}/delete', [AdminTicketController::class, 'delete'])->name('tickets.delete');
             Route::resource('users', AdminUserController::class);
             Route::get('users/{user}/delete', [AdminUserController::class, 'delete'])->name('users.delete');
+            Route::get('users/{user}/impersonate', [AdminUserController::class, 'impersonate'])->name('users.impersonate');
             Route::get('settings', [AdminSettingController::class, 'edit'])->name('settings.edit');
             Route::match(['PUT', 'PATCH'], 'settings', [AdminSettingController::class, 'update'])->name('settings.update');
         });

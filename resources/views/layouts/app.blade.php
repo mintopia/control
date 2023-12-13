@@ -105,6 +105,18 @@
     </aside>
 
     <div class="page-wrapper">
+        @if(session()->get('impersonating'))
+            <div class="navbar navbar-dark bg-dark-subtle">
+                <div class="container-fluid">
+                    <div class="navbar-text">
+                        You are impersonating {{ Auth::user()->nickname }}
+                    </div>
+                    <div class="nav-item">
+                        <a href="{{ route('admin.unimpersonate') }}" class="btn btn-primary">Remove Impersonation</a>
+                    </div>
+                </div>
+            </div>
+        @endif
         <header class="navbar d-print-none">
             <div class="container-xl">
                 <div class="navbar-nav flex-row">

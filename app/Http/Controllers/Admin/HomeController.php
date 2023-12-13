@@ -8,6 +8,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class HomeController extends Controller
 {
@@ -24,5 +25,19 @@ class HomeController extends Controller
             'stats' => $stats,
             'events' => Event::where('ends_at', '>=', Carbon::now())->orderBy('starts_at', 'ASC')->get(),
         ]);
+    }
+
+    public function unimpersonate(Request $request)
+    {
+        if (!$request->session()->get('impersonating')) {
+            abort(403);
+        }
+        $impersonated = $request->user();
+        $user = User::find($request->session()->get('originalUserId'));
+        $request->session()->flush();
+        $request->session()->regenerate(true);
+        Auth::login($user);
+
+        return response()->redirectToRoute('admin.users.show', $impersonated->id);
     }
 }

@@ -6,7 +6,8 @@
     <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
     <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Admin</a></li>
     <li class="breadcrumb-item"><a href="{{ route('admin.users.index') }}">Users</a></li>
-    <li class="breadcrumb-item active"><a href="{{ route('admin.users.show', $user->id) }}">{{ $user->nickname }}</a></li>
+    <li class="breadcrumb-item active"><a href="{{ route('admin.users.show', $user->id) }}">{{ $user->nickname }}</a>
+    </li>
 @endsection
 
 @section('content')
@@ -46,8 +47,8 @@
                             <div class="datagrid-content">
                                 @forelse($user->roles as $role)
                                     <span class="badge bg-primary text-primary-fg">{{ $role->name }}
-                                @empty
-                                    <span class="text-muted">None</span>
+                                        @empty
+                                            <span class="text-muted">None</span>
                                 @endforelse
                             </div>
                         </div>
@@ -94,7 +95,13 @@
                         <i class="icon ti ti-trash"></i>
                         Delete
                     </a>
-                    <a href="{{ route('admin.tickets.index', ['user_id' => $user->id]) }}" class="btn btn-primary-outline ms-auto">
+                    <a href="{{ route('admin.users.impersonate', $user->id) }}"
+                       class="btn btn-primary-outline ms-auto">
+                        <i class="icon ti ti-spy"></i>
+                        Impersonate
+                    </a>
+                    <a href="{{ route('admin.tickets.index', ['user_id' => $user->id]) }}"
+                       class="btn btn-primary-outline">
                         <i class="icon ti ti-ticket"></i>
                         Tickets
                     </a>
@@ -108,7 +115,6 @@
     </div>
 
     <h2>Linked Accounts</h2>
-
 
     <div class="row mb-4">
         <div class="col-12">
@@ -131,7 +137,8 @@
                                 <td>{{ $account->provider->name }}</td>
                                 <td>
                                     <div class="d-flex py-1 align-items-center">
-                                        <span class="avatar me-2" style="background-image: url('{{ $account->avatar_url }}')"></span>
+                                        <span class="avatar me-2"
+                                              style="background-image: url('{{ $account->avatar_url }}')"></span>
                                         <div class="flex-fill">
                                             <div class="font-weight-medium">{{ $account->name }}</div>
                                             <div class="text-secondary">{{ $account->email->email ?? '' }}</div>
@@ -139,12 +146,114 @@
                                     </div>
                                 </td>
                                 <td>{{ $account->external_id }}</td>
+                                <td></td>
                             </tr>
 
                         @empty
                             <tr>
                                 <td colspan="6" class="text-center p-4">
                                     <p>There are no linked accounts</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2>Email Addresses</h2>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Address</th>
+                            <th>Verified</th>
+                            <th>Linked Accounts</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @forelse($user->emails as $email)
+                            <tr>
+                                <td class="text-muted">{{ $email->id }}</td>
+                                <td>
+                                    {{ $email->email }}
+                                    @if($email->id === $user->primaryEmail->id)
+                                        <i class="icon ti ti-star-filled text-yellow"></i>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($email->verified_at)
+                                        <span title="{{ $email->verified_at->format('Y-m-d H:i:s') }}">{{ $email->verified_at->diffForHumans() }}</span>
+                                    @else
+                                        <span class="status status-red">No</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badges-list">
+                                        @foreach($email->linkedAccounts as $account)
+                                            <span class="badge bg-{{ $account->provider->code }} text-{{ $account->provider->code }}-fg">{{ $account->provider->name }}</span>
+                                        @endforeach
+                                    </span>
+                                </td>
+                                <td></td>
+                            </tr>
+
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center p-4">
+                                    <p>There are no email addresses</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2>Clan Memberships</h2>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @forelse($user->clanMemberships as $clanMember)
+                            <tr>
+                                <td class="text-muted">{{ $clanMember->id }}</td>
+                                <td>
+                                    {{ $clanMember->clan->name }}
+                                </td>
+                                <td>{{ $clanMember->role->name }}</td>
+                                <td>
+                                    <span title="{{ $clanMember->created_at->format('Y-m-d H:i:s') }}">{{ $clanMember->created_at->diffForHumans() }}</span>
+                                </td>
+                                <td></td>
+                            </tr>
+
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center p-4">
+                                    <p>The user isn't in any clans</p>
                                 </td>
                             </tr>
                         @endforelse

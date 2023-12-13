@@ -20,37 +20,22 @@
                     <h3 class="card-title">Search</h3>
                 </div>
                 <div class="card-body">
-                    <div class="form-group mb-3">
-                        <label class="form-label" for="id">ID</label>
-                        <input class="form-control @error('id') is-invalid @enderror" type="text" name="id" placeholder="ID" value="{{ $filters->id ?? '' }}" />
-                        @error('id')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="form-label" for="nickname">Nickname</label>
-                        <input class="form-control @error('nickname') is-invalid @enderror" type="text" name="nickname" placeholder="Nickname" value="{{ $filters->nickname ?? '' }}" />
-                        @error('nickname')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="form-label" for="name">Name</label>
-                        <input class="form-control @error('name') is-invalid @enderror" type="text" name="name" placeholder="Name" value="{{ $filters->name ?? '' }}" />
-                        @error('name')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label class="form-label" for="email">Email</label>
-                        <input class="form-control @error('email') is-invalid @enderror" type="text" name="email" placeholder="email" value="{{ $filters->email ?? '' }}" />
-                        @error('email')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                    @include('partials._searchtextfield', [
+                        'name' => 'ID',
+                        'property' => 'id',
+                    ])
+                    @include('partials._searchtextfield', [
+                        'name' => 'Nickname',
+                        'property' => 'nickname',
+                    ])
+                    @include('partials._searchtextfield', [
+                        'name' => 'Name',
+                        'property' => 'name',
+                    ])
+                    @include('partials._searchtextfield', [
+                        'name' => 'Email',
+                        'property' => 'email',
+                    ])
 
                 </div>
                 <div class="card-footer d-flex">

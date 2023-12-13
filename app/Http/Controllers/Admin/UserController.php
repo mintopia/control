@@ -113,4 +113,15 @@ class UserController extends Controller
         $user->name = $request->input('name');
         $user->save();
     }
+
+    public function impersonate(Request $request, User $user)
+    {
+        $originalUser = $request->user();
+        $request->session()->flush();
+        $request->session()->regenerate(true);
+        Auth::login($user);
+        $request->session()->put('originalUserId', $originalUser->id);
+        $request->session()->put('impersonating', true);
+        return response()->redirectToRoute('home');
+    }
 }
