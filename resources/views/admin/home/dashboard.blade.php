@@ -8,6 +8,9 @@
 @endsection
 
 @section('content')
+    <div class="page-header mt-0">
+        <h1>Dashboard</h1>
+    </div>
     <div class="row row-deck row-cards">
         <div class="col-sm-6 col-xl-4">
             <div class="card card-sm">

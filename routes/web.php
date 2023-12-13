@@ -95,8 +95,11 @@ Route::middleware('auth')->group(function() {
         Route::middleware('can:admin')->name('admin.')->prefix('admin')->group(function() {
             Route::get('/', [AdminHomeController::class, 'dashboard'])->name('dashboard');
             Route::resource('events', AdminEventController::class);
+            Route::get('events/{event}/delete', [AdminEventController::class, 'delete'])->name('events.delete');
             Route::resource('tickets', AdminTicketController::class);
+            Route::get('tickets/{ticket}/delete', [AdminTicketController::class, 'delete'])->name('tickets.delete');
             Route::resource('users', AdminUserController::class);
+            Route::get('users/{user}/delete', [AdminUserController::class, 'delete'])->name('users.delete');
             Route::get('settings', [AdminSettingController::class, 'edit'])->name('settings.edit');
             Route::match(['PUT', 'PATCH'], 'settings', [AdminSettingController::class, 'update'])->name('settings.update');
         });
