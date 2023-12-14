@@ -56,17 +56,20 @@
         }
 
         function updatePlan(code, version) {
-            fetch('{{ route('seatingplans.show', $event->code) }}?plan=' + code, {
+            axios.get('{{ route('seatingplans.show', $event->code) }}', {
+                params: {
+                    plan: code,
+                },
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                 },
-                credentials: 'include',
+                responseType: 'text',
             })
             .then(response => {
-                if (!response.ok) {
+                if (response.status !== 200) {
                     throw new Error('Unable to update seating plan');
                 }
-                return response.text();
+                return response.data;
             })
             .then(data => {
                 document.getElementById('tab-plan-' + code).innerHTML = data;
@@ -75,16 +78,15 @@
         }
 
         function checkRevisions() {
-            fetch('{{ route('api.v1.events.seatingplans.index', ['event' => $event->code]) }}', {
+            axios.get('{{ route('api.v1.events.seatingplans.index', ['event' => $event->code]) }}', {
                 headers: {
                     'Accept': 'application/json',
                 },
-                credentials: 'include',
             }).then(response => {
-                if (!response.ok) {
+                if (response.status !== 200) {
                     throw new Error('Unable to fetch revision');
                 }
-                return response.json();
+                return response.data;
             }).then(data => {
                 data.data.forEach((plan) => {
                     if (plans[plan.code] && plans[plan.code] !== plan.revision) {
