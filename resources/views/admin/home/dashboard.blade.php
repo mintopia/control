@@ -42,7 +42,7 @@
                             </span>
                             </div>
                             <div class="col">
-                                <div class="font-weight-medium"><a href="{{ route('admin.tickets.index', ['event_id' => $event->id]) }}" class="text-body text-decoration-none stretched-link">{{ $event->name }}</a></div>
+                                <div class="font-weight-medium"><a href="{{ route('admin.events.show', $event->id) }}" class="text-body text-decoration-none stretched-link">{{ $event->name }}</a></div>
                                 <div class="text-secondary">
                                     {{ $event->tickets()->count() }} tickets
                                 </div>

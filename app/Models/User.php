@@ -51,6 +51,16 @@ use Illuminate\Support\Facades\DB;
  * @method static \Illuminate\Database\Eloquent\Builder|User whereTicketsSyncedAt($value)
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
  * @property-read int|null $tickets_count
+ * @property string|null $name
+ * @property string|null $avatar
+ * @property \Illuminate\Support\Carbon|null $terms_agreed_at
+ * @property int $first_login
+ * @property \Illuminate\Support\Carbon|null $last_login
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereAvatar($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereFirstLogin($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereLastLogin($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereTermsAgreedAt($value)
  * @mixin \Eloquent
  */
 class User extends Authenticatable
@@ -62,6 +72,7 @@ class User extends Authenticatable
     protected $casts = [
         'tickets_synced_at' => 'datetime',
         'terms_agreed_at' => 'datetime',
+        'last_login' => 'datetime',
     ];
 
     protected function toStringName(): string

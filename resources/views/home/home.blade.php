@@ -12,7 +12,7 @@
             <div class="page-title mt-0">
                 <h1>Tickets</h1>
             </div>
-            @if ($tickets)
+            @if (count($tickets) > 0)
                 <div class="card mb-6">
                     <div class="table-responsive">
                         <table class="table table-vcenter card-table table-striped">
@@ -84,8 +84,8 @@
                                     <td>
                                         <a href="{{ route('seatingplans.show', $event->code) }}">{{ $event->name }}</a>
                                     </td>
-                                    <td>{{ $event->starts_at->format('gA jS F Y') }}</td>
-                                    <td>{{ $event->ends_at->format('gA jS F Y') }}</td>
+                                    <td>{{ $event->starts_at->format('jS F Y') }} at {{ $event->starts_at->format('gA') }}</td>
+                                    <td>{{ $event->ends_at->format('jS F Y') }} at {{ $event->ends_at->format('gA') }}</td>
                                     <td class="align-content-end">
                                         @if($event->boxoffice_url)
                                             <a href="{{ $event->boxoffice_url }}">Buy Tickets</a>
@@ -106,7 +106,7 @@
                 </p>
             @endif
         </div>
-        <div class="col-xl-3 col-sm-4">
+        <div class="col-xl-3 col-sm-4 mt-sm-2">
             <div class="card">
                 <div class="card-body text-center">
                     <div class="mb-3">

@@ -1,6 +1,7 @@
 <?php
 namespace App\Services\SocialProviders;
 
+use App\Exceptions\SocialProviderException;
 use App\Models\EmailAddress;
 use App\Models\LinkedAccount;
 use App\Models\SocialProvider;
@@ -96,14 +97,14 @@ abstract class AbstractSocialProvider implements SocialProviderContract
             // Find the account
             $account = $this->provider->accounts()->whereExternalId($remoteUser->getId())->first();
             if ($account && ($localUser !== null && $localUser->id != $account->user_id)) {
-                throw new \Exception('Account is already associated with another user');
+                throw new SocialProviderException('Account is already associated with another user');
             }
 
             // Find the email
             $email = EmailAddress::whereEmail($remoteUser->getEmail())->first();
             if ($email && ($localUser !== null && $localUser->id !== $email->user_id)) {
                 if ($email->verified_at !== null) {
-                    throw new \Exception('Email is already associated with another user');
+                    throw new SocialProviderException('Email is already associated with another user');
                 } else {
                     // Unverified email, let's delete it
                     $email->delete();
@@ -114,7 +115,7 @@ abstract class AbstractSocialProvider implements SocialProviderContract
                 if ($account) {
                     $localUser = $account->user;
                 } elseif (!$this->provider->auth_enabled) {
-                    throw new \Exception('Unable to login with this account');
+                    throw new SocialProviderException('Unable to login with this account');
                 } else {
                     $localUser = new User;
                     $localUser->nickname = $remoteUser->getNickname();

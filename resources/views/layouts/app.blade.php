@@ -99,6 +99,16 @@
                             </div>
                         </li>
                     @endcan
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('logout') }}" >
+                        <span class="nav-link-icon d-md-none d-lg-inline-block">
+                            <i class="icon ti ti-logout"></i>
+                        </span>
+                            <span class="nav-link-title">
+                            Logout
+                        </span>
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -120,24 +130,20 @@
         <header class="navbar d-print-none">
             <div class="container-xl">
                 <div class="navbar-nav flex-row">
-                    <div class="d-flex p-2">
+                    <div class="d-flex py-2 px-0">
                         <ol class="breadcrumb" aria-label="breadcrumbs">
                             @yield('breadcrumbs')
                         </ol>
                     </div>
                 </div>
 
-                <div class="nav-item dropdown">
-                    <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu">
+                <div class="nav-item">
+                    <a href="{{ route('user.profile') }}" class="nav-link d-flex lh-1 text-reset p-0">
                         <span class="avatar avatar-sm" style="background-image: url('{{ Auth::user()->avatarUrl() }}');"></span>
-                        <div class="d-none d-xl-block ps-2">
+                        <div class="d-none d-sm-block ps-2">
                             <div>{{ Auth::user()->nickname }}</div>
                         </div>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                        <a href="{{ route('user.profile') }}" class="dropdown-item">Profile</a>
-                        <a href="{{ route('logout') }}" class="dropdown-item">Logout</a>
-                    </div>
                 </div>
             </div>
         </header>

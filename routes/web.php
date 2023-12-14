@@ -103,6 +103,7 @@ Route::middleware('auth')->group(function() {
             Route::resource('users', AdminUserController::class);
             Route::get('users/{user}/delete', [AdminUserController::class, 'delete'])->name('users.delete');
             Route::get('users/{user}/impersonate', [AdminUserController::class, 'impersonate'])->name('users.impersonate');
+            Route::get('users/{user}/sync', [AdminUserController::class, 'sync_tickets'])->name('users.sync');
             Route::get('settings', [AdminSettingController::class, 'edit'])->name('settings.edit');
             Route::match(['PUT', 'PATCH'], 'settings', [AdminSettingController::class, 'update'])->name('settings.update');
         });

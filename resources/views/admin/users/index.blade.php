@@ -71,8 +71,16 @@
                             <th>Primary Email</th>
                             <th>
                                 @include('partials._sortheader', [
+                                    'title' => 'Last Login',
+                                    'field' => 'last_login',
+                                    'direction' => 'desc',
+                                ])
+                            </th>
+                            <th>
+                                @include('partials._sortheader', [
                                     'title' => 'Created',
                                     'field' => 'created_at',
+                                    'direction' => 'desc',
                                 ])
                             </th>
                         </tr>
@@ -88,6 +96,15 @@
                                     </td>
                                     <td>{{ $user->name }}</td>
                                     <td>{{ $user->primaryEmail->email ?? 'None' }}</td>
+                                    <td>
+                                        @if($user->last_login)
+                                            <span title="{{ $user->last_login->format('Y-m-d H:i:s') }}">
+                                                {{ $user->last_login->diffForHumans() }}
+                                            </span>
+                                        @else
+                                        <span class="text-muted">Never</span>
+                                            @endif
+                                    </td>
                                     <td>
                                         <span title="{{ $user->created_at->format('Y-m-d H:i:s') }}">
                                             {{ $user->created_at->diffForHumans() }}

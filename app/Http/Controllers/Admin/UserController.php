@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\DeleteRequest;
+use App\Http\Requests\Admin\UserUpdateRequest;
 use App\Models\Role;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -85,13 +88,14 @@ class UserController extends Controller
         return view('admin.users.edit', [
             'user' => $user,
             'roles' => Role::all(),
+            'currentRoles' => $user->roles()->pluck('code')->toArray(),
         ]);
     }
 
-    public function update(Request $request, User $user)
+    public function update(UserUpdateRequest $request, User $user)
     {
         $this->updateObject($user, $request);
-        return response()->redirectToRoute('users.show', $user->id)->with('successMessage', 'The user has been updated');
+        return response()->redirectToRoute('admin.users.show', $user->id)->with('successMessage', 'The user has been updated');
     }
 
     public function delete(User $user)
@@ -101,16 +105,55 @@ class UserController extends Controller
         ]);
     }
 
-    public function destroy(User $user)
+    public function destroy(DeleteRequest $request, User $user)
     {
+        $plans = [];
+        foreach ($user->tickets()->with('seat', 'seat.plan')->get() as $ticket) {
+            if ($ticket->seat) {
+                $plans[] = $ticket->seat->plan;
+            }
+        }
+        $plans = array_unique($plans);
         $user->delete();
-        return response()->redirectToRoute('admin.users.index')->with('sucessMessage', 'The user has been deleted');
+        foreach ($plans as $plan) {
+            $plan->updateRevision();
+        }
+        return response()->redirectToRoute('admin.users.index')->with('successMessage', 'The user has been deleted');
     }
 
     protected function updateObject(User $user, Request $request)
     {
         $user->nickname = $request->input('nickname');
         $user->name = $request->input('name');
+        $user->primaryEmail()->associate($user->emails()->find($request->input('primary_email_id')));
+
+        if ($request->input('terms', false)) {
+            if ($user->terms_agreed_at === null) {
+                $user->terms_agreed_at = Carbon::now();
+            }
+        } else {
+            $user->terms_agreed_at = null;
+        }
+
+        $user->first_login = !$request->input('first_login', false);
+        $user->suspended = (bool)$request->input('suspended', false);
+
+        $wantedRoles = $request->input('roles', []);
+        $hasRoles = [];
+        foreach ($user->roles as $role) {
+            if (!in_array($role->code, $wantedRoles)) {
+                $user->roles()->detach($role);
+                continue;
+            }
+            $hasRoles[] = $role->code;
+        }
+        foreach ($wantedRoles as $role) {
+            if (!in_array($role, $hasRoles)) {
+                $role = Role::whereCode($role)->first();
+                $user->roles()->attach($role);
+            }
+        }
+
         $user->save();
     }
 
@@ -123,5 +166,11 @@ class UserController extends Controller
         $request->session()->put('originalUserId', $originalUser->id);
         $request->session()->put('impersonating', true);
         return response()->redirectToRoute('home');
+    }
+
+    public function sync_tickets(User $user)
+    {
+        $user->syncTickets(force: true);
+        return response()->redirectToRoute('admin.users.show', $user->id)->with('successMessage', "Tickets will be synchronised for {$user->nickname}");
     }
 }

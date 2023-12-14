@@ -15,6 +15,12 @@
         <h1>{{ $user->nickname }}</h1>
     </div>
 
+    @if($user->suspended)
+        <div class="alert alert-warning alert-important" role="alert">
+            This user is suspended. They will not be able to login.
+        </div>
+    @endif
+
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
@@ -81,6 +87,32 @@
                             </div>
                         </div>
                         <div class="datagrid-item">
+                            <div class="datagrid-title">Suspended</div>
+                            <div class="datagrid-content">
+                                @if($user->suspended)
+                                    <span class="status status-red">
+                                        Yes
+                                    </span>
+                                @else
+                                    <span class="status status-green">
+                                        No
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="datagrid-item">
+                            <div class="datagrid-title">Last Login</div>
+                            <div class="datagrid-content">
+                                @if($user->last_login)
+                                    <span title="{{ $user->last_login->format('Y-m-d H:i:s') }}">
+                                        {{ $user->last_login->diffForHumans() }}
+                                    </span>
+                                @else
+                                    <span class="text-muted">Never</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="datagrid-item">
                             <div class="datagrid-title">Created</div>
                             <div class="datagrid-content">
                                 <span title="{{ $user->created_at->format('Y-m-d H:i:s') }}">
@@ -99,6 +131,11 @@
                        class="btn btn-primary-outline ms-auto">
                         <i class="icon ti ti-spy"></i>
                         Impersonate
+                    </a>
+                    <a href="{{ route('admin.users.sync', $user->id) }}"
+                       class="btn btn-primary-outline">
+                        <i class="icon ti ti-refresh"></i>
+                        Sync Tickets
                     </a>
                     <a href="{{ route('admin.tickets.index', ['user_id' => $user->id]) }}"
                        class="btn btn-primary-outline">
@@ -220,7 +257,7 @@
         </div>
     </div>
 
-    <h2>Clan Memberships</h2>
+    <h2>Clans</h2>
 
     <div class="row mb-4">
         <div class="col-12">

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\SocialProviderException;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Http\Requests\UserSignupRequest;
 use App\Models\SocialProvider;
@@ -58,12 +59,17 @@ class UserController extends Controller
         try {
             $user = $socialprovider->user();
             if ($user) {
+                if ($user->suspended) {
+                    return response()->redirectToRoute('login')->with('errorMessage', 'Your account has been suspended');
+                }
                 Auth::login($user);
+                $user->last_login = Carbon::now();
+                $user->save();
                 $user->syncTickets(force: true);
                 return response()->redirectToIntended(route('home'))->with('successMessage', 'You have been logged in');
             }
-        } catch (\Exception $ex) {
-            throw $ex;
+        } catch (SocialProviderException $ex) {
+            return response()->redirectToRoute('login')->with('errorMessage', $ex->getMessage());
         }
         return response()->redirectToRoute('login')->with('errorMessage', 'Unable to login');
     }

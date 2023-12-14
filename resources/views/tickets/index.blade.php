@@ -57,7 +57,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="text-center p-4">
+                                <td colspan="5" class="text-center p-4">
                                     <p>You have no tickets</p>
                                 </td>
                             </tr>
