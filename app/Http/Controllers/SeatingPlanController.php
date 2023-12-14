@@ -22,6 +22,15 @@ class SeatingPlanController extends Controller
             $request->session()->now('infoMessage', 'Seating is locked');
         }
         // Get clans and tickets (left-hand sidebar)
+        $clans = [];
+        $seatManagerClans = [];
+        foreach ($request->user()->clanMemberships()->with('clan', 'role')->get() as $clanMember) {
+            $clans[] = $clanMember->clan;
+            $clanIds[] = $clanMember->clan->id;
+            if (in_array($clanMember->role->code, ['leader', 'seatmanager'])) {
+                $seatManagerClans[] = $clanMember->clan->id;
+            }
+        }
         $clans = $request->user()->clanMemberships()->with('clan')->get()->pluck('clan');
         $clanIds = $clans->pluck('id');
         $allTickets = $event->tickets()
@@ -42,11 +51,13 @@ class SeatingPlanController extends Controller
         ];
         $clanSeats = [];
         $mySeats = [];
+        $responsibleSeats = [];
         foreach ($allTickets as $ticket) {
             if ($ticket->user->id === $request->user()->id) {
                 $tickets[0][] = $ticket;
                 if ($ticket->seat_id) {
                     $mySeats[] = $ticket->seat_id;
+                    $responsibleSeats[] = $ticket->seat_id;
                 }
                 continue;
             }
@@ -57,6 +68,9 @@ class SeatingPlanController extends Controller
                 $tickets[$clanMember->clan_id][] = $ticket;
                 if ($ticket->seat_id) {
                     $clanSeats[] = $ticket->seat_id;
+                }
+                if (in_array($clanMember->clan_id, $seatManagerClans)) {
+                    $responsibleSeats[] = $ticket->seat_id;
                 }
             }
         }
@@ -74,6 +88,7 @@ class SeatingPlanController extends Controller
             'seats' => $seats,
             'mySeats' => $mySeats,
             'clanSeats' => $clanSeats,
+            'responsibleSeats' => $responsibleSeats,
         ]);
     }
 }
