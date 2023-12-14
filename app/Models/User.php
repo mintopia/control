@@ -16,6 +16,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * App\Models\User
@@ -65,7 +66,7 @@ use Illuminate\Support\Facades\DB;
  */
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, ToString;
+    use HasApiTokens, HasFactory, Notifiable, ToString;
 
     protected ?Collection $pickableTickets = null;
 

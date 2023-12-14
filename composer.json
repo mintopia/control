@@ -14,7 +14,8 @@
         "laravel/socialite": "^5.11",
         "laravel/tinker": "^2.8",
         "socialiteproviders/discord": "^4.2",
-        "socialiteproviders/steam": "^4.2"
+        "socialiteproviders/steam": "^4.2",
+        "spatie/laravel-fractal": "^6.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.9",

@@ -37,45 +37,7 @@
                 <div class="tab-content">
                     @foreach($event->seatingPlans as $i => $plan)
                         <div id="tab-plan-{{ $plan->code }}" class="card tab-pane @if($i === 0) active show @endif" role="tabpanel" style="min-width: {{ collect($seats[$plan->id] ?? [])->max('x') * 2 + 4 }}em;">
-                            <div class="card-body p-0" style="min-height: {{ (collect($seats[$plan->id] ?? [])->max('y') * 2) + 4 }}em;">
-                                <div class="seating-plan">
-                                    @foreach($seats[$plan->id] ?? [] as $seat)
-                                        @php
-                                            $class = 'available';
-                                            $name = 'Available';
-                                            $canPick = $seat->canPick;
-                                            if ($seat->disabled) {
-                                                $class = 'disabled';
-                                                $name = 'Not Available';
-                                            }
-                                            if ($seat->nickname) {
-                                                $name = $seat->nickname;
-                                            }
-                                            if ($seat->ticket) {
-                                                $class = 'taken';
-                                                if (!in_array($seat->id, $responsibleSeats)) {
-                                                    $canPick = false;
-                                                }
-                                            }
-                                            if (in_array($seat->id, $clanSeats)) {
-                                                $class = 'seat-clan';
-                                            }
-                                            if (in_array($seat->id, $mySeats)) {
-                                                $class = 'seat-mine';
-                                            }
-
-                                        @endphp
-                                        <{{ $canPick ? 'a' : 'div' }} class="d-block seat {{ $seat->class }} {{ $class }}"
-                                             @if($canPick) href="{{ route('seats.edit', $seat->id) }}" @endif
-                                             style="left: {{ $seat->x * 2 }}em; top: {{ $seat->y * 2 }}em;"
-                                             data-bs-trigger="hover" data-bs-toggle="popover"
-                                             data-bs-placement="right"
-                                             title="{{ $seat->description }} {{ $seat->label }}"
-                                             data-bs-content="{{ $name }}"
-                                        ></{{ $canPick ? 'a' : 'div' }}>
-                                    @endforeach
-                                </div>
-                            </div>
+                            @include('seatingplans._plan')
                         </div>
                     @endforeach
                 </div>
@@ -83,3 +45,58 @@
         </div>
     </div>
 @endsection
+@push('footer')
+    <script type="text/javascript">
+        let plans = {
+            @foreach($event->seatingPlans as $plan)
+                '{{ $plan->code }}': {{ $plan->revision }},
+            @endforeach
+        }
+
+        function updatePlan(code, version) {
+            fetch('{{ route('seatingplans.show', $event->code) }}', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'include',
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Unable to update seating plan');
+                }
+                return response.text();
+            })
+            .then(data => {
+                document.getElementById('tab-plan-' + code).innerHTML = data;
+                plans[code] = version;
+            });
+        }
+
+        function checkRevisions() {
+            fetch('{{ route('api.v1.events.seatingplans.index', ['event' => $event->code]) }}', {
+                headers: {
+                    'Accept': 'application/json',
+                },
+                credentials: 'include',
+            }).then(response => {
+                if (!response.ok) {
+                    throw new Error('Unable to fetch revision');
+                }
+                return response.json();
+            }).then(data => {
+                console.log(data);
+                data.data.forEach((plan) => {
+                    if (plans[plan.code] && plans[plan.code] !== plan.revision) {
+                        updatePlan(plan.code, plan.version);
+                    }
+                });
+            }).finally(() => {
+                setTimeout(checkRevisions, 30000);
+            })
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(checkRevisions, 30000)
+        });
+    </script>
+@endpush

@@ -24,7 +24,7 @@ Route::any('webhooks/tickets/{ticketprovider:code}', [WebhookController::class, 
 
 
 // Authenticated routes
-Route::middleware('auth')->group(function() {
+Route::middleware('auth:sanctum')->group(function() {
 
     Route::get('login/signup', [UserController::class, 'signup'])->name('login.signup');
     Route::match(['PUT', 'PATCH'], 'login/signup', [UserController::class, 'signup_process'])->name('login.signup.process');
@@ -85,7 +85,7 @@ Route::middleware('auth')->group(function() {
         });
 
         Route::get('seating', [SeatingPlanController::class, 'index'])->name('seatingplans.index');
-        Route::get('seating/{event:code}', [SeatingPlanController::class, 'show'])->name('seatingplans.show');
+        Route::get('seating/{event}', [SeatingPlanController::class, 'show'])->name('seatingplans.show');
 
         Route::middleware('can:pick,seat')->group(function() {
             Route::get('seats/{seat}', [SeatController::class, 'edit'])->name('seats.edit');

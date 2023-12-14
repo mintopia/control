@@ -49,6 +49,11 @@ class Event extends Model
         'ends_at' => 'datetime',
     ];
 
+    public function getRouteKeyName()
+    {
+        return 'code';
+    }
+
     public function providers(): HasMany
     {
         return $this->hasMany(EventTicketProvider::class);

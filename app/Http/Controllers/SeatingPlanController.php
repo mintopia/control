@@ -81,7 +81,7 @@ class SeatingPlanController extends Controller
             $seats[$plan->id] = $plan->getData();
         }
 
-        return view('seatingplans.show', [
+        $params = [
             'clans' => $clans,
             'tickets' => $tickets,
             'event' => $event,
@@ -89,6 +89,23 @@ class SeatingPlanController extends Controller
             'mySeats' => $mySeats,
             'clanSeats' => $clanSeats,
             'responsibleSeats' => $responsibleSeats,
-        ]);
+        ];
+
+        $view = 'seatingplans.show';
+        if ($request->isXmlHttpRequest() && $request->has('plan')) {
+            $plan = null;
+            foreach ($event->seatingPlans as $seatingPlan) {
+                if ($seatingPlan->code === $request->input('plan')) {
+                    $plan = $seatingPlan;
+                    break;
+                }
+            }
+            if ($plan !== null) {
+                $view = 'seatingplans._plan';
+                $params['plan'] = $plan;
+            }
+        }
+
+        return view($view, $params);
     }
 }

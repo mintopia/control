@@ -11,7 +11,8 @@ RUN composer install \
         --no-dev \
         --no-progress \
         --optimize-autoloader \
-        --prefer-dist
+        --prefer-dist \ &&
+        php artisan route:cache
 
 FROM node:20 AS npm
 WORKDIR /app/

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\SeatingPlanController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -13,3 +14,7 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+Route::prefix('v1')->name('api.v1.')->middleware('auth:sanctum')->group(function() {
+    Route::resource('events.seatingplans', SeatingPlanController::class)->only(['index', 'show'])->scoped();
+});
