@@ -47,6 +47,8 @@
 @endsection
 @push('footer')
     <script type="text/javascript">
+        const INTERVAL = 10;
+
         let plans = {
             @foreach($event->seatingPlans as $plan)
                 '{{ $plan->code }}': {{ $plan->revision }},
@@ -54,7 +56,7 @@
         }
 
         function updatePlan(code, version) {
-            fetch('{{ route('seatingplans.show', $event->code) }}', {
+            fetch('{{ route('seatingplans.show', $event->code) }}?plan=' + code, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                 },
@@ -84,19 +86,18 @@
                 }
                 return response.json();
             }).then(data => {
-                console.log(data);
                 data.data.forEach((plan) => {
                     if (plans[plan.code] && plans[plan.code] !== plan.revision) {
                         updatePlan(plan.code, plan.version);
                     }
                 });
             }).finally(() => {
-                setTimeout(checkRevisions, 30000);
+                setTimeout(checkRevisions, INTERVAL * 1000);
             })
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(checkRevisions, 30000)
+            setTimeout(checkRevisions, INTERVAL * 1000)
         });
     </script>
 @endpush
