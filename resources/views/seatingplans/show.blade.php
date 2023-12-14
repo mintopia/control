@@ -72,8 +72,12 @@
                 return response.data;
             })
             .then(data => {
-                document.getElementById('tab-plan-' + code).innerHTML = data;
+                let container = document.getElementById('tab-plan-' + code);
+                container.innerHTML = data;
                 plans[code] = version;
+                container.querySelectorAll('[data-bs-toggle="popover"]').forEach((element) => {
+                    new bootstrap.Popover(element);
+                });
             });
         }
 
