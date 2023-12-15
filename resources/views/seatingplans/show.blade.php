@@ -94,7 +94,7 @@
             }).then(data => {
                 data.data.forEach((plan) => {
                     if (plans[plan.code] && plans[plan.code] !== plan.revision) {
-                        updatePlan(plan.code, plan.version);
+                        updatePlan(plan.code, plan.revision);
                     }
                 });
             }).finally(() => {
