@@ -162,7 +162,7 @@ class UserController extends Controller
         $originalUser = $request->user();
         $request->session()->flush();
         $request->session()->regenerate(true);
-        Auth::login($user);
+        auth('web')->login($user);
         $request->session()->put('originalUserId', $originalUser->id);
         $request->session()->put('impersonating', true);
         return response()->redirectToRoute('home');

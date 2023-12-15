@@ -36,7 +36,8 @@ class HomeController extends Controller
         $user = User::find($request->session()->get('originalUserId'));
         $request->session()->flush();
         $request->session()->regenerate(true);
-        Auth::login($user);
+
+        auth('web')->login($user);
 
         return response()->redirectToRoute('admin.users.show', $impersonated->id);
     }
