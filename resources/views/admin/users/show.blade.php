@@ -3,11 +3,9 @@
 ])
 
 @section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Admin</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('admin.users.index') }}">Users</a></li>
-    <li class="breadcrumb-item active"><a href="{{ route('admin.users.show', $user->id) }}">{{ $user->nickname }}</a>
-    </li>
+    @include('admin.users._breadcrumbs', [
+        'active' => true,
+    ])
 @endsection
 
 @section('content')
@@ -183,7 +181,14 @@
                                     </div>
                                 </td>
                                 <td>{{ $account->external_id }}</td>
-                                <td></td>
+                                <td>
+                                    <div class="btn-list">
+                                        <a class="ms-auto btn btn-outline-danger @if(!$account->canDelete()) disabled @endif" @if ($account->canDelete()) href="{{ route('admin.users.accounts.delete', [$user->id, $account->id]) }}" @endif>
+                                            <i class="icon ti ti-trash"></i>
+                                            Delete
+                                        </a>
+                                    </div>
+                                </td>
                             </tr>
 
                         @empty
@@ -200,7 +205,20 @@
         </div>
     </div>
 
-    <h2>Email Addresses</h2>
+
+    <div class="row align-items-center">
+        <div class="col page-header mt-2">
+            <h2>Email Addresses</h2>
+        </div>
+        <div class="col-auto ms-auto d-print-none">
+            <div class="btn-list">
+                <a href="{{ route('admin.users.emails.create', $user->id) }}" class="btn btn-primary d-inline-block">
+                    <i class="icon ti ti-mail-plus"></i>
+                    Add Email Address
+                </a>
+            </div>
+        </div>
+    </div>
 
     <div class="row mb-4">
         <div class="col-12">
@@ -240,7 +258,16 @@
                                         @endforeach
                                     </span>
                                 </td>
-                                <td></td>
+                                <td class="btn-list">
+                                    <a class="btn btn-outline-primary ms-auto" href="{{ route('admin.users.emails.edit', [$user->id, $email->id]) }}">
+                                        <i class="icon ti ti-edit"></i>
+                                        Edit
+                                    </a>
+                                    <a class="btn btn-outline-danger @if(!$email->canDelete()) disabled @endif" @if ($email->canDelete()) href="{{ route('admin.users.emails.delete', [$user->id, $email->id]) }}" @endif>
+                                        <i class="icon ti ti-trash"></i>
+                                        Delete
+                                    </a>
+                                </td>
                             </tr>
 
                         @empty
@@ -278,7 +305,9 @@
                             <tr>
                                 <td class="text-muted">{{ $clanMember->id }}</td>
                                 <td>
-                                    {{ $clanMember->clan->name }}
+                                    <a href="{{ route('admin.clans.show', $clanMember->clan->code) }}">
+                                        {{ $clanMember->clan->name }}
+                                    </a>
                                 </td>
                                 <td>{{ $clanMember->role->name }}</td>
                                 <td>

@@ -75,4 +75,22 @@ class LinkedAccount extends Model
     {
         return $this->belongsTo(SocialProvider::class, 'social_provider_id');
     }
+
+    public function canDelete(): bool
+    {
+        // A user must have 1 linked account for auth, regardless!
+        if ($this->user->accounts_count === 1) {
+            return false;
+        }
+
+        // If this isn't for auth, it can be deleted
+        if (!$this->provider->auth_enabled) {
+            return true;
+        }
+
+        // If it is for auth, they must have at least one other auth
+        return $this->user->accounts()->whereHas('provider', function($query) {
+            $query->where('auth_enabled', true);
+        })->count() > 1;
+    }
 }

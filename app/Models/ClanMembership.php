@@ -49,8 +49,11 @@ class ClanMembership extends Model
         return $this->belongsTo(Clan::class);
     }
 
-    public function canDelete(User $user): bool
+    public function canDelete(?User $user = null): bool
     {
+        if (!$user) {
+            $user = $this->user;
+        }
         $leaderRole = ClanRole::whereCode('leader')->first();
         if ($user->id === $this->user_id) {
             if ($this->clan_role_id === $leaderRole->id) {

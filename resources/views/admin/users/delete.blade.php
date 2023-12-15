@@ -1,12 +1,9 @@
 @extends('layouts.app', [
-    'activenav' => 'clans',
+    'activenav' => 'admin',
 ])
 
 @section('breadcrumbs')
-    <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Admin</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('admin.users.index') }}">Users</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('admin.users.show', $user->id) }}">{{ $user->nickname }}</a>
+    @include('admin.users._breadcrumbs')
     <li class="breadcrumb-item active"><a href="{{ route('admin.users.delete', $user->id) }}">Delete</a>
 @endsection
 

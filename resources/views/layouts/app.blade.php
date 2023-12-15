@@ -93,6 +93,7 @@
                             <div class="dropdown-menu @if(($activenav ?? null) === 'admin') show @endif" data-bs-popper="static">
                                 <a class="dropdown-item" href="{{ route('admin.dashboard') }}">Dashboard</a>
                                 <a class="dropdown-item" href="{{ route('admin.users.index') }}">Users</a>
+                                <a class="dropdown-item" href="{{ route('admin.clans.index') }}">Clans</a>
                                 <a class="dropdown-item" href="{{ route('admin.events.index') }}">Events</a>
                                 <a class="dropdown-item" href="{{ route('admin.tickets.index') }}">Tickets</a>
                                 <a class="dropdown-item" href="{{ route('admin.settings.edit') }}">Settings</a>

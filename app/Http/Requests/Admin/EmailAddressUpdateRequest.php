@@ -24,11 +24,11 @@ class EmailAddressUpdateRequest extends FormRequest
     public function rules(): array
     {
         $uniqueRule = 'unique:email_addresses,email';
-        if ($this->emailaddress) {
-            $uniqueRule = Rule::unique('email_addresses')->ignore($this->emailaddress->id);
+        if ($this->email) {
+            $uniqueRule = Rule::unique('email_addresses', 'email')->ignore($this->email->id);
         }
         return [
-            'email' => [
+            'address' => [
                 'required',
                 'string',
                 'email',

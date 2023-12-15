@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\EmailAddressController as AdminEmailAddressController;
+use App\Http\Controllers\Admin\LinkedAccountController as AdminLinkedAccountController;
+use App\Http\Controllers\Admin\ClanController as AdminClanController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -96,14 +99,27 @@ Route::middleware('auth:sanctum')->group(function() {
 
         Route::middleware('can:admin')->name('admin.')->prefix('admin')->group(function() {
             Route::get('/', [AdminHomeController::class, 'dashboard'])->name('dashboard');
+
             Route::resource('events', AdminEventController::class);
             Route::get('events/{event}/delete', [AdminEventController::class, 'delete'])->name('events.delete');
+
             Route::resource('tickets', AdminTicketController::class);
             Route::get('tickets/{ticket}/delete', [AdminTicketController::class, 'delete'])->name('tickets.delete');
+
+            Route::resource('clans', AdminClanController::class);
+            Route::get('clans/{clan}/delete', [AdminClanController::class, 'delete'])->name('clans.delete');
+
             Route::resource('users', AdminUserController::class);
             Route::get('users/{user}/delete', [AdminUserController::class, 'delete'])->name('users.delete');
             Route::get('users/{user}/impersonate', [AdminUserController::class, 'impersonate'])->name('users.impersonate');
             Route::get('users/{user}/sync', [AdminUserController::class, 'sync_tickets'])->name('users.sync');
+
+            Route::resource('users.emails', AdminEmailAddressController::class)->except(['index'])->scoped();
+            Route::get('users/{user}/emails/{email}', [AdminEmailAddressController::class, 'delete'])->name('users.emails.delete')->scopeBindings();
+
+            Route::get('users/{user}/accounts/{account}', [AdminLinkedAccountController::class, 'delete'])->name('users.accounts.delete')->scopeBindings();
+            Route::delete('users/{user}/accounts/{account}', [AdminLinkedAccountController::class, 'destroy'])->name('users.accounts.destroy')->scopeBindings();
+
             Route::get('settings', [AdminSettingController::class, 'edit'])->name('settings.edit');
             Route::match(['PUT', 'PATCH'], 'settings', [AdminSettingController::class, 'update'])->name('settings.update');
         });
