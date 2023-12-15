@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ClanMembershipController as AdminClanMembershipController;
 use App\Http\Controllers\Admin\EmailAddressController as AdminEmailAddressController;
 use App\Http\Controllers\Admin\LinkedAccountController as AdminLinkedAccountController;
 use App\Http\Controllers\Admin\ClanController as AdminClanController;
@@ -95,7 +96,7 @@ Route::middleware('auth:sanctum')->group(function() {
             Route::match(['PUT', 'PATCH'], 'seats/{seat}', [SeatController::class, 'update'])->name('seats.update');
         });
 
-        Route::get('/unimpersonate', [AdminHomeController::class, 'unimpersonate'])->name('admin.unimpersonate');
+        Route::get('/admin/unimpersonate', [AdminHomeController::class, 'unimpersonate'])->name('admin.unimpersonate');
 
         Route::middleware('can:admin')->name('admin.')->prefix('admin')->group(function() {
             Route::get('/', [AdminHomeController::class, 'dashboard'])->name('dashboard');
@@ -108,6 +109,10 @@ Route::middleware('auth:sanctum')->group(function() {
 
             Route::resource('clans', AdminClanController::class);
             Route::get('clans/{clan}/delete', [AdminClanController::class, 'delete'])->name('clans.delete');
+            Route::get('clans/{clan}/regenerate', [AdminClanController::class, 'regenerate'])->name('clans.regenerate');
+
+            Route::resource('clans.members', AdminClanMembershipController::class)->only(['edit', 'update', 'destroy'])->scoped();
+            Route::get('clans/{clan}/members/{member}/delete', [AdminClanMembershipController::class, 'delete'])->name('clans.members.delete')->scopeBindings();
 
             Route::resource('users', AdminUserController::class);
             Route::get('users/{user}/delete', [AdminUserController::class, 'delete'])->name('users.delete');

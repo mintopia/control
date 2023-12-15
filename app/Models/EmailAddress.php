@@ -76,7 +76,7 @@ class EmailAddress extends Model
 
     public function canDelete(): bool
     {
-        if ($this->linked_accounts_count > 0) {
+        if ($this->linkedAccounts()->count() > 0) {
             return false;
         }
         if ($this->id === $this->user->primary_email_id) {

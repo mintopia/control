@@ -79,7 +79,7 @@ class LinkedAccount extends Model
     public function canDelete(): bool
     {
         // A user must have 1 linked account for auth, regardless!
-        if ($this->user->accounts_count === 1) {
+        if ($this->user->accounts()->count() === 1) {
             return false;
         }
 

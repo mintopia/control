@@ -17,7 +17,7 @@ class SetupDiscord extends Command
      *
      * @var string
      */
-    protected $signature = 'setup:discord';
+    protected $signature = 'control:setup-discord';
 
     /**
      * The console command description.
