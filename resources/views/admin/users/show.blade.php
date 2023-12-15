@@ -139,6 +139,7 @@
                        class="btn btn-primary-outline">
                         <i class="icon ti ti-ticket"></i>
                         Tickets
+                        ({{ $user->tickets()->count() }})
                     </a>
                     <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-primary">
                         <i class="icon ti ti-edit"></i>
