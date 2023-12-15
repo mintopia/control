@@ -40,6 +40,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @method static \Illuminate\Database\Eloquent\Builder|Seat whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Seat whereX($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Seat whereY($value)
+ * @property int|null $ticket_id
+ * @method static \Illuminate\Database\Eloquent\Builder|Seat whereTicketId($value)
  * @mixin \Eloquent
  */
 class Seat extends Model

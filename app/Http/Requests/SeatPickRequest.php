@@ -22,6 +22,7 @@ class SeatPickRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'swap' => 'sometimes|boolean',
             'ticket_id' => [
                 'required',
                 'integer',

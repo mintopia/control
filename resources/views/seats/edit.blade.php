@@ -20,17 +20,34 @@
             {{ method_field('PATCH') }}
             <div class="card-body">
                 <h3 class="card-title">Ticket</h3>
-                <p class="card-subtitle">Select the ticket to assign to {{ $seat->label }}</p>
-            </div>
-            <div class="card-body">
+                @if ($seat->ticket)
+                    <p>
+                        This seat is already occupied by {{ $seat->ticket->user->nickname }}. Do you want to unseat or swap them?
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="swap" value="0" checked>
+                            <span class="form-check-label">Unseat</span>
+                        </label>
+                        <label class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="swap" value="1">
+                            <span class="form-check-label">Swap</span>
+                        </label>
+                    </div>
+                @endif
+                <p>Select the ticket to assign to {{ $seat->label }}</p>
+
                 @error('ticket_id')
                     <p class="invalid-feedback">{{ $message }}</p>
                 @enderror
                 <p>
-                    @foreach($tickets as $i => $ticket)
-
+                    @php($checked = false)
+                    @foreach($tickets as $ticket)
+                        @if($ticket->seat && $ticket->seat->id === $seat->id)
+                            @continue
+                        @endif
                         <label class="form-check">
-                            <input class="form-check-input" type="radio" name="ticket_id" value="{{ $ticket->id }}" @if($i === 0) checked @endif>
+                            <input class="form-check-input" type="radio" name="ticket_id" value="{{ $ticket->id }}" @if(!$checked) checked @endif>
                             <span class="form-check-label">
                                 {{ $ticket->user->nickname }}
 
@@ -39,6 +56,7 @@
                                 @endif
                             </span>
                         </label>
+                        @php($checked = true)
                     @endforeach
                 </p>
             </div>

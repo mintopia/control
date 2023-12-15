@@ -29,7 +29,15 @@ class SeatController extends Controller
 
     public function update(SeatPickRequest $request, Seat $seat)
     {
-        return $this->assignSeat($seat, Ticket::find($request->ticket_id));
+        $ticket = Ticket::find($request->ticket_id);
+        if ($seat->ticket && $ticket->seat && $request->input('swap', false)) {
+            $oldSeat = $ticket->seat;
+            if ($ticket->id !== $seat->ticket->id) {
+                $oldSeat->ticket()->associate($seat->ticket);
+                $oldSeat->saveQuietly();
+            }
+        }
+        return $this->assignSeat($seat, $ticket);
     }
 
     protected function assignSeat(Seat $seat, Ticket $ticket)

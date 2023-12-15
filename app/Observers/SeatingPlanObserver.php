@@ -14,7 +14,11 @@ class SeatingPlanObserver
         }
         if (!$seatingPlan->order) {
             $plan = $seatingPlan->event->seatingPlans()->orderBy('order', 'DESC')->first();
-            $seatingPlan->order = $plan->order + 1;
+            if ($plan) {
+                $seatingPlan->order = $plan->order + 1;
+            } else {
+                $seatingPlan->order = 1;
+            }
         }
         if (!$seatingPlan->isDirty('revision')) {
             $seatingPlan->revision++;

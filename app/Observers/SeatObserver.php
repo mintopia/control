@@ -15,6 +15,16 @@ class SeatObserver
 
     public function saved(Seat $seat): void
     {
+        if ($seat->ticket_id) {
+            $others = Seat::whereTicketId($seat->ticket_id)->where('id', '<>', $seat->id)->get();
+            foreach ($others as $other) {
+                $other->ticket()->disassociate();
+                $other->saveQuietly();
+            }
+            if ($others && !$seat->isDirty()) {
+                $seat->plan->updateRevision();
+            }
+        }
         if ($seat->isDirty()) {
             $seat->plan->updateRevision();
         }

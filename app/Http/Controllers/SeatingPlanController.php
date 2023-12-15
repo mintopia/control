@@ -71,9 +71,9 @@ class SeatingPlanController extends Controller
                 $tickets[$clanMember->clan_id][] = $ticket;
                 if ($ticket->seat) {
                     $clanSeats[] = $ticket->seat->id;
-                }
-                if (in_array($clanMember->clan_id, $seatManagerClans)) {
-                    $responsibleSeats[] = $ticket->seat->id;
+                    if (in_array($clanMember->clan_id, $seatManagerClans)) {
+                        $responsibleSeats[] = $ticket->seat->id;
+                    }
                 }
             }
         }
