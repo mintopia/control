@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use function App\makeCode;
 
 /**
@@ -72,9 +73,9 @@ class Ticket extends Model
         return $this->belongsTo(Event::class);
     }
 
-    public function seat(): BelongsTo
+    public function seat(): HasOne
     {
-        return $this->belongsTo(Seat::class);
+        return $this->hasOne(Seat::class);
     }
 
     public function generateTransferCode(): void

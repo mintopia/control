@@ -13,8 +13,8 @@ class SeatController extends Controller
     {
         // Get any clan IDs that we are seating manager or leader for
         $tickets = $request->user()->getPickableTickets($seat->plan->event);
-        if (!$tickets) {
-            return response()->redirectToRoute('seatingplans.show', $seat->plan->code)->with('errorMessage', 'You have no seats available to pick');
+        if (count($tickets) === 0) {
+            return response()->redirectToRoute('seatingplans.show', $seat->plan->event->code)->with('errorMessage', 'You have no seats available to pick');
         }
 
         if (count($tickets) === 1) {
@@ -34,12 +34,8 @@ class SeatController extends Controller
 
     protected function assignSeat(Seat $seat, Ticket $ticket)
     {
-        if ($seat->ticket) {
-            $seat->ticket->seat_id = null;
-            $seat->ticket->save();
-        }
-        $ticket->seat()->associate($seat);
-        $ticket->save();
+        $seat->ticket()->associate($ticket);
+        $seat->save();
         return response()->redirectToRoute('seatingplans.show', $ticket->event->code)->with('successMessage', "You have chosen {$seat->label}");
     }
 }

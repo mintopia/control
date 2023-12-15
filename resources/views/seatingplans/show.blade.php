@@ -14,16 +14,25 @@
     </div>
     <div class="row">
         <div class="col-md-3">
-            @include('seatingplans._tickets', [
-                'title' => 'Your Tickets',
-                'tickets' => $tickets[0]
-            ])
-            @foreach($clans as $clan)
+            @if(count($allTickets) === 0)
+                <p class="text-center mt-4">
+                    <i class="icon ti ti-ticket-off icon-lg text-muted m-6 mt-4"></i>
+                </p>
+                <p class="text-center">
+                    No tickets available.
+                </p>
+            @else
                 @include('seatingplans._tickets', [
-                    'title' => $clan->name,
-                    'tickets' => $tickets[$clan->id] ?? []
+                    'title' => 'Your Tickets',
+                    'tickets' => $tickets[0]
                 ])
-            @endforeach
+                @foreach($clans as $clan)
+                    @include('seatingplans._tickets', [
+                        'title' => $clan->name,
+                        'tickets' => $tickets[$clan->id] ?? []
+                    ])
+                @endforeach
+            @endif
         </div>
         <div class="col-md-9">
             <div class="card-tabs">

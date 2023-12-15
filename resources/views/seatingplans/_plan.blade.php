@@ -18,6 +18,10 @@
                         $canPick = false;
                     }
                 }
+                if (count($allTickets) === 0) {
+                    $canPick = false;
+                }
+
                 if (in_array($seat->id, $clanSeats)) {
                     $class = 'seat-clan';
                 }

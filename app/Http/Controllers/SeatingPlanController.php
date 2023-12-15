@@ -34,6 +34,9 @@ class SeatingPlanController extends Controller
         $clans = $request->user()->clanMemberships()->with('clan')->get()->pluck('clan');
         $clanIds = $clans->pluck('id');
         $allTickets = $event->tickets()
+            ->whereHas('type', function($query) {
+                $query->where('has_seat', true);
+            })
             ->whereUserId($request->user()->id)->orWhere(function ($query) use ($clanIds) {
                 $query->whereHas('user', function ($query) use ($clanIds) {
                     $query->whereHas('clanmemberships', function ($query) use ($clanIds) {
@@ -41,7 +44,7 @@ class SeatingPlanController extends Controller
                     });
                 });
             })
-            ->with(['seat', 'event', 'user' => function ($query) {
+            ->with(['type', 'seat', 'event', 'user' => function ($query) {
                 $query->orderBy('nickname', 'ASC');
             }, 'user.clanMemberships'])
             ->get();
@@ -55,9 +58,9 @@ class SeatingPlanController extends Controller
         foreach ($allTickets as $ticket) {
             if ($ticket->user->id === $request->user()->id) {
                 $tickets[0][] = $ticket;
-                if ($ticket->seat_id) {
-                    $mySeats[] = $ticket->seat_id;
-                    $responsibleSeats[] = $ticket->seat_id;
+                if ($ticket->seat) {
+                    $mySeats[] = $ticket->seat->id;
+                    $responsibleSeats[] = $ticket->seat->id;
                 }
                 continue;
             }
@@ -66,11 +69,11 @@ class SeatingPlanController extends Controller
                     $tickets[$clanMember->clan_id] = [];
                 }
                 $tickets[$clanMember->clan_id][] = $ticket;
-                if ($ticket->seat_id) {
-                    $clanSeats[] = $ticket->seat_id;
+                if ($ticket->seat) {
+                    $clanSeats[] = $ticket->seat->id;
                 }
                 if (in_array($clanMember->clan_id, $seatManagerClans)) {
-                    $responsibleSeats[] = $ticket->seat_id;
+                    $responsibleSeats[] = $ticket->seat->id;
                 }
             }
         }
@@ -84,6 +87,7 @@ class SeatingPlanController extends Controller
         $params = [
             'clans' => $clans,
             'tickets' => $tickets,
+            'allTickets' => $allTickets,
             'event' => $event,
             'seats' => $seats,
             'mySeats' => $mySeats,

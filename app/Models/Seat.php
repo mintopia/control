@@ -46,9 +46,9 @@ class Seat extends Model
 {
     use HasFactory, ToString;
 
-    public function ticket(): HasOne
+    public function ticket(): BelongsTo
     {
-        return $this->hasOne(Ticket::class);
+        return $this->belongsTo(Ticket::class);
     }
 
     public function plan(): BelongsTo

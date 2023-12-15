@@ -2,11 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Services\SocialProviders\DiscordProvider;
-use App\Services\SocialProviders\SteamProvider;
+use App\Services\TicketProviders\TicketTailorProvider;
 use Illuminate\Database\Seeder;
 
-class SocialProvidersSeeder extends Seeder
+class TicketProvidersSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -14,8 +13,7 @@ class SocialProvidersSeeder extends Seeder
     public function run(): void
     {
         $classes = [
-            DiscordProvider::class,
-            SteamProvider::class,
+            TicketTailorProvider::class,
         ];
         foreach ($classes as $className) {
             $provider = new $className;

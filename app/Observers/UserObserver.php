@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Role;
+use App\Models\Seat;
 use App\Models\User;
 
 class UserObserver
@@ -25,10 +26,12 @@ class UserObserver
     public function saved(User $user): void
     {
         if ($user->isDirty('nickname')) {
-            $tickets = $user->tickets()->whereNotNull('seat_id')->with(['seat', 'seat.plan'])->get();
+            $seats = Seat::whereHas('ticket', function ($query) use ($user) {
+                $query->whereUserId($user->id);
+            })->with('plan')->get();
             $plans = [];
-            foreach ($tickets as $ticket) {
-                $plans[$ticket->seat->plan->id] = $ticket->seat->plan;
+            foreach ($seats as $seat) {
+                $plans[$seat->plan->id] = $seat->plan;
             }
             foreach ($plans as $plan) {
                 $plan->updateRevision();

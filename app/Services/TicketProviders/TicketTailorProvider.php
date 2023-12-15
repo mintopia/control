@@ -18,6 +18,9 @@ class TicketTailorProvider extends AbstractTicketProvider
 {
     protected ?Client $client = null;
 
+    protected string $name = 'Ticket Tailor';
+    protected string $code = 'tickettailor';
+
     public function configMapping(): array
     {
         return [
