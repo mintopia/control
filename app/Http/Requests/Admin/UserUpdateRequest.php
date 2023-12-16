@@ -51,11 +51,11 @@ class UserUpdateRequest extends FormRequest
                     return $query->where('user_id', $this->user->id);
                 }),
             ],
-            'roles' => 'sometimes|array',
+            'roles' => 'sometimes|array|nullable',
             'roles.*' => 'string|exists:roles,code',
-            'terms' => 'sometimes|boolean',
-            'first_login' => 'sometimes|boolean',
-            'suspended' => 'sometimes|boolean',
+            'terms' => 'sometimes|boolean|nullable',
+            'first_login' => 'sometimes|boolean|nullable',
+            'suspended' => 'sometimes|boolean|nullable',
         ];
     }
 }

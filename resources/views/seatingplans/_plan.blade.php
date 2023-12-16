@@ -1,5 +1,10 @@
-<div class="card-body p-0" style="min-height: {{ (collect($seats[$plan->id] ?? [])->max('y') * 2) + 4 }}em;">
-    <div class="seating-plan">
+<div class="card-body p-0">
+    <div class="seating-plan" style="
+        @if($plan->image_url)
+            background-image:url('{{ $plan->image_url }}');
+        @endif
+        min-height: {{ (collect($seats[$plan->id] ?? [])->max('y') * 2) + 4 }}em;"
+        >
         @foreach($seats[$plan->id] ?? [] as $seat)
             @php
                 $class = 'available';

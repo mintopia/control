@@ -107,7 +107,7 @@ Route::middleware('auth:sanctum')->group(function() {
             Route::get('events/{event}/export', [AdminEventController::class, 'export_tickets'])->name('events.export');
 
             Route::resource('events.seatingplans', AdminSeatingPlanController::class)->except(['index'])->scoped();
-            Route::get('events/{event}/seatingplans/{seatingplan}/refresh', [AdminSeatingPlanController::class, 'refresh'])->name('admin.events.seatingplans.refresh')->scopeBindings();
+            Route::get('events/{event}/seatingplans/{seatingplan}/refresh', [AdminSeatingPlanController::class, 'refresh'])->name('events.seatingplans.refresh')->scopeBindings();
             Route::get('events/{event}/seatingplans/{seatingplan}/up', [AdminSeatingPlanController::class, 'up'])->name('events.seatingplans.up')->scopeBindings();
             Route::get('events/{event}/seatingplans/{seatingplan}/down', [AdminSeatingPlanController::class, 'down'])->name('events.seatingplans.down')->scopeBindings();
             Route::get('events/{event}/seatingplans/{seatingplan}/delete', [AdminSeatingPlanController::class, 'delete'])->name('events.seatingplans.delete')->scopeBindings();

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -108,5 +109,47 @@ class SeatingPlan extends Model
         Cache::put($key, $data);
         Log::debug("{$this} saving revision {$this->revision}");
         return $data;
+    }
+
+    public function import(string $csv, bool $wipe = false): void
+    {
+        $csv = explode("\n", trim($csv));
+        $rows = array_map(function ($row) {
+            return str_getcsv(trim($row));
+        }, $csv);
+        if ($rows[0][0] === 'ID') {
+            // Header row, throw it away
+            unset($rows[0]);
+        }
+
+        DB::transaction(function() use ($rows, $wipe) {
+            if ($wipe) {
+                $this->seats()->delete();
+            }
+
+            foreach ($rows as $row) {
+                $seat = null;
+                if ((int)$row[0] > 0) {
+                    $seat = $this->seats->where('id', $row[0])->first();
+                }
+                if ($seat === null) {
+                    $seat = new Seat();
+                    $seat->plan()->associate($this);
+                }
+
+                $seat->x = (int)$row[1];
+                $seat->y = (int)$row[2];
+                $seat->row = $row[3];
+                $seat->number = (int)$row[4];
+                $seat->label = $row[5];
+                $seat->description = $row[6] ?? null;
+                $seat->class = $row[7] ?? null;
+                $seat->disabled = (bool)$row[8];
+
+                $seat->saveQuietly();
+            }
+        });
+
+        $this->updateRevision();
     }
 }

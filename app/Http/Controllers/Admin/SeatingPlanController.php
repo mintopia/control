@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DeleteRequest;
+use App\Http\Requests\Admin\SeatingPlanImportRequest;
 use App\Http\Requests\Admin\SeatingPlanUpdateRequest;
 use App\Models\Event;
 use App\Models\SeatingPlan;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class SeatingPlanController extends Controller
@@ -34,6 +36,7 @@ class SeatingPlanController extends Controller
         return view('admin.seatingplans.show', [
             'event' => $event,
             'plan' => $seatingplan,
+            'seats' => $seatingplan->getData(),
         ]);
     }
 
@@ -95,6 +98,53 @@ class SeatingPlanController extends Controller
         }
         $event->fixSeatingPlanOrder();
         return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The seating plan has been moved down');
+    }
+
+    public function export(Event $event, SeatingPlan $seatingplan)
+    {
+        $csv = [[
+            'ID', 'X', 'Y', 'Row', 'Number', 'Label', 'Description', 'CSS Class', 'Disabled',
+        ]];
+        $seatingplan->seats()->chunk(100, function($chunk) use (&$csv) {
+            foreach ($chunk as $seat) {
+                $csv[] = [
+                    $seat->id,
+                    $seat->x,
+                    $seat->y,
+                    $seat->row,
+                    $seat->number,
+                    $seat->label,
+                    $seat->description,
+                    $seat->class,
+                    $seat->disabled ? 1 : 0,
+                ];
+            }
+        });
+
+        $filename = "seating-{$seatingplan->id}-seats-" . Carbon::now()->format('YmdHis') . ".csv";
+        return response()->streamDownload(function() use ($csv) {
+            $handle = fopen('php://output', 'w');
+            foreach ($csv as $row) {
+                fputcsv($handle, $row);
+            }
+            fclose($handle);
+        }, $filename);
+    }
+
+    public function import(Event $event, SeatingPlan $seatingplan)
+    {
+        return view('admin.seatingplans.import', [
+            'event' => $event,
+            'plan' => $seatingplan,
+        ]);
+    }
+
+    public function import_process(SeatingPlanImportRequest $request, Event $event, SeatingPlan $seatingplan)
+    {
+        $csv = $request->file('csv')->get();
+        $wipe = (bool)$request->input('wipe', false);
+        $seatingplan->import($csv, $wipe);
+        return response()->redirectToRoute('admin.events.seatingplans.show', [$event->code, $seatingplan->id])->with('successMessage', 'The seating plan has been imported');
     }
 
     protected function updateObject(SeatingPlan $plan, Request $request)

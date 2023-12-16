@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use function App\makePermalink;
 
 class SeatingPlanUpdateRequest extends FormRequest
 {
@@ -11,7 +12,7 @@ class SeatingPlanUpdateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +23,19 @@ class SeatingPlanUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => [
+                'required',
+                'string',
+                'max:100',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $permalink = makePermalink($value);
+                    $plan = $this->event->seatingPlans()->whereCode($permalink)->first();
+                    if ($plan && (!$this->seatingplan || $plan->id !== $this->seatingplan->id)) {
+                        $fail('The seating plan name is already in use');
+                    }
+                },
+            ],
+            'image_url' => 'sometimes|url:http,https|nullable',
         ];
     }
 }

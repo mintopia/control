@@ -38,8 +38,8 @@ class EventUpdateRequest extends FormRequest
             ],
             'starts_at' => 'required|date',
             'ends_at' => 'required|date|after:starts_at',
-            'boxoffice_url' => 'sometimes|url:http,https',
-            'seating_locked' => 'sometimes|boolean',
+            'boxoffice_url' => 'sometimes|url:http,https|nullable',
+            'seating_locked' => 'sometimes|boolean|nullable',
         ];
     }
 }
