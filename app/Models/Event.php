@@ -73,4 +73,17 @@ class Event extends Model
     {
         return $this->hasMany(SeatingPlan::class);
     }
+
+    public function fixSeatingPlanOrder(): void
+    {
+        $plans = $this->seatingPlans()->orderBy('order', 'ASC')->get();
+        $order = 1;
+        foreach ($plans as $plan) {
+            $plan->order = $order;
+            if ($plan->isDirty()) {
+                $plan->save();
+            }
+            $order++;
+        }
+    }
 }

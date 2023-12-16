@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\EmailAddressController as AdminEmailAddressContro
 use App\Http\Controllers\Admin\LinkedAccountController as AdminLinkedAccountController;
 use App\Http\Controllers\Admin\ClanController as AdminClanController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
+use App\Http\Controllers\Admin\SeatingPlanController as AdminSeatingPlanController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
@@ -103,6 +104,16 @@ Route::middleware('auth:sanctum')->group(function() {
 
             Route::resource('events', AdminEventController::class);
             Route::get('events/{event}/delete', [AdminEventController::class, 'delete'])->name('events.delete');
+            Route::get('events/{event}/export', [AdminEventController::class, 'export_tickets'])->name('events.export');
+
+            Route::resource('events.seatingplans', AdminSeatingPlanController::class)->except(['index'])->scoped();
+            Route::get('events/{event}/seatingplans/{seatingplan}/refresh', [AdminSeatingPlanController::class, 'refresh'])->name('admin.events.seatingplans.refresh')->scopeBindings();
+            Route::get('events/{event}/seatingplans/{seatingplan}/up', [AdminSeatingPlanController::class, 'up'])->name('events.seatingplans.up')->scopeBindings();
+            Route::get('events/{event}/seatingplans/{seatingplan}/down', [AdminSeatingPlanController::class, 'down'])->name('events.seatingplans.down')->scopeBindings();
+            Route::get('events/{event}/seatingplans/{seatingplan}/delete', [AdminSeatingPlanController::class, 'delete'])->name('events.seatingplans.delete')->scopeBindings();
+            Route::get('events/{event}/seatingplans/{seatingplan}/export', [AdminSeatingPlanController::class, 'export'])->name('events.seatingplans.export')->scopeBindings();
+            Route::get('events/{event}/seatingplans/{seatingplan}/import', [AdminSeatingPlanController::class, 'import'])->name('events.seatingplans.import')->scopeBindings();
+            Route::post('events/{event}/seatingplans/{seatingplan}/import', [AdminSeatingPlanController::class, 'import_process'])->name('events.seatingplans.import_process')->scopeBindings();
 
             Route::resource('tickets', AdminTicketController::class);
             Route::get('tickets/{ticket}/delete', [AdminTicketController::class, 'delete'])->name('tickets.delete');

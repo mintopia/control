@@ -9,10 +9,19 @@
 @endsection
 
 @section('content')
-    <div class="page-header mt-0">
-        <h1>Events</h1>
+    <div class="row g-2 align-items-center mb-4">
+        <div class="col page-header mt-2">
+            <h1>Events</h1>
+        </div>
+        <div class="col-auto ms-auto d-print-none">
+            <div class="btn-list">
+                <a href="{{ route('admin.events.create') }}" class="btn btn-primary d-inline-block">
+                    <i class="icon ti ti-plus"></i>
+                    Create Event
+                </a>
+            </div>
+        </div>
     </div>
-
     <div class="row">
         <div class="col-md-12 col-lg-3 mb-4">
             <form action="{{ route('admin.events.index') }}" method="get" class="card">

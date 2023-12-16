@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Admin;
 
-use App\Models\Clan;
+use App\Models\Event;
 use Illuminate\Foundation\Http\FormRequest;
 use function App\makePermalink;
 
-class ClanRequest extends FormRequest
+class EventUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -30,12 +30,16 @@ class ClanRequest extends FormRequest
                 'max:100',
                 function (string $attribute, mixed $value, \Closure $fail) {
                     $permalink = makePermalink($value);
-                    $clan = Clan::whereCode($permalink)->first();
-                    if ($clan && (!$this->clan || $clan->id !== $this->clan->id)) {
-                        $fail('The clan name is already in use');
+                    $event = Event::whereCode($permalink)->first();
+                    if ($event && (!$this->event || $event->id !== $this->event->id)) {
+                        $fail('The event name is already in use');
                     }
                 },
             ],
+            'starts_at' => 'required|date',
+            'ends_at' => 'required|date|after:starts_at',
+            'boxoffice_url' => 'sometimes|url:http,https',
+            'seating_locked' => 'sometimes|boolean',
         ];
     }
 }

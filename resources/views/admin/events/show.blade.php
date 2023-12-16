@@ -36,7 +36,7 @@
                         </div>
                         <div class="datagrid-item">
                             <div class="datagrid-title">Ends</div>
-                            <div class="datagrid-content">{{ $event->starts_at->format('d M Y H:i') }}</div>
+                            <div class="datagrid-content">{{ $event->ends_at->format('d M Y H:i') }}</div>
                         </div>
                         <div class="datagrid-item">
                             <div class="datagrid-title">Box Office URL</div>
@@ -77,7 +77,12 @@
                         <i class="icon ti ti-trash"></i>
                         Delete
                     </a>
-                    <a href="{{ route('admin.tickets.index', ['event_id' => $event->id]) }}" class="btn btn-primary-outline ms-auto">
+
+                    <a href="{{ route('admin.events.export', $event->code) }}" class="btn btn-primary-outline ms-auto">
+                        <i class="icon ti ti-table-export"></i>
+                        Export Ticket List
+                    </a>
+                    <a href="{{ route('admin.tickets.index', ['event_id' => $event->id]) }}" class="btn btn-primary-outline">
                         <i class="icon ti ti-ticket"></i>
                         Tickets
                         ({{ $event->tickets()->count() }})
@@ -97,7 +102,7 @@
         </div>
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
-                <a href="#" class="btn btn-primary d-inline-block">
+                <a href="{{ route('admin.events.seatingplans.create', $event->code) }}" class="btn btn-primary d-inline-block">
                     <i class="icon ti ti-plus"></i>
                     Add Seating Plan
                 </a>
@@ -124,9 +129,17 @@
                         @forelse($seatingPlans as $plan)
                             <tr>
                                 <td class="text-muted">{{ $plan->id }}</td>
-                                <td>{{ $plan->order }}</td>
                                 <td>
-                                    <a href="#">{{ $plan->name }}</a>
+                                    <a href="{{ route('admin.events.seatingplans.down', [$event->code, $plan->id]) }}" class="text-decoration-none text-muted">
+                                        <i class="icon ti ti-caret-down-filled"></i>
+                                    </a>
+                                    {{ $plan->order }}
+                                    <a href="{{ route('admin.events.seatingplans.up', [$event->code, $plan->id]) }}" class="text-decoration-none text-muted">
+                                        <i class="icon ti ti-caret-up-filled"></i>
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="{{ route('admin.events.seatingplans.show', [$event->code, $plan->id]) }}">{{ $plan->name }}</a>
                                 </td>
                                 <td>{{ $plan->code }}</td>
                                 <td>{{ $plan->seats_count }}</td>
@@ -135,7 +148,7 @@
 
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center p-4">
+                                <td colspan="6" class="text-center p-4">
                                     <p>There are no seating plans</p>
                                 </td>
                             </tr>

@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\DeleteRequest;
+use App\Http\Requests\Admin\EventUpdateRequest;
 use App\Models\Event;
 use App\Models\TicketProvider;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class EventController extends Controller
@@ -103,5 +106,86 @@ class EventController extends Controller
             'providers' => $providers,
             'canAddProvider' => $canAddProvider,
         ]);
+    }
+
+    public function create()
+    {
+        return view('admin.events.create', [
+            'event' => new Event(),
+        ]);
+    }
+
+    public function store(EventUpdateRequest $request)
+    {
+        $event = new Event;
+        $this->updateObject($event, $request);
+        return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The event has been created');
+    }
+
+    public function edit(Event $event)
+    {
+        return view('admin.events.edit', [
+            'event' => $event,
+        ]);
+    }
+
+    public function update(EventUpdateRequest $request, Event $event)
+    {
+        $this->updateObject($event, $request);
+        return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The event has been updated');
+    }
+
+    public function delete(Event $event)
+    {
+        return view('admin.events.delete', [
+            'event' => $event,
+        ]);
+    }
+
+    public function destroy(DeleteRequest $request, Event $event)
+    {
+        $event->delete();
+        return response()->redirectToRoute('admin.events.index')->with('successMessage', 'The event has been deleted');
+    }
+
+    public function export_tickets(Event $event)
+    {
+        $csv = [[
+            'ID', 'Ticket Provider', 'External ID', 'Reference', 'Type', 'Nickname', 'Name', 'Email', 'Seat',
+        ]];
+        $event->tickets()->with(['user', 'type', 'provider', 'seat', 'user.primaryEmail'])->chunk(100, function($chunk) use (&$csv) {
+            foreach ($chunk as $ticket) {
+                $csv[] = [
+                    $ticket->id,
+                    $ticket->provider->name,
+                    $ticket->external_id,
+                    $ticket->reference,
+                    $ticket->type->name,
+                    $ticket->user->nickname,
+                    $ticket->user->name,
+                    $ticket->user->primaryEmail->email,
+                    $ticket->seat->label ?? '',
+                ];
+            }
+        });
+
+        $filename = "event-{$event->id}-tickets-" . Carbon::now()->format('YmdHis') . ".csv";
+        return response()->streamDownload(function() use ($csv) {
+            $handle = fopen('php://output', 'w');
+            foreach ($csv as $row) {
+                fputcsv($handle, $row);
+            }
+            fclose($handle);
+        }, $filename);
+    }
+
+    protected function updateObject(Event $event, Request $request): void
+    {
+        $event->name = $request->input('name');
+        $event->starts_at = new Carbon($request->input('starts_at'));
+        $event->ends_at = new Carbon($request->input('ends_at'));
+        $event->boxoffice_url = $request->input('boxoffice_url');
+        $event->seating_locked = (bool)$request->input('seating_locked', false);
+        $event->save();
     }
 }
