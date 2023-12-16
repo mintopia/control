@@ -93,13 +93,18 @@
                     <i class="icon ti ti-table-export"></i>
                     Export
                 </a>
-                <a href="#" class="btn btn-primary">
+                <a href="{{ route('admin.events.seatingplans.seats.create', [$event->code, $plan->id]) }}" class="btn btn-primary">
                     <i class="icon ti ti-plus"></i>
                     Add Seat
                 </a>
             </div>
         </div>
     </div>
+
+    <p class="mt-2 mb-3">
+        If you want to make changes to multiple seats, it may be quicker and easier to export the seats, edit them in
+        Excel or Google Sheets, and then import the changes.
+    </p>
 
     <div class="row mb-4">
         <div class="col-12">
@@ -127,7 +132,7 @@
                                 }
                             @endphp
                             <a class="d-block seat {{ $seat->class }} {{ $class }}"
-                                href="#"
+                                href="{{ route('admin.events.seatingplans.seats.show', [$event->code, $plan->id, $seat->id]) }}"
                                 style="left: {{ $seat->x * 2 }}em; top: {{ $seat->y * 2 }}em;"
                                 data-bs-trigger="hover" data-bs-toggle="popover"
                                 data-bs-placement="right"

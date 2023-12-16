@@ -51,7 +51,7 @@ class SeatObserver
      */
     public function deleted(Seat $seat): void
     {
-        //
+        $seat->plan->updateRevision();
     }
 
     /**
