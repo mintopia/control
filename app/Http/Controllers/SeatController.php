@@ -12,12 +12,12 @@ class SeatController extends Controller
     public function edit(Request $request, Seat $seat)
     {
         if (!$seat->canPick($request->user())) {
-            return response()->redirectToRoute('seatingplans.show', $seat->plan->event->code)->with('errorMessage', "That seat is not available");
+            return response()->redirectToRoute('seatingplans.show', $seat->plan->event->code)->with('errorMessage', "That seat is not available")->withFragment("tab-plan-{$seat->plan->code}");
         }
         // Get any clan IDs that we are seating manager or leader for
         $tickets = $request->user()->getPickableTickets($seat->plan->event);
         if (count($tickets) === 0) {
-            return response()->redirectToRoute('seatingplans.show', $seat->plan->event->code)->with('errorMessage', 'You have no seats available to pick');
+            return response()->redirectToRoute('seatingplans.show', $seat->plan->event->code)->with('errorMessage', 'You have no seats available to pick')->withFragment("tab-plan-{$seat->plan->code}");
         }
 
         if (count($tickets) === 1) {
@@ -33,7 +33,7 @@ class SeatController extends Controller
     public function update(SeatPickRequest $request, Seat $seat)
     {
         if (!$seat->canPick($request->user())) {
-            return response()->redirectToRoute('seatingplans.show', $seat->plan->event->code)->with('errorMessage', "That seat is not available");
+            return response()->redirectToRoute('seatingplans.show', $seat->plan->event->code)->with('errorMessage', "That seat is not available")->withFragment("tab-plan-{$seat->plan->code}");
         }
         $ticket = Ticket::find($request->ticket_id);
         if ($seat->ticket && $ticket->seat && $request->input('swap', false)) {
@@ -50,6 +50,6 @@ class SeatController extends Controller
     {
         $seat->ticket()->associate($ticket);
         $seat->save();
-        return response()->redirectToRoute('seatingplans.show', $ticket->event->code)->with('successMessage', "You have chosen {$seat->label}");
+        return response()->redirectToRoute('seatingplans.show', $ticket->event->code)->with('successMessage', "You have chosen {$seat->label}")->withFragment("tab-plan-{$seat->plan->code}");
     }
 }

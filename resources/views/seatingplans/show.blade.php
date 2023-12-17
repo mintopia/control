@@ -120,8 +120,19 @@
             })
         }
 
+        function selectTab() {
+            if (window.location.hash === '') {
+                return;
+            }
+            const element = document.querySelector("[href='" + window.location.hash + "']");
+            if (element) {
+                bootstrap.Tab.getInstance(element).show()
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(checkRevisions, INTERVAL * 1000)
+            selectTab();
         });
     </script>
 @endpush
