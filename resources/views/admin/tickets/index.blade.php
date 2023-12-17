@@ -114,7 +114,11 @@
                                     <td>
                                         <a href="{{ route('admin.users.show', $ticket->user->id) }}">{{ $ticket->user->nickname }}</a>
                                     </td>
-                                    <td>{{ $ticket->seat->label ?? '' }}</td>
+                                    <td>
+                                        @if($ticket->seat)
+                                            <a href="{{ route('admin.events.seats', ['event' => $ticket->event->code, 'ticket_id' => $ticket->id]) }}">{{ $ticket->seat->label }}</a>
+                                        @endif
+                                    </td>
                                     <td>
                                         <span title="{{ $ticket->created_at->format('Y-m-d H:i:s') }}">
                                             {{ $ticket->created_at->diffForHumans() }}
