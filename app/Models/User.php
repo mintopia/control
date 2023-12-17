@@ -67,6 +67,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property-read int|null $tokens_count
  * @method static \Illuminate\Database\Eloquent\Builder|User whereSuspended($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperUser
  */
 class User extends Authenticatable
 {

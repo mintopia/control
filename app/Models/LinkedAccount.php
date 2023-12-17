@@ -45,6 +45,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read \App\Models\SocialProvider|null $provider
  * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereSocialProviderId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperLinkedAccount
  */
 class LinkedAccount extends Model
 {

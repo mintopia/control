@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\Event $event
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketTypeTicketProvider> $providers
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketTypeMapping> $providers
  * @property-read int|null $providers_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
  * @property-read int|null $tickets_count
@@ -31,7 +31,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereUpdatedAt($value)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketTypeMapping> $mappings
+ * @property-read int|null $mappings_count
  * @mixin \Eloquent
+ * @mixin IdeHelperTicketType
  */
 class TicketType extends Model
 {
@@ -42,14 +45,13 @@ class TicketType extends Model
         return $this->belongsTo(Event::class);
     }
 
-    public function providers(): HasMany
+    public function mappings(): HasMany
     {
-        return $this->hasMany(TicketTypeTicketProvider::class);
+        return $this->hasMany(TicketTypeMapping::class);
     }
 
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
     }
-
 }

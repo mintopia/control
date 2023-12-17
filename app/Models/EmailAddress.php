@@ -41,6 +41,7 @@ use function App\makeCode;
  * @property-read int|null $linked_accounts_count
  * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereVerificationSentAt($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperEmailAddress
  */
 class EmailAddress extends Model
 {

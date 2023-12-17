@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereUserId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperClanMembership
  */
 class ClanMembership extends Model
 {

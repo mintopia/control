@@ -166,7 +166,7 @@
         </div>
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
-                <a href="#" class="btn btn-primary d-inline-block">
+                <a href="{{ route('admin.events.tickettypes.create', $event->code) }}" class="btn btn-primary d-inline-block">
                     <i class="icon ti ti-plus"></i>
                     Add Ticket Type
                 </a>
@@ -197,7 +197,7 @@
                             <tr>
                                 <td class="text-muted">{{ $type->id }}</td>
                                 <td>
-                                    <a href="#">{{ $type->name }}</a>
+                                    <a href="{{ route('admin.events.tickettypes.show', [$event->code, $type->id]) }}">{{ $type->name }}</a>
                                 </td>
                                 <td>
                                     @if($type->has_seat)
@@ -227,16 +227,14 @@
 
     <div class="row align-items-center">
         <div class="col page-header mt-2">
-            <h2>Ticket Providers</h2>
+            <h2>Ticket Provider Mappings</h2>
         </div>
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
-                @if($canAddProvider)
-                    <a href="#" class="btn btn-primary d-inline-block">
-                        <i class="icon ti ti-plus"></i>
-                        Add Ticket Provider
-                    </a>
-                @endif
+                <a href="#" class="btn btn-primary d-inline-block">
+                    <i class="icon ti ti-plus"></i>
+                    Add Mapping
+                </a>
             </div>
         </div>
     </div>
@@ -259,13 +257,13 @@
                         </tr>
                         </thead>
                         <tbody>
-                        @forelse($providers as $provider)
+                        @forelse($event->mappings as $map)
                             <tr>
-                                <td class="text-muted">{{ $provider->id }}</td>
+                                <td class="text-muted">{{ $map->id }}</td>
                                 <td>
-                                    <a href="#">{{ $provider->provider->name }}</a>
+                                    <a href="#">{{ $map->provider->name }}</a>
                                 </td>
-                                <td>{{ $provider->external_id }}</td>
+                                <td>{{ $map->external_id }}</td>
                                 <td class="btn-list">
                                     <a class="btn btn-outline-primary ms-auto" href="#}">
                                         <i class="icon ti ti-edit"></i>
@@ -281,7 +279,7 @@
                         @empty
                             <tr>
                                 <td colspan="4" class="text-center p-4">
-                                    <p>There are no ticket types</p>
+                                    <p>There are no ticket provider mappings</p>
                                 </td>
                             </tr>
                         @endforelse

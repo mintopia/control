@@ -32,6 +32,7 @@ use function App\makeCode;
  * @property string $code
  * @method static \Illuminate\Database\Eloquent\Builder|Clan whereCode($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperClan
  */
 class Clan extends Model
 {

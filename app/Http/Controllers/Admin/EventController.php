@@ -94,17 +94,11 @@ class EventController extends Controller
     {
         $seatingPlans = $event->seatingPlans()->withCount('seats')->orderBy('order', 'ASC')->get();
         $ticketTypes = $event->ticketTypes()->withCount('tickets')->get();
-        $providers = $event->providers()->get();
-
-        $totalProviders = TicketProvider::whereEnabled(true)->count();
-        $canAddProvider = ($totalProviders - count($providers)) > 0;
 
         return view('admin.events.show', [
             'event' => $event,
             'seatingPlans' => $seatingPlans,
             'ticketTypes' => $ticketTypes,
-            'providers' => $providers,
-            'canAddProvider' => $canAddProvider,
         ]);
     }
 

@@ -12,10 +12,14 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class TicketTailorProvider extends AbstractTicketProvider
 {
+    protected const TICKET_TYPES_CACHE_TTL = '86400';
+    protected const EVENTS_CACHE_TTL = 86400;
+
     protected ?Client $client = null;
 
     protected string $name = 'Ticket Tailor';
@@ -115,7 +119,7 @@ class TicketTailorProvider extends AbstractTicketProvider
                 // No email, nothing to do
                 return null;
             }
-            $event = Event::whereHas('providers', function ($query) use ($data) {
+            $event = Event::whereHas('mappings', function ($query) use ($data) {
                 $query->whereTicketProviderId($this->provider->id)->whereExternalId($data->event_id);
             })->first();
             if (!$event) {
@@ -207,6 +211,12 @@ class TicketTailorProvider extends AbstractTicketProvider
 
     public function getEvents(): array
     {
+        $key = "ticketproviders.{$this->provider->id}.{$this->provider->cache_prefix}.events";
+        if ($data = Cache::get($key)) {
+            Log::info("{$this->provider} Fetching events from Cache");
+            return $data;
+        }
+        Log::info("{$this->provider} Fetching events from API");
         $events = [];
         $query = [];
         do {
@@ -219,30 +229,39 @@ class TicketTailorProvider extends AbstractTicketProvider
                 $events[$event->id] = $event->name;
             }
         } while ($data->links->next !== null);
+        Cache::put($key, $events, self::EVENTS_CACHE_TTL);
         return $events;
     }
 
     public function getTicketTypes(string $eventExternalId): array
     {
+        $key = "ticketproviders.{$this->provider->id}.{$this->provider->cache_prefix}.events.{$eventExternalId}.tickettypes";
+        if ($data = Cache::get($key)) {
+            Log::debug("{$this->provider} Fetching ticket types from Cache for {$eventExternalId}");
+            return $data;
+        }
+        Log::info("{$this->provider} Fetching ticket types from API for {$eventExternalId}");
+
         $types = [];
         $response = $this->getClient()->get("/v1/events/{$eventExternalId}");
         $data = json_decode($response->getBody());
         foreach ($data->ticket_types as $type) {
             $types[$type->id] = $type->name;
         }
+        Cache::put($key, $types, self::TICKET_TYPES_CACHE_TTL);
         return $types;
     }
 
     protected function getType(string $externalId): ?TicketType
     {
-        return TicketType::whereHas('providers', function($query) use ($externalId) {
+        return TicketType::whereHas('mappings', function($query) use ($externalId) {
             $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
         })->first();
     }
 
     protected function getEvent(string $externalId): ?Event
     {
-        return Event::whereHas('providers', function ($query) use ($externalId) {
+        return Event::whereHas('mappings', function ($query) use ($externalId) {
             $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
         })->first();
     }

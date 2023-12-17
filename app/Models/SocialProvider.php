@@ -38,6 +38,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereSupportsAuth($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereUpdatedAt($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperSocialProvider
  */
 class SocialProvider extends Model
 {

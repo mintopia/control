@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * App\Models\TicketProvider
@@ -35,11 +36,12 @@ use Illuminate\Http\Request;
  * @property-read int|null $tickets_count
  * @property string|null $webhook_secret
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereWebhookSecret($value)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventTicketProvider> $events
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventMapping> $events
  * @property-read int|null $events_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketTypeTicketProvider> $types
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketTypeMapping> $types
  * @property-read int|null $types_count
  * @mixin \Eloquent
+ * @mixin IdeHelperTicketProvider
  */
 class TicketProvider extends Model
 {
@@ -62,12 +64,12 @@ class TicketProvider extends Model
 
     public function events(): HasMany
     {
-        return $this->hasMany(EventTicketProvider::class);
+        return $this->hasMany(EventMapping::class);
     }
 
     public function types(): HasMany
     {
-        return $this->hasMany(TicketTypeTicketProvider::class);
+        return $this->hasMany(TicketTypeMapping::class);
     }
 
     protected function toStringName(): string
@@ -102,10 +104,42 @@ class TicketProvider extends Model
 
     public function getTicketTypes(Event $event): array
     {
-        $providerEvent = $this->events()->whereEventId($event->id)->first();
-        if ($providerEvent) {
-            return $this->getProvider()->getTicketTypes($providerEvent->external_id);
+        if (!$this->enabled) {
+            return [];
         }
-        return [];
+
+        $providerEvent = $this->events()->whereEventId($event->id)->first();
+        if (!$providerEvent) {
+            return [];
+        }
+
+        $types = $this->getProvider()->getTicketTypes($providerEvent->external_id);
+        if (!$types) {
+            return [];
+        }
+
+        $ids = array_keys($types);
+        $existing = $this->types()
+            ->whereIn('external_id', $ids)
+            ->whereHas('type', function($query) use ($event) {
+                $query->where('event_id', $event->id);
+            })->get();
+
+        $data = [];
+        foreach ($types as $id => $name) {
+            $data[] = (object)[
+                'id' => $id,
+                'name' => $name,
+                'used' => $existing->where('external_id', $id)->count() > 0,
+                'used_by' => $existing->where('external_id', $id),
+            ];
+        }
+        return $data;
+    }
+
+    public function clearCache(): void
+    {
+        $this->cache_prefix = time();
+        $this->save();
     }
 }

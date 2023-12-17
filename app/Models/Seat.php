@@ -43,6 +43,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property int|null $ticket_id
  * @method static \Illuminate\Database\Eloquent\Builder|Seat whereTicketId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperSeat
  */
 class Seat extends Model
 {

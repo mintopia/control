@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\SeatController as AdminSeatController;
 use App\Http\Controllers\Admin\SeatingPlanController as AdminSeatingPlanController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
+use App\Http\Controllers\Admin\TicketTypeController;
+use App\Http\Controllers\Admin\TicketTypeMappingController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
@@ -118,6 +120,11 @@ Route::middleware('auth:sanctum')->group(function() {
             Route::resource('events.seatingplans.seats', AdminSeatController::class)->except(['index'])->scoped();
             Route::get('events/{event}/seatingplans/{seatingplan}/seats/{seat}/delete', [AdminSeatController::class, 'delete'])->name('events.seatingplans.seats.delete')->scopeBindings();
             Route::get('events/{event}/seatingplans/{seatingplan}/seats/{seat}/unseat', [AdminSeatController::class, 'unseat'])->name('events.seatingplans.seats.unseat')->scopeBindings();
+
+            Route::resource('events.tickettypes', TicketTypeController::class)->except(['index'])->scoped();
+            Route::get('events/{event}/tickettypes/{tickettype}/delete', [TicketTypeController::class, 'delete'])->name('events.tickettypes.delete')->scopeBindings();
+            Route::resource('events.tickettypes.mappings', TicketTypeMappingController::class)->except(['show', 'index'])->scoped();
+            Route::get('/events/{event}/tickettypes/{tickettype}/mappings/{mapping}/delete', [TicketTypeMappingController::class, 'delete'])->name('events.tickettypes.mappings.delete')->scopeBindings();
 
             Route::resource('tickets', AdminTicketController::class);
             Route::get('tickets/{ticket}/delete', [AdminTicketController::class, 'delete'])->name('tickets.delete');

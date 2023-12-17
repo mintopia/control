@@ -48,6 +48,7 @@ use function App\makeCode;
  * @property-read \App\Models\Seat|null $seat
  * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereSeatId($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperTicket
  */
 class Ticket extends Model
 {

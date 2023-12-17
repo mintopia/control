@@ -29,6 +29,7 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
  * @method static \Illuminate\Database\Eloquent\Builder|ClanRole whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|ClanRole whereUpdatedAt($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperClanRole
  */
 class ClanRole extends Model
 {

@@ -7,12 +7,14 @@ use App\Models\EmailAddress;
 use App\Models\Event;
 use App\Models\Seat;
 use App\Models\SeatingPlan;
+use App\Models\TicketProvider;
 use App\Models\User;
 use App\Observers\ClanObserver;
 use App\Observers\EmailAddressObserver;
 use App\Observers\EventObserver;
 use App\Observers\SeatingPlanObserver;
 use App\Observers\SeatObserver;
+use App\Observers\TicketProviderObserver;
 use App\Observers\UserObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -27,6 +29,7 @@ class EventServiceProvider extends ServiceProvider
         Event::class => EventObserver::class,
         Seat::class => SeatObserver::class,
         SeatingPlan::class => SeatingPlanObserver::class,
+        TicketProvider::class => TicketProviderObserver::class,
     ];
     /**
      * The event to listener mappings for the application.

@@ -41,10 +41,14 @@ use Illuminate\Support\Facades\Log;
  * @property int $revision
  * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan whereRevision($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperSeatingPlan
  */
 class SeatingPlan extends Model
 {
     use HasFactory, ToString;
+
+    // Cache the plan for 30 days
+    protected const CACHE_TTL = 30 * 86400;
 
     public function seats(): HasMany
     {
@@ -76,9 +80,9 @@ class SeatingPlan extends Model
     public function getData(): Collection
     {
         $key = "seatingplans:{$this->id}:{$this->revision}";
-        if (Cache::has($key)) {
+        if ($data = Cache::get($key)) {
             Log::debug("{$this} fetched from cache");
-            return Cache::get($key);
+            return $data;
         }
 
         $seats = $this->seats()
@@ -106,7 +110,7 @@ class SeatingPlan extends Model
             $data->push($seatData);
         }
 
-        Cache::put($key, $data);
+        Cache::put($key, $data, self::CACHE_TTL);
         Log::debug("{$this} saving revision {$this->revision}");
         return $data;
     }
@@ -129,6 +133,9 @@ class SeatingPlan extends Model
 
             foreach ($rows as $row) {
                 $seat = null;
+                if (!$row[5]) {
+                    continue;
+                }
                 if ((int)$row[0] > 0) {
                     $seat = $this->seats->where('id', $row[0])->first();
                 }

@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property \Illuminate\Support\Carbon|null $ends_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventTicketProvider> $providers
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventMapping> $providers
  * @property-read int|null $providers_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
  * @property-read int|null $tickets_count
@@ -39,6 +39,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $boxoffice_url
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereBoxofficeUrl($value)
  * @mixin \Eloquent
+ * @mixin IdeHelperEvent
  */
 class Event extends Model
 {
@@ -54,9 +55,9 @@ class Event extends Model
         return 'code';
     }
 
-    public function providers(): HasMany
+    public function mappings(): HasMany
     {
-        return $this->hasMany(EventTicketProvider::class);
+        return $this->hasMany(EventMapping::class);
     }
 
     public function tickets(): HasMany
@@ -85,5 +86,26 @@ class Event extends Model
             }
             $order++;
         }
+    }
+    public function getAvailableTicketMappings(?TicketTypeMapping $existing = null): array
+    {
+        $allProviders = TicketProvider::all();
+        $result = [];
+        foreach ($allProviders as $provider) {
+            $types = [];
+            $allTypes = $provider->getTicketTypes($this);
+            foreach ($allTypes as $type) {
+                if (!$type->used || ($existing && $existing->ticket_provider_id == $provider->id && $existing->external_id === $type->id)) {
+                    $types[] = $type;
+                }
+            }
+            if ($types) {
+                $result[] = (object)[
+                    'provider' => $provider,
+                    'types' => $types,
+                ];
+            }
+        }
+        return $result;
     }
 }
