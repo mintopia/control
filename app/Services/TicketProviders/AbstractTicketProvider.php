@@ -12,8 +12,8 @@ abstract class AbstractTicketProvider implements TicketProviderContract
     protected string $name;
     protected string $code;
     protected ?TicketProvider $provider = null;
-    protected string $apikey;
-    protected string $webhookSecret;
+    protected ?string $apikey = null;
+    protected ?string $webhookSecret = null;
 
     public function __construct(?TicketProvider $provider = null)
     {

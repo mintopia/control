@@ -96,7 +96,7 @@
                                 <a class="dropdown-item" href="{{ route('admin.clans.index') }}">Clans</a>
                                 <a class="dropdown-item" href="{{ route('admin.events.index') }}">Events</a>
                                 <a class="dropdown-item" href="{{ route('admin.tickets.index') }}">Tickets</a>
-                                <a class="dropdown-item" href="{{ route('admin.settings.edit') }}">Settings</a>
+                                <a class="dropdown-item" href="{{ route('admin.settings.index') }}">Settings</a>
                             </div>
                         </li>
                     @endcan

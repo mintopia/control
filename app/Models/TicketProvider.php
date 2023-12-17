@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\ToString;
+use App\Services\Contracts\TicketProviderContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -77,7 +78,7 @@ class TicketProvider extends Model
         return $this->code;
     }
 
-    public function getProvider(?string $redirectUrl = null)
+    public function getProvider(?string $redirectUrl = null): TicketProviderContract
     {
         return new $this->provider_class($this);
     }
@@ -159,5 +160,10 @@ class TicketProvider extends Model
     {
         $this->cache_prefix = time();
         $this->save();
+    }
+
+    public function configMapping(): array
+    {
+        return $this->getProvider()->configMapping();
     }
 }

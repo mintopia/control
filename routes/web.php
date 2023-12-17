@@ -8,7 +8,9 @@ use App\Http\Controllers\Admin\ClanController as AdminClanController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
 use App\Http\Controllers\Admin\SeatController as AdminSeatController;
 use App\Http\Controllers\Admin\SeatingPlanController as AdminSeatingPlanController;
+use App\Http\Controllers\Admin\SocialProviderController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
+use App\Http\Controllers\Admin\TicketProviderController;
 use App\Http\Controllers\Admin\TicketTypeController;
 use App\Http\Controllers\Admin\TicketTypeMappingController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
@@ -151,8 +153,12 @@ Route::middleware('auth:sanctum')->group(function() {
             Route::get('users/{user}/accounts/{account}', [AdminLinkedAccountController::class, 'delete'])->name('users.accounts.delete')->scopeBindings();
             Route::delete('users/{user}/accounts/{account}', [AdminLinkedAccountController::class, 'destroy'])->name('users.accounts.destroy')->scopeBindings();
 
-            Route::get('settings', [AdminSettingController::class, 'edit'])->name('settings.edit');
-            Route::match(['PUT', 'PATCH'], 'settings', [AdminSettingController::class, 'update'])->name('settings.update');
+            Route::get('settings', [AdminSettingController::class, 'index'])->name('settings.index');
+            Route::get('settings/ticketproviders/{provider}/edit', [TicketProviderController::class, 'edit'])->name('settings.ticketproviders.edit');
+            Route::match(['PUT', 'PATCH'], 'settings/ticketproviders/{provider}', [TicketProviderController::class, 'update'])->name('settings.ticketproviders.update');
+            Route::get('settings/ticketproviders/{provider}/clearcache', [TicketProviderController::class, 'clearcache'])->name('settings.ticketproviders.clearcache');
+            Route::get('settings/socialproviders/{provider}/edit', [SocialProviderController::class, 'edit'])->name('settings.socialproviders.edit');
+            Route::match(['PUT', 'PATCH'], 'settings/socialproviders/{provider}', [SocialProviderController::class, 'update'])->name('settings.socialproviders.update');
         });
     });
 });

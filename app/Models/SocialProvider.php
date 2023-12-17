@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\ToString;
+use App\Services\Contracts\SocialProviderContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -61,7 +62,7 @@ class SocialProvider extends Model
         return $this->hasMany(LinkedAccount::class);
     }
 
-    public function getProvider(?string $redirectUrl = null)
+    public function getProvider(?string $redirectUrl = null): SocialProviderContract
     {
         return new $this->provider_class($this, $redirectUrl);
     }
@@ -74,5 +75,10 @@ class SocialProvider extends Model
     public function user(?string $redirectUrl = null)
     {
         return $this->getProvider($redirectUrl)->user();
+    }
+
+    public function configMapping(): array
+    {
+        return $this->getProvider()->configMapping();
     }
 }
