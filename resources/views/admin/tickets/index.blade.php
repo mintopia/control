@@ -48,15 +48,20 @@
 
                     @include('partials._searchselectfield', [
                         'name' => 'Event',
-                        'property' => 'event_id',
+                        'property' => 'event',
                         'options' => $events,
-                        'valueProperty' => 'id',
+                        'valueProperty' => 'code',
                         'nameProperty' => 'name',
                     ])
 
                     @include('partials._searchtextfield', [
                         'name' => 'Ticket Type ID',
                         'property' => 'ticket_type_id',
+                    ])
+
+                    @include('partials._searchtextfield', [
+                        'name' => 'Seat',
+                        'property' => 'seat',
                     ])
                 </div>
                 <div class="card-footer d-flex">
@@ -103,7 +108,7 @@
                                         <a href="{{ route('admin.tickets.show', $ticket->id) }}">{{ $ticket->reference }}</a>
                                     </td>
                                     <td>
-                                        <a href="{{ route('admin.events.show', $ticket->event->id) }}">{{ $ticket->event->name }}</a>
+                                        <a href="{{ route('admin.events.show', $ticket->event->code) }}">{{ $ticket->event->name }}</a>
                                     </td>
                                     <td>{{ $ticket->type->name }}</td>
                                     <td>

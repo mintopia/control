@@ -7,6 +7,7 @@ use App\Models\EmailAddress;
 use App\Models\Event;
 use App\Models\Seat;
 use App\Models\SeatingPlan;
+use App\Models\Ticket;
 use App\Models\TicketProvider;
 use App\Models\User;
 use App\Observers\ClanObserver;
@@ -14,6 +15,7 @@ use App\Observers\EmailAddressObserver;
 use App\Observers\EventObserver;
 use App\Observers\SeatingPlanObserver;
 use App\Observers\SeatObserver;
+use App\Observers\TicketObserver;
 use App\Observers\TicketProviderObserver;
 use App\Observers\UserObserver;
 use Illuminate\Auth\Events\Registered;
@@ -30,6 +32,7 @@ class EventServiceProvider extends ServiceProvider
         Seat::class => SeatObserver::class,
         SeatingPlan::class => SeatingPlanObserver::class,
         TicketProvider::class => TicketProviderObserver::class,
+        Ticket::class => TicketObserver::class,
     ];
     /**
      * The event to listener mappings for the application.

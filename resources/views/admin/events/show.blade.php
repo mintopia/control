@@ -82,10 +82,14 @@
                         <i class="icon ti ti-table-export"></i>
                         Export Ticket List
                     </a>
-                    <a href="{{ route('admin.tickets.index', ['event_id' => $event->id]) }}" class="btn btn-primary-outline">
+                    <a href="{{ route('admin.tickets.index', ['event' => $event->code]) }}" class="btn btn-primary-outline">
                         <i class="icon ti ti-ticket"></i>
                         Tickets
                         ({{ $event->tickets()->count() }})
+                    </a>
+                    <a href="{{ route('admin.tickets.create', ['event' => $event->code]) }}" class="btn btn-primary-outline">
+                        <i class="icon ti ti-plus"></i>
+                        Add Ticket
                     </a>
                     <a href="{{ route('admin.events.edit', $event->code) }}" class="btn btn-primary">
                         <i class="icon ti ti-edit"></i>
