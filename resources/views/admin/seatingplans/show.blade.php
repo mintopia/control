@@ -130,14 +130,23 @@
                                 if ($seat->ticket) {
                                     $class = 'taken';
                                 }
+
+                                $tooltipContents = "<span class=\"fs-4\">{$name}</span>";
+                                if ($seat->clans) {
+                                    $tooltipContents .= '<br /><span class="badgelist mt-2 d-block">';
+                                    foreach ($seat->clans as $clan) {
+                                        $tooltipContents .= "<span class=\"badge bg-primary text-primary-fg\">{$clan}</span>";
+                                    }
+                                    $tooltipContents .= '</span>';
+                                }
                             @endphp
                             <a class="d-block seat {{ $seat->class }} {{ $class }}"
                                 href="{{ route('admin.events.seatingplans.seats.show', [$event->code, $plan->id, $seat->id]) }}"
                                 style="left: {{ $seat->x * 2 }}em; top: {{ $seat->y * 2 }}em;"
                                 data-bs-trigger="hover" data-bs-toggle="popover"
-                                data-bs-placement="right"
+                                data-bs-placement="right" data-bs-html="true"
                                 title="{{ $seat->description }} {{ $seat->label }}"
-                                data-bs-content="{{ $name }}"
+                                data-bs-content="{{ $tooltipContents }}"
                             ></a>
                         @endforeach
                     </div>

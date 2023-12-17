@@ -71,6 +71,13 @@ class SeatingPlan extends Model
         $this->save();
     }
 
+    public function delayedRevisionUpdate(): void
+    {
+        $this->revision++;
+        $this->saveQuietly();
+        UpdateSeatingPlanJob::dispatchAfterResponse($this, $this->revision);
+    }
+
     public function queueUpdate(): void
     {
         UpdateSeatingPlanJob::dispatch($this, $this->revision);
@@ -86,13 +93,17 @@ class SeatingPlan extends Model
         }
 
         $seats = $this->seats()
-            ->with(['ticket', 'ticket.user', 'plan'])
+            ->with(['ticket', 'ticket.user', 'plan', 'ticket.user.clanMemberships.clan'])
             ->orderBy('row', 'ASC')
             ->orderBy('number', 'ASC')
             ->get();
 
         $data = new Collection();
         foreach ($seats as $seat) {
+            $clans = [];
+            foreach($seat->ticket->user->clanMemberships ?? [] as $clanMembership) {
+                $clans[] = $clanMembership->clan->name;
+            }
             $seatData = (object)[
                 'id' => $seat->id,
                 'x' => $seat->x,
@@ -106,6 +117,7 @@ class SeatingPlan extends Model
                 'nickname' => $seat->ticket->user->nickname ?? null,
                 'ticket' => $seat->ticket->type->name ?? null,
                 'ticketId' => $seat->ticket->id ?? null,
+                'clans' => $clans,
                 'canPick' => $seat->canPick(),
             ];
             $data->push($seatData);

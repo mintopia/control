@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Clan;
+use App\Models\ClanMembership;
 use App\Models\EmailAddress;
 use App\Models\Event;
 use App\Models\Seat;
@@ -10,6 +11,7 @@ use App\Models\SeatingPlan;
 use App\Models\Ticket;
 use App\Models\TicketProvider;
 use App\Models\User;
+use App\Observers\ClanMembershipObserver;
 use App\Observers\ClanObserver;
 use App\Observers\EmailAddressObserver;
 use App\Observers\EventObserver;
@@ -33,6 +35,7 @@ class EventServiceProvider extends ServiceProvider
         SeatingPlan::class => SeatingPlanObserver::class,
         TicketProvider::class => TicketProviderObserver::class,
         Ticket::class => TicketObserver::class,
+        ClanMembership::class => ClanMembershipObserver::class,
     ];
     /**
      * The event to listener mappings for the application.
