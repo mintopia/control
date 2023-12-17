@@ -133,7 +133,7 @@
 
                                 $tooltipContents = "<span class=\"fs-4\">{$name}</span>";
                                 if ($seat->clans) {
-                                    $tooltipContents .= '<br /><span class="badges-list mt-2 d-block">';
+                                    $tooltipContents .= '<br /><span class="badges-list mt-2">';
                                     foreach ($seat->clans as $clan) {
                                         $tooltipContents .= "<span class=\"badge bg-primary text-primary-fg\">{$clan}</span>";
                                     }
