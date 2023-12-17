@@ -98,10 +98,8 @@ Route::middleware('auth:sanctum')->group(function() {
         Route::get('seating', [SeatingPlanController::class, 'index'])->name('seatingplans.index');
         Route::get('seating/{event}', [SeatingPlanController::class, 'show'])->name('seatingplans.show');
 
-        Route::middleware('can:pick,seat')->group(function() {
-            Route::get('seats/{seat}', [SeatController::class, 'edit'])->name('seats.edit');
-            Route::match(['PUT', 'PATCH'], 'seats/{seat}', [SeatController::class, 'update'])->name('seats.update');
-        });
+        Route::get('seats/{seat}', [SeatController::class, 'edit'])->name('seats.edit');
+        Route::match(['PUT', 'PATCH'], 'seats/{seat}', [SeatController::class, 'update'])->name('seats.update');
 
         Route::get('/admin/unimpersonate', [AdminHomeController::class, 'unimpersonate'])->name('admin.unimpersonate');
 

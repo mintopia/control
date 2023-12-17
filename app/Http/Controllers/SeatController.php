@@ -11,6 +11,9 @@ class SeatController extends Controller
 {
     public function edit(Request $request, Seat $seat)
     {
+        if (!$seat->canPick($request->user())) {
+            return response()->redirectToRoute('seatingplans.show', $seat->plan->event->code)->with('errorMessage', "That seat is not available");
+        }
         // Get any clan IDs that we are seating manager or leader for
         $tickets = $request->user()->getPickableTickets($seat->plan->event);
         if (count($tickets) === 0) {
@@ -29,6 +32,9 @@ class SeatController extends Controller
 
     public function update(SeatPickRequest $request, Seat $seat)
     {
+        if (!$seat->canPick($request->user())) {
+            return response()->redirectToRoute('seatingplans.show', $seat->plan->event->code)->with('errorMessage', "That seat is not available");
+        }
         $ticket = Ticket::find($request->ticket_id);
         if ($seat->ticket && $ticket->seat && $request->input('swap', false)) {
             $oldSeat = $ticket->seat;

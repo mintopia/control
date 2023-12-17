@@ -64,12 +64,27 @@ class Seat extends Model
         return $this->label;
     }
 
-    public function canPick(): bool
+    public function canPick(?User $user = null): bool
     {
         if ($this->disabled) {
             return false;
         }
         if ($this->plan->event->seating_locked) {
+            return false;
+        }
+        if ($user === null) {
+            return true;
+        }
+        $tickets = $user->getPickableTickets($this->plan->event);
+        if (!$tickets) {
+            return false;
+        }
+        if ($this->ticket) {
+            foreach ($tickets as $ticket) {
+                if ($ticket->id === $this->ticket->id) {
+                    return true;
+                }
+            }
             return false;
         }
         return true;
