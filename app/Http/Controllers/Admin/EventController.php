@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DeleteRequest;
 use App\Http\Requests\Admin\EventUpdateRequest;
 use App\Models\Event;
+use App\Models\Seat;
+use App\Models\Ticket;
 use App\Models\TicketProvider;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -171,6 +173,48 @@ class EventController extends Controller
             }
             fclose($handle);
         }, $filename);
+    }
+
+    public function seats(Request $request, Event $event)
+    {
+        $unseated = $event->tickets()->whereDoesntHave('seat')->whereHas('type', function ($query) {
+            $query->where('has_seat', true);
+        })->with(['user', 'type', 'user.clanMemberships.clan'])->get();
+
+        $seats = [];
+        foreach ($event->seatingPlans as $plan) {
+            $seats[$plan->id] = $plan->getData();
+        }
+
+        $currentTicket = null;
+        if ($id = $request->input('ticket_id')) {
+            $currentTicket = $event->tickets()->whereId($id)->first();
+        }
+
+        return view('admin.events.seats', [
+            'event' => $event,
+            'tickets' => $unseated,
+            'seats' => $seats,
+            'currentTicket' => $currentTicket,
+        ]);
+    }
+
+    public function pickseat(Event $event, Ticket $ticket, Seat $seat) {
+        if ($ticket->event_id != $event->id || $seat->plan->event_id != $event->id) {
+            abort(404);
+        }
+        $seat->ticket()->associate($ticket);
+        $seat->save();
+        return response()->redirectToRoute('admin.events.seats', $event->code);
+    }
+
+    public function unseat(Event $event, Ticket $ticket) {
+        if ($ticket->seat) {
+            $seat = $ticket->seat;
+            $seat->ticket()->disassociate($ticket);
+            $seat->save();
+        }
+        return response()->redirectToRoute('admin.events.seats', $event->code);
     }
 
     protected function updateObject(Event $event, Request $request): void

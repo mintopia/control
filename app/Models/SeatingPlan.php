@@ -105,6 +105,7 @@ class SeatingPlan extends Model
                 'description' => $seat->description,
                 'nickname' => $seat->ticket->user->nickname ?? null,
                 'ticket' => $seat->ticket->type->name ?? null,
+                'ticketId' => $seat->ticket->id ?? null,
                 'canPick' => $seat->canPick(),
             ];
             $data->push($seatData);

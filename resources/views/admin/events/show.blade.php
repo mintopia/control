@@ -106,6 +106,10 @@
         </div>
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
+                <a href="{{ route('admin.events.seats', $event->code) }}" class="btn btn-primary-outline">
+                    <i class="icon ti ti-armchair"></i>
+                    Manage Seating
+                </a>
                 <a href="{{ route('admin.events.seatingplans.create', $event->code) }}" class="btn btn-primary d-inline-block">
                     <i class="icon ti ti-plus"></i>
                     Add Seating Plan

@@ -111,6 +111,9 @@ Route::middleware('auth:sanctum')->group(function() {
             Route::resource('events', AdminEventController::class);
             Route::get('events/{event}/delete', [AdminEventController::class, 'delete'])->name('events.delete');
             Route::get('events/{event}/export', [AdminEventController::class, 'export_tickets'])->name('events.export');
+            Route::get('events/{event}/seats', [AdminEventController::class, 'seats'])->name('events.seats');
+            Route::get('events/{event}/seats/{ticket}/unseat', [AdminEventController::class, 'unseat'])->name('events.seats.unseat')->scopeBindings();
+            Route::get('events/{event}/seats/{ticket}/pick/{seat}', [AdminEventController::class, 'pickseat'])->name('events.seats.pick');
 
             Route::resource('events.mappings', EventMappingController::class)->except(['index', 'show'])->scoped();
             Route::get('events/{event}/mappings/{mapping}/delete', [EventMappingController::class, 'delete'])->name('events.mappings.delete')->scopeBindings();
