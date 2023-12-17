@@ -154,6 +154,8 @@ The following features are on the roadmap:
  - Better UI/UX. I'm currently using [tabler.io](https://tabler.io) and entirely server-side rendering.
  - Full-featured API. There's a basic one to support seating plan refreshes. I need to refactor it and improve it.
  - UI Customisation from Admin Pages. Currently the UI colours, branding is all either in the `.env` or compiled into the CSS at build.
+ - Unit Tests. This was very rapidly developed, I'm sorry!
+ - PHPCS and PHPStan. Should be aiming for PSR-12 and level 8 PHPStan.
 
 ## Thanks
 

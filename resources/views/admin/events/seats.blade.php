@@ -121,9 +121,6 @@
                                     >
                                     @foreach($seats[$plan->id] as $seat)
                                         @php
-                                        if (!property_exists($seat, 'ticketId')) {
-                                            dd($seat);
-                                        }
                                             $link = null;
                                             if ($currentTicket) {
                                                 $link = route('admin.events.seats.pick', [$event->code, $currentTicket->id, $seat->id]);
