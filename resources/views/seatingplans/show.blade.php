@@ -12,6 +12,15 @@
     <div class="page-header mt-0">
         <h1>{{ $event->name }}</h1>
     </div>
+    @if (count($allTickets) > 1)
+        <p class="my-2">
+            Select a seat to choose what ticket to assign to it.
+        </p>
+    @elseif(count($allTickets) === 1)
+        <p>
+            Select a seat to assign your ticket to it.
+        </p>
+    @endif
     <div class="row">
         <div class="col-md-3">
             @if(count($allTickets) === 0)
