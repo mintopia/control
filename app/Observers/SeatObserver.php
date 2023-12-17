@@ -20,6 +20,9 @@ class SeatObserver
             foreach ($others as $other) {
                 $other->ticket()->disassociate();
                 $other->saveQuietly();
+                if ($other->plan->id !== $seat->plan->id) {
+                    $other->plan->updateRevision();
+                }
             }
             if ($others && !$seat->isDirty()) {
                 $seat->plan->updateRevision();
