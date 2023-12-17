@@ -15,7 +15,7 @@
 
     <div class="card mb-4">
         <div class="card-header">
-            <h3 class="card-title">Ticket Providers</h3>
+            <h3 class="card-title">Social Providers</h3>
         </div>
         <div class="table-responsive">
             <table class="table table-vcenter card-table">
@@ -102,7 +102,7 @@
 
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Social Providers</h3>
+            <h3 class="card-title">Ticket Providers</h3>
         </div>
         <div class="table-responsive">
             <table class="table table-vcenter card-table">
