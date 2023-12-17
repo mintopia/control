@@ -131,8 +131,8 @@ I'm running with an external docker network called `frontend` with Caddy running
 
 
 ```bash
-cp .env.example .env
-# Edit .env with your preferred editor
+# Create your docker compose file
+# Create your .env file from the project's .env.example and edit as required.
 docker compose up -d redis database
 docker compose run --rm artisan key:generate
 docker compose run --rm artisan migrate
