@@ -57,13 +57,6 @@ services:
       - default
     volumes:
       - ./public:/var/www/storage/public
-    labels:
-      - traefik.http.routers.control-nginx.rule=Host(`staging.seatpicker.stratlan.net`)
-      - traefik.http.routers.control-nginx.tls=true
-      - traefik.http.routers.control-nginx.tls.certresolver=letsencrypt
-      - traefik.http.routers.control-nginx-http.rule=Host(`staging.seatpicker.stratlan.net`)
-      - traefik.http.routers.control-nginx-http.middlewares=tlsredirect
-      - traefik.http.middlewares.tlsredirect.redirectscheme.scheme=https
 
   php-fpm:
     image: ghcr.io/mintopia/control-php-fpm:develop
