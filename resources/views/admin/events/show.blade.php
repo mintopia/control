@@ -231,10 +231,12 @@
         </div>
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
-                <a href="#" class="btn btn-primary d-inline-block">
-                    <i class="icon ti ti-plus"></i>
-                    Add Mapping
-                </a>
+                @if($event->getAvailableEventMappings())
+                    <a href="{{ route('admin.events.mappings.create', $event->code) }}" class="btn btn-primary d-inline-block">
+                        <i class="icon ti ti-plus"></i>
+                        Add Mapping
+                    </a>
+                @endif
             </div>
         </div>
     </div>
@@ -253,6 +255,7 @@
                             <th>ID</th>
                             <th>Provider</th>
                             <th>External ID</th>
+                            <th>External Name</th>
                             <th></th>
                         </tr>
                         </thead>
@@ -260,16 +263,21 @@
                         @forelse($event->mappings as $map)
                             <tr>
                                 <td class="text-muted">{{ $map->id }}</td>
-                                <td>
-                                    <a href="#">{{ $map->provider->name }}</a>
-                                </td>
+                                <td>{{ $map->provider->name }}</td>
                                 <td>{{ $map->external_id }}</td>
+                                <td>
+                                    @if($map->name)
+                                        {{ $map->name }}
+                                    @else
+                                        <span class="text-muted">None</span>
+                                    @endif
+                                </td>
                                 <td class="btn-list">
-                                    <a class="btn btn-outline-primary ms-auto" href="#}">
+                                    <a class="btn btn-outline-primary ms-auto" href="{{ route('admin.events.mappings.edit', [$event->code, $map->id]) }}">
                                         <i class="icon ti ti-edit"></i>
                                         Edit
                                     </a>
-                                    <a class="btn btn-outline-danger" href="#">
+                                    <a class="btn btn-outline-danger" href="{{ route('admin.events.mappings.delete', [$event->code, $map->id]) }}">
                                         <i class="icon ti ti-trash"></i>
                                         Delete
                                     </a>

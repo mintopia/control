@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ClanMembershipController as AdminClanMembershipController;
 use App\Http\Controllers\Admin\EmailAddressController as AdminEmailAddressController;
+use App\Http\Controllers\Admin\EventMappingController;
 use App\Http\Controllers\Admin\LinkedAccountController as AdminLinkedAccountController;
 use App\Http\Controllers\Admin\ClanController as AdminClanController;
 use App\Http\Controllers\Admin\EventController as AdminEventController;
@@ -108,6 +109,9 @@ Route::middleware('auth:sanctum')->group(function() {
             Route::resource('events', AdminEventController::class);
             Route::get('events/{event}/delete', [AdminEventController::class, 'delete'])->name('events.delete');
             Route::get('events/{event}/export', [AdminEventController::class, 'export_tickets'])->name('events.export');
+
+            Route::resource('events.mappings', EventMappingController::class)->except(['index', 'show'])->scoped();
+            Route::get('events/{event}/mappings/{mapping}/delete', [EventMappingController::class, 'delete'])->name('events.mappings.delete')->scopeBindings();
 
             Route::resource('events.seatingplans', AdminSeatingPlanController::class)->except(['index'])->scoped();
             Route::get('events/{event}/seatingplans/{seatingplan}/refresh', [AdminSeatingPlanController::class, 'refresh'])->name('events.seatingplans.refresh')->scopeBindings();

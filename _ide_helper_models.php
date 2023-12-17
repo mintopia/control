@@ -164,6 +164,7 @@ namespace App\Models{
  * @property int $event_id
  * @property int $ticket_provider_id
  * @property string $external_id
+ * @property string|null $name
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\Event $event
@@ -175,6 +176,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|EventMapping whereEventId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|EventMapping whereExternalId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|EventMapping whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|EventMapping whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|EventMapping whereTicketProviderId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|EventMapping whereUpdatedAt($value)
  * @mixin \Eloquent

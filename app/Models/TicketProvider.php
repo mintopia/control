@@ -99,7 +99,25 @@ class TicketProvider extends Model
 
     public function getEvents(): array
     {
-        return $this->getProvider()->getEvents();
+        if (!$this->enabled) {
+            return [];
+        }
+
+        $events = $this->getProvider()->getEvents();
+        $data = [];
+
+        $existing = $this->events;
+
+        foreach ($events as $id => $name) {
+            $data[] = (object)[
+                'id' => $id,
+                'name' => $name,
+                'used' => $existing->where('external_id', $id)->count() > 0,
+                'used_by' => $existing->where('external_id', $id),
+            ];
+        }
+
+        return $data;
     }
 
     public function getTicketTypes(Event $event): array
@@ -108,31 +126,31 @@ class TicketProvider extends Model
             return [];
         }
 
-        $providerEvent = $this->events()->whereEventId($event->id)->first();
-        if (!$providerEvent) {
-            return [];
-        }
-
-        $types = $this->getProvider()->getTicketTypes($providerEvent->external_id);
-        if (!$types) {
-            return [];
-        }
-
-        $ids = array_keys($types);
-        $existing = $this->types()
-            ->whereIn('external_id', $ids)
-            ->whereHas('type', function($query) use ($event) {
-                $query->where('event_id', $event->id);
-            })->get();
+        $providerEvents = $this->events()->whereEventId($event->id)->get();
 
         $data = [];
-        foreach ($types as $id => $name) {
-            $data[] = (object)[
-                'id' => $id,
-                'name' => $name,
-                'used' => $existing->where('external_id', $id)->count() > 0,
-                'used_by' => $existing->where('external_id', $id),
-            ];
+        foreach($providerEvents as $providerEvent) {
+
+            $types = $this->getProvider()->getTicketTypes($providerEvent->external_id);
+            if (!$types) {
+                return [];
+            }
+
+            $ids = array_keys($types);
+            $existing = $this->types()
+                ->whereIn('external_id', $ids)
+                ->whereHas('type', function ($query) use ($event) {
+                    $query->where('event_id', $event->id);
+                })->get();
+
+            foreach ($types as $id => $name) {
+                $data[] = (object)[
+                    'id' => $id,
+                    'name' => $name,
+                    'used' => $existing->where('external_id', $id)->count() > 0,
+                    'used_by' => $existing->where('external_id', $id),
+                ];
+            }
         }
         return $data;
     }

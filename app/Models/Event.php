@@ -87,22 +87,49 @@ class Event extends Model
             $order++;
         }
     }
+
+    public function getAvailableEventMappings(?EventMapping $existing = null): array
+    {
+        $allProviders = TicketProvider::all();
+        $result = [];
+        foreach($allProviders as $provider) {
+            $events = array_filter($provider->getEvents(), function($event) use ($existing, $provider) {
+                if (!$event->used) {
+                    return true;
+                }
+                if ($existing && $existing->ticket_provider_id === $provider->id && $existing->external_id === $event->id) {
+                    return true;
+                }
+                return false;
+            });
+            if ($events) {
+                $result[] = (object)[
+                    'provider' => $provider,
+                    'events' => array_values($events),
+                ];
+            }
+        }
+        return $result;
+    }
+
     public function getAvailableTicketMappings(?TicketTypeMapping $existing = null): array
     {
         $allProviders = TicketProvider::all();
         $result = [];
         foreach ($allProviders as $provider) {
-            $types = [];
-            $allTypes = $provider->getTicketTypes($this);
-            foreach ($allTypes as $type) {
-                if (!$type->used || ($existing && $existing->ticket_provider_id == $provider->id && $existing->external_id === $type->id)) {
-                    $types[] = $type;
+            $types = array_filter($provider->getTicketTypes($this), function($type) use ($existing, $provider) {
+                if (!$type->used) {
+                    return true;
                 }
-            }
+                if ($existing && $existing->ticket_provider_id === $provider->id && $existing->external_id === $type->id) {
+                    return true;
+                }
+                return false;
+            });
             if ($types) {
                 $result[] = (object)[
                     'provider' => $provider,
-                    'types' => $types,
+                    'types' => array_values($types),
                 ];
             }
         }
