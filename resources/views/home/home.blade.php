@@ -35,13 +35,13 @@
                                     <td>{{ $ticket->type->name }}</td>
                                     <td>{{ $ticket->event->name }}</td>
                                     <td>
-                                        <a href="{{ route('seatingplans.show', $ticket->event->code) }}">
-                                            @if ($ticket->canPickSeat())
+                                        @if ($ticket->canPickSeat())
+                                            <a href="{{ route('seatingplans.show', $ticket->event->code) }}">
                                                 {{ $ticket->seat->label ?? 'Choose Seat' }}
-                                            @else
-                                                {{ $ticket->seat->label ?? 'None' }}
-                                            @endif
-                                        </a>
+                                            </a>
+                                        @else
+                                            <span class="text-muted">{{ $ticket->seat->label ?? 'None' }}</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
