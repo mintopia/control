@@ -70,6 +70,8 @@ class UserController extends Controller
             }
         } catch (SocialProviderException $ex) {
             return response()->redirectToRoute('login')->with('errorMessage', $ex->getMessage());
+        } catch (\Exception $ex) {
+            Log::error($ex->getMessage());
         }
         return response()->redirectToRoute('login')->with('errorMessage', 'Unable to login');
     }
