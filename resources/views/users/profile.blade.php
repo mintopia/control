@@ -102,7 +102,7 @@
                     </div>
                 @endforeach
                 @if($availableLinks)
-                    <div class="col-12">
+                    <div class="col-12 btn-list">
                         @foreach($availableLinks as $provider)
                             <a class="btn btn-{{ $provider->code }}" href="{{ route('linkedaccounts.create', $provider->code) }}">
                                 <i class="icon ti ti-brand-{{ $provider->code }}"></i>

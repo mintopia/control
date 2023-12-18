@@ -49,6 +49,7 @@ class EventServiceProvider extends ServiceProvider
         \SocialiteProviders\Manager\SocialiteWasCalled::class => [
             \SocialiteProviders\Discord\DiscordExtendSocialite::class.'@handle',
             \SocialiteProviders\Steam\SteamExtendSocialite::class.'@handle',
+            \SocialiteProviders\Twitch\TwitchExtendSocialite::class.'@handle',
         ],
     ];
 
