@@ -131,7 +131,7 @@ class User extends Authenticatable
                 return $acc->avatar_url;
             }
         }
-        return 'https://gravatar.com/avatar/' . hash('sha256', $this->primaryEmail->email);
+        return 'https://gravatar.com/avatar/' . hash('sha256', $this->primaryEmail->email) . '?d=retro';
     }
 
     public function syncTickets(bool $sync = false, bool $force = false): void
