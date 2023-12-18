@@ -108,7 +108,12 @@ abstract class AbstractSocialProvider implements SocialProviderContract
                 } else {
                     // Unverified email, let's delete it
                     $email->delete();
+                    $email = null;
                 }
+            }
+
+            if ($email) {
+                $localUser = $email->user;
             }
 
             if ($localUser === null) {
