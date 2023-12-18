@@ -82,8 +82,12 @@
                                 <i class="icon ti ti-brand-{{ $account->provider->code }}"></i>
                             </div>
                             <div class="row row-0">
-                                <div class="col-auto w-7">
-                                    <img src="{{ $account->avatar_url }}" class="w-100 h-100 mh-100 object-cover card-img-start" alt="{{ $account->provider->name }} Avatar">
+                                <div class="col-auto w-7 d-flex align-items-center">
+                                    @if ($account->avatar_url)
+                                        <img src="{{ $account->avatar_url }}" class="w-100 h-100 mh-100 object-cover card-img-start" alt="{{ $account->provider->name }} Avatar">
+                                    @else
+                                        <i class="icon ti ti-brand-{{ $account->provider->code }} icon-lg text-muted m-auto d-block" title="No {{ $account->provider->name }} Avatar"></i>
+                                    @endif
                                 </div>
                                 <div class="col">
                                     <div class="card-body p-2">
