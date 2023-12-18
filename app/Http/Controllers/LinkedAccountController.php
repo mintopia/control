@@ -20,5 +20,6 @@ class LinkedAccountController extends Controller
         } catch (SocialProviderException $ex) {
             return response()->redirectToRoute('user.profile')->with('errorMessage', $ex->getMessage());
         }
+        return response()->redirectToRoute('user.profile')->with('errorMessage', "Unable to link your accounts");
     }
 }
