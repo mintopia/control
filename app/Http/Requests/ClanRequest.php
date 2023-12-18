@@ -30,6 +30,10 @@ class ClanRequest extends FormRequest
                 'max:100',
                 function (string $attribute, mixed $value, \Closure $fail) {
                     $permalink = makePermalink($value);
+                    if ($permalink === '') {
+                        $fail('The clan name is not valid');
+                        return;
+                    }
                     $clan = Clan::whereCode($permalink)->first();
                     if ($clan && (!$this->clan || $clan->id !== $this->clan->id)) {
                         $fail('The clan name is already in use');
