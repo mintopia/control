@@ -22,7 +22,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <div class="datagrid col-md-4">
+                        <div class="datagrid col-md-5">
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Reference</div>
                                 <div class="datagrid-content">{{ $ticket->reference }}</div>
@@ -34,7 +34,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="datagrid col-md-8">
+                        <div class="datagrid col-md-7">
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Type</div>
                                 <div class="datagrid-content">{{ $ticket->type->name }}</div>
