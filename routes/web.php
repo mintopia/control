@@ -98,6 +98,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('seating', [SeatingPlanController::class, 'index'])->name('seatingplans.index');
         Route::get('seating/{event}', [SeatingPlanController::class, 'show'])->name('seatingplans.show');
+        Route::get('seating/{event}/tickets/{ticket}/unseat', [SeatingPlanController::class, 'unseat'])->name('seatingplans.unseat');
+        Route::get('seating/{event}/tickets/{ticket}', [SeatingPlanController::class, 'show'])->name('seatingplans.choose');
+        Route::get('seating/{event}/tickets/{ticket}/pick/{seat}', [SeatingPlanController::class, 'select'])->name('seatingplans.select');
 
         Route::get('seats/{seat}', [SeatController::class, 'edit'])->name('seats.edit');
         Route::match(['PUT', 'PATCH'], 'seats/{seat}', [SeatController::class, 'update'])->name('seats.update');

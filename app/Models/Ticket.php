@@ -74,4 +74,18 @@ class Ticket extends Model
         }
         return true;
     }
+
+    public function canBeManagedBy(User $user): bool
+    {
+        if ($user->id === $this->user_id) {
+            return true;
+        }
+
+        $thisTicketClans = $this->user->clanMemberships()->pluck('clan_id');
+        $userClans = $user->clanMemberships()->whereHas('role', function($query) {
+            $query->whereIn('code', ['leader', 'seatmanager']);
+        })->pluck('clan_id');
+        $common = $thisTicketClans->intersect($userClans);
+        return $common->count() > 0;
+    }
 }

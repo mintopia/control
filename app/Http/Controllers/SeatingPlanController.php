@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
+use App\Models\Seat;
+use App\Models\Ticket;
 use Illuminate\Http\Request;
 
 class SeatingPlanController extends Controller
@@ -15,32 +17,34 @@ class SeatingPlanController extends Controller
         ]);
     }
 
-    public function show(Request $request, Event $event)
+    public function show(Request $request, Event $event, ?Ticket $ticket = null)
     {
         if ($event->seating_locked) {
             $request->session()->now('infoMessage', 'Seating is locked');
         }
+        if ($ticket && (!$ticket->canPickSeat() || !$ticket->canBeManagedBy($request->user()))) {
+            return response()->redirectToRoute('seatingplans.show', $event->code)->with('errorMessage', 'You cannot pick a seat for this ticket');
+        }
+
+        $currentTicket = $ticket;
+
         // Get clans and tickets (left-hand sidebar)
-        $clans = [];
         $seatManagerClans = [];
-        foreach ($request->user()->clanMemberships()->with('clan', 'role')->get() as $clanMember) {
-            $clans[] = $clanMember->clan;
-            $clanIds[] = $clanMember->clan->id;
+        $allClans = [];
+        foreach ($request->user()->clanMemberships()->with('role')->get() as $clanMember) {
+            $allClans[] = $clanMember->clan_id;
             if (in_array($clanMember->role->code, ['leader', 'seatmanager'])) {
-                $seatManagerClans[] = $clanMember->clan->id;
+                $seatManagerClans[] = $clanMember->clan_id;
             }
         }
-        $clans = $request->user()->clanMemberships()->with('clan')->get()->pluck('clan');
-        $clanIds = $clans->pluck('id');
+
         $allTickets = $event->tickets()
             ->whereHas('type', function ($query) {
                 $query->where('has_seat', true);
             })
-            ->whereUserId($request->user()->id)->orWhere(function ($query) use ($clanIds) {
-                $query->whereHas('user', function ($query) use ($clanIds) {
-                    $query->whereHas('clanmemberships', function ($query) use ($clanIds) {
-                        $query->whereIn('clan_id', $clanIds);
-                    });
+            ->whereUserId($request->user()->id)->orWhere(function ($query) use ($allClans) {
+                $query->whereHas('user.clanmemberships', function ($query) use ($allClans) {
+                    $query->whereIn('clan_id', $allClans);
                 });
             })
             ->with(['type', 'seat', 'event', 'user' => function ($query) {
@@ -48,15 +52,17 @@ class SeatingPlanController extends Controller
             }, 'user.clanMemberships'])
             ->get();
 
-        $tickets = [
-            0 => [],
-        ];
         $clanSeats = [];
         $mySeats = [];
+        $responsibleTickets = [];
         $responsibleSeats = [];
+
         foreach ($allTickets as $ticket) {
+            if (!$ticket->canPickSeat()) {
+                continue;
+            }
             if ($ticket->user->id === $request->user()->id) {
-                $tickets[0][] = $ticket;
+                array_unshift($responsibleTickets, $ticket);
                 if ($ticket->seat) {
                     $mySeats[] = $ticket->seat->id;
                     $responsibleSeats[] = $ticket->seat->id;
@@ -64,13 +70,13 @@ class SeatingPlanController extends Controller
                 continue;
             }
             foreach ($ticket->user->clanMemberships as $clanMember) {
-                if (!isset($tickets[$clanMember->clan_id])) {
-                    $tickets[$clanMember->clan_id] = [];
-                }
-                $tickets[$clanMember->clan_id][] = $ticket;
                 if ($ticket->seat) {
                     $clanSeats[] = $ticket->seat->id;
-                    if (in_array($clanMember->clan_id, $seatManagerClans)) {
+                }
+
+                if (in_array($clanMember->clan_id, $seatManagerClans)) {
+                    $responsibleTickets[] = $ticket;
+                    if ($ticket->seat) {
                         $responsibleSeats[] = $ticket->seat->id;
                     }
                 }
@@ -84,14 +90,14 @@ class SeatingPlanController extends Controller
         }
 
         $params = [
-            'clans' => $clans,
-            'tickets' => $tickets,
             'allTickets' => $allTickets,
             'event' => $event,
             'seats' => $seats,
             'mySeats' => $mySeats,
             'clanSeats' => $clanSeats,
             'responsibleSeats' => $responsibleSeats,
+            'responsibleTickets' => $responsibleTickets,
+            'currentTicket' => $currentTicket,
         ];
 
         $view = 'seatingplans.show';
@@ -110,5 +116,45 @@ class SeatingPlanController extends Controller
         }
 
         return view($view, $params);
+    }
+
+    public function select(Request $request, Event $event, Ticket $ticket, Seat $seat)
+    {
+        if (!$ticket->canPickSeat() || !$ticket->canBeManagedBy($request->user())) {
+            return response()->redirectToRoute('seatingplans.show', $event->code)->with('errorMessage', 'You cannot pick a seat for this ticket')->withFragment("tab-plan-{$seat->plan->code}");
+        }
+
+        if (!$seat->canPick($request->user())) {
+            return response()->redirectToRoute('seatingplans.show', [$event->code, $ticket->id])->with('errorMessage', "That seat is not available")->withFragment("tab-plan-{$seat->plan->code}");
+        }
+
+        if ($ticket->seat) {
+            $oldSeat = $ticket->seat;
+            $oldSeat->ticket()->disassociate();
+            if ($oldSeat->seating_plan_id !== $seat->seating_plan_id) {
+                $oldSeat->save();
+            } else {
+                $oldSeat->saveQuietly();
+            }
+        }
+
+        $seat->ticket()->associate($ticket);
+        $seat->save();
+        return response()->redirectToRoute('seatingplans.show', $event->code)->with('successMessage', "You have chosen {$seat->label}");
+    }
+
+    public function unseat(Request $request, Event $event, Ticket $ticket)
+    {
+        if (!$ticket->canPickSeat() || !$ticket->canBeManagedBy($request->user())) {
+            return response()->redirectToRoute('seatingplans.show', $event->code)->with('errorMessage', 'You cannot unseat this ticket')->withFragment("tab-plan-{$seat->plan->code}");
+        }
+
+        if ($ticket->seat) {
+            $seat = $ticket->seat;
+            $seat->ticket()->disassociate();
+            $seat->save();
+        }
+
+        return response()->redirectToRoute('seatingplans.show', $event->code)->with('successMessage', "The ticket has been removed from that seat");
     }
 }

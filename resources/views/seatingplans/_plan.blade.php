@@ -7,6 +7,10 @@
     >
         @foreach($seats[$plan->id] ?? [] as $seat)
             @php
+                $url = null;
+                if ($currentTicket) {
+                    $url = route('seatingplans.select', [$event->code, $currentTicket->id, $seat->id]);
+                }
                 $class = 'available';
                 $name = 'Available';
                 $canPick = $seat->canPick;
@@ -19,12 +23,15 @@
                 }
                 if ($seat->ticket) {
                     $class = 'taken';
-                    if (!in_array($seat->id, $responsibleSeats)) {
+                    $canPick = false;
+                }
+                if (!$currentTicket) {
+                    if (in_array($seat->id, $responsibleSeats)) {
+                        $canPick = true;
+                        $url = route('seatingplans.choose', [$event->code, $seat->ticketId]);
+                    } else {
                         $canPick = false;
                     }
-                }
-                if (count($allTickets) === 0) {
-                    $canPick = false;
                 }
 
                 if (in_array($seat->id, $clanSeats)) {
@@ -46,7 +53,7 @@
             @endphp
             <{{ $canPick ? 'a' : 'div' }} class="d-block seat {{ $seat->class }} {{ $class }}"
             @if($canPick)
-                href="{{ route('seats.edit', $seat->id) }}"
+                href="{{ $url }}"
             @endif
             style="left: {{ $seat->x * 2 }}em; top: {{ $seat->y * 2 }}em;"
             data-bs-trigger="hover" data-bs-toggle="popover"
