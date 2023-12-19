@@ -192,12 +192,12 @@
                     <div class="col-lg-auto ms-lg-auto">
                         <ul class="list-inline list-inline-dots mb-0">
                             @if(\App\Models\Setting::fetch('terms'))
-                                <li>
+                                <li class="list-inline-item">
                                     <a href="@setting('terms')" target="_blank" class="link-secondary">Terms and Conditions</a>
                                 </li>
                             @endif
                             @if(\App\Models\Setting::fetch('privacypolicy'))
-                                <li>
+                                <li class="list-inline-item">
                                     <a href="@setting('privacypolicy')" target="_blank" class="link-secondary">Privacy Policy</a>
                                 </li>
                             @endif
