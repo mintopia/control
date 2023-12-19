@@ -36,7 +36,7 @@ class TicketController extends Controller
 
         if ($request->input('event')) {
             $filters->event = $request->input('event');
-            $query = $query->whereHas('event', function($query) use ($filters) {
+            $query = $query->whereHas('event', function ($query) use ($filters) {
                 $query->whereCode($filters->event);
             });
         }
@@ -73,7 +73,7 @@ class TicketController extends Controller
             default:
                 $params['order'] = 'id';
                 break;
-        };
+        }
 
         switch ($request->input('order_direction', 'asc')) {
             case 'desc':
@@ -134,6 +134,14 @@ class TicketController extends Controller
         return response()->redirectToRoute('admin.tickets.show', $ticket->id)->with('successMessage', 'The ticket has been added');
     }
 
+    protected function updateObject(Ticket $ticket, Request $request)
+    {
+        $ticket->reference = $request->input('reference');
+        $ticket->user_id = $request->input('user_id');
+        $ticket->ticket_type_id = $request->input('ticket_type_id');
+        $ticket->save();
+    }
+
     public function show(Ticket $ticket)
     {
         return view('admin.tickets.show', [
@@ -154,24 +162,16 @@ class TicketController extends Controller
         return response()->redirectToRoute('admin.tickets.show', $ticket->id)->with('successMessage', 'The ticket has been updated');
     }
 
-    public function delete(Ticket $ticket)
-    {
-        return view('admin.tickets.delete', [
-            'ticket' => $ticket,
-        ]);
-    }
-
     public function destroy(Ticket $ticket)
     {
         $ticket->delete();
         return response()->redirectToRoute('admin.tickets.index')->with('successMessage', 'The ticket has been deleted');
     }
 
-    protected function updateObject(Ticket $ticket, Request $request)
+    public function delete(Ticket $ticket)
     {
-        $ticket->reference = $request->input('reference');
-        $ticket->user_id = $request->input('user_id');
-        $ticket->ticket_type_id = $request->input('ticket_type_id');
-        $ticket->save();
+        return view('admin.tickets.delete', [
+            'ticket' => $ticket,
+        ]);
     }
 }

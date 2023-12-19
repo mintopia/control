@@ -5,7 +5,6 @@ namespace App\Policies;
 use App\Models\ClanMembership;
 use App\Models\ClanRole;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class ClanMembershipPolicy
 {

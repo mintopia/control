@@ -16,7 +16,8 @@
         <div class="mb-3">
             <label class="form-label required">Nickname</label>
             <div>
-                <input type="text" name="nickname" class="form-control @error('nickname') is-invalid @enderror" placeholder="Nickname" value="{{ old('nickname', $user->nickname ?? '') }}">
+                <input type="text" name="nickname" class="form-control @error('nickname') is-invalid @enderror"
+                       placeholder="Nickname" value="{{ old('nickname', $user->nickname ?? '') }}">
                 <small class="form-hint">Your preferred nickname</small>
                 @error('nickname')
                 <p class="invalid-feedback">{{ $message }}</p>
@@ -26,7 +27,8 @@
         <div class="mb-3">
             <label class="form-label required">Name</label>
             <div>
-                <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" placeholder="Name" value="{{ old('name', $user->name ?? '') }}">
+                <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
+                       placeholder="Name" value="{{ old('name', $user->name ?? '') }}">
                 <small class="form-hint">Your first name and surname</small>
                 @error('name')
                 <p class="invalid-feedback">{{ $message }}</p>

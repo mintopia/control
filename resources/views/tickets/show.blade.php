@@ -30,7 +30,7 @@
                             <div class="datagrid-item">
                                 <div class="datagrid-title">QR Code</div>
                                 <div class="datagrid-content">
-                                    <img src="{{ $ticket->qrcode }}" />
+                                    <img src="{{ $ticket->qrcode }}"/>
                                 </div>
                             </div>
                             <div class="datagrid-item d-none d-print-block">
@@ -61,7 +61,8 @@
                                     @if($ticket->seat)
                                         <a href="{{ route('seatingplans.show', $ticket->event->code) }}#{{ $ticket->seat->label }}">{{ $ticket->seat->label }}</a>
                                     @elseif($ticket->canPickSeat())
-                                        None - <a href="{{ route('seatingplans.show', $ticket->event->code) }}">Choose Seat</a>
+                                        None - <a href="{{ route('seatingplans.show', $ticket->event->code) }}">Choose
+                                            Seat</a>
                                     @else
                                         <span class="text-muted">None</span>
                                     @endif
@@ -82,10 +83,12 @@
                 <div class="card-body">
                     @if($ticket->canTransfer())
                         <p>
-                            If you want to transfer this ticket to another person, you can generate a Ticket Transfer Code.
+                            If you want to transfer this ticket to another person, you can generate a Ticket Transfer
+                            Code.
                         </p>
                         <p>
-                            The other person will be able to enter this code and the ticket will be removed from your account
+                            The other person will be able to enter this code and the ticket will be removed from your
+                            account
                             and added to theirs.
                         </p>
                         @if($ticket->transfer_code)
@@ -106,7 +109,8 @@
                             {{ method_field('PATCH') }}
                             <div class="btn-list w-100 justify-content-end">
                                 @if($ticket->transfer_code)
-                                    <button type="submit" class="btn btn-outline-danger d-inline-block me-auto" name="remove">
+                                    <button type="submit" class="btn btn-outline-danger d-inline-block me-auto"
+                                            name="remove">
                                         <i class="icon ti ti-x"></i>
                                         Remove
                                     </button>

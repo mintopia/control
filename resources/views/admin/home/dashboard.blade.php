@@ -22,7 +22,9 @@
                             </span>
                         </div>
                         <div class="col">
-                            <div class="font-weight-medium"><a href="{{ route('admin.users.index') }}" class="text-body text-decoration-none stretched-link">{{ $stats->users->total }} Users</a></div>
+                            <div class="font-weight-medium"><a href="{{ route('admin.users.index') }}"
+                                                               class="text-body text-decoration-none stretched-link">{{ $stats->users->total }}
+                                    Users</a></div>
                             <div class="text-secondary">
                                 {{ $stats->users->lastWeek }} in the last week
                             </div>
@@ -42,7 +44,9 @@
                             </span>
                             </div>
                             <div class="col">
-                                <div class="font-weight-medium"><a href="{{ route('admin.events.show', $event->code) }}" class="text-body text-decoration-none stretched-link">{{ $event->name }}</a></div>
+                                <div class="font-weight-medium"><a href="{{ route('admin.events.show', $event->code) }}"
+                                                                   class="text-body text-decoration-none stretched-link">{{ $event->name }}</a>
+                                </div>
                                 <div class="text-secondary">
                                     {{ $event->tickets()->count() }} tickets
                                 </div>

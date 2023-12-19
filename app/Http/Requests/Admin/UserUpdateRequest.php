@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -31,7 +32,7 @@ class UserUpdateRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -47,7 +48,7 @@ class UserUpdateRequest extends FormRequest
             'primary_email_id' => [
                 'required',
                 'integer',
-                Rule::exists('email_addresses', 'id')->where(function(Builder $query) {
+                Rule::exists('email_addresses', 'id')->where(function (Builder $query) {
                     return $query->where('user_id', $this->user->id);
                 }),
             ],

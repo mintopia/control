@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\TicketProviderUpdateRequest;
 use App\Models\TicketProvider;
-use Illuminate\Http\Request;
 
 class TicketProviderController extends Controller
 {

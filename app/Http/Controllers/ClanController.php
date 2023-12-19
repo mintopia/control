@@ -13,7 +13,7 @@ class ClanController extends Controller
     {
         $clans = $request->user()
             ->clanMemberships()
-            ->with(['clan' => function($query) {
+            ->with(['clan' => function ($query) {
                 $query->orderBy('name', 'ASC');
             }, 'clan.members', 'role'])
             ->paginate();
@@ -30,17 +30,23 @@ class ClanController extends Controller
     public function store(ClanRequest $request)
     {
         $clan = new Clan();
-        DB::transaction(function() use ($request, $clan) {
+        DB::transaction(function () use ($request, $clan) {
             $this->updateObject($clan, $request);
             $clan->addUser($request->user(), 'leader');
         });
         return response()->redirectToRoute('clans.show', $clan->code)->with('successMessage', 'The clan has been created');
     }
 
+    protected function updateObject(Clan $clan, ClanRequest $request)
+    {
+        $clan->name = $request->input('name');
+        $clan->save();
+    }
+
     public function show(Clan $clan)
     {
         $members = $clan->members()->with([
-            'user' => function($query) {
+            'user' => function ($query) {
                 $query->orderBy('nickname', 'ASC');
             },
             'role',
@@ -71,22 +77,16 @@ class ClanController extends Controller
         return response()->redirectToRoute('clans.show', $clan->code)->with('successMessage', 'The code has been regenerated');
     }
 
-    public function delete(Clan $clan)
-    {
-        return view('clans.delete', [
-            'clan' => $clan,
-        ]);
-    }
-
     public function destroy(Clan $clan)
     {
         $clan->delete();
         return response()->redirectToRoute('clans.index')->with('successMessage', 'The clan has been deleted');
     }
 
-    protected function updateObject(Clan $clan, ClanRequest $request)
+    public function delete(Clan $clan)
     {
-        $clan->name = $request->input('name');
-        $clan->save();
+        return view('clans.delete', [
+            'clan' => $clan,
+        ]);
     }
 }

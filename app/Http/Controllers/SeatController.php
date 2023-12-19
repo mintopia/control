@@ -30,6 +30,13 @@ class SeatController extends Controller
         ]);
     }
 
+    protected function assignSeat(Seat $seat, Ticket $ticket)
+    {
+        $seat->ticket()->associate($ticket);
+        $seat->save();
+        return response()->redirectToRoute('seatingplans.show', $ticket->event->code)->with('successMessage', "You have chosen {$seat->label}")->withFragment("tab-plan-{$seat->plan->code}");
+    }
+
     public function update(SeatPickRequest $request, Seat $seat)
     {
         if (!$seat->canPick($request->user())) {
@@ -44,12 +51,5 @@ class SeatController extends Controller
             }
         }
         return $this->assignSeat($seat, $ticket);
-    }
-
-    protected function assignSeat(Seat $seat, Ticket $ticket)
-    {
-        $seat->ticket()->associate($ticket);
-        $seat->save();
-        return response()->redirectToRoute('seatingplans.show', $ticket->event->code)->with('successMessage', "You have chosen {$seat->label}")->withFragment("tab-plan-{$seat->plan->code}");
     }
 }

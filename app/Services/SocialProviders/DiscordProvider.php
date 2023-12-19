@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\SocialProviders;
 
 use App\Models\LinkedAccount;

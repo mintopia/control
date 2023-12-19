@@ -29,35 +29,6 @@ class EventMappingController extends Controller
         return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The event mapping has been added');
     }
 
-    public function edit(Event $event, EventMapping $mapping)
-    {
-        return view('admin.eventmappings.edit', [
-            'availableMappings' => $event->getAvailableEventMappings($mapping),
-            'event' => $event,
-            'mapping' => $mapping,
-        ]);
-    }
-
-    public function update(EventMappingUpdateRequest $request, Event $event, EventMapping $mapping)
-    {
-        $this->updateObject($mapping, $request);
-        return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The event mapping has been updated');
-    }
-
-    public function delete(Event $event, EventMapping $mapping)
-    {
-        return view('admin.eventmappings.delete', [
-            'event' => $event,
-            'mapping' => $mapping,
-        ]);
-    }
-
-    public function destroy(Event $event, EventMapping $mapping)
-    {
-        $mapping->delete();
-        return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The event mapping has been deleted');
-    }
-
     protected function updateObject(EventMapping $mapping, Request $request)
     {
         [$providerId, $externalId] = explode(':', $request->input('external_id'));
@@ -73,5 +44,34 @@ class EventMappingController extends Controller
             }
         }
         $mapping->save();
+    }
+
+    public function edit(Event $event, EventMapping $mapping)
+    {
+        return view('admin.eventmappings.edit', [
+            'availableMappings' => $event->getAvailableEventMappings($mapping),
+            'event' => $event,
+            'mapping' => $mapping,
+        ]);
+    }
+
+    public function update(EventMappingUpdateRequest $request, Event $event, EventMapping $mapping)
+    {
+        $this->updateObject($mapping, $request);
+        return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The event mapping has been updated');
+    }
+
+    public function destroy(Event $event, EventMapping $mapping)
+    {
+        $mapping->delete();
+        return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The event mapping has been deleted');
+    }
+
+    public function delete(Event $event, EventMapping $mapping)
+    {
+        return view('admin.eventmappings.delete', [
+            'event' => $event,
+            'mapping' => $mapping,
+        ]);
     }
 }

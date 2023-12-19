@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SocialProviderUpdateRequest;
 use App\Models\SocialProvider;
-use Illuminate\Http\Request;
 
 class SocialProviderController extends Controller
 {

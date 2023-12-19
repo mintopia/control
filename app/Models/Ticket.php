@@ -11,43 +11,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use function App\makeCode;
 
 /**
- * App\Models\Ticket
- *
- * @property int $id
- * @property int $ticket_provider_id
- * @property int $user_id
- * @property string $external_id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket query()
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereExternalId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereTicketProviderId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereUserId($value)
- * @property-read \App\Models\TicketProvider|null $provider
- * @property-read \App\Models\User $user
- * @property int $event_id
- * @property string $name
- * @property-read \App\Models\Event $event
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereEventId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereName($value)
- * @property int $ticket_type_id
- * @property string $reference
- * @property string $qrcode
- * @property-read \App\Models\TicketType $type
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereQrcode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereReference($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereTicketTypeId($value)
- * @property string|null $transfer_code
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereTransferCode($value)
- * @property int|null $seat_id
- * @property-read \App\Models\Seat|null $seat
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereSeatId($value)
- * @mixin \Eloquent
  * @mixin IdeHelperTicket
  */
 class Ticket extends Model

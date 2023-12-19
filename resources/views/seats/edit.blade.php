@@ -5,7 +5,8 @@
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
     <li class="breadcrumb-item"><a href="{{ route('seatingplans.index') }}">Seating Plans</a></li>
-    <li class="breadcrumb-item active"><a href="{{ route('seatingplans.show', $seat->plan->event->code) }}">{{ $seat->plan->event->name }}</a></li>
+    <li class="breadcrumb-item active"><a
+            href="{{ route('seatingplans.show', $seat->plan->event->code) }}">{{ $seat->plan->event->name }}</a></li>
     <li class="breadcrumb-item active"><a href="{{ route('seats.edit', $seat->id) }}">{{ $seat->label }}</a></li>
 @endsection
 
@@ -22,7 +23,8 @@
                 <h3 class="card-title">Ticket</h3>
                 @if ($seat->ticket)
                     <p>
-                        This seat is already occupied by {{ $seat->ticket->user->nickname }}. Do you want to unseat or swap them?
+                        This seat is already occupied by {{ $seat->ticket->user->nickname }}. Do you want to unseat or
+                        swap them?
                     </p>
                     <div class="mb-3">
                         <label class="form-check form-check-inline">
@@ -38,7 +40,7 @@
                 <p>Select the ticket to assign to {{ $seat->label }}</p>
 
                 @error('ticket_id')
-                    <p class="invalid-feedback">{{ $message }}</p>
+                <p class="invalid-feedback">{{ $message }}</p>
                 @enderror
                 <p>
                     @php($checked = false)
@@ -47,7 +49,8 @@
                             @continue
                         @endif
                         <label class="form-check">
-                            <input class="form-check-input" type="radio" name="ticket_id" value="{{ $ticket->id }}" @if(!$checked) checked @endif>
+                            <input class="form-check-input" type="radio" name="ticket_id" value="{{ $ticket->id }}"
+                                   @if(!$checked) checked @endif>
                             <span class="form-check-label">
                                 {{ $ticket->user->nickname }}
 

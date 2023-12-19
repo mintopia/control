@@ -6,7 +6,8 @@
     @include('admin.users._breadcrumbs', [
         'user' => $email->user,
     ])
-    <li class="breadcrumb-item active"><a href="{{ route('admin.users.emails.create', $email->user->id) }}">Add Email Address</a>
+    <li class="breadcrumb-item active"><a href="{{ route('admin.users.emails.create', $email->user->id) }}">Add Email
+            Address</a>
         @endsection
 
         @section('content')

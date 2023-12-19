@@ -8,43 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * App\Models\LinkedAccount
- *
- * @property int $id
- * @property int $user_id
- * @property string $service
- * @property string|null $external_id
- * @property string|null $name
- * @property string|null $avatar_url
- * @property string|null $access_token
- * @property string|null $refresh_token
- * @property \Illuminate\Support\Carbon|null $refresh_token_expires_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\User $user
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount query()
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereAccessToken($value)
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereAvatarUrl($value)
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereExternalId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereRefreshToken($value)
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereRefreshTokenExpiresAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereService($value)
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereUserId($value)
- * @property string|null $access_token_expires_at
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereAccessTokenExpiresAt($value)
- * @property int|null $email_address_id
- * @property-read \App\Models\EmailAddress|null $email
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereEmailAddressId($value)
- * @property int|null $social_provider_id
- * @property-read \App\Models\SocialProvider|null $provider
- * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereSocialProviderId($value)
- * @mixin \Eloquent
  * @mixin IdeHelperLinkedAccount
  */
 class LinkedAccount extends Model
@@ -90,8 +53,8 @@ class LinkedAccount extends Model
         }
 
         // If it is for auth, they must have at least one other auth
-        return $this->user->accounts()->whereHas('provider', function($query) {
-            $query->where('auth_enabled', true);
-        })->count() > 1;
+        return $this->user->accounts()->whereHas('provider', function ($query) {
+                $query->where('auth_enabled', true);
+            })->count() > 1;
     }
 }

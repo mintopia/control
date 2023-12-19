@@ -4,7 +4,8 @@
 
 @section('breadcrumbs')
     @include('admin.seatingplans._breadcrumbs')
-    <li class="breadcrumb-item active"><a href="{{ route('admin.events.seatingplans.import', [$event->code, $plan->id]) }}">Import Seats</a></li>
+    <li class="breadcrumb-item active"><a
+            href="{{ route('admin.events.seatingplans.import', [$event->code, $plan->id]) }}">Import Seats</a></li>
 @endsection
 
 @section('content')
@@ -13,7 +14,8 @@
     </div>
 
     <div class="col-md-6 offset-md-3">
-        <form action="{{ route('admin.events.seatingplans.import', [$event->code, $plan->id]) }}" method="post" class="card"  enctype="multipart/form-data">
+        <form action="{{ route('admin.events.seatingplans.import', [$event->code, $plan->id]) }}" method="post"
+              class="card" enctype="multipart/form-data">
             {{ csrf_field() }}
             <div class="card-body">
                 <p>
@@ -41,7 +43,8 @@
                 <div class="mb-3">
                     <label class="form-label">CSV File</label>
                     <div>
-                        <input type="file" name="csv" class="form-control @error('csv') is-invalid @enderror" accept=".csv,text/csv">
+                        <input type="file" name="csv" class="form-control @error('csv') is-invalid @enderror"
+                               accept=".csv,text/csv">
                         <small class="form-hint">The CSV file containing seats to import</small>
                         @error('csv')
                         <p class="invalid-feedback">{{ $message }}</p>
@@ -50,7 +53,8 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-check form-switch">
-                        <input type="checkbox" class="form-check-input" name="wipe" value="1" @if(old('wipe')) checked @endif>
+                        <input type="checkbox" class="form-check-input" name="wipe" value="1"
+                               @if(old('wipe')) checked @endif>
                         Remove all existing seats
                     </label>
                 </div>
@@ -58,7 +62,8 @@
 
             <div class="card-footer text-end">
                 <div class="d-flex">
-                    <a href="{{ route('admin.events.seatingplans.show', [$event->code, $plan->id]) }}" class="btn btn-link">Cancel</a>
+                    <a href="{{ route('admin.events.seatingplans.show', [$event->code, $plan->id]) }}"
+                       class="btn btn-link">Cancel</a>
                     <button type="submit" class="btn btn-primary ms-auto">Save</button>
                 </div>
             </div>

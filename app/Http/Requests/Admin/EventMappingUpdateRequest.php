@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Admin;
 
 use App\Models\TicketProvider;
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class EventMappingUpdateRequest extends FormRequest
@@ -18,14 +20,14 @@ class EventMappingUpdateRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
             'external_id' => [
                 'required',
-                function (string $attribute, mixed $value, \Closure $fail) {
+                function (string $attribute, mixed $value, Closure $fail) {
                     [$provider_id, $external_id] = explode(':', $value);
                     if (!$provider_id || !$external_id) {
                         $fail('Invalid event specified');

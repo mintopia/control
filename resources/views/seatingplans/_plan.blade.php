@@ -4,7 +4,7 @@
             background-image:url('{{ $plan->image_url }}');
         @endif
         min-height: {{ (collect($seats[$plan->id] ?? [])->max('y') * 2) + 4 }}em;"
-        >
+    >
         @foreach($seats[$plan->id] ?? [] as $seat)
             @php
                 $class = 'available';
@@ -45,13 +45,16 @@
 
             @endphp
             <{{ $canPick ? 'a' : 'div' }} class="d-block seat {{ $seat->class }} {{ $class }}"
-                 @if($canPick) href="{{ route('seats.edit', $seat->id) }}" @endif
-                 style="left: {{ $seat->x * 2 }}em; top: {{ $seat->y * 2 }}em;"
-                 data-bs-trigger="hover" data-bs-toggle="popover"
-                 data-bs-placement="right" data-bs-html="true"
-                 title="{{ $seat->description }} {{ $seat->label }}"
-                 data-bs-content="{{ $tooltipContents }}"
-            ></{{ $canPick ? 'a' : 'div' }}>
-        @endforeach
-    </div>
+            @if($canPick)
+                href="{{ route('seats.edit', $seat->id) }}"
+            @endif
+            style="left: {{ $seat->x * 2 }}em; top: {{ $seat->y * 2 }}em;"
+            data-bs-trigger="hover" data-bs-toggle="popover"
+            data-bs-placement="right" data-bs-html="true"
+            title="{{ $seat->description }} {{ $seat->label }}"
+            data-bs-content="{{ $tooltipContents }}"
+            >
+    </{{ $canPick ? 'a' : 'div' }}>
+    @endforeach
+</div>
 </div>

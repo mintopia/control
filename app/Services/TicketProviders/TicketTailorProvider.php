@@ -1,11 +1,11 @@
 <?php
+
 namespace App\Services\TicketProviders;
 
 use App\Exceptions\TicketProviderWebhookException;
 use App\Models\EmailAddress;
 use App\Models\Event;
 use App\Models\Ticket;
-use App\Models\TicketProvider;
 use App\Models\TicketType;
 use App\Models\User;
 use Carbon\Carbon;
@@ -75,37 +75,6 @@ class TicketTailorProvider extends AbstractTicketProvider
         return true;
     }
 
-    protected function getClient(): Client
-    {
-        if (!$this->client) {
-            $this->client = new Client([
-                'base_uri' => config('services.tickettailor.endpoint'),
-                'verify' => config('services.tickettailor.verifytls'),
-                'auth' => [$this->apikey, '']
-            ]);
-        }
-        return $this->client;
-    }
-    public function syncTicket(string $id): ?Ticket
-    {
-        try {
-            $response = $this->getClient()->get("/v1/issued_tickets/{$id}");
-        } catch (ClientException $exception) {
-            if ($exception->getResponse()->getStatusCode() === 404) {
-                // Ticket doesn't exist
-                $ticket = Ticket::whereTicketProviderId($this->provider->id)->whereExternalId($id)->first();
-                if ($ticket) {
-                    $ticket->delete();
-                }
-                return null;
-            }
-            throw $exception;
-        }
-
-        $data = json_decode($response->getBody());
-        return $this->processTicket($data);
-    }
-
     protected function processTicket(object $data): ?Ticket
     {
         $ticket = Ticket::whereTicketProviderId($this->provider->id)->whereExternalId($data->id)->first();
@@ -131,6 +100,82 @@ class TicketTailorProvider extends AbstractTicketProvider
             }
         }
         return $ticket;
+    }
+
+    protected function makeTicket(User $user, object $data): ?Ticket
+    {
+        $event = $this->getEvent($data->event_id);
+        if (!$event) {
+            Log::info("{$this->provider} {$data->id} not added. Unable to find event {$data->event_id}");
+            return null;
+        }
+        $type = $this->getType($data->ticket_type_id);
+        if (!$type) {
+            Log::info("{$this->provider} {$data->id} not added. Unable to find ticket type {$data->ticket_type_id}");
+            return null;
+        }
+        $ticket = new Ticket;
+        $ticket->provider()->associate($this->provider);
+        $ticket->user()->associate($user);
+        $ticket->event()->associate($event);
+        $ticket->type()->associate($type);
+        $ticket->external_id = $data->id;
+        $ticket->name = $data->description;
+        $ticket->reference = $data->barcode;
+        $ticket->qrcode = $this->getQrCode($data);
+        $ticket->save();
+        return $ticket;
+    }
+
+    protected function getEvent(string $externalId): ?Event
+    {
+        return Event::whereHas('mappings', function ($query) use ($externalId) {
+            $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
+        })->first();
+    }
+
+    protected function getType(string $externalId): ?TicketType
+    {
+        return TicketType::whereHas('mappings', function ($query) use ($externalId) {
+            $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
+        })->first();
+    }
+
+    protected function getQrCode(object $data): string
+    {
+        return str_replace(['/st/', '.jpg'], ['/qr/', '.png'], $data->barcode_url);
+    }
+
+    public function syncTicket(string $id): ?Ticket
+    {
+        try {
+            $response = $this->getClient()->get("/v1/issued_tickets/{$id}");
+        } catch (ClientException $exception) {
+            if ($exception->getResponse()->getStatusCode() === 404) {
+                // Ticket doesn't exist
+                $ticket = Ticket::whereTicketProviderId($this->provider->id)->whereExternalId($id)->first();
+                if ($ticket) {
+                    $ticket->delete();
+                }
+                return null;
+            }
+            throw $exception;
+        }
+
+        $data = json_decode($response->getBody());
+        return $this->processTicket($data);
+    }
+
+    protected function getClient(): Client
+    {
+        if (!$this->client) {
+            $this->client = new Client([
+                'base_uri' => config('services.tickettailor.endpoint'),
+                'verify' => config('services.tickettailor.verifytls'),
+                'auth' => [$this->apikey, '']
+            ]);
+        }
+        return $this->client;
     }
 
     public function syncTickets(EmailAddress $email): void
@@ -184,31 +229,6 @@ class TicketTailorProvider extends AbstractTicketProvider
         }
     }
 
-    protected function makeTicket(User $user, object $data): ?Ticket
-    {
-        $event = $this->getEvent($data->event_id);
-        if (!$event) {
-            Log::info("{$this->provider} {$data->id} not added. Unable to find event {$data->event_id}");
-            return null;
-        }
-        $type = $this->getType($data->ticket_type_id);
-        if (!$type) {
-            Log::info("{$this->provider} {$data->id} not added. Unable to find ticket type {$data->ticket_type_id}");
-            return null;
-        }
-        $ticket = new Ticket;
-        $ticket->provider()->associate($this->provider);
-        $ticket->user()->associate($user);
-        $ticket->event()->associate($event);
-        $ticket->type()->associate($type);
-        $ticket->external_id = $data->id;
-        $ticket->name = $data->description;
-        $ticket->reference = $data->barcode;
-        $ticket->qrcode = $this->getQrCode($data);
-        $ticket->save();
-        return $ticket;
-    }
-
     public function getEvents(): array
     {
         $key = "ticketproviders.{$this->provider->id}.{$this->provider->cache_prefix}.events";
@@ -250,24 +270,5 @@ class TicketTailorProvider extends AbstractTicketProvider
         }
         Cache::put($key, $types, self::TICKET_TYPES_CACHE_TTL);
         return $types;
-    }
-
-    protected function getType(string $externalId): ?TicketType
-    {
-        return TicketType::whereHas('mappings', function($query) use ($externalId) {
-            $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
-        })->first();
-    }
-
-    protected function getEvent(string $externalId): ?Event
-    {
-        return Event::whereHas('mappings', function ($query) use ($externalId) {
-            $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
-        })->first();
-    }
-
-    protected function getQrCode(object $data): string
-    {
-        return str_replace(['/st/', '.jpg'], ['/qr/', '.png'], $data->barcode_url);
     }
 }

@@ -64,7 +64,8 @@
                     @if ($currentTicket->seat)
                         <div class="card-footer align-content-end d-flex btn-list">
                             <a href="{{ route('admin.events.seats', $event->code) }}" class="btn btn-link">Cancel</a>
-                            <a href="{{ route('admin.events.seats.unseat', [$event->code, $currentTicket->id]) }}" class="btn btn-primary-outline ms-auto">
+                            <a href="{{ route('admin.events.seats.unseat', [$event->code, $currentTicket->id]) }}"
+                               class="btn btn-primary-outline ms-auto">
                                 <i class="icon ti ti-door-exit"></i>
                                 Unseat
                             </a>
@@ -80,25 +81,26 @@
                             Select a ticket to choose a seat.
                         </p>
                         <ul class="list-unstyled">
-                        @foreach($tickets as $ticket)
-                            <li class="my-1">
-                                <a href="{{ route('admin.events.seats', ['event' => $event, 'ticket_id' => $ticket->id]) }}">
-                                    {{ $ticket->user->nickname }}</a>
-                                <span class="badge-list">
+                            @foreach($tickets as $ticket)
+                                <li class="my-1">
+                                    <a href="{{ route('admin.events.seats', ['event' => $event, 'ticket_id' => $ticket->id]) }}">
+                                        {{ $ticket->user->nickname }}</a>
+                                    <span class="badge-list">
                                     @foreach($ticket->user->clanMemberships as $clanMember)
-                                        <span class="badge bg-muted text-muted-fg">{{ $clanMember->clan->name }}</span>
-                                    @endforeach
+                                            <span
+                                                class="badge bg-muted text-muted-fg">{{ $clanMember->clan->name }}</span>
+                                        @endforeach
                                 </span>
-                            </li>
-                        @endforeach
+                                </li>
+                            @endforeach
                         </ul>
                     </div>
                 </div>
             @endif
             @if(count($tickets) === 0 && !$currentTicket)
-                    <p class="text-center mt-4">
-                        <i class="icon ti ti-ticket-off icon-lg text-muted m-6 mt-4"></i>
-                    </p>
+                <p class="text-center mt-4">
+                    <i class="icon ti ti-ticket-off icon-lg text-muted m-6 mt-4"></i>
+                </p>
             @endif
         </div>
         <div class="col-md-9">
@@ -106,20 +108,24 @@
                 <ul class="nav nav-tabs" role="tablist">
                     @foreach($event->seatingPlans as $i => $plan)
                         <li class="nav-item" role="presentation">
-                            <a class="nav-link @if($i === 0) active @endif" href="#tab-plan-{{ $plan->code }}" data-bs-toggle="tab" @if($i === 0) aria-selected="true" @endif role="tab">{{ $plan->name }}</a>
+                            <a class="nav-link @if($i === 0) active @endif" href="#tab-plan-{{ $plan->code }}"
+                               data-bs-toggle="tab" @if($i === 0) aria-selected="true"
+                               @endif role="tab">{{ $plan->name }}</a>
                         </li>
                     @endforeach
                 </ul>
                 <div class="tab-content">
                     @foreach($event->seatingPlans as $i => $plan)
-                        <div id="tab-plan-{{ $plan->code }}" class="card tab-pane @if($i === 0) active show @endif" role="tabpanel" style="min-width: {{ collect($seats[$plan->id] ?? [])->max('x') * 2 + 4 }}em;">
+                        <div id="tab-plan-{{ $plan->code }}" class="card tab-pane @if($i === 0) active show @endif"
+                             role="tabpanel"
+                             style="min-width: {{ collect($seats[$plan->id] ?? [])->max('x') * 2 + 4 }}em;">
                             <div class="card-body p-0">
                                 <div class="seating-plan" style="
                                     @if($plan->image_url)
                                         background-image:url('{{ $plan->image_url }}');
                                     @endif
                                     min-height: {{ (collect($seats[$plan->id])->max('y') * 2) + 4 }}em;"
-                                    >
+                                >
                                     @foreach($seats[$plan->id] as $seat)
                                         @php
                                             $link = null;
@@ -155,7 +161,7 @@
                                         @endphp
                                         <a class="d-block seat {{ $seat->class }} {{ $class }}"
                                            @if($link)
-                                           href="{{ $link }}"
+                                               href="{{ $link }}"
                                            @endif
                                            style="left: {{ $seat->x * 2 }}em; top: {{ $seat->y * 2 }}em;"
                                            data-bs-trigger="hover" data-bs-toggle="popover"

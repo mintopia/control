@@ -4,7 +4,6 @@ namespace App\Observers;
 
 use App\Models\Clan;
 use App\Models\SeatingPlan;
-use function App\makeCode;
 use function App\makePermalink;
 
 class ClanObserver
@@ -26,10 +25,11 @@ class ClanObserver
         $plans = SeatingPlan::whereHas('seats.ticket.user.clanMemberships', function ($query) use ($clan) {
             $query->whereClanId($clan->id);
         })->get();
-        foreach($plans as $plan) {
+        foreach ($plans as $plan) {
             $plan->delayedRevisionUpdate();
         }
     }
+
     /**
      * Handle the Clan "created" event.
      */

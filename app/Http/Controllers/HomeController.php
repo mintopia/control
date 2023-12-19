@@ -10,7 +10,7 @@ class HomeController extends Controller
 {
     public function home(Request $request)
     {
-        $tickets = $request->user()->tickets()->with(['event' => function($query) {
+        $tickets = $request->user()->tickets()->with(['event' => function ($query) {
             $query->orderBy('starts_at', 'DESC');
             $query->where('ends_at', '>=', Carbon::now());
         }, 'type', 'seat'])->paginate();

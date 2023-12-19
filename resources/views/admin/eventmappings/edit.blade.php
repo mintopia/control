@@ -4,7 +4,8 @@
 
 @section('breadcrumbs')
     @include('admin.events._breadcrumbs')
-    <li class="breadcrumb-item active"><a href="{{ route('admin.events.mappings.edit', [$event->code, $mapping->id]) }}">Edit Mapping</a></li>
+    <li class="breadcrumb-item active"><a
+            href="{{ route('admin.events.mappings.edit', [$event->code, $mapping->id]) }}">Edit Mapping</a></li>
 @endsection
 
 @section('content')
@@ -13,7 +14,8 @@
     </div>
 
     <div class="col-md-6 offset-md-3">
-        <form action="{{ route('admin.events.mappings.update', [$event->code, $mapping->id]) }}" method="post" class="card">
+        <form action="{{ route('admin.events.mappings.update', [$event->code, $mapping->id]) }}" method="post"
+              class="card">
             {{ csrf_field() }}
             {{ method_field('PATCH') }}
             @include('admin.eventmappings._form')

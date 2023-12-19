@@ -31,6 +31,13 @@ class SeatingPlanController extends Controller
         return response()->redirectToRoute('admin.events.seatingplans.show', [$event->code, $seatingplan->id])->with('successMessage', 'The seating plan has been created');
     }
 
+    protected function updateObject(SeatingPlan $plan, Request $request)
+    {
+        $plan->name = $request->input('name');
+        $plan->image_url = $request->input('image_url');
+        $plan->save();
+    }
+
     public function show(Event $event, SeatingPlan $seatingplan)
     {
         return view('admin.seatingplans.show', [
@@ -54,18 +61,18 @@ class SeatingPlanController extends Controller
         return response()->redirectToRoute('admin.events.seatingplans.show', [$event->code, $seatingplan->id])->with('successMessage', 'The seating plan has been updated');
     }
 
+    public function destroy(DeleteRequest $request, Event $event, SeatingPlan $seatingplan)
+    {
+        $seatingplan->delete();
+        return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The seating plan has been deleted');
+    }
+
     public function delete(Event $event, SeatingPlan $seatingplan)
     {
         return view('admin.seatingplans.delete', [
             'event' => $event,
             'plan' => $seatingplan,
         ]);
-    }
-
-    public function destroy(DeleteRequest$request, Event $event, SeatingPlan $seatingplan)
-    {
-        $seatingplan->delete();
-        return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The seating plan has been deleted');
     }
 
     public function refresh(Event $event, SeatingPlan $seatingplan)
@@ -76,27 +83,13 @@ class SeatingPlanController extends Controller
 
     public function up(Event $event, SeatingPlan $seatingplan)
     {
-        $other = $event->seatingPlans()->where('order', '<', $seatingplan->order)->orderBy('order', 'DESC')->first();
-        if ($other) {
-            $other->order++;
-            $seatingplan->order--;
-            $other->saveQuietly();
-            $seatingplan->saveQuietly();
-        }
-        $event->fixSeatingPlanOrder();
+        $seatingplan->moveOrderUp();
         return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The seating plan has been moved up');
     }
 
     public function down(Event $event, SeatingPlan $seatingplan)
     {
-        $other = $event->seatingPlans()->where('order', '>', $seatingplan->order)->orderBy('order', 'ASC')->first();
-        if ($other) {
-            $other->order--;
-            $seatingplan->order++;
-            $other->saveQuietly();
-            $seatingplan->saveQuietly();
-        }
-        $event->fixSeatingPlanOrder();
+        $seatingplan->moveOrderDown();
         return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The seating plan has been moved down');
     }
 
@@ -105,7 +98,7 @@ class SeatingPlanController extends Controller
         $csv = [[
             'ID', 'X', 'Y', 'Row', 'Number', 'Label', 'Description', 'CSS Class', 'Disabled',
         ]];
-        $seatingplan->seats()->chunk(100, function($chunk) use (&$csv) {
+        $seatingplan->seats()->chunk(100, function ($chunk) use (&$csv) {
             foreach ($chunk as $seat) {
                 $csv[] = [
                     $seat->id,
@@ -122,21 +115,13 @@ class SeatingPlanController extends Controller
         });
 
         $filename = "seating-{$seatingplan->id}-seats-" . Carbon::now()->format('YmdHis') . ".csv";
-        return response()->streamDownload(function() use ($csv) {
+        return response()->streamDownload(function () use ($csv) {
             $handle = fopen('php://output', 'w');
             foreach ($csv as $row) {
                 fputcsv($handle, $row);
             }
             fclose($handle);
         }, $filename);
-    }
-
-    public function import(Event $event, SeatingPlan $seatingplan)
-    {
-        return view('admin.seatingplans.import', [
-            'event' => $event,
-            'plan' => $seatingplan,
-        ]);
     }
 
     public function import_process(SeatingPlanImportRequest $request, Event $event, SeatingPlan $seatingplan)
@@ -147,10 +132,11 @@ class SeatingPlanController extends Controller
         return response()->redirectToRoute('admin.events.seatingplans.show', [$event->code, $seatingplan->id])->with('successMessage', 'The seating plan has been imported');
     }
 
-    protected function updateObject(SeatingPlan $plan, Request $request)
+    public function import(Event $event, SeatingPlan $seatingplan)
     {
-        $plan->name = $request->input('name');
-        $plan->image_url = $request->input('image_url');
-        $plan->save();
+        return view('admin.seatingplans.import', [
+            'event' => $event,
+            'plan' => $seatingplan,
+        ]);
     }
 }

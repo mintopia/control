@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\SocialProviders;
 
 use App\Exceptions\SocialProviderException;
@@ -24,6 +25,19 @@ abstract class AbstractSocialProvider implements SocialProviderContract
     public function __construct(protected ?SocialProvider $provider = null, protected ?string $redirectUrl = null)
     {
         $this->resolveRedirectUrl();
+    }
+
+    protected function resolveRedirectUrl(?string $redirectUrl = null): void
+    {
+        if ($this->redirectUrl !== null) {
+            return;
+        }
+        if (Auth::guest() && $this->provider && $this->provider->auth_enabled) {
+            // Probably login
+            $this->redirectUrl = route('login.return', $this->code);
+        } else {
+            $this->redirectUrl = route('linkedaccounts.store', $this->code);
+        }
     }
 
     public function configMapping(): array
@@ -62,29 +76,15 @@ abstract class AbstractSocialProvider implements SocialProviderContract
         return $provider;
     }
 
-    protected function getSocialiteProvider()
-    {
-        return Socialite::driver($this->socialiteProviderCode);
-    }
-
     public function redirect(): RedirectResponse
     {
         return $this->getSocialiteProvider()->redirect();
     }
 
-    protected function resolveRedirectUrl(?string $redirectUrl = null): void
+    protected function getSocialiteProvider()
     {
-        if ($this->redirectUrl !== null) {
-            return;
-        }
-        if (Auth::guest() && $this->provider && $this->provider->auth_enabled) {
-            // Probably login
-            $this->redirectUrl = route('login.return', $this->code);
-        } else {
-            $this->redirectUrl = route('linkedaccounts.store', $this->code);
-        }
+        return Socialite::driver($this->socialiteProviderCode);
     }
-
 
     public function user(?User $localUser = null)
     {
@@ -93,7 +93,7 @@ abstract class AbstractSocialProvider implements SocialProviderContract
         }
         $remoteUser = $this->getSocialiteProvider()->user();
 
-        DB::transaction(function() use ($localUser, $remoteUser) {
+        DB::transaction(function () use ($localUser, $remoteUser) {
             // Find the account
             $account = $this->provider->accounts()->whereExternalId($remoteUser->getId())->first();
             if ($account && ($localUser !== null && $localUser->id != $account->user_id)) {

@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Admin;
 
 use App\Models\Event;
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use function App\makePermalink;
 
@@ -19,7 +21,7 @@ class EventUpdateRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -28,7 +30,7 @@ class EventUpdateRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                function (string $attribute, mixed $value, \Closure $fail) {
+                function (string $attribute, mixed $value, Closure $fail) {
                     $permalink = makePermalink($value);
                     $event = Event::whereCode($permalink)->first();
                     if ($event && (!$this->event || $event->id !== $this->event->id)) {

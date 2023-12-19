@@ -12,14 +12,6 @@ class SeatingPlanObserver
         if (!$seatingPlan->code) {
             $seatingPlan->code = makePermalink($seatingPlan->name);
         }
-        if (!$seatingPlan->order) {
-            $plan = $seatingPlan->event->seatingPlans()->orderBy('order', 'DESC')->first();
-            if ($plan) {
-                $seatingPlan->order = $plan->order + 1;
-            } else {
-                $seatingPlan->order = 1;
-            }
-        }
         if (!$seatingPlan->isDirty('revision')) {
             $seatingPlan->revision++;
         }

@@ -50,7 +50,7 @@ class ClanController extends Controller
             default:
                 $params['order'] = 'id';
                 break;
-        };
+        }
 
         switch ($request->input('order_direction', 'asc')) {
             case 'desc':
@@ -76,7 +76,7 @@ class ClanController extends Controller
 
     public function show(Clan $clan)
     {
-        $members = $clan->members()->with(['role', 'user' => function($query) {
+        $members = $clan->members()->with(['role', 'user' => function ($query) {
             $query->orderBy('nickname', 'ASC');
         }])->get();
         return view('admin.clans.show', [
@@ -99,17 +99,17 @@ class ClanController extends Controller
         return response()->redirectToRoute('admin.clans.show', $clan->code)->with('successMessage', 'The clan has been updated');
     }
 
+    public function destroy(DeleteRequest $request, Clan $clan)
+    {
+        $clan->delete();
+        return response()->redirectToRoute('admin.clans.index')->with('successMessage', 'The clan has been deleted');
+    }
+
     public function delete(Clan $clan)
     {
         return view('admin.clans.delete', [
             'clan' => $clan,
         ]);
-    }
-
-    public function destroy(DeleteRequest $request, Clan $clan)
-    {
-        $clan->delete();
-        return response()->redirectToRoute('admin.clans.index')->with('successMessage', 'The clan has been deleted');
     }
 
     public function regenerate(Clan $clan)

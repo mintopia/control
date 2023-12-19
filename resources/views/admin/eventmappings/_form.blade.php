@@ -15,7 +15,8 @@
                     }
                 @endphp
                 <label class="form-check">
-                    <input class="form-check-input" type="radio" name="external_id" value="{{ $key }}" @if($checked) checked @endif
+                    <input class="form-check-input" type="radio" name="external_id" value="{{ $key }}"
+                           @if($checked) checked @endif
                     <span class="form-check-label">
                         {{ $event->name }}
                         @if ($event->id == $mapping->external_id)

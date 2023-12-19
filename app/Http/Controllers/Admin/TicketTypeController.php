@@ -29,6 +29,13 @@ class TicketTypeController extends Controller
         return response()->redirectToRoute('admin.events.tickettypes.show', [$event->code, $type->id])->with('successMessage', 'The ticket type has been created');
     }
 
+    protected function updateObject(TicketType $type, Request $request)
+    {
+        $type->name = $request->input('name');
+        $type->has_seat = (bool)$request->input('has_seat', false);
+        $type->save();
+    }
+
     public function show(Event $event, TicketType $tickettype)
     {
         return view('admin.tickettypes.show', [
@@ -51,24 +58,17 @@ class TicketTypeController extends Controller
         return response()->redirectToRoute('admin.events.tickettypes.show', [$event->code, $tickettype->id]);
     }
 
-    public function delete(Event $event, TicketType $tickettype)
-    {
-        return view('admin.tickettypes.delete', [
-            'event' => $event,
-            'type' => $tickettype,
-        ]);
-    }
-
     public function destroy(DeleteRequest $request, Event $event, TicketType $tickettype)
     {
         $tickettype->delete();
         return response()->redirectToRoute('admin.events.show', $event->code);
     }
 
-    protected function updateObject(TicketType $type, Request $request)
+    public function delete(Event $event, TicketType $tickettype)
     {
-        $type->name = $request->input('name');
-        $type->has_seat = (bool)$request->input('has_seat', false);
-        $type->save();
+        return view('admin.tickettypes.delete', [
+            'event' => $event,
+            'type' => $tickettype,
+        ]);
     }
 }

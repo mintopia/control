@@ -5,7 +5,8 @@
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
     <li class="breadcrumb-item"><a href="{{ route('seatingplans.index') }}">Seating Plans</a></li>
-    <li class="breadcrumb-item active"><a href="{{ route('seatingplans.show', $event->code) }}">{{ $event->name }}</a></li>
+    <li class="breadcrumb-item active"><a href="{{ route('seatingplans.show', $event->code) }}">{{ $event->name }}</a>
+    </li>
 @endsection
 
 @section('content')
@@ -48,13 +49,17 @@
                 <ul class="nav nav-tabs" role="tablist">
                     @foreach($event->seatingPlans as $i => $plan)
                         <li class="nav-item" role="presentation">
-                            <a class="nav-link @if($i === 0) active @endif" href="#tab-plan-{{ $plan->code }}" data-bs-toggle="tab" @if($i === 0) aria-selected="true" @endif role="tab">{{ $plan->name }}</a>
+                            <a class="nav-link @if($i === 0) active @endif" href="#tab-plan-{{ $plan->code }}"
+                               data-bs-toggle="tab" @if($i === 0) aria-selected="true"
+                               @endif role="tab">{{ $plan->name }}</a>
                         </li>
                     @endforeach
                 </ul>
                 <div class="tab-content">
                     @foreach($event->seatingPlans as $i => $plan)
-                        <div id="tab-plan-{{ $plan->code }}" class="card tab-pane @if($i === 0) active show @endif" role="tabpanel" style="min-width: {{ collect($seats[$plan->id] ?? [])->max('x') * 2 + 4 }}em;">
+                        <div id="tab-plan-{{ $plan->code }}" class="card tab-pane @if($i === 0) active show @endif"
+                             role="tabpanel"
+                             style="min-width: {{ collect($seats[$plan->id] ?? [])->max('x') * 2 + 4 }}em;">
                             @include('seatingplans._plan')
                         </div>
                     @endforeach
@@ -69,7 +74,7 @@
 
         let plans = {
             @foreach($event->seatingPlans as $plan)
-                '{{ $plan->code }}': {{ $plan->revision }},
+            '{{ $plan->code }}': {{ $plan->revision }},
             @endforeach
         }
 
@@ -83,20 +88,20 @@
                 },
                 responseType: 'text',
             })
-            .then(response => {
-                if (response.status !== 200) {
-                    throw new Error('Unable to update seating plan');
-                }
-                return response.data;
-            })
-            .then(data => {
-                let container = document.getElementById('tab-plan-' + code);
-                container.innerHTML = data;
-                plans[code] = version;
-                container.querySelectorAll('[data-bs-toggle="popover"]').forEach((element) => {
-                    new bootstrap.Popover(element);
+                .then(response => {
+                    if (response.status !== 200) {
+                        throw new Error('Unable to update seating plan');
+                    }
+                    return response.data;
+                })
+                .then(data => {
+                    let container = document.getElementById('tab-plan-' + code);
+                    container.innerHTML = data;
+                    plans[code] = version;
+                    container.querySelectorAll('[data-bs-toggle="popover"]').forEach((element) => {
+                        new bootstrap.Popover(element);
+                    });
                 });
-            });
         }
 
         function checkRevisions() {

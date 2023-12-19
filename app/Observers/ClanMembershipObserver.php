@@ -4,7 +4,6 @@ namespace App\Observers;
 
 use App\Models\ClanMembership;
 use App\Models\SeatingPlan;
-use Illuminate\Support\Collection;
 
 class ClanMembershipObserver
 {
@@ -19,6 +18,7 @@ class ClanMembershipObserver
             }
         }
     }
+
     /**
      * Handle the ClanMembership "created" event.
      */
@@ -40,7 +40,7 @@ class ClanMembershipObserver
         $plans = SeatingPlan::whereHas('seats.ticket.user.clanMemberships', function ($query) use ($clanMembership) {
             $query->whereId($clanMembership->id);
         })->get();
-        foreach($plans as $plan) {
+        foreach ($plans as $plan) {
             $plan->delayedRevisionUpdate();
         }
     }

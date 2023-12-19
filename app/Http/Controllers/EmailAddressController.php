@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\EmailVerificationException;
 use App\Http\Requests\EmailAddressRequest;
 use App\Http\Requests\EmailVerifyRequest;
 use App\Models\EmailAddress;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class EmailAddressController extends Controller
@@ -34,12 +32,12 @@ class EmailAddressController extends Controller
         return response()->redirectToRoute('emails.verify', $email->id)->with('successMessage', "A verification code has been sent to {$email->email}");
     }
 
-    public function verify(Request $request, EmailAddress $emailaddress)
+    public function delete(EmailAddress $emailaddress)
     {
-        if ($emailaddress->verified_at) {
-            return response()->redirectToRoute('user.profile')->with('successMessage', 'The email address is verified');
+        if (!$emailaddress->canDelete()) {
+            return response()->redirectToRoute('user.profile')->with('errorMessage', 'It is not possible to remove this email address');
         }
-        return view('emailaddresses.verify', [
+        return view('emailaddresses.delete', [
             'email' => $emailaddress,
         ]);
     }
@@ -58,25 +56,25 @@ class EmailAddressController extends Controller
         return $this->verifyEmail($emailaddress, $request->input('code'));
     }
 
-    public function verify_process(EmailVerifyRequest $request, EmailAddress $emailaddress)
-    {
-        return $this->verifyEmail($emailaddress, $request->input('code'));
-    }
-
     protected function verifyEmail(EmailAddress $emailaddress, string $code)
     {
         $emailaddress->verify($code);
         return response()->redirectToRoute('user.profile')->with('successMessage', 'The email address has been verified');
     }
 
-    public function delete(EmailAddress $emailaddress)
+    public function verify(Request $request, EmailAddress $emailaddress)
     {
-        if (!$emailaddress->canDelete()) {
-            return response()->redirectToRoute('user.profile')->with('errorMessage', 'It is not possible to remove this email address');
+        if ($emailaddress->verified_at) {
+            return response()->redirectToRoute('user.profile')->with('successMessage', 'The email address is verified');
         }
-        return view('emailaddresses.delete', [
+        return view('emailaddresses.verify', [
             'email' => $emailaddress,
         ]);
+    }
+
+    public function verify_process(EmailVerifyRequest $request, EmailAddress $emailaddress)
+    {
+        return $this->verifyEmail($emailaddress, $request->input('code'));
     }
 
     public function destroy(EmailAddress $emailaddress)

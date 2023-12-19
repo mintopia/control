@@ -86,32 +86,32 @@
                         </tr>
                         </thead>
                         <tbody>
-                            @foreach($users as $user)
-                                <tr>
-                                    <td class="text-muted">{{ $user->id }}</td>
-                                    <td>
-                                        <a href="{{ route('admin.users.show', $user->id) }}">
-                                            {{ $user->nickname }}
-                                        </a>
-                                    </td>
-                                    <td>{{ $user->name }}</td>
-                                    <td>{{ $user->primaryEmail->email ?? 'None' }}</td>
-                                    <td>
-                                        @if($user->last_login)
-                                            <span title="{{ $user->last_login->format('Y-m-d H:i:s') }}">
+                        @foreach($users as $user)
+                            <tr>
+                                <td class="text-muted">{{ $user->id }}</td>
+                                <td>
+                                    <a href="{{ route('admin.users.show', $user->id) }}">
+                                        {{ $user->nickname }}
+                                    </a>
+                                </td>
+                                <td>{{ $user->name }}</td>
+                                <td>{{ $user->primaryEmail->email ?? 'None' }}</td>
+                                <td>
+                                    @if($user->last_login)
+                                        <span title="{{ $user->last_login->format('Y-m-d H:i:s') }}">
                                                 {{ $user->last_login->diffForHumans() }}
                                             </span>
-                                        @else
+                                    @else
                                         <span class="text-muted">Never</span>
-                                            @endif
-                                    </td>
-                                    <td>
+                                    @endif
+                                </td>
+                                <td>
                                         <span title="{{ $user->created_at->format('Y-m-d H:i:s') }}">
                                             {{ $user->created_at->diffForHumans() }}
                                         </span>
-                                    </td>
-                                </tr>
-                            @endforeach
+                                </td>
+                            </tr>
+                        @endforeach
                         </tbody>
                     </table>
                 </div>

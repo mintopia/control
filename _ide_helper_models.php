@@ -305,6 +305,7 @@ namespace App\Models{
  * @property-read int|null $seats_count
  * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan ordered(string $direction = 'asc')
  * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan query()
  * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan whereCode($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan whereCreatedAt($value)
@@ -318,6 +319,41 @@ namespace App\Models{
  * @mixin \Eloquent
  */
 	class IdeHelperSeatingPlan {}
+}
+
+namespace App\Models{
+/**
+ * App\Models\Setting
+ *
+ * @property int $id
+ * @property string $code
+ * @property string $name
+ * @property string|null $description
+ * @property int $encrypted
+ * @property mixed|null|null $value
+ * @property string|null $validation
+ * @property \App\Enums\SettingType $type
+ * @property int $order
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting ordered(string $direction = 'asc')
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereEncrypted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereValidation($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereValue($value)
+ * @mixin \Eloquent
+ */
+	class IdeHelperSetting {}
 }
 
 namespace App\Models{

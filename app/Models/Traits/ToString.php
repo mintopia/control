@@ -1,5 +1,8 @@
 <?php
+
 namespace App\Models\Traits;
+
+use ReflectionClass;
 
 trait ToString
 {
@@ -8,7 +11,7 @@ trait ToString
         if (method_exists($this, 'toStringModelName')) {
             $className = $this->toStringModelName();
         } else {
-            $rClass = new \ReflectionClass($this);
+            $rClass = new ReflectionClass($this);
             $className = $rClass->getShortName();
         }
         $id = $this->id ?? '#';

@@ -7,10 +7,10 @@ use App\Http\Requests\ProfileUpdateRequest;
 use App\Http\Requests\UserSignupRequest;
 use App\Models\SocialProvider;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Laravel\Socialite\Facades\Socialite;
 
 class UserController extends Controller
 {
@@ -25,14 +25,6 @@ class UserController extends Controller
 
         return view('users.profile', [
             'availableLinks' => $providers,
-        ]);
-    }
-
-    public function login()
-    {
-        $providers = SocialProvider::whereAuthEnabled(true)->whereEnabled(true)->get();
-        return view('users.login', [
-            'providers' => $providers,
         ]);
     }
 
@@ -70,10 +62,18 @@ class UserController extends Controller
             }
         } catch (SocialProviderException $ex) {
             return response()->redirectToRoute('login')->with('errorMessage', $ex->getMessage());
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             Log::error($ex->getMessage());
         }
         return response()->redirectToRoute('login')->with('errorMessage', 'Unable to login');
+    }
+
+    public function login()
+    {
+        $providers = SocialProvider::whereAuthEnabled(true)->whereEnabled(true)->get();
+        return view('users.login', [
+            'providers' => $providers,
+        ]);
     }
 
     public function signup(Request $request)

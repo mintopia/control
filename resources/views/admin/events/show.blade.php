@@ -82,12 +82,14 @@
                         <i class="icon ti ti-table-export"></i>
                         Export Ticket List
                     </a>
-                    <a href="{{ route('admin.tickets.index', ['event' => $event->code]) }}" class="btn btn-primary-outline">
+                    <a href="{{ route('admin.tickets.index', ['event' => $event->code]) }}"
+                       class="btn btn-primary-outline">
                         <i class="icon ti ti-ticket"></i>
                         Tickets
                         ({{ $event->tickets()->count() }})
                     </a>
-                    <a href="{{ route('admin.tickets.create', ['event' => $event->code]) }}" class="btn btn-primary-outline">
+                    <a href="{{ route('admin.tickets.create', ['event' => $event->code]) }}"
+                       class="btn btn-primary-outline">
                         <i class="icon ti ti-plus"></i>
                         Add Ticket
                     </a>
@@ -110,7 +112,8 @@
                     <i class="icon ti ti-armchair"></i>
                     Manage Seating
                 </a>
-                <a href="{{ route('admin.events.seatingplans.create', $event->code) }}" class="btn btn-primary d-inline-block">
+                <a href="{{ route('admin.events.seatingplans.create', $event->code) }}"
+                   class="btn btn-primary d-inline-block">
                     <i class="icon ti ti-plus"></i>
                     Add Seating Plan
                 </a>
@@ -138,11 +141,13 @@
                             <tr>
                                 <td class="text-muted">{{ $plan->id }}</td>
                                 <td>
-                                    <a href="{{ route('admin.events.seatingplans.down', [$event->code, $plan->id]) }}" class="text-decoration-none text-muted">
+                                    <a href="{{ route('admin.events.seatingplans.down', [$event->code, $plan->id]) }}"
+                                       class="text-decoration-none text-muted">
                                         <i class="icon ti ti-caret-down-filled"></i>
                                     </a>
                                     {{ $plan->order }}
-                                    <a href="{{ route('admin.events.seatingplans.up', [$event->code, $plan->id]) }}" class="text-decoration-none text-muted">
+                                    <a href="{{ route('admin.events.seatingplans.up', [$event->code, $plan->id]) }}"
+                                       class="text-decoration-none text-muted">
                                         <i class="icon ti ti-caret-up-filled"></i>
                                     </a>
                                 </td>
@@ -174,7 +179,8 @@
         </div>
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
-                <a href="{{ route('admin.events.tickettypes.create', $event->code) }}" class="btn btn-primary d-inline-block">
+                <a href="{{ route('admin.events.tickettypes.create', $event->code) }}"
+                   class="btn btn-primary d-inline-block">
                     <i class="icon ti ti-plus"></i>
                     Add Ticket Type
                 </a>
@@ -183,7 +189,8 @@
     </div>
 
     <p>
-        This is where you can define the different types of tickets you have, and whether they are able to pick seats or not. This
+        This is where you can define the different types of tickets you have, and whether they are able to pick seats or
+        not. This
         also allows you to link them to ticket types from your ticket provider.
     </p>
 
@@ -240,7 +247,8 @@
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
                 @if($event->getAvailableEventMappings())
-                    <a href="{{ route('admin.events.mappings.create', $event->code) }}" class="btn btn-primary d-inline-block">
+                    <a href="{{ route('admin.events.mappings.create', $event->code) }}"
+                       class="btn btn-primary d-inline-block">
                         <i class="icon ti ti-plus"></i>
                         Add Mapping
                     </a>
@@ -281,11 +289,13 @@
                                     @endif
                                 </td>
                                 <td class="btn-list">
-                                    <a class="btn btn-outline-primary ms-auto" href="{{ route('admin.events.mappings.edit', [$event->code, $map->id]) }}">
+                                    <a class="btn btn-outline-primary ms-auto"
+                                       href="{{ route('admin.events.mappings.edit', [$event->code, $map->id]) }}">
                                         <i class="icon ti ti-edit"></i>
                                         Edit
                                     </a>
-                                    <a class="btn btn-outline-danger" href="{{ route('admin.events.mappings.delete', [$event->code, $map->id]) }}">
+                                    <a class="btn btn-outline-danger"
+                                       href="{{ route('admin.events.mappings.delete', [$event->code, $map->id]) }}">
                                         <i class="icon ti ti-trash"></i>
                                         Delete
                                     </a>

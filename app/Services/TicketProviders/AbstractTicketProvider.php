@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\TicketProviders;
 
 use App\Models\EmailAddress;
@@ -20,6 +21,13 @@ abstract class AbstractTicketProvider implements TicketProviderContract
         if ($provider) {
             $this->setProvider($provider);
         }
+    }
+
+    protected function setProvider(TicketProvider $provider): void
+    {
+        $this->provider = $provider;
+        $this->apikey = $this->provider->apikey;
+        $this->webhookSecret = $this->provider->webhook_secret ?? '';
     }
 
     public function configMapping(): array
@@ -50,13 +58,6 @@ abstract class AbstractTicketProvider implements TicketProviderContract
         return $provider;
     }
 
-    protected function setProvider(TicketProvider $provider): void
-    {
-        $this->provider = $provider;
-        $this->apikey = $this->provider->apikey;
-        $this->webhookSecret = $this->provider->webhook_secret ?? '';
-    }
-
     public function processWebhook(Request $request): bool
     {
         return true;
@@ -75,6 +76,7 @@ abstract class AbstractTicketProvider implements TicketProviderContract
     {
         return [];
     }
+
     public function getTicketTypes(string $eventExternalId): array
     {
         return [];

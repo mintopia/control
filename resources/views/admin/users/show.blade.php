@@ -184,7 +184,8 @@
                                 <td>{{ $account->external_id }}</td>
                                 <td>
                                     <div class="btn-list">
-                                        <a class="ms-auto btn btn-outline-danger @if(!$account->canDelete()) disabled @endif" @if ($account->canDelete()) href="{{ route('admin.users.accounts.delete', [$user->id, $account->id]) }}" @endif>
+                                        <a class="ms-auto btn btn-outline-danger @if(!$account->canDelete()) disabled @endif"
+                                           @if ($account->canDelete()) href="{{ route('admin.users.accounts.delete', [$user->id, $account->id]) }}" @endif>
                                             <i class="icon ti ti-trash"></i>
                                             Delete
                                         </a>
@@ -247,7 +248,8 @@
                                 </td>
                                 <td>
                                     @if($email->verified_at)
-                                        <span title="{{ $email->verified_at->format('Y-m-d H:i:s') }}">{{ $email->verified_at->diffForHumans() }}</span>
+                                        <span
+                                            title="{{ $email->verified_at->format('Y-m-d H:i:s') }}">{{ $email->verified_at->diffForHumans() }}</span>
                                     @else
                                         <span class="status status-red">No</span>
                                     @endif
@@ -255,16 +257,19 @@
                                 <td>
                                     <span class="badges-list">
                                         @foreach($email->linkedAccounts as $account)
-                                            <span class="badge bg-{{ $account->provider->code }} text-{{ $account->provider->code }}-fg">{{ $account->provider->name }}</span>
+                                            <span
+                                                class="badge bg-{{ $account->provider->code }} text-{{ $account->provider->code }}-fg">{{ $account->provider->name }}</span>
                                         @endforeach
                                     </span>
                                 </td>
                                 <td class="btn-list">
-                                    <a class="btn btn-outline-primary ms-auto" href="{{ route('admin.users.emails.edit', [$user->id, $email->id]) }}">
+                                    <a class="btn btn-outline-primary ms-auto"
+                                       href="{{ route('admin.users.emails.edit', [$user->id, $email->id]) }}">
                                         <i class="icon ti ti-edit"></i>
                                         Edit
                                     </a>
-                                    <a class="btn btn-outline-danger @if(!$email->canDelete()) disabled @endif" @if ($email->canDelete()) href="{{ route('admin.users.emails.delete', [$user->id, $email->id]) }}" @endif>
+                                    <a class="btn btn-outline-danger @if(!$email->canDelete()) disabled @endif"
+                                       @if ($email->canDelete()) href="{{ route('admin.users.emails.delete', [$user->id, $email->id]) }}" @endif>
                                         <i class="icon ti ti-trash"></i>
                                         Delete
                                     </a>
@@ -312,7 +317,8 @@
                                 </td>
                                 <td>{{ $clanMember->role->name }}</td>
                                 <td>
-                                    <span title="{{ $clanMember->created_at->format('Y-m-d H:i:s') }}">{{ $clanMember->created_at->diffForHumans() }}</span>
+                                    <span
+                                        title="{{ $clanMember->created_at->format('Y-m-d H:i:s') }}">{{ $clanMember->created_at->diffForHumans() }}</span>
                                 </td>
                                 <td></td>
                             </tr>

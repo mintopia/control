@@ -12,6 +12,7 @@ class TicketObserver
             $ticket->seat->plan->updateRevision();
         }
     }
+
     /**
      * Handle the Ticket "created" event.
      */

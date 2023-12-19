@@ -28,6 +28,19 @@ class EmailAddressController extends Controller
         return response()->redirectToRoute('admin.users.show', $email->user->id)->with('successMessage', 'The email address has been created');
     }
 
+    protected function updateObject(EmailAddress $email, Request $request)
+    {
+        $email->email = $request->input('address');
+        if ($request->input('verified', false)) {
+            if (!$email->verified_at) {
+                $email->verified_at = Carbon::now();
+            }
+        } else {
+            $email->verified_at = null;
+        }
+        $email->save();
+    }
+
     public function edit(User $user, EmailAddress $email)
     {
         return view('admin.emailaddresses.edit', [
@@ -41,16 +54,6 @@ class EmailAddressController extends Controller
         return response()->redirectToRoute('admin.users.show', $email->user->id)->with('successMessage', 'The email address has been updated');
     }
 
-    public function delete(User $user, EmailAddress $email)
-    {
-        if (!$email->canDelete()) {
-            return response()->redirectToRoute('admin.users.show')->with('errorMessage', 'It is not possible to remove this email address');
-        }
-        return view('admin.emailaddresses.delete', [
-            'email' => $email,
-        ]);
-    }
-
     public function destroy(User $user, EmailAddress $email)
     {
         if (!$email->canDelete()) {
@@ -60,16 +63,13 @@ class EmailAddressController extends Controller
         return response()->redirectToRoute('admin.users.show', $email->user->id)->with('successMessage', 'The email address has been deleted');
     }
 
-    protected function updateObject(EmailAddress $email, Request $request)
+    public function delete(User $user, EmailAddress $email)
     {
-        $email->email = $request->input('address');
-        if ($request->input('verified', false)) {
-            if (!$email->verified_at) {
-                $email->verified_at = Carbon::now();
-            }
-        } else {
-            $email->verified_at = null;
+        if (!$email->canDelete()) {
+            return response()->redirectToRoute('admin.users.show')->with('errorMessage', 'It is not possible to remove this email address');
         }
-        $email->save();
+        return view('admin.emailaddresses.delete', [
+            'email' => $email,
+        ]);
     }
 }

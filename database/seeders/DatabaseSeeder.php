@@ -16,5 +16,6 @@ class DatabaseSeeder extends Seeder
         $this->call(ClanRolesSeeder::class);
         $this->call(SocialProvidersSeeder::class);
         $this->call(TicketProvidersSeeder::class);
+        $this->call(SettingsSeeder::class);
     }
 }

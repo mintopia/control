@@ -33,7 +33,8 @@
                                     <i class="icon ti ti-alert-triangle"></i>
                                 </div>
                                 <div>
-                                    You are editing permissions for yourself. If you change your membership from Leader, you will be unable to manage
+                                    You are editing permissions for yourself. If you change your membership from Leader,
+                                    you will be unable to manage
                                     this clan.
                                 </div>
                             </div>
@@ -41,21 +42,24 @@
                     @endif
                     <div>
                         <label class="form-check">
-                            <input class="form-check-input" type="radio" name="role" value="leader" @if(old('role', $member->role->code) === 'leader') checked="" @endif>
+                            <input class="form-check-input" type="radio" name="role" value="leader"
+                                   @if(old('role', $member->role->code) === 'leader') checked="" @endif>
                             <span class="form-check-label">Leader</span>
                             <p class="form-hint">
                                 The user will have full control of the clan.
                             </p>
                         </label>
                         <label class="form-check">
-                            <input class="form-check-input" type="radio" name="role" value="seatmanager" @if(old('role', $member->role->code) === 'seatmanager') checked="" @endif>
+                            <input class="form-check-input" type="radio" name="role" value="seatmanager"
+                                   @if(old('role', $member->role->code) === 'seatmanager') checked="" @endif>
                             <span class="form-check-label">Seating Manager</span>
                             <p class="form-hint">
                                 The user will be able to move people in the clan to different seats.
                             </p>
                         </label>
                         <label class="form-check">
-                            <input class="form-check-input" type="radio" name="role" value="member" @if(old('role', $member->role->code) === 'member') checked="" @endif>
+                            <input class="form-check-input" type="radio" name="role" value="member"
+                                   @if(old('role', $member->role->code) === 'member') checked="" @endif>
                             <span class="form-check-label">Member</span>
                             <p class="form-hint">
                                 The user can see the clan, all members and the invite code.
@@ -64,7 +68,7 @@
                     </div>
                 </div>
                 @error('role')
-                    <p class="invalid-feedback">{{ $message }}</p>
+                <p class="invalid-feedback">{{ $message }}</p>
                 @enderror
             </div>
             <div class="card-footer text-end">

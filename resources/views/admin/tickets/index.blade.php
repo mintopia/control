@@ -97,35 +97,35 @@
                         </tr>
                         </thead>
                         <tbody>
-                            @foreach($tickets as $ticket)
-                                <tr>
-                                    <td class="text-muted">{{ $ticket->id }}</td>
-                                    <td>
-                                        <span class="user-select-all">{{ $ticket->external_id }}</span><br />
-                                        <span class="text-muted">{{ $ticket->provider->name }}</span>
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('admin.tickets.show', $ticket->id) }}">{{ $ticket->reference }}</a>
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('admin.events.show', $ticket->event->code) }}">{{ $ticket->event->name }}</a>
-                                    </td>
-                                    <td>{{ $ticket->type->name }}</td>
-                                    <td>
-                                        <a href="{{ route('admin.users.show', $ticket->user->id) }}">{{ $ticket->user->nickname }}</a>
-                                    </td>
-                                    <td>
-                                        @if($ticket->seat)
-                                            <a href="{{ route('admin.events.seats', ['event' => $ticket->event->code, 'ticket_id' => $ticket->id]) }}">{{ $ticket->seat->label }}</a>
-                                        @endif
-                                    </td>
-                                    <td>
+                        @foreach($tickets as $ticket)
+                            <tr>
+                                <td class="text-muted">{{ $ticket->id }}</td>
+                                <td>
+                                    <span class="user-select-all">{{ $ticket->external_id }}</span><br/>
+                                    <span class="text-muted">{{ $ticket->provider->name }}</span>
+                                </td>
+                                <td>
+                                    <a href="{{ route('admin.tickets.show', $ticket->id) }}">{{ $ticket->reference }}</a>
+                                </td>
+                                <td>
+                                    <a href="{{ route('admin.events.show', $ticket->event->code) }}">{{ $ticket->event->name }}</a>
+                                </td>
+                                <td>{{ $ticket->type->name }}</td>
+                                <td>
+                                    <a href="{{ route('admin.users.show', $ticket->user->id) }}">{{ $ticket->user->nickname }}</a>
+                                </td>
+                                <td>
+                                    @if($ticket->seat)
+                                        <a href="{{ route('admin.events.seats', ['event' => $ticket->event->code, 'ticket_id' => $ticket->id]) }}">{{ $ticket->seat->label }}</a>
+                                    @endif
+                                </td>
+                                <td>
                                         <span title="{{ $ticket->created_at->format('Y-m-d H:i:s') }}">
                                             {{ $ticket->created_at->diffForHumans() }}
                                         </span>
-                                    </td>
-                                </tr>
-                            @endforeach
+                                </td>
+                            </tr>
+                        @endforeach
                         </tbody>
                     </table>
                 </div>

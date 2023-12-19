@@ -9,7 +9,6 @@ use App\Models\Role;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -52,7 +51,7 @@ class UserController extends Controller
             default:
                 $params['order'] = 'id';
                 break;
-        };
+        }
 
         switch ($request->input('order_direction', 'asc')) {
             case 'desc':
@@ -98,29 +97,6 @@ class UserController extends Controller
         return response()->redirectToRoute('admin.users.show', $user->id)->with('successMessage', 'The user has been updated');
     }
 
-    public function delete(User $user)
-    {
-        return view('admin.users.delete', [
-            'user' => $user,
-        ]);
-    }
-
-    public function destroy(DeleteRequest $request, User $user)
-    {
-        $plans = [];
-        foreach ($user->tickets()->with('seat', 'seat.plan')->get() as $ticket) {
-            if ($ticket->seat) {
-                $plans[] = $ticket->seat->plan;
-            }
-        }
-        $plans = array_unique($plans);
-        $user->delete();
-        foreach ($plans as $plan) {
-            $plan->updateRevision();
-        }
-        return response()->redirectToRoute('admin.users.index')->with('successMessage', 'The user has been deleted');
-    }
-
     protected function updateObject(User $user, Request $request)
     {
         $user->nickname = $request->input('nickname');
@@ -155,6 +131,29 @@ class UserController extends Controller
         }
 
         $user->save();
+    }
+
+    public function destroy(DeleteRequest $request, User $user)
+    {
+        $plans = [];
+        foreach ($user->tickets()->with('seat', 'seat.plan')->get() as $ticket) {
+            if ($ticket->seat) {
+                $plans[] = $ticket->seat->plan;
+            }
+        }
+        $plans = array_unique($plans);
+        $user->delete();
+        foreach ($plans as $plan) {
+            $plan->updateRevision();
+        }
+        return response()->redirectToRoute('admin.users.index')->with('successMessage', 'The user has been deleted');
+    }
+
+    public function delete(User $user)
+    {
+        return view('admin.users.delete', [
+            'user' => $user,
+        ]);
     }
 
     public function impersonate(Request $request, User $user)

@@ -15,12 +15,14 @@ class EventObserver
             }
         }
     }
+
     public function saving(Event $event): void
     {
         if (!$event->code) {
             $event->code = makePermalink($event->name);
         }
     }
+
     /**
      * Handle the Event "created" event.
      */

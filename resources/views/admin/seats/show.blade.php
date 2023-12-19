@@ -75,16 +75,19 @@
                     </div>
                 </div>
                 <div class="card-footer align-content-end d-flex btn-list">
-                    <a href="{{ route('admin.events.seatingplans.seats.delete', [$event->code, $plan->id, $seat->id]) }}" class="btn btn-outline-danger">
+                    <a href="{{ route('admin.events.seatingplans.seats.delete', [$event->code, $plan->id, $seat->id]) }}"
+                       class="btn btn-outline-danger">
                         <i class="icon ti ti-trash"></i>
                         Delete
                     </a>
 
-                    <a href="{{ route('admin.events.seatingplans.seats.unseat', [$event->code, $plan->id, $seat->id]) }}" class="btn btn-primary-outline ms-auto @if(!$seat->ticket) disabled @endif">
+                    <a href="{{ route('admin.events.seatingplans.seats.unseat', [$event->code, $plan->id, $seat->id]) }}"
+                       class="btn btn-primary-outline ms-auto @if(!$seat->ticket) disabled @endif">
                         <i class="icon ti ti-door-exit"></i>
                         Unseat Ticket
                     </a>
-                    <a href="{{ route('admin.events.seatingplans.seats.edit', [$event->code, $plan->id, $seat->id]) }}" class="btn btn-primary">
+                    <a href="{{ route('admin.events.seatingplans.seats.edit', [$event->code, $plan->id, $seat->id]) }}"
+                       class="btn btn-primary">
                         <i class="icon ti ti-edit"></i>
                         Edit
                     </a>

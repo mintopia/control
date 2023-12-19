@@ -6,42 +6,10 @@ use App\Models\Traits\ToString;
 use App\Services\Contracts\TicketProviderContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 /**
- * App\Models\TicketProvider
- *
- * @property int $id
- * @property string $name
- * @property string $code
- * @property string $provider_class
- * @property mixed|null $apikey
- * @property int $enabled
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider query()
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereApikey($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereEnabled($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereProviderClass($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereUpdatedAt($value)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
- * @property-read int|null $tickets_count
- * @property string|null $webhook_secret
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereWebhookSecret($value)
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventMapping> $events
- * @property-read int|null $events_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketTypeMapping> $types
- * @property-read int|null $types_count
- * @mixin \Eloquent
  * @mixin IdeHelperTicketProvider
  */
 class TicketProvider extends Model
@@ -63,29 +31,14 @@ class TicketProvider extends Model
         return $this->hasMany(Ticket::class);
     }
 
-    public function events(): HasMany
+    public function syncTicket(string $id): ?Ticket
     {
-        return $this->hasMany(EventMapping::class);
-    }
-
-    public function types(): HasMany
-    {
-        return $this->hasMany(TicketTypeMapping::class);
-    }
-
-    protected function toStringName(): string
-    {
-        return $this->code;
+        return $this->getProvider()->syncTicket($id);
     }
 
     public function getProvider(?string $redirectUrl = null): TicketProviderContract
     {
         return new $this->provider_class($this);
-    }
-
-    public function syncTicket(string $id): ?Ticket
-    {
-        return $this->getProvider()->syncTicket($id);
     }
 
     public function syncTickets(EmailAddress $email): void
@@ -130,7 +83,7 @@ class TicketProvider extends Model
         $providerEvents = $this->events()->whereEventId($event->id)->get();
 
         $data = [];
-        foreach($providerEvents as $providerEvent) {
+        foreach ($providerEvents as $providerEvent) {
 
             $types = $this->getProvider()->getTicketTypes($providerEvent->external_id);
             if (!$types) {
@@ -156,6 +109,16 @@ class TicketProvider extends Model
         return $data;
     }
 
+    public function events(): HasMany
+    {
+        return $this->hasMany(EventMapping::class);
+    }
+
+    public function types(): HasMany
+    {
+        return $this->hasMany(TicketTypeMapping::class);
+    }
+
     public function clearCache(): void
     {
         $this->cache_prefix = time();
@@ -165,5 +128,10 @@ class TicketProvider extends Model
     public function configMapping(): array
     {
         return $this->getProvider()->configMapping();
+    }
+
+    protected function toStringName(): string
+    {
+        return $this->code;
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Models\Ticket;
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class TicketTransferRequest extends FormRequest
@@ -18,7 +20,7 @@ class TicketTransferRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -26,7 +28,7 @@ class TicketTransferRequest extends FormRequest
             'code' => [
                 'required',
                 'string',
-                function (string $attribute, mixed $value, \Closure $fail) {
+                function (string $attribute, mixed $value, Closure $fail) {
                     $ticket = Ticket::whereTransferCode(strtoupper($value))->first();
                     if ($ticket === null) {
                         $fail('The transfer code is invalid');

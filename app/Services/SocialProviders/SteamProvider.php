@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\SocialProviders;
 
 use App\Models\LinkedAccount;
@@ -26,7 +27,7 @@ class SteamProvider extends AbstractSocialProvider
     {
         $host = request()->getHost();
         return Socialite::buildProvider(Provider::class, [
-            'client_id' =>null,
+            'client_id' => null,
             'client_secret' => $this->provider->client_secret,
             'redirect' => $this->redirectUrl,
             'allowed_hosts' => [

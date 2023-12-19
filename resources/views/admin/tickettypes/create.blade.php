@@ -4,7 +4,8 @@
 
 @section('breadcrumbs')
     @include('admin.events._breadcrumbs')
-    <li class="breadcrumb-item active"><a href="{{ route('admin.events.tickettypes.create', $event->code) }}">Add Ticket Type</a></li>
+    <li class="breadcrumb-item active"><a href="{{ route('admin.events.tickettypes.create', $event->code) }}">Add Ticket
+            Type</a></li>
 @endsection
 
 @section('content')

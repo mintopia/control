@@ -39,7 +39,8 @@
                     @if ($leave)
                         Are you sure you want to leave <strong>{{ $clan->name }}</strong>?
                     @else
-                        Are you sure you want to remove <strong>{{ $member->user->nickname }}</strong> from <strong>{{ $clan->name }}</strong>?
+                        Are you sure you want to remove <strong>{{ $member->user->nickname }}</strong> from
+                        <strong>{{ $clan->name }}</strong>?
                     @endif
                 </p>
             </div>

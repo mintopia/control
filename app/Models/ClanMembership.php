@@ -8,27 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * App\Models\ClanMembership
- *
- * @property int $id
- * @property int $user_id
- * @property int $clan_id
- * @property int $clan_role_id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Clan $clan
- * @property-read \App\Models\ClanRole|null $role
- * @property-read \App\Models\User $user
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership query()
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereClanId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereClanRoleId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereUserId($value)
- * @mixin \Eloquent
  * @mixin IdeHelperClanMembership
  */
 class ClanMembership extends Model

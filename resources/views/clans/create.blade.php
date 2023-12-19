@@ -19,9 +19,10 @@
             <div class="card-body">
                 <h3 class="card-title">Name</h3>
                 <p class="card-subtitle">Enter the name for your clan.</p>
-                <input type="name" name="name" id="name" value="{{ old('name') }}" class="form-control @error('name') is-invalid @enderror" placeholder="Clan Name">
+                <input type="name" name="name" id="name" value="{{ old('name') }}"
+                       class="form-control @error('name') is-invalid @enderror" placeholder="Clan Name">
                 @error('name')
-                    <p class="invalid-feedback">{{ $message }}</p>
+                <p class="invalid-feedback">{{ $message }}</p>
                 @enderror
             </div>
             <div class="card-footer text-end">

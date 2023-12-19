@@ -1,4 +1,5 @@
 <?php
+
 namespace App;
 function makePermalink(string $input): string
 {
@@ -7,7 +8,7 @@ function makePermalink(string $input): string
     $replacements = array("-", "");
     $output = preg_replace($patterns, $replacements, $input);
     return substr($output, 0, 128);
-};
+}
 
 function makeCode(int $length = 6): string
 {

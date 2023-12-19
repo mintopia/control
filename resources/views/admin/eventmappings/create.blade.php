@@ -4,7 +4,8 @@
 
 @section('breadcrumbs')
     @include('admin.events._breadcrumbs')
-    <li class="breadcrumb-item active"><a href="{{ route('admin.events.mappings.create', $event->code) }}">Add Mapping</a></li>
+    <li class="breadcrumb-item active"><a href="{{ route('admin.events.mappings.create', $event->code) }}">Add
+            Mapping</a></li>
 @endsection
 
 @section('content')

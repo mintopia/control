@@ -37,14 +37,14 @@ class EventController extends Controller
 
         if ($request->input('external_id')) {
             $filters->external_id = $request->input('external_id');
-            $query = $query->whereHas('provider', function($query) use ($filters) {
+            $query = $query->whereHas('provider', function ($query) use ($filters) {
                 $query->whereExternalId($filters->external_id);
             });
         }
 
         if ($request->input('provider_id')) {
             $filters->provider_id = $request->input('provider_id');
-            $query = $query->whereHas('provider', function($query) use ($filters) {
+            $query = $query->whereHas('provider', function ($query) use ($filters) {
                 $query->whereTicketProviderId($filters->provider_id);
             });
         }
@@ -64,7 +64,7 @@ class EventController extends Controller
             default:
                 $params['order'] = 'id';
                 break;
-        };
+        }
 
         switch ($request->input('order_direction', 'asc')) {
             case 'desc':
@@ -118,6 +118,16 @@ class EventController extends Controller
         return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The event has been created');
     }
 
+    protected function updateObject(Event $event, Request $request): void
+    {
+        $event->name = $request->input('name');
+        $event->starts_at = new Carbon($request->input('starts_at'));
+        $event->ends_at = new Carbon($request->input('ends_at'));
+        $event->boxoffice_url = $request->input('boxoffice_url');
+        $event->seating_locked = (bool)$request->input('seating_locked', false);
+        $event->save();
+    }
+
     public function edit(Event $event)
     {
         return view('admin.events.edit', [
@@ -131,6 +141,12 @@ class EventController extends Controller
         return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The event has been updated');
     }
 
+    public function destroy(DeleteRequest $request, Event $event)
+    {
+        $event->delete();
+        return response()->redirectToRoute('admin.events.index')->with('successMessage', 'The event has been deleted');
+    }
+
     public function delete(Event $event)
     {
         return view('admin.events.delete', [
@@ -138,18 +154,12 @@ class EventController extends Controller
         ]);
     }
 
-    public function destroy(DeleteRequest $request, Event $event)
-    {
-        $event->delete();
-        return response()->redirectToRoute('admin.events.index')->with('successMessage', 'The event has been deleted');
-    }
-
     public function export_tickets(Event $event)
     {
         $csv = [[
             'ID', 'Ticket Provider', 'External ID', 'Reference', 'Type', 'Nickname', 'Name', 'Email', 'Seat',
         ]];
-        $event->tickets()->with(['user', 'type', 'provider', 'seat', 'user.primaryEmail'])->chunk(100, function($chunk) use (&$csv) {
+        $event->tickets()->with(['user', 'type', 'provider', 'seat', 'user.primaryEmail'])->chunk(100, function ($chunk) use (&$csv) {
             foreach ($chunk as $ticket) {
                 $csv[] = [
                     $ticket->id,
@@ -166,7 +176,7 @@ class EventController extends Controller
         });
 
         $filename = "event-{$event->id}-tickets-" . Carbon::now()->format('YmdHis') . ".csv";
-        return response()->streamDownload(function() use ($csv) {
+        return response()->streamDownload(function () use ($csv) {
             $handle = fopen('php://output', 'w');
             foreach ($csv as $row) {
                 fputcsv($handle, $row);
@@ -199,7 +209,8 @@ class EventController extends Controller
         ]);
     }
 
-    public function pickseat(Event $event, Ticket $ticket, Seat $seat) {
+    public function pickseat(Event $event, Ticket $ticket, Seat $seat)
+    {
         if ($ticket->event_id != $event->id || $seat->plan->event_id != $event->id) {
             abort(404);
         }
@@ -208,22 +219,13 @@ class EventController extends Controller
         return response()->redirectToRoute('admin.events.seats', $event->code);
     }
 
-    public function unseat(Event $event, Ticket $ticket) {
+    public function unseat(Event $event, Ticket $ticket)
+    {
         if ($ticket->seat) {
             $seat = $ticket->seat;
             $seat->ticket()->disassociate($ticket);
             $seat->save();
         }
         return response()->redirectToRoute('admin.events.seats', $event->code);
-    }
-
-    protected function updateObject(Event $event, Request $request): void
-    {
-        $event->name = $request->input('name');
-        $event->starts_at = new Carbon($request->input('starts_at'));
-        $event->ends_at = new Carbon($request->input('ends_at'));
-        $event->boxoffice_url = $request->input('boxoffice_url');
-        $event->seating_locked = (bool)$request->input('seating_locked', false);
-        $event->save();
     }
 }

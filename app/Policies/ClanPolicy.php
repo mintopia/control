@@ -5,7 +5,6 @@ namespace App\Policies;
 use App\Models\Clan;
 use App\Models\ClanMembership;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class ClanPolicy
 {
@@ -22,7 +21,7 @@ class ClanPolicy
      */
     public function update(User $user, Clan $clan): bool
     {
-        $isLeader = (bool) ClanMembership::whereUserId($user->id)->whereClanId($clan->id)->whereHas('role', function ($query) {
+        $isLeader = (bool)ClanMembership::whereUserId($user->id)->whereClanId($clan->id)->whereHas('role', function ($query) {
             $query->whereCode('leader');
         })->count();
         return $isLeader;

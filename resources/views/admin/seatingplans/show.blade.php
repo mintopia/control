@@ -61,16 +61,19 @@
                     </div>
                 </div>
                 <div class="card-footer align-content-end d-flex btn-list">
-                    <a href="{{ route('admin.events.seatingplans.delete', [$event->code, $plan->id]) }}" class="btn btn-outline-danger">
+                    <a href="{{ route('admin.events.seatingplans.delete', [$event->code, $plan->id]) }}"
+                       class="btn btn-outline-danger">
                         <i class="icon ti ti-trash"></i>
                         Delete
                     </a>
 
-                    <a href="{{ route('admin.events.seatingplans.refresh', [$event->code, $plan->id]) }}" class="btn btn-primary-outline ms-auto">
+                    <a href="{{ route('admin.events.seatingplans.refresh', [$event->code, $plan->id]) }}"
+                       class="btn btn-primary-outline ms-auto">
                         <i class="icon ti ti-refresh"></i>
                         Refresh
                     </a>
-                    <a href="{{ route('admin.events.seatingplans.edit', [$event->code, $plan->id]) }}" class="btn btn-primary">
+                    <a href="{{ route('admin.events.seatingplans.edit', [$event->code, $plan->id]) }}"
+                       class="btn btn-primary">
                         <i class="icon ti ti-edit"></i>
                         Edit
                     </a>
@@ -85,15 +88,18 @@
         </div>
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
-                <a href="{{ route('admin.events.seatingplans.import', [$event->code, $plan->id]) }}" class="btn btn-outline-primary">
+                <a href="{{ route('admin.events.seatingplans.import', [$event->code, $plan->id]) }}"
+                   class="btn btn-outline-primary">
                     <i class="icon ti ti-table-import"></i>
                     Import
                 </a>
-                <a href="{{ route('admin.events.seatingplans.export', [$event->code, $plan->id]) }}" class="btn btn-outline-primary">
+                <a href="{{ route('admin.events.seatingplans.export', [$event->code, $plan->id]) }}"
+                   class="btn btn-outline-primary">
                     <i class="icon ti ti-table-export"></i>
                     Export
                 </a>
-                <a href="{{ route('admin.events.seatingplans.seats.create', [$event->code, $plan->id]) }}" class="btn btn-primary">
+                <a href="{{ route('admin.events.seatingplans.seats.create', [$event->code, $plan->id]) }}"
+                   class="btn btn-primary">
                     <i class="icon ti ti-plus"></i>
                     Add Seat
                 </a>
@@ -115,7 +121,7 @@
                             background-image:url('{{ $plan->image_url }}');
                         @endif
                         min-height: {{ ($seats->max('y') * 2) + 4 }}em;"
-                        >
+                    >
                         @foreach($seats as $seat)
                             @php
                                 $class = 'available';
@@ -141,12 +147,12 @@
                                 }
                             @endphp
                             <a class="d-block seat {{ $seat->class }} {{ $class }}"
-                                href="{{ route('admin.events.seatingplans.seats.show', [$event->code, $plan->id, $seat->id]) }}"
-                                style="left: {{ $seat->x * 2 }}em; top: {{ $seat->y * 2 }}em;"
-                                data-bs-trigger="hover" data-bs-toggle="popover"
-                                data-bs-placement="right" data-bs-html="true"
-                                title="{{ $seat->description }} {{ $seat->label }}"
-                                data-bs-content="{{ $tooltipContents }}"
+                               href="{{ route('admin.events.seatingplans.seats.show', [$event->code, $plan->id, $seat->id]) }}"
+                               style="left: {{ $seat->x * 2 }}em; top: {{ $seat->y * 2 }}em;"
+                               data-bs-trigger="hover" data-bs-toggle="popover"
+                               data-bs-placement="right" data-bs-html="true"
+                               title="{{ $seat->description }} {{ $seat->label }}"
+                               data-bs-content="{{ $tooltipContents }}"
                             ></a>
                         @endforeach
                     </div>

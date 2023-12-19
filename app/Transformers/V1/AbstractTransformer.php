@@ -3,7 +3,6 @@
 namespace App\Transformers\V1;
 
 use App\Models\User;
-use Illuminate\Database\Eloquent\Model;
 use League\Fractal\TransformerAbstract;
 
 abstract class AbstractTransformer extends TransformerAbstract

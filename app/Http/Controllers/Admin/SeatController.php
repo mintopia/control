@@ -30,6 +30,19 @@ class SeatController extends Controller
         return response()->redirectToRoute('admin.events.seatingplans.show', [$event->code, $seatingplan->id])->with('successMessage', 'The seat has been created');
     }
 
+    protected function updateObject(Seat $seat, Request $request): void
+    {
+        $seat->x = $request->input('x');
+        $seat->y = $request->input('y');
+        $seat->row = $request->input('row');
+        $seat->number = $request->input('number');
+        $seat->label = $request->input('label');
+        $seat->description = $request->input('description');
+        $seat->class = $request->input('class');
+        $seat->disabled = (bool)$request->input('disabled', false);
+        $seat->save();
+    }
+
     public function show(Event $event, SeatingPlan $seatingplan, Seat $seat)
     {
         return view('admin.seats.show', [
@@ -54,6 +67,12 @@ class SeatController extends Controller
         return response()->redirectToRoute('admin.events.seatingplans.seats.show', [$event->code, $seatingplan->id, $seat->id])->with('successMessage', 'The seat has been updated');
     }
 
+    public function destroy(Event $event, SeatingPlan $seatingplan, Seat $seat)
+    {
+        $seat->delete();
+        return response()->redirectToRoute('admin.events.seatingplans.show', [$event->code, $seatingplan->id])->with('successMessage', 'The seat has been deleted');
+    }
+
     public function delete(Event $event, SeatingPlan $seatingplan, Seat $seat)
     {
         return view('admin.seats.delete', [
@@ -63,29 +82,10 @@ class SeatController extends Controller
         ]);
     }
 
-    public function destroy(Event $event, SeatingPlan $seatingplan, Seat $seat)
-    {
-        $seat->delete();
-        return response()->redirectToRoute('admin.events.seatingplans.show', [$event->code, $seatingplan->id])->with('successMessage', 'The seat has been deleted');
-    }
-
     public function unseat(Event $event, SeatingPlan $seatingplan, Seat $seat)
     {
         $seat->ticket()->disassociate();
         $seat->save();
         return response()->redirectToRoute('admin.events.seatingplans.seats.show', [$event->code, $seatingplan->id, $seat->id])->with('successMessage', 'The ticket has been removed from this seat');
-    }
-
-    protected function updateObject(Seat $seat, Request $request): void
-    {
-        $seat->x = $request->input('x');
-        $seat->y = $request->input('y');
-        $seat->row = $request->input('row');
-        $seat->number = $request->input('number');
-        $seat->label = $request->input('label');
-        $seat->description = $request->input('description');
-        $seat->class = $request->input('class');
-        $seat->disabled = (bool)$request->input('disabled', false);
-        $seat->save();
     }
 }

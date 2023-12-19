@@ -45,14 +45,15 @@
                             <tr>
                                 <td>
                                     <div class="d-flex py-1 align-items-center">
-                                        <span class="avatar me-2" style="background-image: url('{{ $member->user->avatarUrl() }}')"></span>
+                                        <span class="avatar me-2"
+                                              style="background-image: url('{{ $member->user->avatarUrl() }}')"></span>
                                         <div class="flex-fill">
                                             <div class="font-weight-medium">
                                                 {{ $member->user->nickname }}
                                                 @if($member->user_id === Auth::user()->id)
                                                     <i class="icon ti ti-star-filled text-yellow" title="You!"></i>
                                                 @endif
-                                                <br />
+                                                <br/>
                                                 <span class="text-muted">{{ $member->user->name }}</span>
                                             </div>
                                         </div>
@@ -67,7 +68,8 @@
                                 </td>
                                 <td class="text-end">
                                     @can('delete', $member)
-                                        <a href="{{ route('clans.members.delete', [$clan->code, $member->id]) }}" class="btn btn-danger">
+                                        <a href="{{ route('clans.members.delete', [$clan->code, $member->id]) }}"
+                                           class="btn btn-danger">
                                             @if($member->user_id === Auth::user()->id)
                                                 Leave
                                             @else

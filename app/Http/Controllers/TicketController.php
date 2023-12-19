@@ -4,14 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TicketTransferRequest;
 use App\Models\Ticket;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class TicketController extends Controller
 {
     public function index(Request $request)
     {
-        $tickets = $request->user()->tickets()->with(['event' => function($query) {
+        $tickets = $request->user()->tickets()->with(['event' => function ($query) {
             $query->orderBy('starts_at', 'DESC');
         }, 'type', 'seat'])->paginate();
         return view('tickets.index', [

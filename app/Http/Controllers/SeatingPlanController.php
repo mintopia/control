@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Event;
-use App\Models\Seat;
 use Illuminate\Http\Request;
 
 class SeatingPlanController extends Controller
@@ -34,7 +33,7 @@ class SeatingPlanController extends Controller
         $clans = $request->user()->clanMemberships()->with('clan')->get()->pluck('clan');
         $clanIds = $clans->pluck('id');
         $allTickets = $event->tickets()
-            ->whereHas('type', function($query) {
+            ->whereHas('type', function ($query) {
                 $query->where('has_seat', true);
             })
             ->whereUserId($request->user()->id)->orWhere(function ($query) use ($clanIds) {

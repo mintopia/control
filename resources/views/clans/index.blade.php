@@ -23,7 +23,8 @@
     </div>
 
     <p>
-        Creating and joining clans makes it easy to arrange your seats. The clan leader can appoint a seating manager, who is
+        Creating and joining clans makes it easy to arrange your seats. The clan leader can appoint a seating manager,
+        who is
         able to pick your seat for you.
     </p>
 
@@ -79,9 +80,10 @@
                     </p>
 
                     <div class="mb-3">
-                        <input type="text" class="form-control @error('code') is-invalid @enderror" value="{{ old('code') }}" name="code" id="code">
+                        <input type="text" class="form-control @error('code') is-invalid @enderror"
+                               value="{{ old('code') }}" name="code" id="code">
                         @error('code')
-                            <p class="invalid-feedback">{{ $message }}</p>
+                        <p class="invalid-feedback">{{ $message }}</p>
                         @enderror
                     </div>
 

@@ -106,26 +106,26 @@
                         </tr>
                         </thead>
                         <tbody>
-                            @foreach($events as $event)
-                                <tr>
-                                    <td class="text-muted">{{ $event->id }}</td>
-                                    <td>
-                                        <a href="{{ route('admin.events.show', $event->code) }}">{{ $event->name }}</a>
-                                    </td>
-                                    <td>{{ $event->code }}</td>
-                                    <td>
-                                        {{ $event->starts_at->format('d M Y H:i') }}
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('admin.tickets.index', ['event_id' => $event->id]) }}">{{ $event->tickets_count }}</a>
-                                    </td>
-                                    <td>
+                        @foreach($events as $event)
+                            <tr>
+                                <td class="text-muted">{{ $event->id }}</td>
+                                <td>
+                                    <a href="{{ route('admin.events.show', $event->code) }}">{{ $event->name }}</a>
+                                </td>
+                                <td>{{ $event->code }}</td>
+                                <td>
+                                    {{ $event->starts_at->format('d M Y H:i') }}
+                                </td>
+                                <td>
+                                    <a href="{{ route('admin.tickets.index', ['event_id' => $event->id]) }}">{{ $event->tickets_count }}</a>
+                                </td>
+                                <td>
                                         <span title="{{ $event->created_at->format('Y-m-d H:i:s') }}">
                                             {{ $event->created_at->diffForHumans() }}
                                         </span>
-                                    </td>
-                                </tr>
-                            @endforeach
+                                </td>
+                            </tr>
+                        @endforeach
                         </tbody>
                     </table>
                 </div>

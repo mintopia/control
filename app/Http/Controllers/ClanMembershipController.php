@@ -39,15 +39,6 @@ class ClanMembershipController extends Controller
         return response()->redirectToRoute('clans.show', $clan->code)->with('successMessage', "{$clanmembership->user->nickname}'s role has been updated");
     }
 
-    public function delete(Clan $clan, ClanMembership $clanmembership)
-    {
-        return view('clans.members.delete', [
-            'clan' => $clan,
-            'member' => $clanmembership,
-            'leave' => $clanmembership->user_id === Auth::user()->id,
-        ]);
-    }
-
     public function destroy(Clan $clan, ClanMembership $clanmembership)
     {
         $message = "{$clanmembership->user->nickname} has been removed";
@@ -58,5 +49,14 @@ class ClanMembershipController extends Controller
         }
         $clanmembership->delete();
         return response()->redirectTo($location)->with('successMessage', $message);
+    }
+
+    public function delete(Clan $clan, ClanMembership $clanmembership)
+    {
+        return view('clans.members.delete', [
+            'clan' => $clan,
+            'member' => $clanmembership,
+            'leave' => $clanmembership->user_id === Auth::user()->id,
+        ]);
     }
 }

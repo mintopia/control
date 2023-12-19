@@ -90,24 +90,24 @@
                         </tr>
                         </thead>
                         <tbody>
-                            @foreach($clans as $clan)
-                                <tr>
-                                    <td class="text-muted">{{ $clan->id }}</td>
-                                    <td>
-                                        <a href="{{ route('admin.clans.show', $clan->code) }}">
-                                            {{ $clan->name }}
-                                        </a>
-                                    </td>
-                                    <td>{{ $clan->code }}</td>
-                                    <td>{{ $clan->members_count }}</td>
-                                    <td><span class="user-select-all">{{ $clan->invite_code }}</span></td>
-                                    <td>
+                        @foreach($clans as $clan)
+                            <tr>
+                                <td class="text-muted">{{ $clan->id }}</td>
+                                <td>
+                                    <a href="{{ route('admin.clans.show', $clan->code) }}">
+                                        {{ $clan->name }}
+                                    </a>
+                                </td>
+                                <td>{{ $clan->code }}</td>
+                                <td>{{ $clan->members_count }}</td>
+                                <td><span class="user-select-all">{{ $clan->invite_code }}</span></td>
+                                <td>
                                         <span title="{{ $clan->created_at->format('Y-m-d H:i:s') }}">
                                             {{ $clan->created_at->diffForHumans() }}
                                         </span>
-                                    </td>
-                                </tr>
-                            @endforeach
+                                </td>
+                            </tr>
+                        @endforeach
                         </tbody>
                     </table>
                 </div>

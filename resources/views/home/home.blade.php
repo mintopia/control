@@ -84,8 +84,10 @@
                                     <td>
                                         <a href="{{ route('seatingplans.show', $event->code) }}">{{ $event->name }}</a>
                                     </td>
-                                    <td>{{ $event->starts_at->format('jS F Y') }} at {{ $event->starts_at->format('gA') }}</td>
-                                    <td>{{ $event->ends_at->format('jS F Y') }} at {{ $event->ends_at->format('gA') }}</td>
+                                    <td>{{ $event->starts_at->format('jS F Y') }}
+                                        at {{ $event->starts_at->format('gA') }}</td>
+                                    <td>{{ $event->ends_at->format('jS F Y') }}
+                                        at {{ $event->ends_at->format('gA') }}</td>
                                     <td class="align-content-end">
                                         @if($event->boxoffice_url)
                                             <a href="{{ $event->boxoffice_url }}">Buy Tickets</a>
@@ -110,7 +112,8 @@
             <div class="card">
                 <div class="card-body text-center">
                     <div class="mb-3">
-                        <span class="avatar avatar-xl rounded" style="background-image: url('{{ Auth::user()->avatarUrl() }}')"></span>
+                        <span class="avatar avatar-xl rounded"
+                              style="background-image: url('{{ Auth::user()->avatarUrl() }}')"></span>
                     </div>
                     <div class="card-title mb-1">{{ Auth::user()->nickname }}</div>
                     <div class="text-secondary">
@@ -120,8 +123,9 @@
                         <div class="mt-4">
                             <span class="badges-list justify-content-center">
                             @foreach(Auth::user()->clanMemberships as $clanMember)
-                                <a href="{{ route('clans.show', $clanMember->clan->code) }}" class="badge text-decoration-none bg-blue text-blue-fg">{{ $clanMember->clan->name }}</a>
-                            @endforeach
+                                    <a href="{{ route('clans.show', $clanMember->clan->code) }}"
+                                       class="badge text-decoration-none bg-blue text-blue-fg">{{ $clanMember->clan->name }}</a>
+                                @endforeach
                             </span>
                         </div>
                     @endif

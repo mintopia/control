@@ -12,6 +12,7 @@ class TicketProviderObserver
             $ticketProvider->cache_prefix = time();
         }
     }
+
     /**
      * Handle the TicketProvider "created" event.
      */

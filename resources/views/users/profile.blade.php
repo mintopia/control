@@ -40,20 +40,23 @@
                                         <td @if (!$email->verified_at) class="text-secondary"@endif>
                                             {{ $email->email }}
                                             @if ($email->id === Auth::user()->primaryEmail->id)
-                                                <i class="icon ti ti-star-filled text-yellow" title="Primary Email Address"></i>
+                                                <i class="icon ti ti-star-filled text-yellow"
+                                                   title="Primary Email Address"></i>
                                             @endif
                                         </td>
                                         <td>
                                             @if($email->verified_at)
                                                 Yes
                                             @else
-                                                <a href="{{ route('emails.verify', $email->id) }}" class="text-red">No - Verify Now</a>
+                                                <a href="{{ route('emails.verify', $email->id) }}" class="text-red">No -
+                                                    Verify Now</a>
                                             @endif
                                         </td>
                                         <td>
                                             <span class="badges-list">
                                                 @foreach($email->linkedAccounts as $account)
-                                                    <span class="badge bg-{{ $account->provider->code }} text-{{ $account->provider->code }}-fg">{{ $account->provider->name }}</span>
+                                                    <span
+                                                        class="badge bg-{{ $account->provider->code }} text-{{ $account->provider->code }}-fg">{{ $account->provider->name }}</span>
                                                 @endforeach
                                             </span>
                                         </td>
@@ -84,9 +87,12 @@
                             <div class="row row-0">
                                 <div class="col-auto w-7 d-flex align-items-center">
                                     @if ($account->avatar_url)
-                                        <img src="{{ $account->avatar_url }}" class="w-100 h-100 mh-100 object-cover card-img-start" alt="{{ $account->provider->name }} Avatar">
+                                        <img src="{{ $account->avatar_url }}"
+                                             class="w-100 h-100 mh-100 object-cover card-img-start"
+                                             alt="{{ $account->provider->name }} Avatar">
                                     @else
-                                        <i class="icon ti ti-brand-{{ $account->provider->code }} icon-lg text-muted m-auto d-block" title="No {{ $account->provider->name }} Avatar"></i>
+                                        <i class="icon ti ti-brand-{{ $account->provider->code }} icon-lg text-muted m-auto d-block"
+                                           title="No {{ $account->provider->name }} Avatar"></i>
                                     @endif
                                 </div>
                                 <div class="col">
@@ -104,7 +110,8 @@
                 @if($availableLinks)
                     <div class="col-12 btn-list">
                         @foreach($availableLinks as $provider)
-                            <a class="btn btn-{{ $provider->code }}" href="{{ route('linkedaccounts.create', $provider->code) }}">
+                            <a class="btn btn-{{ $provider->code }}"
+                               href="{{ route('linkedaccounts.create', $provider->code) }}">
                                 <i class="icon ti ti-brand-{{ $provider->code }}"></i>
                                 Link with {{ $provider->name }}
                             </a>
@@ -117,7 +124,8 @@
             <div class="card">
                 <div class="card-body text-center">
                     <div class="mb-3">
-                        <span class="avatar avatar-xl rounded" style="background-image: url('{{ Auth::user()->avatarUrl() }}')"></span>
+                        <span class="avatar avatar-xl rounded"
+                              style="background-image: url('{{ Auth::user()->avatarUrl() }}')"></span>
                     </div>
                     <div class="card-title mb-1">{{ Auth::user()->nickname }}</div>
                     <div class="text-secondary">

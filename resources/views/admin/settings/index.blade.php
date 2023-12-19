@@ -13,6 +13,48 @@
         <h1>Settings</h1>
     </div>
 
+    @if(count($settings) > 0)
+        <form action="{{ route('admin.settings.update') }}" method="post" class="card mb-4 col-md-6">
+            {{ csrf_field() }}
+            {{ method_field('PATCH') }}
+            <div class="card-body">
+                @foreach($settings as $setting)
+                    @if($setting->type === \App\Enums\SettingType::stString)
+                        <div class="mb-3">
+                            <label class="form-label @if(str_contains($setting->validation ?? '', 'required')) required @endif ">{{ $setting->name }}</label>
+                            <div>
+                                <input type="text" name="{{ $setting->code }}" class="form-control @error($setting->code) is-invalid @enderror"
+                                       value="{{ old($setting->name, $setting->value ?? '') }}">
+                                @if($setting->description)
+                                    <small class="form-hint">{{ $setting->description }}</small>
+                                @endif
+                                @error($setting->code)
+                                <p class="invalid-feedback">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                    @elseif($setting->type === \App\Enums\SettingType::stBoolean)
+                        <div class="mb-3">
+                            <label class="form-check form-switch">
+                                <input type="checkbox" class="form-check-input" name="{{ $setting->code }}" value="1"
+                                       @if(old($setting->name, $setting->value)) checked @endif>
+                                {{ $setting->name }}
+                            </label>
+                            @if($setting->description)
+                                <small class="form-hint">{{ $setting->description }}</small>
+                            @endif
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+            <div class="card-footer text-end">
+                <div class="d-flex">
+                    <button type="submit" class="btn btn-primary ms-auto">Save</button>
+                </div>
+            </div>
+        </form>
+    @endif
+
     <div class="card mb-4">
         <div class="card-header">
             <h3 class="card-title">Social Providers</h3>
@@ -34,7 +76,7 @@
                     <tr>
                         <td>
                             {{ $provider->name }}
-                            <br />
+                            <br/>
                             <span class="text-muted">{{ $provider->code }}</span>
                         </td>
                         <td>
@@ -75,7 +117,7 @@
                             @endif
                         </td>
                         <td>
-                            <span class="user-select-all">{{ route('login.return', $provider->code) }}</span><br />
+                            <span class="user-select-all">{{ route('login.return', $provider->code) }}</span><br/>
                             <span class="user-select-all">{{ route('linkedaccounts.store', $provider->code) }}</span>
                         </td>
                         <td>
@@ -119,7 +161,7 @@
                     <tr>
                         <td>
                             {{ $provider->name }}
-                            <br />
+                            <br/>
                             <span class="text-muted">{{ $provider->code }}</span>
                         </td>
                         <td>

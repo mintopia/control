@@ -49,16 +49,19 @@
                     </div>
                 </div>
                 <div class="card-footer align-content-end d-flex btn-list">
-                    <a href="{{ route('admin.events.tickettypes.delete', [$event->code, $type->id]) }}" class="btn btn-outline-danger">
+                    <a href="{{ route('admin.events.tickettypes.delete', [$event->code, $type->id]) }}"
+                       class="btn btn-outline-danger">
                         <i class="icon ti ti-trash"></i>
                         Delete
                     </a>
-                    <a href="{{ route('admin.tickets.index', ['ticket_type_id' => $type->id]) }}" class="btn btn-primary-outline ms-auto">
+                    <a href="{{ route('admin.tickets.index', ['ticket_type_id' => $type->id]) }}"
+                       class="btn btn-primary-outline ms-auto">
                         <i class="icon ti ti-ticket"></i>
                         Tickets
                         ({{ $type->tickets()->count() }})
                     </a>
-                    <a href="{{ route('admin.events.tickettypes.edit', [$event->code, $type->id]) }}" class="btn btn-primary">
+                    <a href="{{ route('admin.events.tickettypes.edit', [$event->code, $type->id]) }}"
+                       class="btn btn-primary">
                         <i class="icon ti ti-edit"></i>
                         Edit
                     </a>
@@ -74,7 +77,8 @@
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
                 @if(count($event->getAvailableTicketMappings()) > 0)
-                    <a href="{{ route('admin.events.tickettypes.mappings.create', [$event->code, $type->id]) }}" class="btn btn-primary d-inline-block">
+                    <a href="{{ route('admin.events.tickettypes.mappings.create', [$event->code, $type->id]) }}"
+                       class="btn btn-primary d-inline-block">
                         <i class="icon ti ti-plus"></i>
                         Add Mapping
                     </a>
@@ -115,11 +119,13 @@
                                     @endif
                                 </td>
                                 <td class="btn-list">
-                                    <a class="btn btn-outline-primary ms-auto" href="{{ route('admin.events.tickettypes.mappings.edit', [$event->code, $type->id, $map->id]) }}">
+                                    <a class="btn btn-outline-primary ms-auto"
+                                       href="{{ route('admin.events.tickettypes.mappings.edit', [$event->code, $type->id, $map->id]) }}">
                                         <i class="icon ti ti-edit"></i>
                                         Edit
                                     </a>
-                                    <a class="btn btn-outline-danger" href="{{ route('admin.events.tickettypes.mappings.delete', [$event->code, $type->id, $map->id]) }}">
+                                    <a class="btn btn-outline-danger"
+                                       href="{{ route('admin.events.tickettypes.mappings.delete', [$event->code, $type->id, $map->id]) }}">
                                         <i class="icon ti ti-trash"></i>
                                         Delete
                                     </a>

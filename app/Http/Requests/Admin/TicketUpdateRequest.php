@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests\Admin;
 
-use App\Models\Event;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use function App\makePermalink;
 
 class TicketUpdateRequest extends FormRequest
 {
@@ -19,7 +18,7 @@ class TicketUpdateRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {

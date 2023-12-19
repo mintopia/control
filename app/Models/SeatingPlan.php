@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Jobs\UpdateSeatingPlanJob;
 use App\Models\Traits\ToString;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,63 +13,27 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Spatie\EloquentSortable\Sortable;
+use Spatie\EloquentSortable\SortableTrait;
 
 /**
- * App\Models\SeatingPlan
- *
- * @property int $id
- * @property int $event_id
- * @property string $name
- * @property string $code
- * @property int $order
- * @property string|null $image_url
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Event $event
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Seat> $seats
- * @property-read int|null $seats_count
- * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan query()
- * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan whereCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan whereEventId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan whereImageUrl($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan whereOrder($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan whereUpdatedAt($value)
- * @property int $revision
- * @method static \Illuminate\Database\Eloquent\Builder|SeatingPlan whereRevision($value)
- * @mixin \Eloquent
  * @mixin IdeHelperSeatingPlan
  */
-class SeatingPlan extends Model
+class SeatingPlan extends Model implements Sortable
 {
-    use HasFactory, ToString;
+    use HasFactory, ToString, SortableTrait;
 
     // Cache the plan for 30 days
     protected const CACHE_TTL = 30 * 86400;
-
-    public function seats(): HasMany
-    {
-        return $this->hasMany(Seat::class);
-    }
 
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
-    protected function toStringName(): string
+    public function buildSortQuery(): Builder
     {
-        return $this->code;
-    }
-
-    public function updateRevision(): void
-    {
-        $this->revision++;
-        $this->save();
+        return static::query()->where('event_id', $this->event_id);
     }
 
     public function delayedRevisionUpdate(): void
@@ -101,7 +66,7 @@ class SeatingPlan extends Model
         $data = new Collection();
         foreach ($seats as $seat) {
             $clans = [];
-            foreach($seat->ticket->user->clanMemberships ?? [] as $clanMembership) {
+            foreach ($seat->ticket->user->clanMemberships ?? [] as $clanMembership) {
                 $clans[] = $clanMembership->clan->name;
             }
             $seatData = (object)[
@@ -128,6 +93,11 @@ class SeatingPlan extends Model
         return $data;
     }
 
+    public function seats(): HasMany
+    {
+        return $this->hasMany(Seat::class);
+    }
+
     public function import(string $csv, bool $wipe = false): void
     {
         $csv = explode("\n", trim($csv));
@@ -139,7 +109,7 @@ class SeatingPlan extends Model
             unset($rows[0]);
         }
 
-        DB::transaction(function() use ($rows, $wipe) {
+        DB::transaction(function () use ($rows, $wipe) {
             if ($wipe) {
                 $this->seats()->delete();
             }
@@ -171,5 +141,16 @@ class SeatingPlan extends Model
         });
 
         $this->updateRevision();
+    }
+
+    public function updateRevision(): void
+    {
+        $this->revision++;
+        $this->save();
+    }
+
+    protected function toStringName(): string
+    {
+        return $this->code;
     }
 }
