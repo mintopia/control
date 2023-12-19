@@ -6,6 +6,7 @@ use App\Models\EmailAddress;
 use App\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -30,7 +31,7 @@ class VerifyEmail extends Mailable
     {
         return new Envelope(
             subject: Setting::fetch('name') . ' - Verify Email Address',
-
+            from: new Address(config('mail.from.address'), Setting::fetch('name', config('mail.from.name'))),
         );
     }
 
