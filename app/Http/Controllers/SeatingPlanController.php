@@ -140,7 +140,7 @@ class SeatingPlanController extends Controller
 
         $seat->ticket()->associate($ticket);
         $seat->save();
-        return response()->redirectToRoute('seatingplans.show', $event->code)->with('successMessage', "You have chosen {$seat->label}");
+        return response()->redirectToRoute('seatingplans.show', $event->code)->withFragment("tab-plan-{$seat->plan->code}");
     }
 
     public function unseat(Request $request, Event $event, Ticket $ticket)
@@ -155,6 +155,6 @@ class SeatingPlanController extends Controller
             $seat->save();
         }
 
-        return response()->redirectToRoute('seatingplans.show', $event->code)->with('successMessage', "The ticket has been removed from that seat");
+        return response()->redirectToRoute('seatingplans.show', $event->code)->withFragment("tab-plan-{$seat->plan->code}");
     }
 }
