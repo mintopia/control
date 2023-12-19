@@ -64,7 +64,7 @@
                     @if ($currentTicket->seat)
                         <div class="card-footer align-content-end d-flex btn-list">
                             <a href="{{ route('admin.events.seats', $event->code) }}" class="btn btn-link">Cancel</a>
-                            @if ($currentTicket->canSeat())
+                            @if ($currentTicket->canPickSeat())
                                 <a href="{{ route('admin.events.seats.unseat', [$event->code, $currentTicket->id]) }}"
                                    class="btn btn-primary-outline ms-auto">
                                     <i class="icon ti ti-door-exit"></i>
