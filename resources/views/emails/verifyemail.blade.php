@@ -16,5 +16,5 @@
     This code will expire at {{ $email->getVerificationExpiry()->format('d M Y H:i') }}.
 
     Thanks,<br>
-    {{ config('app.name') }}
+    @setting('name')
 </x-mail::message>

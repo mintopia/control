@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\EmailAddress;
+use App\Models\Setting;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
@@ -28,7 +29,7 @@ class VerifyEmail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: config('app.name') . ' - Verify Email Address',
+            subject: Setting::fetch('name') . ' - Verify Email Address',
 
         );
     }

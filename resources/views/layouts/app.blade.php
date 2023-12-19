@@ -10,7 +10,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>
-        @setting('name', config('app.name'))
+        @setting('name')
     </title>
     @stack('head')
 </head>
@@ -25,9 +25,9 @@
             <h1 class="navbar-brand navbar-brand-autodark mt-1 px-2">
                 <a href="{{ route('home') }}">
                     @if(App\Models\Setting::fetch('logo-light'))
-                        <img src="@setting('logo-light')" alt="@setting('name', config('app.name'))">
+                        <img src="@setting('logo-light')" alt="@setting('name')">
                     @else
-                        @setting('name', config('app.name'))
+                        @setting('name')
                     @endif
                 </a>
             </h1>
@@ -207,7 +207,7 @@
                         <ul class="list-inline list-inline-dots mb-0">
                             <li class="list-inline-item">
                                 Copyright &copy; {{ date('Y') }}
-                                <a href="{{ route('home') }}" class="link-secondary">@setting('name', config('app.name'))</a>.
+                                <a href="{{ route('home') }}" class="link-secondary">@setting('name')</a>.
                                 All rights reserved.
                             </li>
                         </ul>

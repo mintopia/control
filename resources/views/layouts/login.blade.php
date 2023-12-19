@@ -64,7 +64,7 @@
                         <ul class="list-inline list-inline-dots mb-0">
                             <li class="list-inline-item">
                                 Copyright &copy; {{ date('Y') }}
-                                <a href="{{ route('home') }}" class="link-secondary">@setting('foobar', config('app.name'))</a>.<br/>
+                                <a href="{{ route('home') }}" class="link-secondary">@setting('name')</a>.<br/>
                                 All rights reserved.
                             </li>
                         </ul>
@@ -75,7 +75,7 @@
     </div>
     <div class="col-12 col-lg-6 col-xl-8 d-none d-lg-block">
         <div class="bg-cover h-100 min-vh-100"
-             style="background-image: url('@setting('cover-image', Vite::asset('resources/img/cover.jpg'))"></div>
+             style="background-image: url('@setting('cover-image', Vite::asset('resources/img/cover.jpg'))');"></div>
     </div>
 </div>
 </body>

@@ -36,7 +36,7 @@ class Setting extends Model implements Sortable
         $key = "settings.{$code}";
         if ($setting = Cache::get($key)) {
             Log::debug("Fetched {$key} from application cache");
-            if ($setting === null) {
+            if ($setting->value === null) {
                 return $default;
             }
             if ($setting->encrypted) {
@@ -49,7 +49,7 @@ class Setting extends Model implements Sortable
         $setting = Setting::whereCode($code)->first();
         Log::debug("Fetching {$key} from database");
         if ($setting === null) {
-            Cache::put($key, null);
+            Cache::put($key, $setting);
             static::$cached[$code] = null;
             return $default;
         }
