@@ -22,7 +22,7 @@
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <div class="datagrid col-md-5">
+                        <div class="datagrid col-md-5 mb-4">
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Reference</div>
                                 <div class="datagrid-content">{{ $ticket->reference }}</div>
@@ -32,6 +32,14 @@
                                 <div class="datagrid-content">
                                     <img src="{{ $ticket->qrcode }}" />
                                 </div>
+                            </div>
+                            <div class="datagrid-item d-none d-print-block">
+                                <div class="datagrid-title">Nickname</div>
+                                <div class="datagrid-content">{{ $ticket->user->nickname }}</div>
+                            </div>
+                            <div class="datagrid-item d-none d-print-block">
+                                <div class="datagrid-title">Name</div>
+                                <div class="datagrid-content">{{ $ticket->user->name }}</div>
                             </div>
                         </div>
                         <div class="datagrid col-md-7">
@@ -64,7 +72,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 d-print-none">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">
