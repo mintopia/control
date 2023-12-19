@@ -88,7 +88,7 @@
                                 <li class="my-1 d-flex">
                                     <a href="{{ route('seatingplans.choose', [$event->code, $ticket->id]) }}">{{ $ticket->user->nickname }}</a>
                                     @if ($ticket->user->id === Auth::user()->id)
-                                        - {{ $ticket->reference }}
+                                        <span class="mx-1"> - {{ $ticket->reference }}</span>
                                     @endif
                                     @if ($ticket->seat)
                                         <span class="badge ms-auto bg-muted text-muted-fg d-inline-block">{{ $ticket->seat->label }}</span>
