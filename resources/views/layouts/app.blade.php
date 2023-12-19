@@ -25,7 +25,8 @@
             <h1 class="navbar-brand navbar-brand-autodark mt-1 px-2">
                 <a href="{{ route('home') }}">
                     @if(App\Models\Setting::fetch('logo-light'))
-                        <img src="@setting('logo-light')" alt="@setting('name')">
+                        <img src="@setting('logo-light')" alt="@setting('name')" style="max-height: 40px;" class="d-inline d-lg-none">
+                        <img src="@setting('logo-light')" alt="@setting('name')" class="d-none d-lg-inline">
                     @else
                         @setting('name')
                     @endif

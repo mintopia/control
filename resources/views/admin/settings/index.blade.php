@@ -14,7 +14,7 @@
     </div>
 
     @if(count($settings) > 0)
-        <form action="{{ route('admin.settings.update') }}" method="post" class="card mb-4 col-md-6">
+        <form action="{{ route('admin.settings.update') }}" method="post" class="card mb-4 col-lg-6">
             {{ csrf_field() }}
             {{ method_field('PATCH') }}
             <div class="card-body">
