@@ -31,7 +31,7 @@ class VerifyEmail extends Mailable
     {
         return new Envelope(
             subject: Setting::fetch('name') . ' - Verify Email Address',
-            from: new Address(config('mail.from.address'), Setting::fetch('name', config('mail.from.name'))),
+            from: new Address(config('mail.from.address'), Setting::fetch('name')),
         );
     }
 
@@ -48,6 +48,7 @@ class VerifyEmail extends Mailable
                     'code' => $this->email->verification_code
                 ]),
                 'email' => $this->email,
+                'name' => Setting::fetch('name'),
             ]
         );
     }
