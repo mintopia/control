@@ -34,10 +34,10 @@
                     }
                 }
 
-                if (in_array($seat->id, $clanSeats)) {
+                if (in_array($seat->id, $clanSeats) || in_array($seat->id, $mySeats)) {
                     $class = 'seat-clan';
                 }
-                if (in_array($seat->id, $mySeats)) {
+                if ($currentTicket && $seat->ticketId === $currentTicket->id) {
                     $class = 'seat-mine';
                 }
 

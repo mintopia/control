@@ -81,7 +81,7 @@
                 <div class="card mb-2">
                     <div class="card-body">
                         <h3 class="card-title">
-                            Available Tickets
+                            Select Ticket
                         </h3>
                         <ul class="list-unstyled">
                             @foreach($responsibleTickets as $ticket)
