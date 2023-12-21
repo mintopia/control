@@ -35,17 +35,30 @@
                 @enderror
             </div>
         </div>
-        <div class="mb-5">
-            <div>
-                <label class="form-check @error('terms') is-invalid @enderror">
-                    <input class="form-check-input" name="terms" value="1" type="checkbox">
-                    <span class="form-check-label required">I agree to the <a href="#">Terms and Conditions</a></span>
-                </label>
-                @error('terms')
-                <p class="invalid-feedback">{{ $message }}</p>
-                @enderror
+        @if($terms || $privacy)
+            <div class="mb-5">
+                <div>
+                    <label class="form-check @error('terms') is-invalid @enderror">
+                        <input class="form-check-input" name="terms" value="1" type="checkbox">
+                        <span class="form-check-label required">
+                            I agree to the
+                            @if($terms)
+                                <a href="{{ $terms }}">Terms and Conditions</a>
+                                @if($privacy)
+                                    and
+                                @endif
+                            @endif
+                            @if($privacy)
+                                <a href="{{ $privacy }}">Privacy Policy</a>
+                            @endif
+                        </span>
+                    </label>
+                    @error('terms')
+                    <p class="invalid-feedback">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
-        </div>
+        @endif
         <div class="d-flex">
             <a href="{{ route('logout') }}" class="btn btn-link">Cancel</a>
             <button type="submit" class="btn btn-primary ms-auto">Continue</button>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Setting;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -23,9 +24,21 @@ class UserSignupRequest extends FormRequest
      */
     public function messages(): array
     {
-        return [
-            'terms.accepted' => 'You must agree to the terms and conditions',
-        ];
+        $terms = Setting::fetch('terms');
+        $privacy = Setting::fetch('privacypolicy');
+        if ($terms || $privacy) {
+            $combined = [];
+            if ($terms) {
+                $combined[] = 'Terms and Conditions';
+            }
+            if ($privacy) {
+                $combined[] = 'Privacy Policy';
+            }
+            return [
+                'terms.accepted' => 'You must agree to the ' . implode(' and ', $combined),
+            ];
+        }
+        return [];
     }
 
     /**
@@ -35,7 +48,7 @@ class UserSignupRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'nickname' => [
                 'required',
                 'string',
@@ -44,7 +57,12 @@ class UserSignupRequest extends FormRequest
                 Rule::unique('users', 'nickname')->ignore($this->user()->id),
             ],
             'name' => 'required|string|max:255|min:4',
-            'terms' => 'accepted',
         ];
+
+        if (Setting::fetch('terms') || Setting::fetch('privacypolicy')) {
+            $rules['terms'] = 'accepted';
+        }
+
+        return $rules;
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\SocialProviderException;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Http\Requests\UserSignupRequest;
+use App\Models\Setting;
 use App\Models\SocialProvider;
 use Carbon\Carbon;
 use Exception;
@@ -80,6 +81,8 @@ class UserController extends Controller
     {
         return view('users.signup', [
             'user' => $request->user(),
+            'terms' => Setting::fetch('terms'),
+            'privacy' => Setting::fetch('privacypolicy'),
         ]);
     }
 
