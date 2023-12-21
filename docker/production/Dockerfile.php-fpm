@@ -11,8 +11,7 @@ RUN composer install \
         --no-dev \
         --no-progress \
         --optimize-autoloader \
-        --prefer-dist && \
-        php artisan route:cache
+        --prefer-dist
 
 FROM node:20 AS npm
 WORKDIR /app/
@@ -29,3 +28,4 @@ FROM ghcr.io/mintopia/php-docker-php-fpm:latest
 LABEL maintainer="jessica.smith@digicert.com"
 
 COPY --from=npm --chown=1000:1000 /app/ /var/www/
+COPY --chown=root:root --chmod=775 docker/production/docker-php-entrypoint /usr/local/bin
