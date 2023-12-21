@@ -17,7 +17,8 @@
         "socialiteproviders/steam": "^4.2",
         "socialiteproviders/twitch": "^5.3",
         "spatie/eloquent-sortable": "^4.1",
-        "spatie/laravel-fractal": "^6.0"
+        "spatie/laravel-fractal": "^6.0",
+        "spatie/laravel-prometheus": "^1.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.9",
