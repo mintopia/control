@@ -49,7 +49,12 @@
                             </div>
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Event</div>
-                                <div class="datagrid-content">{{ $ticket->event->name }}</div>
+                                <div class="datagrid-content">
+                                    {{ $ticket->event->name }}
+                                    @if($ticket->event->draft)
+                                        <span class="badge bg-muted text-muted-fg d-print-none">Draft</span>
+                                    @endif
+                                </div>
                             </div>
                             <div class="datagrid-item">
                                 <div class="datagrid-title">Date</div>

@@ -11,4 +11,12 @@ class TicketPolicy
     {
         return $user->id === $ticket->user_id;
     }
+
+    public function see(User $user, Ticket $ticket): bool
+    {
+        if (!$ticket->event->draft) {
+            return true;
+        }
+        return $user->hasRole('admin');
+    }
 }

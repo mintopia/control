@@ -30,8 +30,10 @@
                             <tr>
                                 <td>
                                     <a href="{{ route('seatingplans.show', $event->code) }}">
-                                        {{ $event->name }}
-                                    </a>
+                                        {{ $event->name }}</a>
+                                    @if($event->draft)
+                                        <span class="badge bg-muted text-muted-fg">Draft</span>
+                                    @endif
                                 </td>
                                 <td>{{ $event->starts_at->format('jS F Y') }}
                                     at {{ $event->starts_at->format('gA') }}</td>

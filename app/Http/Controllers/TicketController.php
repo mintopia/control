@@ -10,15 +10,27 @@ class TicketController extends Controller
 {
     public function index(Request $request)
     {
-        $tickets = $request->user()->tickets()->with(['event' => function ($query) {
-            $query->orderBy('starts_at', 'DESC');
-        }, 'type', 'seat'])->paginate();
+        $query = $request
+            ->user()
+            ->tickets();
+
+        if (!$request->user()->hasRole('admin')) {
+            $query->whereHas('event', function($query) {
+                $query->whereDraft(false);
+            });
+        }
+
+        $tickets = $query->with(['event' => function ($query) {
+                $query->orderBy('starts_at', 'DESC');
+            }, 'type', 'seat'])
+            ->paginate();
+
         return view('tickets.index', [
             'tickets' => $tickets,
         ]);
     }
 
-    public function show(Ticket $ticket)
+    public function show(Request $request, Ticket $ticket)
     {
         return view('tickets.show', [
             'ticket' => $ticket,

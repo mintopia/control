@@ -81,12 +81,6 @@
                             </th>
                             <th>
                                 @include('partials._sortheader', [
-                                    'title' => 'Code',
-                                    'field' => 'code',
-                                ])
-                            </th>
-                            <th>
-                                @include('partials._sortheader', [
                                     'title' => 'Starts',
                                     'field' => 'starts_at',
                                 ])
@@ -111,8 +105,10 @@
                                 <td class="text-muted">{{ $event->id }}</td>
                                 <td>
                                     <a href="{{ route('admin.events.show', $event->code) }}">{{ $event->name }}</a>
+                                    @if ($event->draft)
+                                        <span class="badge bg-muted text-muted-fg">Draft</span>
+                                    @endif
                                 </td>
-                                <td>{{ $event->code }}</td>
                                 <td>
                                     {{ $event->starts_at->format('d M Y H:i') }}
                                 </td>

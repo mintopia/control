@@ -12,7 +12,7 @@
             <div class="page-title mt-0">
                 <h1>Tickets</h1>
             </div>
-            @if (count($tickets) > 0)
+            @if ($tickets->count() > 0)
                 <div class="card mb-6">
                     <div class="table-responsive">
                         <table class="table table-vcenter card-table table-striped">
@@ -33,7 +33,12 @@
                                         </a>
                                     </td>
                                     <td>{{ $ticket->type->name }}</td>
-                                    <td>{{ $ticket->event->name }}</td>
+                                    <td>
+                                        {{ $ticket->event->name }}
+                                        @if($ticket->event->draft)
+                                            <span class="badge bg-muted text-muted-fg">Draft</span>
+                                        @endif
+                                    </td>
                                     <td>
                                         @if ($ticket->canPickSeat())
                                             <a href="{{ route('seatingplans.show', $ticket->event->code) }}">
@@ -66,7 +71,7 @@
             <div class="page-title mt-0">
                 <h1>Events</h1>
             </div>
-            @if($events)
+            @if($events->count() > 0)
                 <div class="card mb-6">
                     <div class="table-responsive">
                         <table class="table table-vcenter card-table table-striped">
@@ -83,6 +88,9 @@
                                 <tr>
                                     <td>
                                         <a href="{{ route('seatingplans.show', $event->code) }}">{{ $event->name }}</a>
+                                        @if($event->draft)
+                                            <span class="badge bg-muted text-muted-fg">Draft</span>
+                                        @endif
                                     </td>
                                     <td>{{ $event->starts_at->format('jS F Y') }}
                                         at {{ $event->starts_at->format('gA') }}</td>

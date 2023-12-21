@@ -53,7 +53,6 @@ class EventController extends Controller
 
         switch ($request->input('order')) {
             case 'name':
-            case 'code':
             case 'starts_at':
             case 'ends_at':
             case 'tickets_count':
@@ -125,6 +124,17 @@ class EventController extends Controller
         $event->ends_at = new Carbon($request->input('ends_at'));
         $event->boxoffice_url = $request->input('boxoffice_url');
         $event->seating_locked = (bool)$request->input('seating_locked', false);
+        if ($request->input('seating_opens_at', null)) {
+            $event->seating_opens_at = new Carbon($request->input('seating_opens_at'));
+        } else {
+            $event->seating_opens_at = null;
+        }
+        if ($request->input('seating_closes_at')) {
+            $event->seating_closes_at = new Carbon($request->input('seating_closes_at'));
+        } else {
+            $event->seating_closes_at = null;
+        }
+        $event->draft = (bool)$request->input('draft', false);
         $event->save();
     }
 

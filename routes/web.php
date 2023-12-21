@@ -90,16 +90,20 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         Route::get('tickets', [TicketController::class, 'index'])->name('tickets.index');
-        Route::post('tickets/transfer', [TicketController::class, 'transfer'])->name('tickets.transfer');
-        Route::middleware('can:update,ticket')->group(function () {
-            Route::resource('tickets', TicketController::class)->only(['show', 'update']);
+        Route::middleware('can:see,ticket')->group(function() {
+            Route::post('tickets/transfer', [TicketController::class, 'transfer'])->name('tickets.transfer');
+            Route::middleware('can:update,ticket')->group(function () {
+                Route::resource('tickets', TicketController::class)->only(['show', 'update']);
+            });
         });
 
         Route::get('seating', [SeatingPlanController::class, 'index'])->name('seatingplans.index');
-        Route::get('seating/{event}', [SeatingPlanController::class, 'show'])->name('seatingplans.show');
-        Route::get('seating/{event}/tickets/{ticket}/unseat', [SeatingPlanController::class, 'unseat'])->name('seatingplans.unseat');
-        Route::get('seating/{event}/tickets/{ticket}', [SeatingPlanController::class, 'show'])->name('seatingplans.choose');
-        Route::get('seating/{event}/tickets/{ticket}/pick/{seat}', [SeatingPlanController::class, 'select'])->name('seatingplans.select');
+        Route::middleware('can:see,event')->group(function() {
+            Route::get('seating/{event}', [SeatingPlanController::class, 'show'])->name('seatingplans.show');
+            Route::get('seating/{event}/tickets/{ticket}/unseat', [SeatingPlanController::class, 'unseat'])->name('seatingplans.unseat');
+            Route::get('seating/{event}/tickets/{ticket}', [SeatingPlanController::class, 'show'])->name('seatingplans.choose');
+            Route::get('seating/{event}/tickets/{ticket}/pick/{seat}', [SeatingPlanController::class, 'select'])->name('seatingplans.select');
+        });
 
         Route::get('/admin/unimpersonate', [AdminHomeController::class, 'unimpersonate'])->name('admin.unimpersonate');
 

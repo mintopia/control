@@ -29,7 +29,13 @@ class TicketTransferRequest extends FormRequest
                 'required',
                 'string',
                 function (string $attribute, mixed $value, Closure $fail) {
-                    $ticket = Ticket::whereTransferCode(strtoupper($value))->first();
+                    $query = Ticket::whereTransferCode(strtoupper($value));
+                    if (!$this->user()->hasRole('admin')) {
+                        $query = $query->whereHas('event', function($query) {
+                            $query->whereDraft(false);
+                        });
+                    }
+                    $ticket = $query->first();
                     if ($ticket === null) {
                         $fail('The transfer code is invalid');
                     } elseif (!$ticket->canTransfer()) {

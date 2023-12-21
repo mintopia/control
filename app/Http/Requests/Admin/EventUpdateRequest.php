@@ -42,6 +42,9 @@ class EventUpdateRequest extends FormRequest
             'ends_at' => 'required|date|after:starts_at',
             'boxoffice_url' => 'sometimes|url:http,https|nullable',
             'seating_locked' => 'sometimes|boolean|nullable',
+            'seating_opens_at' => 'sometimes|date|nullable',
+            'seating_closes_at' => 'sometimes|date|nullable',
+            'draft' => 'sometimes|boolean|nullable',
         ];
     }
 }

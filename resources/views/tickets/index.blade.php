@@ -53,7 +53,12 @@
                                         <span class="text-muted">None</span>
                                     @endif
                                 </td>
-                                <td>{{ $ticket->event->name }}</td>
+                                <td>
+                                    {{ $ticket->event->name }}
+                                    @if($ticket->event->draft)
+                                        <span class="badge bg-muted text-muted-fg">Draft</span>
+                                    @endif
+                                </td>
                                 <td></td>
                             </tr>
                         @empty

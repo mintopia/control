@@ -10,12 +10,24 @@ class HomeController extends Controller
 {
     public function home(Request $request)
     {
-        $tickets = $request->user()->tickets()->with(['event' => function ($query) {
-            $query->orderBy('starts_at', 'DESC');
-            $query->where('ends_at', '>=', Carbon::now());
-        }, 'type', 'seat'])->paginate();
+        $tickets = $request
+            ->user()
+            ->tickets()
+            ->whereHas('event', function($query) use ($request)  {
+                $query->where('ends_at', '>=', Carbon::now());
+                if (!$request->user()->hasRole('admin')) {
+                    $query->whereDraft(false);
+                }
+            })->with(['event' => function ($query) {
+                $query->orderBy('starts_at', 'DESC');
+            }, 'type', 'seat'])
+            ->paginate();
 
-        $events = Event::where('starts_at', '>=', Carbon::now())->get();
+        $query = Event::where('starts_at', '>=', Carbon::now());
+        if (!$request->user()->hasRole('admin')) {
+            $query->whereDraft(false);
+        }
+        $events = $query->get();
 
         return view('home.home', [
             'tickets' => $tickets,

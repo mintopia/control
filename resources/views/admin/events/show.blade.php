@@ -16,8 +16,8 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-body">
-                    <div class="datagrid">
+                <div class="card-body row">
+                    <div class="datagrid mb-5">
                         <div class="datagrid-item">
                             <div class="datagrid-title">ID</div>
                             <div class="datagrid-content">{{ $event->id }}</div>
@@ -31,14 +31,6 @@
                             <div class="datagrid-content">{{ $event->code }}</div>
                         </div>
                         <div class="datagrid-item">
-                            <div class="datagrid-title">Starts</div>
-                            <div class="datagrid-content">{{ $event->starts_at->format('d M Y H:i') }}</div>
-                        </div>
-                        <div class="datagrid-item">
-                            <div class="datagrid-title">Ends</div>
-                            <div class="datagrid-content">{{ $event->ends_at->format('d M Y H:i') }}</div>
-                        </div>
-                        <div class="datagrid-item">
                             <div class="datagrid-title">Box Office URL</div>
                             <div class="datagrid-content">
                                 @if($event->boxoffice_url)
@@ -48,6 +40,32 @@
                                 @endif
                             </div>
                         </div>
+                        <div class="datagrid-item">
+                            <div class="datagrid-title">Starts</div>
+                            <div class="datagrid-content">{{ $event->starts_at->format('d M Y H:i') }}</div>
+                        </div>
+                        <div class="datagrid-item">
+                            <div class="datagrid-title">Ends</div>
+                            <div class="datagrid-content">{{ $event->ends_at->format('d M Y H:i') }}</div>
+                        </div>
+
+                        <div class="datagrid-item">
+                            <div class="datagrid-title">Draft</div>
+                            <div class="datagrid-content">
+                                @if($event->draft)
+                                    <span class="status status-red">
+                                        Yes
+                                    </span>
+                                @else
+                                    <span class="status status-green">
+                                        No
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="datagrid">
                         <div class="datagrid-item">
                             <div class="datagrid-title">Seating Locked</div>
                             <div class="datagrid-content">
@@ -62,6 +80,28 @@
                                 @endif
                             </div>
                         </div>
+
+                        <div class="datagrid-item">
+                            <div class="datagrid-title">Seating Unlocked At</div>
+                            <div class="datagrid-content">
+                                @if($event->seating_opens_at)
+                                    {{ $event->seating_opens_at->format('d M Y H:i') }}
+                                @else
+                                    <span class="text-muted">Not Set</span>
+                                @endif</div>
+                        </div>
+
+                        <div class="datagrid-item">
+                            <div class="datagrid-title">Seating Locked At</div>
+                            <div class="datagrid-content">
+                                @if($event->seating_closes_at)
+                                    {{ $event->seating_closes_at->format('d M Y H:i') }}
+                                @else
+                                    <span class="text-muted">Not Set</span>
+                                @endif
+                            </div>
+                        </div>
+
                         <div class="datagrid-item">
                             <div class="datagrid-title">Created</div>
                             <div class="datagrid-content">
@@ -70,6 +110,7 @@
                                 </span>
                             </div>
                         </div>
+
                     </div>
                 </div>
                 <div class="card-footer align-content-end d-flex btn-list">

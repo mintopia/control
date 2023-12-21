@@ -9,9 +9,13 @@ use Illuminate\Http\Request;
 
 class SeatingPlanController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $events = Event::orderBy('starts_at', 'DESC')->with('seatingPlans')->paginate();
+        $query = Event::query();
+        if (!$request->user()->hasRole('admin')) {
+            $query = $query->whereDraft(false);
+        }
+        $events = $query->orderBy('starts_at', 'DESC')->with('seatingPlans')->paginate();
         return view('seatingplans.index', [
             'events' => $events,
         ]);

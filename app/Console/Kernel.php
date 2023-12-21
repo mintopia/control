@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('sanctum:prune-expired --hours=24')->daily();
         $schedule->command('control:prune-clans')->everyFiveMinutes();
+        $schedule->command('control:update-event-seating-locks')->everyMinute();
     }
 
     /**

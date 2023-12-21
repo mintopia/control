@@ -125,10 +125,13 @@ namespace App\Models{
  * @property int $id
  * @property string $name
  * @property string $code
+ * @property int $draft
  * @property string|null $boxoffice_url
  * @property \Illuminate\Support\Carbon|null $starts_at
  * @property \Illuminate\Support\Carbon|null $ends_at
  * @property int $seating_locked
+ * @property string|null $seating_opens_at
+ * @property string|null $seating_closes_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventMapping> $mappings
@@ -145,10 +148,13 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereBoxofficeUrl($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereCode($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereDraft($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereEndsAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereSeatingClosesAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereSeatingLocked($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereSeatingOpensAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereStartsAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Event whereUpdatedAt($value)
  * @mixin \Eloquent

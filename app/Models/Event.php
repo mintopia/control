@@ -17,6 +17,8 @@ class Event extends Model
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
+        'seating_opens_at' => 'datetime',
+        'seating_closes_at' => 'datetime',
     ];
 
     public function getRouteKeyName()

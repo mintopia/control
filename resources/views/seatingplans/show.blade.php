@@ -11,7 +11,13 @@
 
 @section('content')
     <div class="page-header mt-0">
-        <h1>{{ $event->name }}</h1>
+        <h1>
+            {{ $event->name }}
+
+            @if($event->draft)
+                <span class="badge bg-muted text-muted-fg">Draft</span>
+            @endif
+        </h1>
     </div>
 
     @if ($currentTicket)
