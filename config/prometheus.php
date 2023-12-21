@@ -6,7 +6,7 @@ return [
      * The urls that will return metrics.
      */
     'urls' => [
-        'default' => env('PROMETHEUS_PATH', 'prometheus'),
+        'default' => env('PROMETHEUS_PATH1', 'prometheus'),
     ],
 
     /*

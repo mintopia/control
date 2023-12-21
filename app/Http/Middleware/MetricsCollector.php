@@ -18,7 +18,11 @@ class MetricsCollector
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
-        if (substr($request->getRequestUri(), 1) === config('prometheus.urls.default')) {
+        $promUrl = config('prometheus.urls.default');
+        if (!str_starts_with($promUrl, '/')) {
+            $promUrl = "/{$promUrl}";
+        }
+        if ($request->getRequestUri() === $promUrl) {
             return $response;
         }
         $method = $request->getMethod();
