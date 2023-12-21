@@ -21,7 +21,6 @@ use App\Http\Controllers\ClanMembershipController;
 use App\Http\Controllers\EmailAddressController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LinkedAccountController;
-use App\Http\Controllers\SeatController;
 use App\Http\Controllers\SeatingPlanController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
@@ -101,9 +100,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('seating/{event}/tickets/{ticket}/unseat', [SeatingPlanController::class, 'unseat'])->name('seatingplans.unseat');
         Route::get('seating/{event}/tickets/{ticket}', [SeatingPlanController::class, 'show'])->name('seatingplans.choose');
         Route::get('seating/{event}/tickets/{ticket}/pick/{seat}', [SeatingPlanController::class, 'select'])->name('seatingplans.select');
-
-        Route::get('seats/{seat}', [SeatController::class, 'edit'])->name('seats.edit');
-        Route::match(['PUT', 'PATCH'], 'seats/{seat}', [SeatController::class, 'update'])->name('seats.update');
 
         Route::get('/admin/unimpersonate', [AdminHomeController::class, 'unimpersonate'])->name('admin.unimpersonate');
 
