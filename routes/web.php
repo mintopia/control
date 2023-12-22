@@ -135,6 +135,10 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::resource('events.tickettypes.mappings', TicketTypeMappingController::class)->except(['show', 'index'])->scoped();
             Route::get('/events/{event}/tickettypes/{tickettype}/mappings/{mapping}/delete', [TicketTypeMappingController::class, 'delete'])->name('events.tickettypes.mappings.delete')->scopeBindings();
 
+            Route::get('tickets/import', [AdminTicketController::class, 'import'])->name('tickets.import');
+            Route::post('tickets/import', [AdminTicketController::class, 'import_show'])->name('tickets.import.show');
+            Route::post('tickets/import/process', [AdminTicketController::class, 'import_process'])->name('tickets.import.process');
+
             Route::resource('tickets', AdminTicketController::class);
             Route::get('tickets/{ticket}/delete', [AdminTicketController::class, 'delete'])->name('tickets.delete');
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\TicketImportRequest;
 use App\Http\Requests\Admin\TicketUpdateRequest;
 use App\Models\Event;
 use App\Models\Ticket;
@@ -211,4 +212,31 @@ class TicketController extends Controller
             'ticket' => $ticket,
         ]);
     }
+
+    public function import()
+    {
+        return view('admin.tickets.import');
+    }
+
+    public function import_show(TicketImportRequest $request)
+    {
+        $csv = $request->file('csv')->get();
+        $imports = Ticket::import($csv);
+        $request->session()->flash('imports', $imports);
+        return view('admin.tickets.import_show', [
+            'imports' => $imports,
+        ]);
+    }
+
+    public function import_process(Request $request)
+    {
+        // TODO: Process Import
+        $imports = $request->session()->get('imports');
+        foreach ($imports as $import) {
+            Ticket::createFromImport($import);
+        }
+
+        return response()->redirectToRoute('admin.tickets.index')->with('successMessage', 'The tickets have been imported');
+    }
+
 }

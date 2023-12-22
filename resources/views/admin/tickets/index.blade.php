@@ -9,8 +9,18 @@
 @endsection
 
 @section('content')
-    <div class="page-header mt-0">
-        <h1>Tickets</h1>
+    <div class="row g-2 align-items-center mb-4">
+        <div class="col page-header mt-2">
+            <h1>Tickets</h1>
+        </div>
+        <div class="col-auto ms-auto d-print-none">
+            <div class="btn-list">
+                <a href="{{ route('admin.tickets.import') }}" class="btn btn-primary d-inline-block">
+                    <i class="icon ti ti-table-import"></i>
+                    Import
+                </a>
+            </div>
+        </div>
     </div>
 
     <div class="row">

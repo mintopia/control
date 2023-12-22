@@ -5,7 +5,7 @@ namespace App\Http\Requests\Admin;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class SeatingPlanImportRequest extends FormRequest
+class TicketImportRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,7 +23,6 @@ class SeatingPlanImportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'wipe' => 'sometimes|boolean|nullable',
             'csv' => 'required|file',
         ];
     }
