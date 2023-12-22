@@ -65,16 +65,6 @@ class TicketController extends Controller
 
         $params = (array)$filters;
 
-        switch ($request->input('order')) {
-            case 'created_at':
-                $params['order'] = $request->input('order');
-                break;
-            case 'id':
-            default:
-                $params['order'] = 'id';
-                break;
-        }
-
         switch ($request->input('order_direction', 'asc')) {
             case 'desc':
                 $params['order_direction'] = 'desc';
@@ -84,12 +74,59 @@ class TicketController extends Controller
                 $params['order_direction'] = 'asc';
         }
 
-        $query = $query->orderBy($params['order'], $params['order_direction']);
+        switch ($request->input('order')) {
+            case 'created_at':
+            case 'external_id':
+            case 'reference':
+                $params['order'] = $request->input('order');
+                $query = $query->orderBy($params['order'], $params['order_direction']);
+                break;
+
+            case 'event':
+                $params['order'] = 'event';
+                $query = $query
+                    ->join('events', 'tickets.event_id', '=', 'events.id')
+                    ->orderBy('events.name', $params['order_direction']);
+                break;
+
+            case 'type':
+                $params['order'] = 'type';
+                $query = $query
+                    ->join('ticket_types', 'tickets.ticket_type_id', '=', 'ticket_types.id')
+                    ->orderBy('ticket_types.name', $params['order_direction']);
+                break;
+
+            case 'user':
+                $params['order'] = 'user';
+                $query = $query
+                    ->join('users', 'tickets.user_id', '=', 'users.id')
+                    ->orderBy('users.nickname', $params['order_direction']);
+                break;
+
+            case 'seat':
+                $params['order'] = 'seat';
+                $query = $query
+                    ->leftJoin('seats', 'seats.ticket_id', '=', 'tickets.id')
+                    ->orderBy('seats.row', $params['order_direction'])
+                    ->orderBy('seats.number', $params['order_direction']);
+                break;
+
+            case 'id':
+            default:
+                $params['order'] = 'id';
+                $query = $query->orderBy($params['order'], $params['order_direction']);
+                break;
+        }
+
 
         $params['page'] = $request->input('page', 1);
         $params['perPage'] = $request->input('perPage', 20);
 
-        $tickets = $query->with(['event', 'user', 'type', 'provider', 'seat'])->paginate($params['perPage'])->appends($params);
+        $tickets = $query
+            ->with(['event', 'user', 'type', 'provider', 'seat'])
+            ->select('tickets.*')
+            ->paginate($params['perPage'])
+            ->appends($params);
 
         $events = Event::orderBy('starts_at', 'DESC')->get();
         $providers = TicketProvider::orderBy('name', 'ASC')->get();

@@ -35,8 +35,18 @@
                     <table class="table table-vcenter card-table">
                         <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Role</th>
+                            <th>
+                                @include('partials._sortheader', [
+                                    'title' => 'Name',
+                                    'field' => 'name',
+                                ])
+                            </th>
+                            <th>
+                                @include('partials._sortheader', [
+                                    'title' => 'Role',
+                                    'field' => 'role',
+                                ])
+                            </th>
                             <td class="w-2"></td>
                         </tr>
                         </thead>

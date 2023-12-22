@@ -13,9 +13,10 @@ class ClanController extends Controller
     {
         $clans = $request->user()
             ->clanMemberships()
-            ->with(['clan' => function ($query) {
-                $query->orderBy('name', 'ASC');
-            }, 'clan.members', 'role'])
+            ->join('clans', 'clan_memberships.clan_id', '=', 'clans.id')
+            ->select('clan_memberships.*')
+            ->orderBy('clans.name', 'asc')
+            ->with(['clan', 'clan.members', 'role'])
             ->paginate();
         return view('clans.index', [
             'members' => $clans,
@@ -43,17 +44,43 @@ class ClanController extends Controller
         $clan->save();
     }
 
-    public function show(Clan $clan)
+    public function show(Request $request, Clan $clan)
     {
-        $members = $clan->members()->with([
-            'user' => function ($query) {
-                $query->orderBy('nickname', 'ASC');
-            },
-            'role',
-        ])->paginate();
+        $query = $clan->members();
+        $params['order_direction'] = $request->input('order_direction', 'asc');
+        if (!in_array($params['order_direction'], ['asc', 'desc'])) {
+            $params['order_direction'] = 'asc';
+        }
+
+        switch ($request->input('order')) {
+            case 'name':
+                $params['order'] = 'name';
+                $query
+                    ->join('users', 'clan_memberships.user_id', '=', 'users.id')
+                    ->orderBy('users.nickname', $params['order_direction']);
+                break;
+
+            case 'role':
+            default:
+                $params['order'] = 'role';
+                $query
+                    ->join('clan_roles', 'clan_memberships.clan_role_id', '=', 'clan_roles.id')
+                    ->join('users', 'clan_memberships.user_id', '=', 'users.id')
+                    ->orderBy('clan_roles.id', $params['order_direction'])
+                    ->orderBy('users.nickname', $params['order_direction']);
+                break;
+        }
+
+        $members = $query
+            ->with(['user', 'role'])
+            ->select('clan_memberships.*')
+            ->paginate()
+            ->appends($params);
+
         return view('clans.show', [
             'clan' => $clan,
             'members' => $members,
+            'params' => $params,
         ]);
     }
 

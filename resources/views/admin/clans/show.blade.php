@@ -73,17 +73,37 @@
                     <table class="table table-vcenter card-table">
                         <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>User</th>
-                            <th>Role</th>
-                            <th>Joined</th>
+                            <th>
+                                @include('partials._sortheader', [
+                                    'title' => 'ID',
+                                    'field' => 'id',
+                                ])
+                            </th>
+                            <th>
+                                @include('partials._sortheader', [
+                                    'title' => 'User',
+                                    'field' => 'user',
+                                ])
+                            </th>
+                            <th>
+                                @include('partials._sortheader', [
+                                    'title' => 'Role',
+                                    'field' => 'role',
+                                ])
+                            </th>
+                            <th>
+                                @include('partials._sortheader', [
+                                    'title' => 'Joined',
+                                    'field' => 'created',
+                                ])
+                            </th>
                             <th></th>
                         </tr>
                         </thead>
                         <tbody>
                         @forelse($members as $member)
                             <tr>
-                                <td class="text-muted">{{ $member->id }}</td>
+                                <td class="text-muted">{{ $member->user->id }}</td>
                                 <td>
                                     <a href="{{ route('admin.users.show', $member->user->id) }}">{{ $member->user->nickname }}</a>
                                 </td>

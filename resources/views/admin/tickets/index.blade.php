@@ -82,12 +82,42 @@
                                     'field' => 'id',
                                 ])
                             </th>
-                            <th>External ID</th>
-                            <th>Reference</th>
-                            <th>Event</th>
-                            <th>Type</th>
-                            <th>User</th>
-                            <th>Seat</th>
+                            <th>
+                                @include('partials._sortheader', [
+                                    'title' => 'External ID',
+                                    'field' => 'external_id',
+                                ])
+                            </th>
+                            <th>
+                                @include('partials._sortheader', [
+                                    'title' => 'Reference',
+                                    'field' => 'reference',
+                                ])
+                            </th>
+                            <th>
+                                @include('partials._sortheader', [
+                                    'title' => 'Event',
+                                    'field' => 'event',
+                                ])
+                            </th>
+                            <th>
+                                @include('partials._sortheader', [
+                                    'title' => 'Type',
+                                    'field' => 'type',
+                                ])
+                            </th>
+                            <th>
+                                @include('partials._sortheader', [
+                                    'title' => 'User',
+                                    'field' => 'user',
+                                ])
+                            </th>
+                            <th>
+                                @include('partials._sortheader', [
+                                    'title' => 'Seat',
+                                    'field' => 'seat',
+                                ])
+                            </th>
                             <th>
                                 @include('partials._sortheader', [
                                     'title' => 'Created',

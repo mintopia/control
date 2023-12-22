@@ -74,14 +74,51 @@ class ClanController extends Controller
         ]);
     }
 
-    public function show(Clan $clan)
+    public function show(Request $request, Clan $clan)
     {
-        $members = $clan->members()->with(['role', 'user' => function ($query) {
-            $query->orderBy('nickname', 'ASC');
-        }])->get();
+        $query = $clan->members();
+
+        $orderDirection = 'asc';
+        $params = [];
+        if (in_array($request->input('order_direction', 'asc'), ['asc', 'desc'])) {
+            $orderDirection = $request->input('order_direction', 'asc');
+            $params['order_direction'] = $orderDirection;
+        }
+
+        switch ($request->input('order')) {
+            case 'user':
+                $params['order'] = 'user';
+                $query = $query
+                    ->join('users', 'clan_memberships.user_id', '=', 'users.id')
+                    ->orderBy('users.nickname', $orderDirection);
+                break;
+
+            case 'role':
+                $params['order'] = 'role';
+                $query = $query->orderBy('clan_role_id', $orderDirection);
+                break;
+
+            case 'created':
+                $params['order'] = 'created';
+                $query = $query->orderBy('created_at', $orderDirection);
+                break;
+
+            case 'id':
+            default:
+                $params['order'] = 'id';
+                $query = $query->orderBy('id', $orderDirection);
+                break;
+        }
+
+        $members = $query
+            ->with(['role', 'user'])
+            ->select('clan_memberships.*')
+            ->get();
+
         return view('admin.clans.show', [
             'clan' => $clan,
             'members' => $members,
+            'params' => $params,
         ]);
     }
 
