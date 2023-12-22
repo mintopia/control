@@ -90,11 +90,9 @@ Route::middleware('auth:sanctum')->group(function () {
         });
 
         Route::get('tickets', [TicketController::class, 'index'])->name('tickets.index');
-        Route::middleware('can:see,ticket')->group(function() {
-            Route::post('tickets/transfer', [TicketController::class, 'transfer'])->name('tickets.transfer');
-            Route::middleware('can:update,ticket')->group(function () {
-                Route::resource('tickets', TicketController::class)->only(['show', 'update']);
-            });
+        Route::post('tickets/transfer', [TicketController::class, 'transfer'])->name('tickets.transfer');
+        Route::middleware(['can:see,ticket', 'can:update,ticket'])->group(function() {
+            Route::resource('tickets', TicketController::class)->only(['show', 'update']);
         });
 
         Route::get('seating', [SeatingPlanController::class, 'index'])->name('seatingplans.index');
