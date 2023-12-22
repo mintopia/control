@@ -100,9 +100,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('seating', [SeatingPlanController::class, 'index'])->name('seatingplans.index');
         Route::middleware('can:see,event')->group(function() {
             Route::get('seating/{event}', [SeatingPlanController::class, 'show'])->name('seatingplans.show');
-            Route::get('seating/{event}/tickets/{ticket}/unseat', [SeatingPlanController::class, 'unseat'])->name('seatingplans.unseat');
-            Route::get('seating/{event}/tickets/{ticket}', [SeatingPlanController::class, 'show'])->name('seatingplans.choose');
-            Route::get('seating/{event}/tickets/{ticket}/pick/{seat}', [SeatingPlanController::class, 'select'])->name('seatingplans.select');
+            Route::get('seating/{event}/tickets/{ticket}/unseat', [SeatingPlanController::class, 'unseat'])->name('seatingplans.unseat')->scopeBindings();
+            Route::get('seating/{event}/tickets/{ticket}', [SeatingPlanController::class, 'show'])->name('seatingplans.choose')->scopeBindings();
+            Route::get('seating/{event}/tickets/{ticket}/pick/{seat}', [SeatingPlanController::class, 'select'])->name('seatingplans.select')->scopeBindings();
         });
 
         Route::get('/admin/unimpersonate', [AdminHomeController::class, 'unimpersonate'])->name('admin.unimpersonate');

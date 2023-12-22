@@ -20,15 +20,18 @@
         </h1>
     </div>
 
-    @if ($currentTicket)
-        <p>
-            Choose a seat for <strong>{{ $currentTicket->user->nickname }}</strong>.
-        </p>
-    @elseif(count($allTickets) > 0)
-        <p>
-            Select a ticket to assign it a seat.
-        </p>
+    @if(!$event->seating_locked)
+        @if($currentTicket)
+            <p>
+                Choose a seat for <strong>{{ $currentTicket->user->nickname }}</strong>.
+            </p>
+        @elseif(count($allTickets) > 0)
+            <p>
+                Select a ticket to assign it a seat.
+            </p>
+        @endif
     @endif
+
     <div class="row">
         <div class="col-md-3">
             @if($currentTicket)
@@ -87,12 +90,20 @@
                 <div class="card mb-2">
                     <div class="card-body">
                         <h3 class="card-title">
-                            Select Ticket
+                            @if($event->seating_locked)
+                                Tickets
+                            @else
+                                Select Ticket
+                            @endif
                         </h3>
                         <ul class="list-unstyled">
                             @foreach($responsibleTickets as $ticket)
                                 <li class="my-1 d-flex">
-                                    <a href="{{ route('seatingplans.choose', [$event->code, $ticket->id]) }}">{{ $ticket->user->nickname }}</a>
+                                    @if($event->seating_locked)
+                                        {{ $ticket->user->nickname }}
+                                    @else
+                                        <a href="{{ route('seatingplans.choose', [$event->code, $ticket->id]) }}">{{ $ticket->user->nickname }}</a>
+                                    @endif
                                     @if ($ticket->user->id === Auth::user()->id)
                                         <span class="mx-1"> - {{ $ticket->reference }}</span>
                                     @endif

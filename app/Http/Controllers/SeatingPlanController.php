@@ -26,6 +26,7 @@ class SeatingPlanController extends Controller
         if ($event->seating_locked) {
             $request->session()->now('infoMessage', 'Seating is locked');
         }
+
         if ($ticket && (!$ticket->canPickSeat() || !$ticket->canBeManagedBy($request->user()))) {
             return response()->redirectToRoute('seatingplans.show', $event->code)->with('errorMessage', 'You cannot pick a seat for this ticket');
         }
@@ -46,15 +47,20 @@ class SeatingPlanController extends Controller
             ->whereHas('type', function ($query) {
                 $query->where('has_seat', true);
             })
-            ->whereUserId($request->user()->id)->orWhere(function ($query) use ($allClans) {
-                $query->whereHas('user.clanmemberships', function ($query) use ($allClans) {
-                    $query->whereIn('clan_id', $allClans);
-                });
+            ->where(function ($query) use ($allClans, $request) {
+                $query
+                    ->whereUserId($request->user()->id)
+                    ->orWhere(function ($query) use ($allClans) {
+                        $query->whereHas('user.clanmemberships', function ($query) use ($allClans) {
+                            $query->whereIn('clan_id', $allClans);
+                        });
+                    });
             })
             ->with(['type', 'seat', 'event', 'user' => function ($query) {
                 $query->orderBy('nickname', 'ASC');
             }, 'user.clanMemberships'])
             ->get();
+
 
         $clanSeats = [];
         $mySeats = [];
@@ -62,9 +68,6 @@ class SeatingPlanController extends Controller
         $responsibleSeats = [];
 
         foreach ($allTickets as $ticket) {
-            if (!$ticket->canPickSeat()) {
-                continue;
-            }
             if ($ticket->user->id === $request->user()->id) {
                 array_unshift($responsibleTickets, $ticket);
                 if ($ticket->seat) {
