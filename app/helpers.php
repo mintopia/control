@@ -4,7 +4,7 @@ namespace App;
 function makePermalink(string $input): string
 {
     $input = strtolower($input);
-    $patterns = array("/ /", "/[^a-z0-9-]/i");
+    $patterns = array("/ /", "/[^a-z]/i");
     $replacements = array("-", "");
     $output = preg_replace($patterns, $replacements, $input);
     return substr($output, 0, 128);
