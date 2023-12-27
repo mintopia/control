@@ -93,6 +93,7 @@ class TicketTailorProvider extends AbstractTicketProvider
             })->first();
             if (!$event) {
                 Log::info("{$this->provider} {$data->id} not added. Unable to find event {$data->event_id}");
+                return null;
             }
             $ticket = $this->makeTicket($email->user, $data);
             if ($ticket) {
