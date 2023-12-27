@@ -84,7 +84,7 @@ class TicketTailorProvider extends AbstractTicketProvider
         } elseif (!$ticket) {
             $email = EmailAddress::whereEmail($data->email)->whereNotNull('verified_at')->first();
             if (!$email) {
-                Log::info("{$this->provider} {$data->ticket} not added. Unable to find {$data->email}");
+                Log::info("{$this->provider} {$data->id} not added. Unable to find {$data->email}");
                 // No email, nothing to do
                 return null;
             }
@@ -92,10 +92,10 @@ class TicketTailorProvider extends AbstractTicketProvider
                 $query->whereTicketProviderId($this->provider->id)->whereExternalId($data->event_id);
             })->first();
             if (!$event) {
-                Log::info("{$this->provider} {$data->ticket} not added. Unable to find event {$data->event_id}");
+                Log::info("{$this->provider} {$data->id} not added. Unable to find event {$data->event_id}");
             }
             $ticket = $this->makeTicket($email->user, $data);
-            if (!$ticket) {
+            if ($ticket) {
                 Log::info("{$this->provider} {$ticket} has been added for {$email}");
             }
         }
