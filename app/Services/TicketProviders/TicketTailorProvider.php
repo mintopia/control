@@ -147,26 +147,6 @@ class TicketTailorProvider extends AbstractTicketProvider
         return str_replace(['/st/', '.jpg'], ['/qr/', '.png'], $data->barcode_url);
     }
 
-    public function syncTicket(string $id): ?Ticket
-    {
-        try {
-            $response = $this->getClient()->get("/v1/issued_tickets/{$id}");
-        } catch (ClientException $exception) {
-            if ($exception->getResponse()->getStatusCode() === 404) {
-                // Ticket doesn't exist
-                $ticket = Ticket::whereTicketProviderId($this->provider->id)->whereExternalId($id)->first();
-                if ($ticket) {
-                    $ticket->delete();
-                }
-                return null;
-            }
-            throw $exception;
-        }
-
-        $data = json_decode($response->getBody());
-        return $this->processTicket($data);
-    }
-
     protected function getClient(): Client
     {
         if (!$this->client) {

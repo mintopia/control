@@ -55,7 +55,7 @@ class Event extends Model
                 if (!$event->used) {
                     return true;
                 }
-                if ($existing && $existing->ticket_provider_id === $provider->id && $existing->external_id === $event->id) {
+                if ($existing && $existing->ticket_provider_id === $provider->id && $existing->external_id == $event->id) {
                     return true;
                 }
                 return false;
@@ -79,7 +79,7 @@ class Event extends Model
                 if (!$type->used) {
                     return true;
                 }
-                if ($existing && $existing->ticket_provider_id === $provider->id && $existing->external_id === $type->id) {
+                if ($existing && $existing->ticket_provider_id == $provider->id && $existing->external_id == $type->id) {
                     return true;
                 }
                 return false;

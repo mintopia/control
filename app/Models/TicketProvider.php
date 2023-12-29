@@ -18,22 +18,19 @@ class TicketProvider extends Model
 
     protected $hidden = [
         'apikey',
+        'apisecret',
         'webhook_secret',
     ];
 
     protected $casts = [
         'apikey' => 'encrypted',
+        'apisecret' => 'encrypted',
         'webhook_secret' => 'encrypted',
     ];
 
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
-    }
-
-    public function syncTicket(string $id): ?Ticket
-    {
-        return $this->getProvider()->syncTicket($id);
     }
 
     public function getProvider(?string $redirectUrl = null): TicketProviderContract

@@ -22,7 +22,13 @@
                     {{ method_field('PATCH') }}
                     <div class="card-body">
                         @include('partials._providersconfig', [
+                            'fieldName' => 'endpoint',
+                        ])
+                        @include('partials._providersconfig', [
                             'fieldName' => 'apikey',
+                        ])
+                        @include('partials._providersconfig', [
+                            'fieldName' => 'apisecret',
                         ])
                         @include('partials._providersconfig', [
                             'fieldName' => 'webhook_secret',

@@ -38,10 +38,13 @@ class EventMappingController extends Controller
         $events = $mapping->provider->getEvents();
         $mapping->name = '';
         foreach ($events as $event) {
-            if ($event->id === $externalId) {
+            if ($event->id == $externalId) {
                 $mapping->name = $event->name;
                 break;
             }
+        }
+        if (!$mapping->name) {
+            $mapping->name = $mapping->event->name;
         }
         $mapping->save();
     }

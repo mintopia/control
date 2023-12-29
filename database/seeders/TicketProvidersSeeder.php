@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Services\TicketProviders\InternalTicketProvider;
 use App\Services\TicketProviders\TicketTailorProvider;
+use App\Services\TicketProviders\WooCommerceProvider;
 use Illuminate\Database\Seeder;
 
 class TicketProvidersSeeder extends Seeder
@@ -16,6 +17,7 @@ class TicketProvidersSeeder extends Seeder
         $classes = [
             TicketTailorProvider::class,
             InternalTicketProvider::class,
+            WooCommerceProvider::class,
         ];
         foreach ($classes as $className) {
             $provider = new $className;

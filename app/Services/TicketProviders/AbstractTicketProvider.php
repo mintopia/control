@@ -63,11 +63,6 @@ abstract class AbstractTicketProvider implements TicketProviderContract
         return true;
     }
 
-    public function syncTicket(string $id): ?Ticket
-    {
-        return null;
-    }
-
     public function syncTickets(EmailAddress $email): void
     {
     }

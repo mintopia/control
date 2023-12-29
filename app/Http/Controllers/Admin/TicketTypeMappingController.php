@@ -40,10 +40,13 @@ class TicketTypeMappingController extends Controller
         $types = $mapping->provider->getTicketTypes($mapping->type->event);
         $mapping->name = '';
         foreach ($types as $type) {
-            if ($type->id === $externalId) {
+            if ($type->id == $externalId) {
                 $mapping->name = $type->name;
                 break;
             }
+        }
+        if (!$mapping->name) {
+            $mapping->name = $mapping->ticket->name;
         }
         $mapping->save();
     }

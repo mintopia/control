@@ -21,6 +21,8 @@ class TicketProviderController extends Controller
     {
         $provider->apikey = $request->input('apikey');
         $provider->webhook_secret = $request->input('webhook_secret');
+        $provider->endpoint = $request->input('endpoint');
+        $provider->apisecret = $request->input('apisecret');
         $provider->enabled = (bool)$request->input('enabled');
         $provider->save();
         return response()->redirectToRoute('admin.settings.index')->with('successMessage', "{$provider->name} has been updated");

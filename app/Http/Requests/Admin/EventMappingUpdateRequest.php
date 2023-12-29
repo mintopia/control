@@ -40,11 +40,11 @@ class EventMappingUpdateRequest extends FormRequest
                     }
                     $available = $this->event->getAvailableEventMappings($this->mapping ?? null);
                     foreach ($available as $mapping) {
-                        if ($mapping->provider->id !== $provider->id) {
+                        if ($mapping->provider->id != $provider->id) {
                             continue;
                         }
                         foreach ($mapping->events as $event) {
-                            if ($event->id === $external_id) {
+                            if ($event->id == $external_id) {
                                 return;
                             }
                         }

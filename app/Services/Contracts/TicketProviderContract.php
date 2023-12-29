@@ -39,15 +39,6 @@ interface TicketProviderContract
     public function processWebhook(Request $request): bool;
 
     /**
-     * Fetch a ticket from the provider with its ticket ID. If the ticket doesn't exist, and we have a local user, it will
-     * be created. Otherwise, we will update the local ticket based on the remote ticket.
-     *
-     * @param string $id
-     * @return ?Ticket
-     */
-    public function syncTicket(string $id): ?Ticket;
-
-    /**
      * Fetch tickets for the provided email and create them locally if they exist.
      * @param EmailAddress $email
      * @return void

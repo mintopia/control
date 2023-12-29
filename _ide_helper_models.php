@@ -130,8 +130,8 @@ namespace App\Models{
  * @property \Illuminate\Support\Carbon|null $starts_at
  * @property \Illuminate\Support\Carbon|null $ends_at
  * @property int $seating_locked
- * @property string|null $seating_opens_at
- * @property string|null $seating_closes_at
+ * @property \Illuminate\Support\Carbon|null $seating_opens_at
+ * @property \Illuminate\Support\Carbon|null $seating_closes_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventMapping> $mappings
@@ -448,6 +448,8 @@ namespace App\Models{
  * @property string $code
  * @property string $provider_class
  * @property mixed|null $apikey
+ * @property mixed|null $apisecret
+ * @property string|null $endpoint
  * @property mixed|null $webhook_secret
  * @property int $enabled
  * @property string $cache_prefix
@@ -463,10 +465,12 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider query()
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereApikey($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereApisecret($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCachePrefix($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCode($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereEnabled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereEndpoint($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereProviderClass($value)

@@ -40,11 +40,11 @@ class TicketTypeMappingUpdateRequest extends FormRequest
                     }
                     $available = $this->event->getAvailableTicketMappings($this->mapping ?? null);
                     foreach ($available as $mapping) {
-                        if ($mapping->provider->id !== $provider->id) {
+                        if ($mapping->provider->id != $provider->id) {
                             continue;
                         }
                         foreach ($mapping->types as $type) {
-                            if ($type->id === $external_id) {
+                            if ($type->id == $external_id) {
                                 return;
                             }
                         }

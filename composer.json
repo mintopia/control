@@ -13,6 +13,7 @@
         "laravel/sanctum": "^3.3",
         "laravel/socialite": "^5.11",
         "laravel/tinker": "^2.8",
+        "ramsey/uuid": "^4.7",
         "socialiteproviders/discord": "^4.2",
         "socialiteproviders/steam": "^4.2",
         "socialiteproviders/twitch": "^5.3",
