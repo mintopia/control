@@ -6,7 +6,7 @@
     @include('admin.users._breadcrumbs', [
         'user' => $email->user,
     ])
-    <li class="breadcrumb-item active"><a href="{{ route('admin.users.emails.delete', $email->user->id) }}">Delete Email
+    <li class="breadcrumb-item active"><a href="{{ route('admin.users.emails.delete', [$email->user->id, $email->id]) }}">Delete Email
             Address</a>
         @endsection
 

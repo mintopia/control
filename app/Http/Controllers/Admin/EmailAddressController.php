@@ -23,7 +23,7 @@ class EmailAddressController extends Controller
     public function store(User $user, EmailAddressUpdateRequest $request)
     {
         $email = new EmailAddress();
-        $email->user()->associate($request->user());
+        $email->user()->associate($user);
         $this->updateObject($email, $request);
         return response()->redirectToRoute('admin.users.show', $email->user->id)->with('successMessage', 'The email address has been created');
     }
