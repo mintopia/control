@@ -24,6 +24,11 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
                 return true;
             }
 
+            // Filter out the seating plan API
+            if ($entry->isRequest() && str_starts_with($entry->content['uri'], '/api/v1/')) {
+                return false;
+            }
+
             if (config('telescope.nofilter', false)) {
                 return true;
             }
