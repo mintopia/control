@@ -127,6 +127,12 @@ class SeatingPlanController extends Controller
 
     public function select(Request $request, Event $event, Ticket $ticket, Seat $seat)
     {
+        if ($seat->plan->event_id !== $event->id) {
+            abort(404);
+        }
+        if ($ticket->event_id !== $event->id) {
+            abort(404);
+        }
         if (!$ticket->canPickSeat() || !$ticket->canBeManagedBy($request->user())) {
             return response()->redirectToRoute('seatingplans.show', $event->code)->with('errorMessage', 'You cannot pick a seat for this ticket')->withFragment("tab-plan-{$seat->plan->code}");
         }
