@@ -13,6 +13,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('sanctum:prune-expired --hours=24')->daily();
+        $schedule->command('telescope:prune')->daily();
         $schedule->command('control:prune-clans')->everyFiveMinutes();
         $schedule->command('control:update-event-seating-locks')->everyMinute();
     }
