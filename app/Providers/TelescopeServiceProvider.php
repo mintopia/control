@@ -24,6 +24,10 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
                 return true;
             }
 
+            if (config('telescope.nofilter', false)) {
+                return true;
+            }
+
             return $entry->isReportableException() ||
                    $entry->isFailedRequest() ||
                    $entry->isFailedJob() ||

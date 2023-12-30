@@ -63,6 +63,7 @@ return [
     */
 
     'enabled' => env('TELESCOPE_ENABLED', true),
+    'nofilter' => env('TELESCOPE_NOFILTER', false),
 
     /*
     |--------------------------------------------------------------------------
