@@ -8,12 +8,14 @@ LAN Party user accounts, ticket management and seat picker. It is designed to wo
 
  - Discord
  - Steam (No authentication, just account linking)
+ - Twitch
 
 These are using Laravel Socialite, so any provider supported by Socialite can be integrated.
 
 ### Ticket Provider Support
 
  - Ticket Tailor
+ - WooCommerce
  - Internal
 
 These are custom integrations but more can be added and used if people develop them. The Internal provider allows you to manually issue tickets to users.
