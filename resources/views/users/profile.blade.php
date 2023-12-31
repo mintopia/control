@@ -23,7 +23,8 @@
             </div>
             <div class="row mb-4">
                 <div class="col">
-                    <div class="card">
+                    @if(count(Auth::user()->emails) > 0)
+                        <div class="card">
                         <div class="table-responsive">
                             <table class="table table-vcenter card-table">
                                 <thead>
@@ -71,6 +72,14 @@
                             </table>
                         </div>
                     </div>
+                    @else
+                        <p class="text-center">
+                            <i class="icon ti ti-mail-off icon-lg text-muted m-6"></i>
+                        </p>
+                        <p class="text-center">
+                            You have no email addresses
+                        </p>
+                    @endif
                 </div>
             </div>
 

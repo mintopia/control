@@ -40,21 +40,23 @@
                                 @enderror
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label required">Primary Email Address</label>
-                            <select class="form-select @error('name') is-invalid @enderror" name="primary_email_id">
-                                @foreach($user->emails as $email)
-                                    <option value="{{ $email->id }}"
-                                            @if(old('primary_email_id', $user->primaryEmail->id) == $email->id) selected @endif>{{ $email->email }}</option>
-                                @endforeach
-                            </select>
-                            <div>
-                                <small class="form-hint">The main email address for this user</small>
-                                @error('primary_email_id')
-                                <p class="invalid-feedback">{{ $message }}</p>
-                                @enderror
+                        @if (count($user->emails) > 0)
+                            <div class="mb-3">
+                                <label class="form-label required">Primary Email Address</label>
+                                <select class="form-select @error('name') is-invalid @enderror" name="primary_email_id">
+                                    @foreach($user->emails as $email)
+                                        <option value="{{ $email->id }}"
+                                                @if(old('primary_email_id', $user->primaryEmail->id) == $email->id) selected @endif>{{ $email->email }}</option>
+                                    @endforeach
+                                </select>
+                                <div>
+                                    <small class="form-hint">The main email address for this user</small>
+                                    @error('primary_email_id')
+                                    <p class="invalid-feedback">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
-                        </div>
+                        @endif
                         <div class="mb-6">
                             <div class="form-label">Roles</div>
                             <div>

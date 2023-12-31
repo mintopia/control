@@ -17,9 +17,6 @@
         <form action="{{ route('emails.store') }}" method="post" class="card">
             {{ csrf_field() }}
             <div class="card-body">
-                <p>
-                    Thank you for logging in. We just need to collect a few more bits of information.
-                </p>
                 <h3 class="card-title">Email Address</h3>
                 <p class="card-subtitle">Enter your email address. We will send a verification code to it.</p>
                 <input type="email" name="email" id="email" value="{{ old('email') }}"

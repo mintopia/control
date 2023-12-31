@@ -101,7 +101,9 @@ class UserController extends Controller
     {
         $user->nickname = $request->input('nickname');
         $user->name = $request->input('name');
-        $user->primaryEmail()->associate($user->emails()->find($request->input('primary_email_id')));
+        if ($request->input('primary_email_id')) {
+            $user->primaryEmail()->associate($user->emails()->find($request->input('primary_email_id')));
+        }
 
         if ($request->input('terms', false)) {
             if ($user->terms_agreed_at === null) {

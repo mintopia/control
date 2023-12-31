@@ -46,7 +46,7 @@ class UserUpdateRequest extends FormRequest
             ],
             'name' => 'required|string|max:255|min:4',
             'primary_email_id' => [
-                'required',
+                'sometimes',
                 'integer',
                 Rule::exists('email_addresses', 'id')->where(function (Builder $query) {
                     return $query->where('user_id', $this->user->id);
