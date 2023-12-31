@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\SeatController as AdminSeatController;
 use App\Http\Controllers\Admin\SeatingPlanController as AdminSeatingPlanController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\SocialProviderController;
+use App\Http\Controllers\Admin\ThemeController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 use App\Http\Controllers\Admin\TicketProviderController;
 use App\Http\Controllers\Admin\TicketTypeController;
@@ -167,6 +168,10 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('settings/ticketproviders/{provider}/clearcache', [TicketProviderController::class, 'clearcache'])->name('settings.ticketproviders.clearcache');
             Route::get('settings/socialproviders/{provider}/edit', [SocialProviderController::class, 'edit'])->name('settings.socialproviders.edit');
             Route::match(['PUT', 'PATCH'], 'settings/socialproviders/{provider}', [SocialProviderController::class, 'update'])->name('settings.socialproviders.update');
+            Route::prefix('settings')->name('settings.')->group(function() {
+                Route::resource('themes', ThemeController::class)->except(['index', 'show']);
+                Route::get('themes/{theme}/delete', [ThemeController::class, 'delete'])->name('themes.delete');
+            });
         });
     });
 });

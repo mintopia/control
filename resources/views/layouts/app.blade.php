@@ -13,6 +13,7 @@
         @setting('name')
     </title>
     @stack('head')
+    @include('partials._theme')
 </head>
 <body>
 <div class="page">

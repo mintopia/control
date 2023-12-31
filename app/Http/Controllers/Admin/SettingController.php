@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SettingUpdateRequest;
 use App\Models\Setting;
 use App\Models\SocialProvider;
+use App\Models\Theme;
 use App\Models\TicketProvider;
 
 class SettingController extends Controller
@@ -16,9 +17,11 @@ class SettingController extends Controller
         $socialProviders = SocialProvider::get();
         $ticketProviders = TicketProvider::get();
         $settings = Setting::ordered()->get();
+        $themes = Theme::get();
         return view('admin.settings.index', [
             'socialProviders' => $socialProviders,
             'ticketProviders' => $ticketProviders,
+            'themes' => $themes,
             'settings' => $settings,
         ]);
     }

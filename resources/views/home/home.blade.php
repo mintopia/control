@@ -132,7 +132,7 @@
                             <span class="badges-list justify-content-center">
                             @foreach(Auth::user()->clanMemberships as $clanMember)
                                     <a href="{{ route('clans.show', $clanMember->clan->code) }}"
-                                       class="badge text-decoration-none bg-blue text-blue-fg">{{ $clanMember->clan->name }}</a>
+                                       class="badge text-decoration-none bg-primary text-primary-fg">{{ $clanMember->clan->name }}</a>
                                 @endforeach
                             </span>
                         </div>

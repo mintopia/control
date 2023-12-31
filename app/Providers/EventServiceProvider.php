@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\Seat;
 use App\Models\SeatingPlan;
 use App\Models\Setting;
+use App\Models\Theme;
 use App\Models\Ticket;
 use App\Models\TicketProvider;
 use App\Models\User;
@@ -19,6 +20,7 @@ use App\Observers\EventObserver;
 use App\Observers\SeatingPlanObserver;
 use App\Observers\SeatObserver;
 use App\Observers\SettingObserver;
+use App\Observers\ThemeObserver;
 use App\Observers\TicketObserver;
 use App\Observers\TicketProviderObserver;
 use App\Observers\UserObserver;
@@ -43,6 +45,7 @@ class EventServiceProvider extends ServiceProvider
         Ticket::class => TicketObserver::class,
         ClanMembership::class => ClanMembershipObserver::class,
         Setting::class => SettingObserver::class,
+        Theme::class => ThemeObserver::class,
     ];
     /**
      * The event to listener mappings for the application.

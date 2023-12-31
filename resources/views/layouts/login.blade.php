@@ -7,6 +7,7 @@
     <title>@setting('name', config('app.name'))</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('partials._theme')
 </head>
 <body class="d-flex flex-column bg-white">
 <div class="row g-0 flex-fill">
