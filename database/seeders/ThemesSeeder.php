@@ -21,8 +21,6 @@ class ThemesSeeder extends Seeder
                 'code' => 'default',
                 'readonly' => true,
                 'primary' => '#0054a6',
-                'secondary' => '#3175b7',
-                'tertiary' => '#f2f6fa',
                 'nav_background' => '#182433',
                 'seat_available' => '#ffffff',
                 'seat_taken' => '#dc3545',

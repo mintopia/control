@@ -51,39 +51,6 @@
                 @enderror
             </div>
             <div class="mb-3">
-                <label class="form-label required">Secondary</label>
-
-                <div class="col-md-5">
-                    <div class="input-group">
-                        <span class="input-group-prepend">
-                            <input type="color" class="form-control form-control-color" value="{{ old('primary', $theme->secondary ?? '') }}" title="Secondary Colour" @if($theme->readonly) disabled="" @endif>
-                        </span>
-                        <input type="text" name="secondary" class="form-control @error('secondary') is-invalid @enderror"
-                               placeholder="Colour" value="{{ old('secondary', $theme->secondary ?? '') }}" @if($theme->readonly) disabled="" @endif>
-                    </div>
-                </div>
-                <small class="form-hint">The secondary colour used for when buttons are active</small>
-                @error('secondary')
-                <p class="invalid-feedback">{{ $message }}</p>
-                @enderror
-            </div>
-            <div class="mb-3">
-                <label class="form-label required">Tertiary</label>
-                <div class="col-md-5">
-                    <div class="input-group">
-                        <span class="input-group-prepend">
-                            <input type="color" class="form-control form-control-color" value="{{ old('tertiary', $theme->tertiary ?? '') }}" title="Tertiary Colour" @if($theme->readonly) disabled="" @endif>
-                        </span>
-                        <input type="text" name="tertiary" class="form-control @error('tertiary') is-invalid @enderror"
-                               placeholder="Colour" value="{{ old('tertiary', $theme->tertiary ?? '') }}" @if($theme->readonly) disabled="" @endif>
-                    </div>
-                </div>
-                <small class="form-hint">The tertiary colour used for the background of active cancel buttons</small>
-                @error('tertiary')
-                <p class="invalid-feedback">{{ $message }}</p>
-                @enderror
-            </div>
-            <div class="mb-3">
                 <label class="form-label required">Navigation Background Colour</label>
                 <div class="col-md-5">
                     <div class="input-group">
@@ -98,6 +65,16 @@
                 @error('nav_background')
                 <p class="invalid-feedback">{{ $message }}</p>
                 @enderror
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-check form-switch">
+                        <input type="checkbox" class="form-check-input" name="dark_mode" value="1"
+                               @if(old('dark_mode', $theme->dark_mode)) checked @endif>
+                        Dark Mode
+                    </label>
+                </div>
             </div>
         </div>
         <div class="col-md-6">

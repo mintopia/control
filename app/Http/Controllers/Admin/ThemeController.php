@@ -67,13 +67,12 @@ class ThemeController extends Controller
     protected function updateObject(Theme $theme, Request $request)
     {
         $theme->active = (bool)$request->input('active');
+        $theme->dark_mode = (bool)$request->input('dark_mode');
         if (!$theme->readonly) {
             $map = [
                 'name',
                 'css',
                 'primary',
-                'secondary',
-                'tertiary',
                 'nav_background',
                 'seat_available',
                 'seat_disabled',

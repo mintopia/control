@@ -15,7 +15,7 @@
     @stack('head')
     @include('partials._theme')
 </head>
-<body>
+<body @if($darkMode) data-bs-theme="dark" @endif>
 <div class="page">
     <aside class="navbar navbar-vertical navbar-expand-lg" data-bs-theme="dark">
         <div class="container-fluid">

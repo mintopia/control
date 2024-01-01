@@ -9,17 +9,25 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @include('partials._theme')
 </head>
-<body class="d-flex flex-column bg-white">
+<body class="d-flex flex-column" @if($darkMode) data-bs-theme="dark" @endif>
 <div class="row g-0 flex-fill">
     <div class="col-12 col-lg-6 col-xl-4 border-top-wide border-primary d-flex flex-column justify-content-center">
         <div class="container container-tight mt-auto px-lg-5">
             <h1 class="mb-4 text-center">
                 <a href="{{ route('home') }}" class="navbar-brand navbar-brand-autodark">
-                    @if(App\Models\Setting::fetch('logo-light'))
-                        <img src="@setting('logo-dark')" alt="@setting('name', config('app.name'))">
+                    @if($darkMode)
+                        @if(App\Models\Setting::fetch('logo-light'))
+                            <img src="@setting('logo-light')" alt="@setting('name', config('app.name'))">
+                        @else
+                            @setting('name', config('app.name'))
+                       @endif
                     @else
-                        @setting('name', config('app.name'))
-                   @endif
+                        @if(App\Models\Setting::fetch('logo-dark'))
+                            <img src="@setting('logo-dark')" alt="@setting('name', config('app.name'))">
+                        @else
+                            @setting('name', config('app.name'))
+                        @endif
+                    @endif
                 </a>
             </h1>
             @if (session('successMessage'))

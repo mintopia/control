@@ -18,7 +18,7 @@
             {{ method_field('PATCH') }}
             @if ($theme->readonly)
                 <div class="alert alert-info alert-important m-4">
-                    It is not possible to edit this theme, you can only set it to be active.
+                    It is not possible to edit this theme, you can only set it to be active and change dark mode.
                 </div>
             @endif
             @include('admin.themes._form')

@@ -1,59 +1,29 @@
-@php
-    $currentTheme = App\Models\Theme::whereActive(true)->first();
-@endphp
 @if($currentTheme)
     <style>
-        /* Theme Specific */
-        a {
-            color: {{ $currentTheme->primary }};
+        :root {
+            --tblr-primary: {{ $currentTheme->primary }};
+            --tblr-primary-rgb: {{ $currentTheme->rgb('primary') }};
+
+            --tblr-link-color: {{ $currentTheme->primary }};
+            --tblr-link-color-rgb: {{ $currentTheme->rgb('primary') }};
+            --tblr-link-hover-color: {{ $currentTheme->primary }};
+            --tblr-link-hover-color-rgb: {{ $currentTheme->rgb('primary') }};
+        }
+
+        .navbar[data-bs-theme=dark] {
+            --tblr-navbar-bg: {{ $currentTheme->nav_background }};
+        }
+
+        .breadcrumb a {
+            --tblr-breadcrumb-link-color: {{ $currentTheme->primary }};
         }
 
         .btn-link, .btn-link:hover {
             color: {{ $currentTheme->primary }};
         }
 
-        .bg-primary {
-            background-color: {{ $currentTheme->primary }} !important;
-        }
-
-        .btn-check:checked + .btn, :not(.btn-check) + .btn:active, .btn:first-child:active, .btn.active, .btn.show {
-            color: {{ $currentTheme->primary }};
-            border-color: {{ $currentTheme->primary }};
-            background-color: {{ $currentTheme->tertiary }};
-        }
-
-        .breadcrumb a {
-            color: {{ $currentTheme->primary }};
-        }
-
-        .navbar[data-bs-theme=dark] {
-            background-color: {{ $currentTheme->nav_background }};
-        }
-
-        .navbar-expand-lg .nav-item.active::after {
-            border-color: {{ $currentTheme->primary }};
-        }
-
-        .btn-primary {
-            background-color: {{ $currentTheme->primary }};
-        }
-
-        .btn-primary:hover {
-            background-color: {{ $currentTheme->secondary }};
-        }
-
-        .btn-primary:active {
-            background-color: {{ $currentTheme->secondary }} !important;
-            color: #ffffff !important;
-        }
-
-        .btn-outline-primary {
-            border-color: {{ $currentTheme->primary }};
-            color: {{ $currentTheme->primary }};
-        }
-
-        .btn-outline-primary:hover {
-            background-color: {{ $currentTheme->primary }};
+        .border-primary {
+            border-color: {{ $currentTheme->primary }} !important;
         }
 
         .seating-plan .seat.available {
