@@ -47,6 +47,6 @@
         }
 
         /* Theme CSS Override */
-        {{ $currentTheme->css }}
+        {!! $currentTheme->css !!}
     </style>
 @endif
