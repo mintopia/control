@@ -29,17 +29,15 @@ class SyncDiscordRoles extends Command
     protected $description = 'Synchronise discord roles';
 
     protected ?array $managedRoles = null;
-
-    public function __construct(protected ?DiscordApi $discord)
-    {
-        parent::__construct();
-    }
+    protected DiscordApi $discord;
 
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(DiscordApi $discord)
     {
+        $this->discord = $discord;
+
         if ($this->discord === null) {
             Log::debug("Unable to sync Discord roles, no API access");
             return;

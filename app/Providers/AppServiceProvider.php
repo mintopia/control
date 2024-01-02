@@ -37,13 +37,5 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('currentTheme', $currentTheme);
                 $view->with('darkMode', $darkMode);
         });
-        $this->app->singleton(DiscordApi::class, function($app) {
-            $provider = SocialProvider::whereCode('discord')->first();
-            $id = Setting::fetch('discord.server.id');
-            if (!$provider || !$id) {
-                return null;
-            }
-            return new DiscordApi($provider, $id);
-        });
     }
 }
