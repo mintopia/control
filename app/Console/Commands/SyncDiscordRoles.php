@@ -34,7 +34,7 @@ class SyncDiscordRoles extends Command
     /**
      * Execute the console command.
      */
-    public function handle(DiscordApi $discord)
+    public function handle(?DiscordApi $discord)
     {
         $this->discord = $discord;
 
