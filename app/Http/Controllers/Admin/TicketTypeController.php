@@ -7,17 +7,25 @@ use App\Http\Requests\Admin\DeleteRequest;
 use App\Http\Requests\Admin\TicketTypeUpdateRequest;
 use App\Models\Event;
 use App\Models\TicketType;
+use App\Services\DiscordApi;
 use Illuminate\Http\Request;
 
 class TicketTypeController extends Controller
 {
-    public function create(Event $event)
+    public function create(?DiscordApi $discord, Event $event)
     {
         $type = new TicketType();
         $type->event()->associate($event);
+        $roles = [
+            '' => 'None',
+        ];
+        if ($discord) {
+            $roles += $discord->getRoles();
+        }
         return view('admin.tickettypes.create', [
             'event' => $event,
             'type' => $type,
+            'roles' => $roles,
         ]);
     }
 
@@ -33,6 +41,7 @@ class TicketTypeController extends Controller
     {
         $type->name = $request->input('name');
         $type->has_seat = (bool)$request->input('has_seat', false);
+        $type->discord_role_id = $request->input('discord_role_id', null);
         $type->save();
     }
 
@@ -44,11 +53,18 @@ class TicketTypeController extends Controller
         ]);
     }
 
-    public function edit(Event $event, TicketType $tickettype)
+    public function edit(?DiscordApi $discord, Event $event, TicketType $tickettype)
     {
+        $roles = [
+            '' => 'None',
+        ];
+        if ($discord) {
+            $roles += $discord->getRoles();
+        }
         return view('admin.tickettypes.edit', [
             'event' => $event,
             'type' => $tickettype,
+            'roles' => $roles,
         ]);
     }
 

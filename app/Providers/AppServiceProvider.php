@@ -2,7 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Setting;
+use App\Models\SocialProvider;
 use App\Models\Theme;
+use App\Services\DiscordApi;
+use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
@@ -13,7 +17,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(DiscordApi::class, function($app) {
+            $provider = SocialProvider::whereCode('discord')->first();
+            $id = Setting::fetch('discord.server.id');
+            if (!$provider || !$id) {
+                return null;
+            }
+            return new DiscordApi($provider, $id);
+        });
     }
 
     /**

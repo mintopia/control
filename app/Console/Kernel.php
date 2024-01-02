@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('telescope:prune')->daily();
         $schedule->command('control:prune-clans')->everyFiveMinutes();
         $schedule->command('control:update-event-seating-locks')->everyMinute();
+        $schedule->command('control:sync-discord-roles')->everyFifteenMinutes();
     }
 
     /**

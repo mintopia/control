@@ -336,6 +336,7 @@ namespace App\Models{
  * @property string $name
  * @property string|null $description
  * @property int $encrypted
+ * @property int $hidden
  * @property mixed|null|null $value
  * @property string|null $validation
  * @property \App\Enums\SettingType $type
@@ -350,6 +351,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|Setting whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Setting whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Setting whereEncrypted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereHidden($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Setting whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Setting whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Setting whereOrder($value)
@@ -375,6 +377,7 @@ namespace App\Models{
  * @property int $auth_enabled
  * @property string|null $client_id
  * @property mixed|null $client_secret
+ * @property mixed|null $token
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\LinkedAccount> $accounts
@@ -392,6 +395,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereProviderClass($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereSupportsAuth($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereUpdatedAt($value)
  * @mixin \Eloquent
  */
@@ -407,9 +411,8 @@ namespace App\Models{
  * @property string $code
  * @property int $readonly
  * @property int $active
+ * @property int $dark_mode
  * @property string $primary
- * @property string $secondary
- * @property string $tertiary
  * @property string $nav_background
  * @property string $seat_available
  * @property string $seat_disabled
@@ -426,6 +429,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|Theme whereCode($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Theme whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Theme whereCss($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Theme whereDarkMode($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Theme whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Theme whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Theme whereNavBackground($value)
@@ -436,8 +440,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|Theme whereSeatDisabled($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Theme whereSeatSelected($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Theme whereSeatTaken($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereSecondary($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereTertiary($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Theme whereUpdatedAt($value)
  * @mixin \Eloquent
  */
@@ -535,6 +537,8 @@ namespace App\Models{
  * @property int $event_id
  * @property string $name
  * @property int $has_seat
+ * @property string|null $discord_role_id
+ * @property string|null $discord_role_name
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\Event $event
@@ -546,6 +550,8 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|TicketType newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|TicketType query()
  * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereDiscordRoleId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereDiscordRoleName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereEventId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereHasSeat($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereId($value)

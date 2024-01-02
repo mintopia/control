@@ -25,6 +25,7 @@ class TicketTypeUpdateRequest extends FormRequest
         return [
             'name' => 'required|string|max:100',
             'has_seat' => 'sometimes|boolean|nullable',
+            'discord_role_id' => 'sometimes|string|nullable',
         ];
     }
 }

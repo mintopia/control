@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Ticket;
+use App\Models\User;
 
 class TicketObserver
 {
@@ -10,6 +11,17 @@ class TicketObserver
     {
         if ($ticket->isDirty() && $ticket->seat) {
             $ticket->seat->plan->updateRevision();
+        }
+        if ($ticket->isDirty('user_id')) {
+            $original = $ticket->getOriginal('user_id');
+            if ($original) {
+                $originalUser = User::whereId($original)->first();
+                if ($originalUser) {
+                    $originalUser->syncDiscordRoles();
+                }
+            }
+            // Update new user
+            $ticket->user->syncDiscordRoles();
         }
     }
 

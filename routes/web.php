@@ -169,6 +169,8 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('settings/socialproviders/{provider}/edit', [SocialProviderController::class, 'edit'])->name('settings.socialproviders.edit');
             Route::match(['PUT', 'PATCH'], 'settings/socialproviders/{provider}', [SocialProviderController::class, 'update'])->name('settings.socialproviders.update');
             Route::prefix('settings')->name('settings.')->group(function() {
+                Route::get('discord', [AdminSettingController::class, 'add_discord'])->name('discord');
+                Route::get('discord/return', [AdminSettingController::class, 'add_discord_return'])->name('discord_return');
                 Route::resource('themes', ThemeController::class)->except(['index', 'show']);
                 Route::get('themes/{theme}/delete', [ThemeController::class, 'delete'])->name('themes.delete');
             });
