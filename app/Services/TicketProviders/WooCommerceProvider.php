@@ -8,16 +8,21 @@ use App\Models\Event;
 use App\Models\Ticket;
 use App\Models\TicketType;
 use App\Models\User;
+use App\Services\TicketProviders\Traits\GenericSyncAllTrait;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use Illuminate\Console\OutputStyle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use PharIo\Manifest\Email;
 use Ramsey\Uuid\Uuid;
 
 class WooCommerceProvider extends AbstractTicketProvider
 {
+    use GenericSyncAllTrait;
+
     protected const TICKET_TYPES_CACHE_TTL = '86400';
     protected const EVENTS_CACHE_TTL = 86400;
 
@@ -49,19 +54,22 @@ class WooCommerceProvider extends AbstractTicketProvider
         return true;
     }
 
-    protected function makeTicket(User $user, object $data): ?Ticket
+    protected function makeTicket(?User $user, object $data): ?Ticket
     {
         $type = $this->getType($data->ticket_type_id);
         if (!$type) {
-            Log::info("{$this->provider} {$data->id} not added. Unable to find ticket type {$data->ticket_type_id}");
+            Log::debug("{$this->provider} {$data->id} not added. Unable to find ticket type {$data->ticket_type_id}");
             return null;
         }
         $ticket = new Ticket;
         $ticket->provider()->associate($this->provider);
-        $ticket->user()->associate($user);
+        if ($user) {
+            $ticket->user()->associate($user);
+        }
         $ticket->type()->associate($type);
         $ticket->event()->associate($type->event);
         $ticket->external_id = $data->id;
+        $ticket->original_email = $data->order->billing->email;
         $ticket->name = $data->item->name;
         $ticket->reference = $data->id;
         $ticket->qrcode = $this->getQrCode($data);
@@ -93,50 +101,27 @@ class WooCommerceProvider extends AbstractTicketProvider
         return $this->client;
     }
 
-    public function syncTickets(EmailAddress $email): void
+    public function syncTickets(string|EmailAddress $email): void
     {
-        $orders = [];
-        $page = 1;
-        do {
-            $response = $this->getClient()->get('orders', [
-                'query' => [
-                    'search' => $email->email,
-                    'page' => $page,
-                ]
-            ]);
-            $data = json_decode($response->getBody());
-            foreach ($data as $ticket) {
-                if ($ticket->billing->email == $email->email) {
-                    $orders[] = $ticket;
-                }
-            }
-            $page++;
-        } while (count($data) > 0);
+        $user = null;
+        if ($email instanceof EmailAddress) {
+            $address = $email->email;
+            $user = $email->user;
+        } else {
+            $address = $email;
+        }
 
-        // Crack the orders into separate tickets
+        $ticketData = $this->getTickets($address);
+        $tickets = [];
         $valid = [];
         $voided = [];
-        $ticketData = [];
-        foreach ($orders as $order) {
-            $tickets = [];
 
-            foreach ($order->line_items as $item) {
-                for ($i = 1; $i <= $item->quantity; $i++) {
-                    $externalId = "{$order->id}-{$item->id}-{$i}";
-                    $tickets[] = $externalId;
-                    $ticketData[$externalId] = (object)[
-                        'id' => $externalId,
-                        'ticket_type_id' => $item->product_id,
-                        'order' => $order,
-                        'item' => $item,
-                    ];
-                }
-            }
-
-            if (in_array($order->status, ['processing', 'completed'])) {
-                $valid = array_merge($valid, $tickets);
+        foreach ($ticketData as $ticket) {
+            $tickets[] = $ticket->id;
+            if (in_array($ticket->order->status, ['processing', 'completed'])) {
+                $valid[] = $ticket->id;
             } else {
-                $voided = array_merge($voided, $tickets);
+                $voided[] = $ticket->id;
             }
         }
 
@@ -155,16 +140,68 @@ class WooCommerceProvider extends AbstractTicketProvider
         $found = [];
         foreach ($tickets as $ticket) {
             $found[] = $ticket->external_id;
+            // Match up with our user if we have one
+            if ($user && !$ticket->user) {
+                $ticket->user()->associate($user);
+                $ticket->save();
+                Log::info("{$this->provider} {$ticket} has been allocated to {$user}");
+            }
         }
         $missing = array_diff($valid, $found);
 
         foreach ($missing as $ticketId) {
             $data = $ticketData[$ticketId];
-            $ticket = $this->makeTicket($email->user, $data);
+            $ticket = $this->makeTicket($user, $data);
             if ($ticket) {
                 Log::info("{$this->provider} {$ticket} has been added for {$email}");
             }
         }
+    }
+
+    protected function getTickets(?string $address = null): array
+    {
+        $orders = [];
+        $query = [
+            'page' => 1,
+        ];
+        if ($address) {
+            $query['search'] = $address;
+        }
+        do {
+            $response = $this->getClient()->get('orders', [
+                'query' => $query
+            ]);
+            $data = json_decode($response->getBody());
+            foreach ($data as $order) {
+                if (!$address || $order->billing->email == $address) {
+                    $orders[] = $order;
+                }
+            }
+            $query['page']++;
+        } while (count($data) > 0);
+
+        // Crack the orders into separate tickets
+        $tickets = [];
+        foreach ($orders as $order) {
+            foreach ($order->line_items as $item) {
+                for ($i = 1; $i <= $item->quantity; $i++) {
+                    $externalId = "{$order->id}-{$item->id}-{$i}";
+                    $status = 'voided';
+                    if (in_array($order->status, ['processing', 'completed'])) {
+                        $status = 'valid';
+                    }
+                    $tickets[$externalId] = (object)[
+                        'id' => $externalId,
+                        'ticket_type_id' => $item->product_id,
+                        'order' => $order,
+                        'item' => $item,
+                        'status' => $status,
+                        'email' => $order->billing->email,
+                    ];
+                }
+            }
+        }
+        return $tickets;
     }
 
     public function getEvents(): array

@@ -14,7 +14,7 @@
 
     @if ($currentTicket)
         <p>
-            Choose a seat for <strong>{{ $currentTicket->user->nickname }}</strong>.
+            Choose a seat for <strong>{{ $currentTicket->user->nickname ?? $currentTicket->original_email }}</strong>.
         </p>
     @else
         <p>
@@ -27,8 +27,8 @@
             @if($currentTicket)
                 <div class="card mb-4">
                     <div class="card-body">
-                        <h3 class="card-title">{{ $currentTicket->user->nickname }}</h3>
-                        @if($currentTicket->user->clanMemberships)
+                        <h3 class="card-title">{{ $currentTicket->user->nickname ?? $currentTicket->original_email }}</h3>
+                        @if($currentTicket->user && $currentTicket->user->clanMemberships)
                             <p class="card-subtitle">
 
                                 <span class="badge-list">
@@ -86,12 +86,14 @@
                             @foreach($tickets as $ticket)
                                 <li class="my-1">
                                     <a href="{{ route('admin.events.seats', ['event' => $event, 'ticket_id' => $ticket->id]) }}">
-                                        {{ $ticket->user->nickname }}</a>
+                                        {{ $ticket->user->nickname ?? $ticket->original_email }}</a>
                                     <span class="badge-list">
-                                    @foreach($ticket->user->clanMemberships as $clanMember)
+                                    @if ($ticket->user)
+                                        @foreach($ticket->user->clanMemberships as $clanMember)
                                             <span
                                                 class="badge bg-muted text-muted-fg">{{ $clanMember->clan->name }}</span>
                                         @endforeach
+                                    @endif
                                 </span>
                                 </li>
                             @endforeach
@@ -142,11 +144,12 @@
                                                 $class = 'disabled';
                                                 $name = 'Not Available';
                                             }
-                                            if ($seat->nickname) {
-                                                $name = $seat->nickname;
-                                            }
                                             if ($seat->ticket) {
                                                 $class = 'taken';
+                                                $name = $seat->original_email;
+                                            }
+                                            if ($seat->nickname) {
+                                                $name = $seat->nickname;
                                             }
                                             if ($currentTicket && $currentTicket->id == $seat->ticketId) {
                                                 $class = 'seat-mine';

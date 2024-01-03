@@ -18,12 +18,13 @@
                     $class = 'disabled';
                     $name = 'Not Available';
                 }
-                if ($seat->nickname) {
-                    $name = $seat->nickname;
-                }
                 if ($seat->ticket) {
                     $class = 'taken';
                     $canPick = false;
+                    $name = 'Occupied';
+                }
+                if ($seat->nickname) {
+                    $name = $seat->nickname;
                 }
                 if (!$currentTicket) {
                     if (in_array($seat->id, $responsibleSeats)) {

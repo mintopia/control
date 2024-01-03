@@ -80,6 +80,7 @@ class SeatingPlan extends Model implements Sortable
                 'disabled' => $seat->disabled,
                 'description' => $seat->description,
                 'nickname' => $seat->ticket->user->nickname ?? null,
+                'original_email' => $seat->ticket->original_email ?? null,
                 'ticket' => $seat->ticket->type->name ?? null,
                 'ticketId' => $seat->ticket->id ?? null,
                 'clans' => $clans,

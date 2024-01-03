@@ -8,6 +8,7 @@ class DiscordApi
 {
     protected ?Client $client = null;
     protected ?array $roles = null;
+    protected ?array $members = null;
 
 
     public function __construct(protected SocialProvider $provider, protected string $serverId)
@@ -55,7 +56,11 @@ class DiscordApi
 
     public function getMemberRoles(): array
     {
-        $members = [];
+        if ($this->members !== null) {
+            return $this->members;
+        }
+
+        $this->members = [];
         $after = 0;
         do {
             $response = $this->getClient()->get("guilds/{$this->serverId}/members", [
@@ -67,7 +72,7 @@ class DiscordApi
             $data = json_decode($response->getBody());
 
             foreach ($data as $member) {
-                $members[$member->user->id] = (object)[
+                $this->members[$member->user->id] = (object)[
                     'id' => $member->user->id,
                     'nickname' => $member->user->username,
                     'roles' => $member->roles,
@@ -76,7 +81,7 @@ class DiscordApi
             }
         } while (count($data) === 1000);
 
-        return $members;
+        return $this->members;
     }
 
     public function addRoleToMember(string $roleId, string $memberId): void

@@ -8,15 +8,17 @@ use App\Models\Event;
 use App\Models\Ticket;
 use App\Models\TicketType;
 use App\Models\User;
+use App\Services\TicketProviders\Traits\GenericSyncAllTrait;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class TicketTailorProvider extends AbstractTicketProvider
 {
+    use GenericSyncAllTrait;
+
     protected const TICKET_TYPES_CACHE_TTL = '86400';
     protected const EVENTS_CACHE_TTL = 86400;
 
@@ -83,11 +85,6 @@ class TicketTailorProvider extends AbstractTicketProvider
             $ticket->delete();
         } elseif (!$ticket) {
             $email = EmailAddress::whereEmail($data->email)->whereNotNull('verified_at')->first();
-            if (!$email) {
-                Log::info("{$this->provider} {$data->id} not added. Unable to find {$data->email}");
-                // No email, nothing to do
-                return null;
-            }
             $event = Event::whereHas('mappings', function ($query) use ($data) {
                 $query->whereTicketProviderId($this->provider->id)->whereExternalId($data->event_id);
             })->first();
@@ -95,15 +92,19 @@ class TicketTailorProvider extends AbstractTicketProvider
                 Log::info("{$this->provider} {$data->id} not added. Unable to find event {$data->event_id}");
                 return null;
             }
-            $ticket = $this->makeTicket($email->user, $data);
+            $user = null;
+            if ($email) {
+                $user = $email->user;
+            }
+            $ticket = $this->makeTicket($user , $data);
             if ($ticket) {
-                Log::info("{$this->provider} {$ticket} has been added for {$email}");
+                Log::info("{$this->provider} {$ticket} has been added for {$data->email}");
             }
         }
         return $ticket;
     }
 
-    protected function makeTicket(User $user, object $data): ?Ticket
+    protected function makeTicket(?User $user, object $data): ?Ticket
     {
         $event = $this->getEvent($data->event_id);
         if (!$event) {
@@ -115,12 +116,23 @@ class TicketTailorProvider extends AbstractTicketProvider
             Log::info("{$this->provider} {$data->id} not added. Unable to find ticket type {$data->ticket_type_id}");
             return null;
         }
+        if (!$user) {
+            $email = EmailAddress::whereEmail($data->email)
+                ->where('verified_at', '<=', Carbon::now())
+                ->with('user')->first();
+            if ($email) {
+                $user = $email->user;
+            }
+        }
         $ticket = new Ticket;
         $ticket->provider()->associate($this->provider);
-        $ticket->user()->associate($user);
+        if ($user) {
+            $ticket->user()->associate($user);
+        }
         $ticket->event()->associate($event);
         $ticket->type()->associate($type);
         $ticket->external_id = $data->id;
+        $ticket->original_email = $data->email;
         $ticket->name = $data->description;
         $ticket->reference = $data->barcode;
         $ticket->qrcode = $this->getQrCode($data);
@@ -159,14 +171,13 @@ class TicketTailorProvider extends AbstractTicketProvider
         return $this->client;
     }
 
-    public function syncTickets(EmailAddress $email): void
+    protected function getTickets(?string $address = null): array
     {
-        $ticketData = [];
-        $valid = [];
-        $voided = [];
-        $query = [
-            'email' => $email->email,
-        ];
+        $query = [];
+        if ($address) {
+            $query['email'] = $address;
+        }
+        $tickets = [];
         do {
             $response = $this->getClient()->get('/v1/issued_tickets', [
                 'query' => $query,
@@ -174,14 +185,35 @@ class TicketTailorProvider extends AbstractTicketProvider
             $data = json_decode($response->getBody());
             foreach ($data->data as $ticket) {
                 $query['starting_after'] = $ticket->id;
-                if ($ticket->status === 'valid') {
-                    $valid[] = $ticket->id;
-                    $ticketData[$ticket->id] = $ticket;
-                } elseif ($ticket->status === 'voided') {
-                    $voided[] = $ticket->id;
-                }
+                $tickets[$ticket->id] = $ticket;
             }
         } while ($data->links->next);
+        return $tickets;
+    }
+
+    public function syncTickets(string|EmailAddress $email): void
+    {
+        $user = null;
+        if ($email instanceof EmailAddress) {
+            $address = $email->email;
+            $user = $email->user;
+        } else {
+            $address = $email;
+        }
+
+        $valid = [];
+        $voided = [];
+        $ticketData = [];
+
+        $allTickets = $this->getTickets($address);
+        foreach ($allTickets as $ticket) {
+            if ($ticket->status === 'valid') {
+                $valid[] = $ticket->id;
+                $ticketData[$ticket->id] = $ticket;
+            } else {
+                $voided[] = $ticket->id;
+            }
+        }
 
         // Remove voided - fetch all and delete them in chunks so we trigger delete events
         if ($voided) {
@@ -194,16 +226,23 @@ class TicketTailorProvider extends AbstractTicketProvider
         }
 
         // Add any missing valid tickets
-        $tickets = Ticket::whereTicketProviderId($this->provider->id)->whereIn('external_id', $valid)->get();
+        $tickets = Ticket::whereTicketProviderId($this->provider->id)->whereIn('external_id', $valid)->with('user')->get();
         $found = [];
         foreach ($tickets as $ticket) {
             $found[] = $ticket->external_id;
+            // Match up with our user if we have one
+            if ($user && !$ticket->user) {
+                $ticket->user()->associate($user);
+                $ticket->save();
+                Log::info("{$this->provider} {$ticket} has been allocated to {$user}");
+            }
         }
         $missing = array_diff($valid, $found);
 
+        // Add the ticket
         foreach ($missing as $ticketId) {
             $data = $ticketData[$ticketId];
-            $ticket = $this->makeTicket($email->user, $data);
+            $ticket = $this->makeTicket($user, $data);
             if ($ticket) {
                 Log::info("{$this->provider} {$ticket} has been added for {$email}");
             }

@@ -25,7 +25,7 @@ class TicketUpdateRequest extends FormRequest
         return [
             'reference' => 'required|string|max:100',
             'ticket_type_id' => 'required|integer|exists:ticket_types,id',
-            'user_id' => 'required|integer|exists:users,id',
+            'user_id' => 'sometimes|integer|exists:users,id|nullable',
         ];
     }
 }

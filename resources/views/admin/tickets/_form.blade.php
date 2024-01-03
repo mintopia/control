@@ -30,7 +30,7 @@
         </div>
     </div>
     <div class="mb-3">
-        <label class="form-label required">User ID</label>
+        <label class="form-label">User ID</label>
         <div>
             <input type="text" name="user_id" class="form-control @error('user_id') is-invalid @enderror"
                    placeholder="42" value="{{ old('user_id', $ticket->user_id) }}">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\TicketProviderUpdateRequest;
 use App\Models\TicketProvider;
+use Illuminate\Support\Facades\Artisan;
 
 class TicketProviderController extends Controller
 {
@@ -32,5 +33,13 @@ class TicketProviderController extends Controller
     {
         $provider->clearCache();
         return response()->redirectToRoute('admin.settings.index')->with('successMessage', "{$provider->name} cache has been cleared");
+    }
+
+    public function sync(TicketProvider $provider)
+    {
+        Artisan::queue("control:sync-tickets", [
+            'provider' => $provider->code,
+        ]);
+        return response()->redirectToRoute('admin.settings.index')->with('successMessage', "{$provider->name} tickets will be synchronised");
     }
 }

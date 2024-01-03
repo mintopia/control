@@ -452,10 +452,11 @@ namespace App\Models{
  *
  * @property int $id
  * @property int $ticket_provider_id
- * @property int $user_id
+ * @property int|null $user_id
  * @property int $event_id
  * @property int $ticket_type_id
  * @property string $external_id
+ * @property string|null $original_email
  * @property string $name
  * @property string $reference
  * @property string $qrcode
@@ -466,7 +467,7 @@ namespace App\Models{
  * @property-read \App\Models\TicketProvider $provider
  * @property-read \App\Models\Seat|null $seat
  * @property-read \App\Models\TicketType $type
- * @property-read \App\Models\User $user
+ * @property-read \App\Models\User|null $user
  * @method static \Illuminate\Database\Eloquent\Builder|Ticket newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Ticket newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|Ticket query()
@@ -475,6 +476,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereExternalId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereOriginalEmail($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereQrcode($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereReference($value)
  * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereTicketProviderId($value)

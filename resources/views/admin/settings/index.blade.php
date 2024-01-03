@@ -306,6 +306,11 @@
                             </td>
                             <td>
                                 <div class="btn-list justify-content-end">
+                                    <a href="{{ route('admin.settings.ticketproviders.sync', $provider->id) }}"
+                                       class="btn btn-outline-primary">
+                                        <i class="icon ti ti-refresh-alert"></i>
+                                        Sync Tickets
+                                    </a>
                                     <a href="{{ route('admin.settings.ticketproviders.clearcache', $provider->id) }}"
                                        class="btn btn-outline-primary">
                                         <i class="icon ti ti-refresh"></i>
