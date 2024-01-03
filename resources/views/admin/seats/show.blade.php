@@ -66,7 +66,7 @@
                             <div class="datagrid-title">Ticket</div>
                             <div class="datagrid-content">
                                 @if ($seat->ticket)
-                                    <a href="{{ route('admin.tickets.show', [$seat->ticket->id]) }}">{{ $seat->ticket->user->nickname }}</a>
+                                    <a href="{{ route('admin.tickets.show', [$seat->ticket->id]) }}">{{ $seat->ticket->user->nickname ?? $seat->ticket->original_email }}</a>
                                 @else
                                     <span class="text-muted">None</span>
                                 @endif
