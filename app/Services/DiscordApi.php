@@ -55,17 +55,27 @@ class DiscordApi
 
     public function getMemberRoles(): array
     {
-        $response = $this->getClient()->get("guilds/{$this->serverId}/members");
-        $data = json_decode($response->getBody());
-
         $members = [];
-        foreach ($data as $member) {
-            $members[$member->user->id] = (object)[
-                'id' => $member->user->id,
-                'nickname' => $member->user->global_name,
-                'roles' => $member->roles,
-            ];
-        }
+        $after = 0;
+        do {
+            $response = $this->getClient()->get("guilds/{$this->serverId}/members", [
+                'query' => [
+                    'limit' => 1000,
+                    'after' => $after,
+                ],
+            ]);
+            $data = json_decode($response->getBody());
+
+            foreach ($data as $member) {
+                $members[$member->user->id] = (object)[
+                    'id' => $member->user->id,
+                    'nickname' => $member->user->username,
+                    'roles' => $member->roles,
+                ];
+                $after = $member->user->id;
+            }
+        } while (count($data) === 1000);
+
         return $members;
     }
 
