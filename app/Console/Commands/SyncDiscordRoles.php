@@ -29,7 +29,7 @@ class SyncDiscordRoles extends Command
     protected $description = 'Synchronise discord roles';
 
     protected ?array $managedRoles = null;
-    protected DiscordApi $discord;
+    protected ?DiscordApi $discord;
 
     /**
      * Execute the console command.
