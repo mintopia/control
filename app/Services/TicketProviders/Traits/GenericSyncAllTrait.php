@@ -47,15 +47,6 @@ trait GenericSyncAllTrait
                     $output->writeln(" {$ticket} has been voided, removing");
                     $ticket->delete();
                 } else {
-                    // For some reason we have the wrong original email - shouldn't happen, but it could
-                    // TODO: Remove once we've sorted this on deployed instances
-                    if ($ticket->original_email !== $remoteTicket->email) {
-                        if ($output) {
-                            $output->writeln(" Updating email address on {$ticket}");
-                        }
-                        $ticket->original_email = $remoteTicket->email;
-                    }
-
                     // If we don't have a user on the ticket, try and find one
                     if (!$ticket->user) {
                         $email = EmailAddress::whereEmail($remoteTicket->email)
@@ -66,12 +57,9 @@ trait GenericSyncAllTrait
                                 $output->writeln(" Associating {$ticket} with {$email->user}");
                             }
                             $ticket->user()->associate($email->user);
+                            $ticket->save();
                             Log::info("{$this->provider} {$ticket} has been allocated to {$email->user}");
                         }
-                    }
-
-                    if ($ticket->isDirty()) {
-                        $ticket->save();
                     }
                 }
             }
