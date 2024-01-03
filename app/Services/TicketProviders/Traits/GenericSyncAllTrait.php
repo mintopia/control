@@ -6,6 +6,7 @@ use App\Services\TicketProviders\TicketTailorProvider;
 use App\Services\TicketProviders\WooCommerceProvider;
 use Carbon\Carbon;
 use Illuminate\Console\OutputStyle;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @mixin TicketTailorProvider
@@ -65,6 +66,7 @@ trait GenericSyncAllTrait
                                 $output->writeln(" Associating {$ticket} with {$email->user}");
                             }
                             $ticket->user()->associate($email->user);
+                            Log::info("{$this->provider} {$ticket} has been allocated to {$email->user}");
                         }
                     }
 
@@ -86,6 +88,7 @@ trait GenericSyncAllTrait
                     $output->writeln(" Creating ticket for {$id} - {$remoteTickets[$id]->email}");
                 }
                 $ticket = $this->makeTicket(null, $remoteTickets[$id]);
+                Log::info("{$this->provider} {$ticket} has been added for {$remoteTickets[$id]->email}");
                 if ($output) {
                     $output->writeln(" Created {$ticket}");
                 }

@@ -45,6 +45,8 @@ class SyncTickets extends Command
             Log::info("{$provider}: Synchronising tickets");
             $this->output->writeln("Synchronising all tickets for {$provider}");
             $prov->syncAllTickets($this->output);
+            Log::info("{$provider}: Finished synchronising");
+            $this->output->writeln("Finished synchronising all tickets for {$provider}");
         }
     }
 }

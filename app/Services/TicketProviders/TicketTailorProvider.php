@@ -108,12 +108,12 @@ class TicketTailorProvider extends AbstractTicketProvider
     {
         $event = $this->getEvent($data->event_id);
         if (!$event) {
-            Log::info("{$this->provider} {$data->id} not added. Unable to find event {$data->event_id}");
+            Log::debug("{$this->provider} {$data->id} not added. Unable to find event {$data->event_id}");
             return null;
         }
         $type = $this->getType($data->ticket_type_id);
         if (!$type) {
-            Log::info("{$this->provider} {$data->id} not added. Unable to find ticket type {$data->ticket_type_id}");
+            Log::debug("{$this->provider} {$data->id} not added. Unable to find ticket type {$data->ticket_type_id}");
             return null;
         }
         if (!$user) {
