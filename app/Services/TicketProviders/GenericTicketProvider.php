@@ -182,10 +182,7 @@ class GenericTicketProvider extends AbstractTicketProvider
         }
         Log::info("{$this->provider} Fetching events from API");
         $events = [];
-        $query = [];
-        $response = $this->getClient()->get("events", [
-            'query' => $query,
-        ]);
+        $response = $this->getClient()->get("events", []);
         $data = json_decode($response->getBody());
         foreach ($data->events as $event) {
             $events[$event->id] = $event->name;
