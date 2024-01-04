@@ -23,13 +23,13 @@
                     This page allows you to import a CSV of tickets.
                 </p>
                 <p>
-                    You will need to specify the Ticket Type ID, an optional User ID and an optional Seat Label
+                    You will need to specify the Ticket Type ID, a User ID and an optional Seat Label
                 </p>
                 <p>An example format would be:</p>
                 <pre><code>Ticket Type ID,User ID,Seat Label
 1,1,A1
 1,42,A4
-1,,
+1,2,
 2,1,</code></pre>
                 <p>
                     You can find user IDs from the Users page, and Ticket Type ID from the Event admin page.
