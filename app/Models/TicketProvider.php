@@ -33,12 +33,12 @@ class TicketProvider extends Model
         return $this->hasMany(Ticket::class);
     }
 
-    public function getProvider(?string $redirectUrl = null): TicketProviderContract
+    public function getProvider(): TicketProviderContract
     {
         return new $this->provider_class($this);
     }
 
-    public function syncTickets(EmailAddress $email): void
+    public function syncTickets(string|EmailAddress $email): void
     {
         $this->getProvider()->syncTickets($email);
     }

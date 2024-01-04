@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Ticket;
+use App\Models\User;
 
 class TicketObserver
 {
@@ -11,45 +12,18 @@ class TicketObserver
         if ($ticket->isDirty() && $ticket->seat) {
             $ticket->seat->plan->updateRevision();
         }
-    }
-
-    /**
-     * Handle the Ticket "created" event.
-     */
-    public function created(Ticket $ticket): void
-    {
-        //
-    }
-
-    /**
-     * Handle the Ticket "updated" event.
-     */
-    public function updated(Ticket $ticket): void
-    {
-        //
-    }
-
-    /**
-     * Handle the Ticket "deleted" event.
-     */
-    public function deleted(Ticket $ticket): void
-    {
-        //
-    }
-
-    /**
-     * Handle the Ticket "restored" event.
-     */
-    public function restored(Ticket $ticket): void
-    {
-        //
-    }
-
-    /**
-     * Handle the Ticket "force deleted" event.
-     */
-    public function forceDeleted(Ticket $ticket): void
-    {
-        //
+        if ($ticket->isDirty('user_id')) {
+            $original = $ticket->getOriginal('user_id');
+            if ($original) {
+                $originalUser = User::whereId($original)->first();
+                if ($originalUser) {
+                    $originalUser->syncDiscordRoles();
+                }
+            }
+            if ($ticket->user) {
+                // Update new user
+                $ticket->user->syncDiscordRoles();
+            }
+        }
     }
 }

@@ -38,12 +38,18 @@
                         <tr>
                             <td>{{ $import->event->name }}</td>
                             <td>{{ $import->type->name }}</td>
-                            <td>{{ $import->user->nickname }}</td>
+                            <td>
+                                @if ($import->user)
+                                    {{ $import->user->nickname }}
+                                @else
+                                    <span class="text-muted">None</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($import->seat)
                                     {{ $import->seat->label }}
                                 @else
-                                    <span class="None"></span>
+                                    <span class="text-muted">None</span>
                                 @endif
                             </td>
                         </tr>

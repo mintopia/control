@@ -245,6 +245,7 @@
                             <th>ID</th>
                             <th>Name</th>
                             <th>Has Seats</th>
+                            <th>Discord Role</th>
                             <th>Tickets</th>
                         </tr>
                         </thead>
@@ -260,6 +261,13 @@
                                         <span class="status status-green">Yes</span>
                                     @else
                                         <span class="status status-red">No</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($type->discord_role_id)
+                                        {{ $type->discord_role_name ?? $type->discord_role_id }}
+                                    @else
+                                        <span class="text-muted">None</span>
                                     @endif
                                 </td>
                                 <td>

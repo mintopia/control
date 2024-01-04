@@ -64,6 +64,11 @@ class TicketController extends Controller
             });
         }
 
+        if ($request->input('original_email')) {
+            $filters->original_email = $request->input('original_email');
+            $query = $query->whereOriginalEmail($filters->original_email);
+        }
+
         $params = (array)$filters;
 
         switch ($request->input('order_direction', 'asc')) {

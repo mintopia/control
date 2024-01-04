@@ -177,9 +177,9 @@ class EventController extends Controller
                     $ticket->external_id,
                     $ticket->reference,
                     $ticket->type->name,
-                    $ticket->user->nickname,
-                    $ticket->user->name,
-                    $ticket->user->primaryEmail->email,
+                    $ticket->user->nickname ?? '',
+                    $ticket->user->name ?? '',
+                    $ticket->user->primaryEmail->email ?? $ticket->original_email,
                     $ticket->seat->label ?? '',
                 ];
             }

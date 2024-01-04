@@ -3,9 +3,9 @@
 namespace App\Services\TicketProviders;
 
 use App\Models\EmailAddress;
-use App\Models\Ticket;
 use App\Models\TicketProvider;
 use App\Services\Contracts\TicketProviderContract;
+use Illuminate\Console\OutputStyle;
 use Illuminate\Http\Request;
 
 abstract class AbstractTicketProvider implements TicketProviderContract
@@ -63,7 +63,7 @@ abstract class AbstractTicketProvider implements TicketProviderContract
         return true;
     }
 
-    public function syncTickets(EmailAddress $email): void
+    public function syncTickets(string|EmailAddress $email): void
     {
     }
 
@@ -75,5 +75,9 @@ abstract class AbstractTicketProvider implements TicketProviderContract
     public function getTicketTypes(string $eventExternalId): array
     {
         return [];
+    }
+
+    public function syncAllTickets(?OutputStyle $output): void
+    {
     }
 }

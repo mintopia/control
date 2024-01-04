@@ -29,7 +29,11 @@
                         <div class="datagrid-item">
                             <div class="datagrid-title">User</div>
                             <div class="datagrid-content">
-                                <a href="{{ route('admin.users.show', $ticket->user->id) }}">{{ $ticket->user->nickname }}</a>
+                                @if($ticket->user_id)
+                                    <a href="{{ route('admin.users.show', $ticket->user->id) }}">{{ $ticket->user->nickname }}</a>
+                                @else
+                                    <span class="text-muted">{{ $ticket->original_email }}</span>
+                                @endif
                             </div>
                         </div>
                         <div class="datagrid-item">

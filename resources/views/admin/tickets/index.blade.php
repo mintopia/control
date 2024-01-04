@@ -73,6 +73,10 @@
                         'name' => 'Seat',
                         'property' => 'seat',
                     ])
+                    @include('partials._searchtextfield', [
+                        'name' => 'Original Email',
+                        'property' => 'original_email',
+                    ])
                 </div>
                 <div class="card-footer d-flex">
                     <button class="btn btn-primary ms-auto" type="submit">Search</button>
@@ -128,12 +132,6 @@
                                     'field' => 'seat',
                                 ])
                             </th>
-                            <th>
-                                @include('partials._sortheader', [
-                                    'title' => 'Created',
-                                    'field' => 'created_at',
-                                ])
-                            </th>
                         </tr>
                         </thead>
                         <tbody>
@@ -152,17 +150,16 @@
                                 </td>
                                 <td>{{ $ticket->type->name }}</td>
                                 <td>
-                                    <a href="{{ route('admin.users.show', $ticket->user->id) }}">{{ $ticket->user->nickname }}</a>
+                                    @if($ticket->user_id)
+                                        <a href="{{ route('admin.users.show', $ticket->user->id) }}">{{ $ticket->user->nickname }}</a>
+                                    @else
+                                        <span class="text-muted">{{ $ticket->original_email }}</span>
+                                    @endif
                                 </td>
                                 <td>
                                     @if($ticket->seat)
                                         <a href="{{ route('admin.events.seats', ['event' => $ticket->event->code, 'ticket_id' => $ticket->id]) }}">{{ $ticket->seat->label }}</a>
                                     @endif
-                                </td>
-                                <td>
-                                        <span title="{{ $ticket->created_at->format('Y-m-d H:i:s') }}">
-                                            {{ $ticket->created_at->diffForHumans() }}
-                                        </span>
                                 </td>
                             </tr>
                         @endforeach

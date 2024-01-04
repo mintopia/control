@@ -17,10 +17,12 @@ class SocialProvider extends Model
 
     protected $hidden = [
         'client_secret',
+        'token',
     ];
 
     protected $casts = [
         'client_secret' => 'encrypted',
+        'token' => 'encrypted',
     ];
 
     public function accounts(): HasMany

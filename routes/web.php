@@ -166,9 +166,12 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('settings/ticketproviders/{provider}/edit', [TicketProviderController::class, 'edit'])->name('settings.ticketproviders.edit');
             Route::match(['PUT', 'PATCH'], 'settings/ticketproviders/{provider}', [TicketProviderController::class, 'update'])->name('settings.ticketproviders.update');
             Route::get('settings/ticketproviders/{provider}/clearcache', [TicketProviderController::class, 'clearcache'])->name('settings.ticketproviders.clearcache');
+            Route::get('settings/ticketproviders/{provider}/sync', [TicketProviderController::class, 'sync'])->name('settings.ticketproviders.sync');
             Route::get('settings/socialproviders/{provider}/edit', [SocialProviderController::class, 'edit'])->name('settings.socialproviders.edit');
             Route::match(['PUT', 'PATCH'], 'settings/socialproviders/{provider}', [SocialProviderController::class, 'update'])->name('settings.socialproviders.update');
             Route::prefix('settings')->name('settings.')->group(function() {
+                Route::get('discord', [AdminSettingController::class, 'add_discord'])->name('discord');
+                Route::get('discord/return', [AdminSettingController::class, 'add_discord_return'])->name('discord_return');
                 Route::resource('themes', ThemeController::class)->except(['index', 'show']);
                 Route::get('themes/{theme}/delete', [ThemeController::class, 'delete'])->name('themes.delete');
             });

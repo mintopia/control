@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\ToString;
+use App\Services\DiscordApi;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -131,5 +134,56 @@ class User extends Authenticatable
                 return $this->primaryEmail->email ?? null;
             },
         );
+    }
+
+    protected function getDiscordAccount()
+    {
+        return $this->accounts()->whereHas('provider', function($query) {
+            $query->whereCode('discord');
+        })->first();
+    }
+
+    public function addDiscordRole(string $roleId): bool
+    {
+        $account = $this->getDiscordAccount();
+        if (!$account) {
+            return false;
+        }
+        $api = resolve(DiscordApi::class);
+        if (!$api) {
+            return false;
+        }
+        try {
+            $api->addRoleToMember($roleId, $account->external_id);
+            return true;
+        } catch (\Exception $ex) {
+            return false;
+        }
+    }
+
+    public function removeDiscordRole(string $roleId): bool
+    {
+        $account = $this->getDiscordAccount();
+        if (!$account) {
+            return false;
+        }
+        $api = resolve(DiscordApi::class);
+        if (!$api) {
+            return false;
+        }
+        try {
+            $api->removeRoleFromMember($roleId, $account->external_id);
+            return true;
+        } catch (\Exception $ex) {
+            return false;
+        }
+    }
+
+    public function syncDiscordRoles(): void
+    {
+        Log::debug("{$this}: Queued sync of discord roles");
+        Artisan::queue('control:sync-discord-roles', [
+            'user' => $this->id,
+        ]);
     }
 }

@@ -27,6 +27,9 @@
                         @include('partials._providersconfig', [
                             'fieldName' => 'client_secret',
                         ])
+                        @include('partials._providersconfig', [
+                            'fieldName' => 'token',
+                        ])
                         <div class="mb-3">
                             <label class="form-check form-switch">
                                 <input type="checkbox" class="form-check-input" name="enabled" value="1"

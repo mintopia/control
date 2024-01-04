@@ -3,8 +3,8 @@
 namespace App\Services\Contracts;
 
 use App\Models\EmailAddress;
-use App\Models\Ticket;
 use App\Models\TicketProvider;
+use Illuminate\Console\OutputStyle;
 use Illuminate\Http\Request;
 
 interface TicketProviderContract
@@ -40,10 +40,10 @@ interface TicketProviderContract
 
     /**
      * Fetch tickets for the provided email and create them locally if they exist.
-     * @param EmailAddress $email
+     * @param string|EmailAddress $email
      * @return void
      */
-    public function syncTickets(EmailAddress $email): void;
+    public function syncTickets(string|EmailAddress $email): void;
 
 
     /**
@@ -66,4 +66,13 @@ interface TicketProviderContract
      * @return array
      */
     public function getTicketTypes(string $eventExternalId): array;
+
+    /**
+     * Synchronise ALL tickets from the provider. As long as there's a ticket mapping in the database, synchronise the
+     * tickets for them.
+     *
+     * @param OutputStyle|null $output
+     * @return void
+     */
+    public function syncAllTickets(?OutputStyle $output): void;
 }

@@ -42,6 +42,14 @@ class SettingsSeeder extends Seeder
                 'validation' => 'sometimes|nullable|string|url:http,https',
                 'description' => 'URL for the large image shown during login and signup',
             ],
+            'discord.server.name' => (object)[
+                'name' => 'Discord Server Name',
+                'hidden' => true,
+            ],
+            'discord.server.id' => (object)[
+                'name' => 'Discord Server ID',
+                'hidden' => true,
+            ],
         ];
         foreach ($settings as $code => $setting) {
             $this->updateSetting($code, $setting);
@@ -56,6 +64,7 @@ class SettingsSeeder extends Seeder
             $setting->code = $code;
             $setting->value = $data->default ?? null;
         }
+        $setting->hidden = $data->hidden ?? false;
         $setting->name = $data->name;
         $setting->description = $data->description ?? null;
         $setting->encrypted = $data->encrypted ?? false;

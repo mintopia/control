@@ -41,6 +41,26 @@
                             </div>
                         </div>
                         <div class="datagrid-item">
+                            <div class="datagrid-title">Discord Role</div>
+                            <div class="datagrid-content">
+                                @if ($type->discord_role_name)
+                                    {{ $type->discord_role_name }}
+                                @else
+                                    <span class="text-muted">None</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="datagrid-item">
+                            <div class="datagrid-title">Discord Role ID</div>
+                            <div class="datagrid-content">
+                                @if ($type->discord_role_id)
+                                    {{ $type->discord_role_id }}
+                                @else
+                                    <span class="text-muted">None</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="datagrid-item">
                             <div class="datagrid-title">Event</div>
                             <div class="datagrid-content">
                                 <a href="{{ route('admin.events.show', $event->code) }}">{{ $event->name }}</a>

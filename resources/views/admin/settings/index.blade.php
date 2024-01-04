@@ -15,7 +15,7 @@
 
     <div class="row">
         @if(count($settings) > 0)
-            <div class="col col-lg-6">
+            <div class="col-12 col-lg-6">
                 <form action="{{ route('admin.settings.update') }}" method="post" class="card mb-4">
                     {{ csrf_field() }}
                     {{ method_field('PATCH') }}
@@ -57,68 +57,123 @@
                 </form>
             </div>
         @endif
-        <div class="col col-lg-6">
+        <div class="col-12 col-lg-6">
             <div class="card mb-4">
-            <div class="card-header">
-                <h3 class="card-title">Themes</h3>
+                <div class="card-header">
+                    <h3 class="card-title">Themes</h3>
 
-                <a class="btn btn-primary ms-auto" href="{{ route('admin.settings.themes.create') }}">
-                    <i class="icon ti ti-pencil-plus"></i>
-                    Add Theme
-                </a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-vcenter card-table">
-                    <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th class="w-1">Active</th>
-                        <th></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    @forelse($themes as $theme)
+                    <a class="btn btn-primary ms-auto" href="{{ route('admin.settings.themes.create') }}">
+                        <i class="icon ti ti-pencil-plus"></i>
+                        Add Theme
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead>
                         <tr>
-                            <td>
-                                {{ $theme->name }}
-                            </td>
-                            <td>
-                                @if($theme->active)
-                                    <span class="status status-green">
-                                        Yes
-                                    </span>
-                                @else
-                                    <span class="status status-muted">
-                                        No
-                                    </span>
-                                @endif
-                            </td>
-                            <td>
-                                <div class="btn-list justify-content-end">
-                                    <a href="{{ route('admin.settings.themes.edit', $theme->id) }}"
-                                       class="btn btn-outline-primary">
-                                        <i class="icon ti ti-edit"></i>
-                                        Edit
-                                    </a>
-                                    <a class="btn btn-outline-danger @if($theme->readonly) disabled @endif"
-                                       @if (!$theme->readonly) href="{{ route('admin.settings.themes.delete', $theme->id) }}" @endif>
-                                        <i class="icon ti ti-trash"></i>
-                                        Delete
-                                    </a>
+                            <th>Name</th>
+                            <th class="w-1">Active</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @forelse($themes as $theme)
+                            <tr>
+                                <td>
+                                    {{ $theme->name }}
+                                </td>
+                                <td>
+                                    @if($theme->active)
+                                        <span class="status status-green">
+                                            Yes
+                                        </span>
+                                    @else
+                                        <span class="status status-muted">
+                                            No
+                                        </span>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="btn-list justify-content-end">
+                                        <a href="{{ route('admin.settings.themes.edit', $theme->id) }}"
+                                           class="btn btn-outline-primary">
+                                            <i class="icon ti ti-edit"></i>
+                                            Edit
+                                        </a>
+                                        <a class="btn btn-outline-danger @if($theme->readonly) disabled @endif"
+                                           @if (!$theme->readonly) href="{{ route('admin.settings.themes.delete', $theme->id) }}" @endif>
+                                            <i class="icon ti ti-trash"></i>
+                                            Delete
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center p-4">
+                                    <p>There are no social providers</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">Discord Integration</h3>
+                </div>
+                @if($discordProvider && $discordProvider->client_id && $discordProvider->client_secret && $discordProvider->token)
+                    @if($discordId && $discordName && $discordId->value && $discordName->value)
+                        <div class="card-body">
+                            <div class="datagrid mb-3">
+                                <div class="datagrid-item">
+                                    <div class="datagrid-title">Server Name</div>
+                                    <div class="datagrid-content">{{ $discordName->value }}</div>
                                 </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="text-center p-4">
-                                <p>There are no social providers</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                    </tbody>
-                </table>
+                                <div class="datagrid-item">
+                                    <div class="datagrid-title">Server ID</div>
+                                    <div class="datagrid-content">{{ $discordId->value }}</div>
+                                </div>
+                            </div>
+
+                            <p>
+                                To assign a role to users, the bot's role needs to be <strong>above</strong> the role it needs to assign in the roles list.
+                            </p>
+
+                            <p>
+                                If you have removed the bot from your server and need to reconnect it, you can do that here.
+                            </p>
+                        </div>
+                        <div class="card-footer d-flex">
+                            <a class="btn btn-discord ms-auto" href="{{ route('admin.settings.discord') }}">
+                                <i class="icon ti ti-brand-discord"></i>
+                                Reconnect to Discord Server
+                            </a>
+                        </div>
+                    @else
+                        <div class="card-body">
+                            <p>
+                                To integrate with your Discord server and be able to automatically assign roles to users based
+                                on their event tickets, just connect to your Discord server here.
+                            </p>
+                        </div>
+                        <div class="card-footer d-flex">
+                            <a class="btn btn-discord ms-auto" href="{{ route('admin.settings.discord') }}">
+                                <i class="icon ti ti-brand-discord"></i>
+                                Connect to Discord Server
+                            </a>
+                        </div>
+                    @endif
+                @else
+                    <div class="card-body">
+                        <p>
+                            If you configure the Discord social provider, you can add the Seat Picker to your Discord server. It
+                            will then be able to add and remove roles to users based on their event tickets.
+                        </p>
+                    </div>
+                @endif
             </div>
-        </div>
         </div>
         <div class="col col-12">
             <div class="card mb-4">
@@ -185,6 +240,10 @@
                             <td>
                                 <span class="user-select-all">{{ route('login.return', $provider->code) }}</span><br/>
                                 <span class="user-select-all">{{ route('linkedaccounts.store', $provider->code) }}</span>
+                                @if ($provider->code === 'discord')
+                                    <br/>
+                                    <span class="user-select-all">{{ route('admin.settings.discord_return') }}</span>
+                                @endif
                             </td>
                             <td>
                                 <div class="btn-list justify-content-end">
@@ -247,6 +306,11 @@
                             </td>
                             <td>
                                 <div class="btn-list justify-content-end">
+                                    <a href="{{ route('admin.settings.ticketproviders.sync', $provider->id) }}"
+                                       class="btn btn-outline-primary">
+                                        <i class="icon ti ti-refresh-alert"></i>
+                                        Sync Tickets
+                                    </a>
                                     <a href="{{ route('admin.settings.ticketproviders.clearcache', $provider->id) }}"
                                        class="btn btn-outline-primary">
                                         <i class="icon ti ti-refresh"></i>

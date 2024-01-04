@@ -12,6 +12,7 @@ use App\Models\Setting;
 use App\Models\Theme;
 use App\Models\Ticket;
 use App\Models\TicketProvider;
+use App\Models\TicketType;
 use App\Models\User;
 use App\Observers\ClanMembershipObserver;
 use App\Observers\ClanObserver;
@@ -23,6 +24,7 @@ use App\Observers\SettingObserver;
 use App\Observers\ThemeObserver;
 use App\Observers\TicketObserver;
 use App\Observers\TicketProviderObserver;
+use App\Observers\TicketTypeObserver;
 use App\Observers\UserObserver;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -46,6 +48,7 @@ class EventServiceProvider extends ServiceProvider
         ClanMembership::class => ClanMembershipObserver::class,
         Setting::class => SettingObserver::class,
         Theme::class => ThemeObserver::class,
+        TicketType::class => TicketTypeObserver::class,
     ];
     /**
      * The event to listener mappings for the application.

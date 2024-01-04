@@ -21,7 +21,7 @@ class UpdateEventSeatingLock extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Lock and unlock Seating Plans at specific times';
 
     /**
      * Execute the console command.

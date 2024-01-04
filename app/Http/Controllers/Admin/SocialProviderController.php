@@ -21,6 +21,7 @@ class SocialProviderController extends Controller
     {
         $provider->client_id = $request->input('client_id');
         $provider->client_secret = $request->input('client_secret');
+        $provider->token = $request->input('token');
         $provider->enabled = (bool)$request->input('enabled');
         if ($provider->supports_auth) {
             $provider->auth_enabled = (bool)$request->input('auth_enabled');
