@@ -18,7 +18,7 @@
     </p>
 
     <div class="row mb-2">
-        <div class="col-md-8 mb-4">
+        <div class="@if(App\Models\Setting::fetch('disable-ticket-transfers')) col-md-12 @else col-md-8 @endif mb-4">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Your Tickets</h3>
@@ -76,6 +76,7 @@
                 ])
             </div>
         </div>
+        @if(!App\Models\Setting::fetch('disable-ticket-transfers'))
         <div class="col-md-4 mb-4">
             <div class="card">
                 <div class="card-header">
@@ -105,5 +106,6 @@
                 </form>
             </div>
         </div>
+        @endif
     </div>
 @endsection

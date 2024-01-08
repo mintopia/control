@@ -50,6 +50,12 @@ class SettingsSeeder extends Seeder
                 'name' => 'Discord Server ID',
                 'hidden' => true,
             ],
+            'disable-ticket-transfers' => (object)[
+                'name' => 'Disable Ticket Transfers',
+                'description' => 'Whether or not ticket transfers should be disabled',
+                'type' => SettingType::stBoolean,
+                'default' => false,
+            ],
         ];
         foreach ($settings as $code => $setting) {
             $this->updateSetting($code, $setting);
