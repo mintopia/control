@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\TicketTransferRequest;
+use App\Models\Setting;
 use App\Models\Ticket;
 use Illuminate\Http\Request;
 
@@ -39,6 +40,9 @@ class TicketController extends Controller
 
     public function update(Request $request, Ticket $ticket)
     {
+        if(Setting::fetch('disable-ticket-transfers')){
+            return response()->redirectToRoute('tickets.show', $ticket->id)->with('errorMessage', 'Ticket transfers are disabled.');
+        }
         if ($request->has('generate')) {
             $ticket->generateTransferCode();
             return response()->redirectToRoute('tickets.show', $ticket->id)->with('successMessage', 'A new transfer code has been generated');
@@ -52,6 +56,9 @@ class TicketController extends Controller
 
     public function transfer(TicketTransferRequest $request)
     {
+        if(Setting::fetch('disable-ticket-transfers')){
+            return response()->redirectToRoute('tickets.index')->with('errorMessage', 'Ticket transfers are disabled.');
+        }
         $ticket = Ticket::whereTransferCode($request->input('code'))->first();
         $ticket->user()->associate($request->user());
         $ticket->transfer_code = null;

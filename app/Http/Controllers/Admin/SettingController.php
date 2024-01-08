@@ -33,7 +33,7 @@ class SettingController extends Controller
     {
         $settings = Setting::whereHidden(false)->get();
         foreach ($settings as $setting) {
-            if ($request->has($setting->code)) {
+            if ($request->has($setting->code) || $setting->type === SettingType::stBoolean) {
                 $value = $request->input($setting->code);
                 if ($setting->type === SettingType::stBoolean) {
                     $value = (bool)$value;
