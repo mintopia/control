@@ -27,12 +27,14 @@
                                 <div class="datagrid-title">Reference</div>
                                 <div class="datagrid-content">{{ $ticket->reference }}</div>
                             </div>
+                            @if($ticket->qrcode)
                             <div class="datagrid-item">
                                 <div class="datagrid-title">QR Code</div>
                                 <div class="datagrid-content">
                                     <img src="{{ $ticket->qrcode }}"/>
                                 </div>
                             </div>
+                            @endif
                             <div class="datagrid-item d-none d-print-block">
                                 <div class="datagrid-title">Nickname</div>
                                 <div class="datagrid-content">{{ $ticket->user->nickname }}</div>
