@@ -5,9 +5,7 @@ use App\Models\ProviderSetting;
 use App\Models\SocialProvider;
 use App\Models\TicketProvider;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -65,7 +63,7 @@ return new class extends Migration
         $setting->encrypted = in_array($code, $encrypted);
 
         $value = $provider->{$code};
-        if ($setting->encrypted) {
+        if ($value && $setting->encrypted) {
             $value = Crypt::decryptString($value);
         }
         $setting->value = $value;
