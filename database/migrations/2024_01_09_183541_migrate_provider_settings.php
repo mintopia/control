@@ -44,6 +44,13 @@ return new class extends Migration
 
     protected function updateSetting(string $code, object $config, SocialProvider|TicketProvider $provider): void
     {
+        $encrypted = [
+            'client_secret',
+            'apikey',
+            'webhook_secret',
+            'token',
+        ];
+
         $setting = $provider->settings()->whereCode($code)->first();
         if (!$setting) {
             $setting = new ProviderSetting();
@@ -54,14 +61,7 @@ return new class extends Migration
         $setting->name = $config->name;
         $setting->description = $config->description ?? null;
         $setting->validation = $config->validation ?? null;
-
-        $casts = $provider->getCasts();
-        if (isset($casts[$code]) && $casts[$code] == 'encrypted') {
-            $setting->encrypted = true;
-        } else {
-            $setting->encrypted = false;
-        }
-
+        $setting->encrypted = in_array($code, $encrypted);
         $setting->value = $provider->{$code};
         $setting->save();
     }
