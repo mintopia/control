@@ -65,7 +65,7 @@ return new class extends Migration
         $setting->encrypted = in_array($code, $encrypted);
 
         $value = $provider->{$code};
-        if (!$setting->encrypted) {
+        if ($setting->encrypted) {
             $value = Crypt::decryptString($value);
         }
         $setting->value = $value;
