@@ -37,14 +37,17 @@ class SetupDiscord extends Command
             $provider = $prov->install();
         }
 
-        $provider->client_id = text(
+        $clientId = $provider->settings()->whereCode('client_id')->first();
+        $secret = $provider->settings()->whereCode('client_secret')->first();
+
+        $clientId->value = text(
             label: 'Discord Client ID',
             hint: 'This can be found in your Discord Developer OAuth2 settings',
-            default: $provider->client_id ?? ''
+            default: $clientId->value ?? ''
         );
 
-        if (!$provider->client_secret || confirm('Do you want to change the Client Secret?', false)) {
-            $provider->client_secret = password(
+        if (!$secret->value || confirm('Do you want to change the Client Secret?', false)) {
+            $secret->value = password(
                 label: 'Discord Client Secret'
             );
         }
@@ -58,6 +61,8 @@ class SetupDiscord extends Command
         );
 
         $provider->save();
+        $clientId->save();
+        $secret->save();
 
         \Laravel\Prompts\info('The provider has been updated');
 
