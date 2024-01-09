@@ -30,6 +30,14 @@
                         @include('partials._providersconfig', [
                             'fieldName' => 'token',
                         ])
+                        @include('partials._providersconfig', [
+                            'fieldName' => 'host',
+                        ])
+                        @if($provider->can_be_renamed)
+                            @include('partials._providersconfig', [
+                                'fieldName' => 'name',
+                            ])
+                        @endif
                         <div class="mb-3">
                             <label class="form-check form-switch">
                                 <input type="checkbox" class="form-check-input" name="enabled" value="1"

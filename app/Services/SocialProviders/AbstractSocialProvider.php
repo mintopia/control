@@ -21,6 +21,7 @@ abstract class AbstractSocialProvider implements SocialProviderContract
     protected string $socialiteProviderCode;
 
     protected bool $supportsAuth = false;
+    protected bool $canBeRenamed = false;
 
     public function __construct(protected ?SocialProvider $provider = null, protected ?string $redirectUrl = null)
     {
@@ -72,6 +73,7 @@ abstract class AbstractSocialProvider implements SocialProviderContract
         $provider->supports_auth = $this->supportsAuth;
         $provider->enabled = false;
         $provider->auth_enabled = false;
+        $provider->can_be_renamed = $this->canBeRenamed;
         $provider->save();
         return $provider;
     }
