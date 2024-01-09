@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Services\SocialProviders\DiscordProvider;
+use App\Services\SocialProviders\LaravelPassportProvider;
 use App\Services\SocialProviders\SteamProvider;
 use App\Services\SocialProviders\TwitchProvider;
 use Illuminate\Database\Seeder;
@@ -18,6 +19,7 @@ class SocialProvidersSeeder extends Seeder
             DiscordProvider::class,
             SteamProvider::class,
             TwitchProvider::class,
+            LaravelPassportProvider::class
         ];
         foreach ($classes as $className) {
             $provider = new $className;

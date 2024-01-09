@@ -30,6 +30,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use SocialiteProviders\Discord\DiscordExtendSocialite;
+use SocialiteProviders\LaravelPassport\LaravelPassportExtendSocialite;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Steam\SteamExtendSocialite;
 use SocialiteProviders\Twitch\TwitchExtendSocialite;
@@ -63,6 +64,7 @@ class EventServiceProvider extends ServiceProvider
             DiscordExtendSocialite::class . '@handle',
             SteamExtendSocialite::class . '@handle',
             TwitchExtendSocialite::class . '@handle',
+            LaravelPassportExtendSocialite::class . '@handle',
         ],
     ];
 

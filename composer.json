@@ -16,6 +16,7 @@
         "laravel/tinker": "^2.8",
         "ramsey/uuid": "^4.7",
         "socialiteproviders/discord": "^4.2",
+        "socialiteproviders/laravelpassport": "^4.3",
         "socialiteproviders/steam": "^4.2",
         "socialiteproviders/twitch": "^5.3",
         "spatie/eloquent-sortable": "^4.1",

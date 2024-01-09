@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Services\SocialProviders;
+
+use App\Models\LinkedAccount;
+use App\Models\SocialProvider;
+use Laravel\Socialite\Facades\Socialite;
+use SocialiteProviders\LaravelPassport\Provider;
+use SocialiteProviders\Manager\Config;
+
+class LaravelPassportProvider extends AbstractSocialProvider
+{
+    protected string $name = 'Laravel Passport';
+    protected string $code = 'laravelpassport';
+    protected string $socialiteProviderCode = 'laravelpassport';
+    protected bool $supportsAuth = true;
+    protected bool $canBeRenamed = true;
+
+    public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null)
+    {
+        parent::__construct($provider, $redirectUrl);
+        if($provider != null) {
+            $this->name = $provider->name;
+        }
+    }
+
+    protected function getSocialiteProvider()
+    {
+        $config = new Config($this->provider->client_id, $this->provider->client_secret,
+            $this->redirectUrl, ['host' => $this->provider->host]);
+        return Socialite::buildProvider(Provider::class, $config->get())
+            ->setConfig($config)->with(['prompt' => 'none']);
+    }
+
+    public function configMapping(): array
+    {
+        return array_merge(
+            parent::configMapping(),
+            [
+                'host' => (object)[
+                    'name' => 'Passport Host',
+                    'validation' => 'required|string',
+                ],
+                'name' => (object)[
+                    'name' => 'Display Name',
+                    'validation' => 'required|string'
+                ]
+            ],
+        );
+    }
+
+    protected function updateAccount(LinkedAccount $account, $remoteUser): void
+    {
+        $account->avatar_url = $remoteUser->getAvatar();
+        $account->refresh_token = $remoteUser->refreshToken;
+        $account->access_token = $remoteUser->token;
+        $account->name = $remoteUser->getNickname();
+    }
+}
