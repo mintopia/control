@@ -231,6 +231,46 @@ namespace App\Models{
 
 namespace App\Models{
 /**
+ * App\Models\ProviderSetting
+ *
+ * @property int $id
+ * @property string $provider_type
+ * @property int $provider_id
+ * @property string $name
+ * @property string $code
+ * @property string|null $description
+ * @property \App\Enums\SettingType $type
+ * @property int $encrypted
+ * @property string|null $validation
+ * @property mixed|null|null $value
+ * @property int $order
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $provider
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting ordered(string $direction = 'asc')
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting query()
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting whereEncrypted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting whereOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting whereProviderId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting whereProviderType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting whereValidation($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ProviderSetting whereValue($value)
+ * @mixin \Eloquent
+ */
+	class IdeHelperProviderSetting {}
+}
+
+namespace App\Models{
+/**
  * App\Models\Role
  *
  * @property int $id
@@ -375,19 +415,18 @@ namespace App\Models{
  * @property int $supports_auth
  * @property int $enabled
  * @property int $auth_enabled
- * @property string|null $client_id
- * @property mixed|null $client_secret
- * @property mixed|null $token
+ * @property int $can_be_renamed
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\LinkedAccount> $accounts
  * @property-read int|null $accounts_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProviderSetting> $settings
+ * @property-read int|null $settings_count
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider query()
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereAuthEnabled($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereClientId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereClientSecret($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereCanBeRenamed($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereCode($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereEnabled($value)
@@ -395,7 +434,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereProviderClass($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereSupportsAuth($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereUpdatedAt($value)
  * @mixin \Eloquent
  */
@@ -459,7 +497,7 @@ namespace App\Models{
  * @property string|null $original_email
  * @property string $name
  * @property string $reference
- * @property string $qrcode
+ * @property string|null $qrcode
  * @property string|null $transfer_code
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -497,16 +535,14 @@ namespace App\Models{
  * @property string $name
  * @property string $code
  * @property string $provider_class
- * @property mixed|null $apikey
- * @property mixed|null $apisecret
- * @property string|null $endpoint
- * @property mixed|null $webhook_secret
  * @property int $enabled
  * @property string $cache_prefix
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventMapping> $events
  * @property-read int|null $events_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProviderSetting> $settings
+ * @property-read int|null $settings_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
  * @property-read int|null $tickets_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketTypeMapping> $types
@@ -514,18 +550,14 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider query()
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereApikey($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereApisecret($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCachePrefix($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCode($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereEnabled($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereEndpoint($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereProviderClass($value)
  * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereWebhookSecret($value)
  * @mixin \Eloquent
  */
 	class IdeHelperTicketProvider {}

@@ -22,13 +22,17 @@ class SocialProviderUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        $config = $this->provider->configMapping();
         $rules = [
             'enabled' => 'sometimes|nullable|boolean',
             'auth_enabled' => 'sometimes|nullable|boolean',
         ];
-        foreach ($config as $field => $data) {
-            $rules[$field] = $data->validation;
+        if ($this->provider->can_be_renamed) {
+            $rules['name'] = 'sometimes|string|max:100';
+        }
+        foreach ($this->provider->settings as $setting) {
+            if ($setting->validation) {
+                $rules[$setting->code] = $setting->validation;
+            }
         }
         return $rules;
     }

@@ -21,23 +21,26 @@
                     {{ csrf_field() }}
                     {{ method_field('PATCH') }}
                     <div class="card-body">
-                        @include('partials._providersconfig', [
-                            'fieldName' => 'client_id',
-                        ])
-                        @include('partials._providersconfig', [
-                            'fieldName' => 'client_secret',
-                        ])
-                        @include('partials._providersconfig', [
-                            'fieldName' => 'token',
-                        ])
-                        @include('partials._providersconfig', [
-                            'fieldName' => 'host',
-                        ])
                         @if($provider->can_be_renamed)
-                            @include('partials._providersconfig', [
-                                'fieldName' => 'name',
-                            ])
+                            <div class="mb-3">
+                                <label class="form-label required">Name</label>
+                                <div>
+                                    <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
+                                           placeholder="Name" value="{{ old('name', $provider->name ?? '') }}">
+                                    <small class="form-hint">The name of the provider. </small>
+                                    @error('name')
+                                    <p class="invalid-feedback">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            </div>
                         @endif
+
+                        @foreach($provider->settings as $setting)
+                            @include('partials._providersconfig', [
+                                'setting' => $setting,
+                            ])
+                        @endforeach
+
                         <div class="mb-3">
                             <label class="form-check form-switch">
                                 <input type="checkbox" class="form-check-input" name="enabled" value="1"

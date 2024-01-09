@@ -2,19 +2,20 @@
 
 namespace App\Services\TicketProviders;
 
+use App\Enums\SettingType;
 use App\Models\EmailAddress;
+use App\Models\ProviderSetting;
 use App\Models\TicketProvider;
 use App\Services\Contracts\TicketProviderContract;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 abstract class AbstractTicketProvider implements TicketProviderContract
 {
     protected string $name;
     protected string $code;
     protected ?TicketProvider $provider = null;
-    protected ?string $apikey = null;
-    protected ?string $webhookSecret = null;
 
     public function __construct(?TicketProvider $provider = null)
     {
@@ -26,8 +27,6 @@ abstract class AbstractTicketProvider implements TicketProviderContract
     protected function setProvider(TicketProvider $provider): void
     {
         $this->provider = $provider;
-        $this->apikey = $this->provider->apikey;
-        $this->webhookSecret = $this->provider->webhook_secret ?? '';
     }
 
     public function configMapping(): array
@@ -53,7 +52,22 @@ abstract class AbstractTicketProvider implements TicketProviderContract
             $provider->code = $this->code;
             $provider->provider_class = get_called_class();
             $provider->enabled = false;
-            $provider->save();
+            DB::transaction(function() use ($provider) {
+                $provider->save();
+
+                foreach ($this->configMapping() as $code => $config) {
+                    $setting = new ProviderSetting();
+                    $setting->provider()->associate($provider);
+                    $setting->code = $code;
+                    $setting->name = $config->name;
+                    $setting->validation = $config->description ?? null;
+                    $setting->encrypted = $config->encrypted ?? false;
+                    $setting->description = $config->description ?? null;
+                    $setting->value = $config->value ?? null;
+                    $setting->type = $config->type ?? SettingType::stString;
+                    $setting->save();
+                }
+            });
         }
         return $provider;
     }

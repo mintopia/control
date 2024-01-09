@@ -2,9 +2,11 @@
 
 namespace App\Services\SocialProviders;
 
+use App\Enums\SettingType;
 use App\Exceptions\SocialProviderException;
 use App\Models\EmailAddress;
 use App\Models\LinkedAccount;
+use App\Models\ProviderSetting;
 use App\Models\SocialProvider;
 use App\Models\User;
 use App\Services\Contracts\SocialProviderContract;
@@ -74,6 +76,24 @@ abstract class AbstractSocialProvider implements SocialProviderContract
         $provider->enabled = false;
         $provider->auth_enabled = false;
         $provider->can_be_renamed = $this->canBeRenamed;
+
+        DB::transaction(function() use ($provider) {
+            $provider->save();
+
+            foreach ($this->configMapping() as $code => $config) {
+                $setting = new ProviderSetting();
+                $setting->provider()->associate($provider);
+                $setting->code = $code;
+                $setting->name = $config->name;
+                $setting->validation = $config->description ?? null;
+                $setting->encrypted = $config->encrypted ?? false;
+                $setting->description = $config->description ?? null;
+                $setting->value = $config->value ?? null;
+                $setting->type = $config->type ?? SettingType::stString;
+                $setting->save();
+            }
+        });
+
         $provider->save();
         return $provider;
     }

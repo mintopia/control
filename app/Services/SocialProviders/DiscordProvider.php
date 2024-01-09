@@ -17,8 +17,8 @@ class DiscordProvider extends AbstractSocialProvider
     protected function getSocialiteProvider()
     {
         return Socialite::buildProvider(Provider::class, [
-            'client_id' => $this->provider->client_id,
-            'client_secret' => $this->provider->client_secret,
+            'client_id' => $this->provider->getSetting('client_id'),
+            'client_secret' => $this->provider->getSetting('client_secret'),
             'redirect' => $this->redirectUrl,
         ]);
     }

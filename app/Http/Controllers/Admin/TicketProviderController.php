@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\SettingType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\TicketProviderUpdateRequest;
 use App\Models\TicketProvider;
@@ -20,10 +21,18 @@ class TicketProviderController extends Controller
 
     public function update(TicketProviderUpdateRequest $request, TicketProvider $provider)
     {
-        $provider->apikey = $request->input('apikey');
-        $provider->webhook_secret = $request->input('webhook_secret');
-        $provider->endpoint = $request->input('endpoint');
-        $provider->apisecret = $request->input('apisecret');
+        $settings = $provider->settings()->get();
+        foreach ($settings as $setting) {
+            if ($request->has($setting->code)) {
+                $setting->value = $request->input($setting->code);
+            } elseif ($setting->type == SettingType::stBoolean) {
+                $setting->value = false;
+            }
+            if ($setting->isDirty()) {
+                $setting->save();
+            }
+        }
+
         $provider->enabled = (bool)$request->input('enabled');
         $provider->save();
         return response()->redirectToRoute('admin.settings.index')->with('successMessage', "{$provider->name} has been updated");

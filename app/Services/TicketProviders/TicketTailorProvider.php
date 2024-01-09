@@ -51,8 +51,8 @@ class TicketTailorProvider extends AbstractTicketProvider
 
     protected function verifyWebhook(Request $request): bool
     {
-        // No secret, must be valid
-        if (!$this->webhookSecret) {
+        $secret = $this->provider->getSetting('webhook_secret');
+        if (!$secret) {
             return true;
         }
 
@@ -70,7 +70,7 @@ class TicketTailorProvider extends AbstractTicketProvider
         }
 
         $body = $request->getContent();
-        $hash = hash_hmac('sha256', $timestamp . $body, $this->webhookSecret);
+        $hash = hash_hmac('sha256', $timestamp . $body, $secret);
         if (!hash_equals($signature, $hash)) {
             throw new TicketProviderWebhookException('Hash does not match signature');
         }
@@ -165,7 +165,7 @@ class TicketTailorProvider extends AbstractTicketProvider
             $this->client = new Client([
                 'base_uri' => config('services.tickettailor.endpoint'),
                 'verify' => config('services.tickettailor.verifytls'),
-                'auth' => [$this->apikey, '']
+                'auth' => [$this->provider->getSetting('apikey'), '']
             ]);
         }
         return $this->client;

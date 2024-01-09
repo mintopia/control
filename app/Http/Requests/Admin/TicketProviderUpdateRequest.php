@@ -22,12 +22,13 @@ class TicketProviderUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
-        $config = $this->provider->configMapping();
         $rules = [
             'enabled' => 'sometimes|nullable|boolean',
         ];
-        foreach ($config as $field => $data) {
-            $rules[$field] = $data->validation;
+        foreach ($this->provider->settings as $setting) {
+            if ($setting->validation) {
+                $rules[$setting->code] = $setting->validation;
+            }
         }
         return $rules;
     }

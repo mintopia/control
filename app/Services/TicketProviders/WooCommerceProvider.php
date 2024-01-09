@@ -93,9 +93,9 @@ class WooCommerceProvider extends AbstractTicketProvider
     {
         if (!$this->client) {
             $this->client = new Client([
-                'base_uri' => $this->provider->endpoint,
+                'base_uri' => $this->provider->getSetting('endpoint'),
                 'verify' => config('services.woocommerce.verifytls', true),
-                'auth' => [$this->provider->apikey, $this->provider->apisecret],
+                'auth' => [$this->provider->getSetting('apikey'), $this->provider->getSetting('apisecret')],
             ]);
         }
         return $this->client;

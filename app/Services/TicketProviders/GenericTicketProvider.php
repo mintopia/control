@@ -43,8 +43,8 @@ class GenericTicketProvider extends AbstractTicketProvider
     {
         if (!$this->client) {
             $this->client = new Client([
-                'base_uri' => $this->provider->endpoint,
-                'auth' => [$this->apikey, '']
+                'base_uri' => $this->provider->getSetting('endpoint'),
+                'auth' => [$this->provider->getSetting('apikey'), '']
             ]);
         }
         return $this->client;

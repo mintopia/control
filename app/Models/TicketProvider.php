@@ -7,6 +7,7 @@ use App\Services\Contracts\TicketProviderContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\Request;
 
 /**
@@ -15,18 +16,7 @@ use Illuminate\Http\Request;
 class TicketProvider extends Model
 {
     use HasFactory, ToString;
-
-    protected $hidden = [
-        'apikey',
-        'apisecret',
-        'webhook_secret',
-    ];
-
-    protected $casts = [
-        'apikey' => 'encrypted',
-        'apisecret' => 'encrypted',
-        'webhook_secret' => 'encrypted',
-    ];
+    protected array $_settings = [];
 
     public function tickets(): HasMany
     {
@@ -114,6 +104,25 @@ class TicketProvider extends Model
     public function types(): HasMany
     {
         return $this->hasMany(TicketTypeMapping::class);
+    }
+
+    public function settings(): MorphMany
+    {
+        return $this->morphMany(ProviderSetting::class, 'provider');
+    }
+
+    public function getSetting(string $code): mixed
+    {
+        if (isset($this->_settings[$code])) {
+            return $this->_settings[$code];
+        }
+        $setting = $this->settings()->whereCode($code)->first();
+        if (!$setting) {
+            $this->_settings[$code] = null;
+            return null;
+        }
+        $this->_settings[$code] = $setting->value;
+        return $setting->value;
     }
 
     public function clearCache(): void

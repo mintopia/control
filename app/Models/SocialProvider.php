@@ -7,6 +7,7 @@ use App\Services\Contracts\SocialProviderContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 /**
  * @mixin IdeHelperSocialProvider
@@ -15,15 +16,7 @@ class SocialProvider extends Model
 {
     use HasFactory, ToString;
 
-    protected $hidden = [
-        'client_secret',
-        'token',
-    ];
-
-    protected $casts = [
-        'client_secret' => 'encrypted',
-        'token' => 'encrypted',
-    ];
+    protected array $_settings = [];
 
     public function accounts(): HasMany
     {
@@ -53,5 +46,24 @@ class SocialProvider extends Model
     protected function toStringName(): string
     {
         return $this->code;
+    }
+
+    public function settings(): MorphMany
+    {
+        return $this->morphMany(ProviderSetting::class, 'provider');
+    }
+
+    public function getSetting(string $code): mixed
+    {
+        if (isset($this->_settings[$code])) {
+            return $this->_settings[$code];
+        }
+        $setting = $this->settings()->whereCode($code)->first();
+        if (!$setting) {
+            $this->_settings[$code] = null;
+            return null;
+        }
+        $this->_settings[$code] = $setting->value;
+        return $setting->value;
     }
 }

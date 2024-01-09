@@ -24,7 +24,7 @@ class DiscordApi
                 'base_uri' => config('services.discord.endpoint', 'https://discord.com/api/'),
                 'verify' => config('services.discord.verifytls', true),
                 'headers' => [
-                    'Authorization' => "Bot {$this->provider->token}",
+                    'Authorization' => "Bot {$this->provider->getSetting('token')}",
                 ]
             ];
             $this->client = new Client($config);

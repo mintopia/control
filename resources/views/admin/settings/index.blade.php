@@ -123,7 +123,7 @@
                 <div class="card-header">
                     <h3 class="card-title">Discord Integration</h3>
                 </div>
-                @if($discordProvider && $discordProvider->client_id && $discordProvider->client_secret && $discordProvider->token)
+                @if($discordProvider && $discordProvider->getSetting('client_id') && $discordProvider->getSetting('client_secret') && $discordProvider->getSetting('token'))
                     @if($discordId && $discordName && $discordId->value && $discordName->value)
                         <div class="card-body">
                             <div class="datagrid mb-3">

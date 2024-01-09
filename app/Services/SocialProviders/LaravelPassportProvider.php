@@ -26,8 +26,12 @@ class LaravelPassportProvider extends AbstractSocialProvider
 
     protected function getSocialiteProvider()
     {
-        $config = new Config($this->provider->client_id, $this->provider->client_secret,
-            $this->redirectUrl, ['host' => $this->provider->host]);
+        $config = new Config(
+            $this->provider->getSetting('client_id'),
+            $this->provider->getSetting('client_secret'),
+            $this->redirectUrl,
+            ['host' => $this->provider->host]
+        );
         return Socialite::buildProvider(Provider::class, $config->get())
             ->setConfig($config)->with(['prompt' => 'none']);
     }
@@ -41,10 +45,6 @@ class LaravelPassportProvider extends AbstractSocialProvider
                     'name' => 'Passport Host',
                     'validation' => 'required|string',
                 ],
-                'name' => (object)[
-                    'name' => 'Display Name',
-                    'validation' => 'required|string'
-                ]
             ],
         );
     }

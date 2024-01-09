@@ -21,18 +21,13 @@
                     {{ csrf_field() }}
                     {{ method_field('PATCH') }}
                     <div class="card-body">
-                        @include('partials._providersconfig', [
-                            'fieldName' => 'endpoint',
-                        ])
-                        @include('partials._providersconfig', [
-                            'fieldName' => 'apikey',
-                        ])
-                        @include('partials._providersconfig', [
-                            'fieldName' => 'apisecret',
-                        ])
-                        @include('partials._providersconfig', [
-                            'fieldName' => 'webhook_secret',
-                        ])
+
+                        @foreach($provider->settings as $setting)
+                            @include('partials._providersconfig', [
+                                'setting' => $setting,
+                            ])
+                        @endforeach
+
                         <div class="mb-3">
                             <label class="form-check form-switch">
                                 <input type="checkbox" class="form-check-input" name="enabled" value="1"
