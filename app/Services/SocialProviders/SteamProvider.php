@@ -20,6 +20,7 @@ class SteamProvider extends AbstractSocialProvider
             'client_secret' => (object)[
                 'name' => 'API Key',
                 'validation' => 'required|string',
+                'encrypted' => true,
             ],
         ];
     }

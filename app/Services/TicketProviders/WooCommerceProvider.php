@@ -41,16 +41,54 @@ class WooCommerceProvider extends AbstractTicketProvider
             'apikey' => (object)[
                 'name' => 'Consumer Key',
                 'validation' => 'required|string',
+                'encrypted' => true,
             ],
             'apisecret' => (object)[
                 'name' => 'Consumer Secret',
                 'validation' => 'required|string',
+                'encrypted' => true,
+            ],
+            'webhook_secret' => (object)[
+                'name' => 'Webhook Secret',
+                'validation' => 'string',
+                'encrypted' => true,
             ],
         ];
     }
 
+
     public function processWebhook(Request $request): bool
     {
+        $this->verifyWebhook($request);
+        $data = json_decode($request->getContent());
+        $parsed = $this->parseOrder($data);
+        if ($parsed) {
+            foreach ($parsed as $ticket) {
+                $tickets[$ticket->id] = $ticket;
+            }
+            $this->processTickets($tickets, $data->billing->email);
+        }
+        return true;
+    }
+
+    protected function verifyWebhook(Request $request): bool
+    {
+        $secret = $this->provider->getSetting('webhook_secret');
+        if (!$secret) {
+            throw new TicketProviderWebhookException('No webhook secret is configured');
+        }
+
+        $signature = base64_decode($request->header('x-wc-webhook-signature'));
+        if (!$signature) {
+            throw new TicketProviderWebhookException('Unable to retrieve signature from header');
+        }
+
+        $content = (string)$request->getContent();
+        $hash = hash_hmac('sha256', $content, $secret, true);
+
+        if (!hash_equals($signature, $hash)) {
+            throw new TicketProviderWebhookException('Hash does not match signature');
+        }
         return true;
     }
 
@@ -112,6 +150,11 @@ class WooCommerceProvider extends AbstractTicketProvider
         }
 
         $ticketData = $this->getTickets($address);
+        $this->processTickets($ticketData, $address, $user);
+    }
+
+    protected function processTickets(array $ticketData, string $address, ?User $user = null): void
+    {
         $tickets = [];
         $valid = [];
         $voided = [];
@@ -153,7 +196,7 @@ class WooCommerceProvider extends AbstractTicketProvider
             $data = $ticketData[$ticketId];
             $ticket = $this->makeTicket($user, $data);
             if ($ticket) {
-                Log::info("{$this->provider} {$ticket} has been added for {$email}");
+                Log::info("{$this->provider} {$ticket} has been added for {$address}");
             }
         }
     }
@@ -183,22 +226,32 @@ class WooCommerceProvider extends AbstractTicketProvider
         // Crack the orders into separate tickets
         $tickets = [];
         foreach ($orders as $order) {
-            foreach ($order->line_items as $item) {
-                for ($i = 1; $i <= $item->quantity; $i++) {
-                    $externalId = "{$order->id}-{$item->id}-{$i}";
-                    $status = 'voided';
-                    if (in_array($order->status, ['processing', 'completed'])) {
-                        $status = 'valid';
-                    }
-                    $tickets[$externalId] = (object)[
-                        'id' => $externalId,
-                        'ticket_type_id' => $item->product_id,
-                        'order' => $order,
-                        'item' => $item,
-                        'status' => $status,
-                        'email' => $order->billing->email,
-                    ];
+            $parsed = $this->parseOrder($order);
+            foreach ($parsed as $ticket) {
+                $tickets[$ticket->id] = $ticket;
+            }
+        }
+        return $tickets;
+    }
+
+    protected function parseOrder(object $order): array
+    {
+        $tickets = [];
+        foreach ($order->line_items as $item) {
+            for ($i = 1; $i <= $item->quantity; $i++) {
+                $externalId = "{$order->id}-{$item->id}-{$i}";
+                $status = 'voided';
+                if (in_array($order->status, ['processing', 'completed'])) {
+                    $status = 'valid';
                 }
+                $tickets[$externalId] = (object)[
+                    'id' => $externalId,
+                    'ticket_type_id' => $item->product_id,
+                    'order' => $order,
+                    'item' => $item,
+                    'status' => $status,
+                    'email' => $order->billing->email,
+                ];
             }
         }
         return $tickets;

@@ -31,6 +31,7 @@ class GenericTicketProvider extends AbstractTicketProvider
             'apikey' => (object)[
                 'name' => 'API Key',
                 'validation' => 'required|string',
+                'encrypted' => true,
             ],
             'endpoint' => (object)[
                 'name' => 'Base URL',

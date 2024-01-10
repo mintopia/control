@@ -33,10 +33,12 @@ class TicketTailorProvider extends AbstractTicketProvider
             'apikey' => (object)[
                 'name' => 'API Key',
                 'validation' => 'required|string',
+                'encrypted' => true,
             ],
             'webhook_secret' => (object)[
                 'name' => 'Webhook Signing Secret',
                 'validation' => 'sometimes|string|nullable',
+                'encrypted' => true,
             ],
         ];
     }

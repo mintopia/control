@@ -15,7 +15,7 @@ class SettingValue implements CastsAttributes
      */
     public function get(Model $model, string $key, mixed $value, array $attributes): mixed
     {
-        if ($model->encrypted) {
+        if ($model->encrypted && $value !== null) {
             $value = Crypt::decrypt($value);
         }
         return $value;
@@ -28,7 +28,7 @@ class SettingValue implements CastsAttributes
      */
     public function set(Model $model, string $key, mixed $value, array $attributes): mixed
     {
-        if ($model->encrypted) {
+        if ($model->encrypted && $value !== null) {
             $value = Crypt::encrypt($value);
         }
         return $value;

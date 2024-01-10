@@ -24,6 +24,7 @@ class TicketProvidersSeeder extends Seeder
         foreach ($classes as $className) {
             $provider = new $className;
             $provider->install();
+            $provider->installSettings();
         }
     }
 }

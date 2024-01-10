@@ -53,6 +53,7 @@ abstract class AbstractSocialProvider implements SocialProviderContract
             'client_secret' => (object)[
                 'name' => 'Client Secret',
                 'validation' => 'required|string',
+                'encrypted' => true,
             ],
         ];
     }
@@ -64,6 +65,7 @@ abstract class AbstractSocialProvider implements SocialProviderContract
         }
 
         $provider = SocialProvider::whereCode($this->socialiteProviderCode)->first();
+        $this->provider = $provider;
         if ($provider) {
             return $provider;
         }
@@ -79,23 +81,33 @@ abstract class AbstractSocialProvider implements SocialProviderContract
 
         DB::transaction(function() use ($provider) {
             $provider->save();
-
-            foreach ($this->configMapping() as $code => $config) {
-                $setting = new ProviderSetting();
-                $setting->provider()->associate($provider);
-                $setting->code = $code;
-                $setting->name = $config->name;
-                $setting->validation = $config->description ?? null;
-                $setting->encrypted = $config->encrypted ?? false;
-                $setting->description = $config->description ?? null;
-                $setting->value = $config->value ?? null;
-                $setting->type = $config->type ?? SettingType::stString;
-                $setting->save();
-            }
+            $this->installSettings();
         });
 
         $provider->save();
         return $provider;
+    }
+
+    public function installSettings(): void
+    {
+        foreach ($this->configMapping() as $code => $config) {
+            $setting = $this->provider->settings()->whereCode($code)->first();
+            if (!$setting) {
+                $setting = new ProviderSetting();
+                $setting->provider()->associate($this->provider);
+                $setting->code = $code;
+                // Only set value initially
+                $setting->value = $config->value ?? null;
+            }
+            $setting->name = $config->name;
+            $setting->validation = $config->description ?? null;
+            $setting->encrypted = $config->encrypted ?? false;
+            $setting->description = $config->description ?? null;
+            $setting->type = $config->type ?? SettingType::stString;
+            if ($setting->isDirty()) {
+                $setting->save();
+            }
+        }
     }
 
     public function redirect(): RedirectResponse

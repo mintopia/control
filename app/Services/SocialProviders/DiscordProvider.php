@@ -32,6 +32,7 @@ class DiscordProvider extends AbstractSocialProvider
                 'token' => (object)[
                     'name' => 'Bot Token',
                     'validation' => 'sometimes|string|nullable',
+                    'encrypted' => true,
                 ],
             ],
         );
