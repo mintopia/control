@@ -74,7 +74,7 @@ abstract class AbstractTicketProvider implements TicketProviderContract
                 $setting->value = $config->value ?? null;
             }
             $setting->name = $config->name;
-            $setting->validation = $config->description ?? null;
+            $setting->validation = $config->validation ?? null;
             $setting->encrypted = $config->encrypted ?? false;
             $setting->description = $config->description ?? null;
             $setting->type = $config->type ?? SettingType::stString;
