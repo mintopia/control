@@ -64,7 +64,7 @@ abstract class AbstractSocialProvider implements SocialProviderContract
             return $this->provider;
         }
 
-        $provider = SocialProvider::whereCode($this->socialiteProviderCode)->first();
+        $provider = SocialProvider::whereCode($this->code)->first();
         $this->provider = $provider;
         if ($provider) {
             return $provider;
