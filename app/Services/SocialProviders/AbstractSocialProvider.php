@@ -60,32 +60,26 @@ abstract class AbstractSocialProvider implements SocialProviderContract
 
     public function install(): SocialProvider
     {
-        if ($this->provider) {
-            return $this->provider;
-        }
+        $this->provider = SocialProvider::whereCode($this->code)->first();
+        if (!$this->provider) {
+            $provider = new SocialProvider();
+            $this->provider = $provider;
+            $provider->name = $this->name;
+            $provider->code = $this->code;
+            $provider->provider_class = get_called_class();
+            $provider->supports_auth = $this->supportsAuth;
+            $provider->enabled = false;
+            $provider->auth_enabled = false;
+            $provider->can_be_renamed = $this->canBeRenamed;
 
-        $provider = SocialProvider::whereCode($this->code)->first();
-        $this->provider = $provider;
-        if ($provider) {
-            return $provider;
-        }
+            DB::transaction(function () use ($provider) {
+                $provider->save();
+                $this->installSettings();
+            });
 
-        $provider = new SocialProvider();
-        $provider->name = $this->name;
-        $provider->code = $this->code;
-        $provider->provider_class = get_called_class();
-        $provider->supports_auth = $this->supportsAuth;
-        $provider->enabled = false;
-        $provider->auth_enabled = false;
-        $provider->can_be_renamed = $this->canBeRenamed;
-
-        DB::transaction(function() use ($provider) {
             $provider->save();
-            $this->installSettings();
-        });
-
-        $provider->save();
-        return $provider;
+        }
+        return $this->provider;
     }
 
     public function installSettings(): void

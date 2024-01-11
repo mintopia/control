@@ -45,10 +45,10 @@ abstract class AbstractTicketProvider implements TicketProviderContract
 
     public function install(): TicketProvider
     {
-        $provider = TicketProvider::whereCode($this->code)->first();
-        $this->provider = $provider;
-        if (!$provider) {
+        $this->provider = TicketProvider::whereCode($this->code)->first();
+        if (!$this->provider) {
             $provider = new TicketProvider();
+            $this->provider = $provider;
             $provider->name = $this->name;
             $provider->code = $this->code;
             $provider->provider_class = get_called_class();
@@ -59,7 +59,7 @@ abstract class AbstractTicketProvider implements TicketProviderContract
                 $this->installSettings();
             });
         }
-        return $provider;
+        return $this->provider;
     }
 
     public function installSettings(): void
