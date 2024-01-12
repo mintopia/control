@@ -23,6 +23,16 @@
                     $canPick = false;
                     $name = 'Occupied';
                 }
+                if($seat->clan){
+                    if(Auth::user()->inClan($seat->clanCode)){
+                        $class = 'seat-clan';
+                        $name = 'Available';
+                    } else {
+                        $canPick = false;
+                        $class = 'taken';
+                        $name = 'Not Available';
+                    }
+                }
                 if ($seat->nickname) {
                     $name = $seat->nickname;
                 }

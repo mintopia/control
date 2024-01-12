@@ -69,6 +69,9 @@ class SeatingPlan extends Model implements Sortable
             foreach ($seat->ticket->user->clanMemberships ?? [] as $clanMembership) {
                 $clans[] = $clanMembership->clan->name;
             }
+            if($seat->clan && !in_array($seat->clan->name, $clans)){
+                $clans[] = $seat->clan->name;
+            }
             $seatData = (object)[
                 'id' => $seat->id,
                 'x' => $seat->x,
@@ -85,6 +88,8 @@ class SeatingPlan extends Model implements Sortable
                 'ticketId' => $seat->ticket->id ?? null,
                 'clans' => $clans,
                 'canPick' => $seat->canPick(),
+                'clan' => $seat->clan->name ?? null,
+                'clanCode' => $seat->clan->code ?? null
             ];
             $data->push($seatData);
         }

@@ -72,6 +72,16 @@
                                 @endif
                             </div>
                         </div>
+                        <div class="datagrid-item">
+                            <div class="datagrid-title">Assigned Clan</div>
+                            <div class="datagrid-content">
+                                @if($seat->clan)
+                                    <a href="{{ route('admin.clans.show', [$seat->clan->code]) }}">{{ $seat->clan->name}}</a>
+                                @else
+                                    <span class="text-muted">None</span>
+                                @endif
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-footer align-content-end d-flex btn-list">

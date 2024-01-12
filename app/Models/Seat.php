@@ -24,6 +24,11 @@ class Seat extends Model
         return $this->belongsTo(SeatingPlan::class, 'seating_plan_id');
     }
 
+    public function clan(): BelongsTo
+    {
+        return $this->belongsTo(Clan::class);
+    }
+
     public function canPick(?User $user = null): bool
     {
         if ($this->disabled) {
@@ -37,6 +42,9 @@ class Seat extends Model
         }
         $tickets = $user->getPickableTickets($this->plan->event);
         if (!$tickets) {
+            return false;
+        }
+        if($this->clan != null && !$this->clan->isMember($user)){
             return false;
         }
         if ($this->ticket) {
