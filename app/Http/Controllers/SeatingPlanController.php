@@ -96,11 +96,17 @@ class SeatingPlanController extends Controller
             $seats[$plan->id] = $plan->getData();
         }
 
+        $myClans = [];
+        foreach($request->user()->clanMemberships as $clanMembership){
+            $myClans[] = $clanMembership->clan->code;
+        }
+
         $params = [
             'allTickets' => $allTickets,
             'event' => $event,
             'seats' => $seats,
             'mySeats' => $mySeats,
+            'myClans' => $myClans,
             'clanSeats' => $clanSeats,
             'responsibleSeats' => $responsibleSeats,
             'responsibleTickets' => $responsibleTickets,

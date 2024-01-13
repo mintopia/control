@@ -122,9 +122,6 @@ class User extends Authenticatable
         return $this->hasMany(ClanMembership::class);
     }
 
-    public function inClan(string $clanCode): bool {
-        return Clan::whereCode($clanCode)->first()->isMember($this);
-    }
 
     protected function toStringName(): string
     {

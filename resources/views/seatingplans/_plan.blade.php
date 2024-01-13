@@ -24,7 +24,7 @@
                     $name = 'Occupied';
                 }
                 if($seat->clan){
-                    if(Auth::user()->inClan($seat->clanCode)){
+                    if(in_array($seat->clanCode, $myClans)){
                         $class = 'seat-clan';
                         $name = 'Available';
                     } else {
