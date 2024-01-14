@@ -30,7 +30,7 @@ class LaravelPassportProvider extends AbstractSocialProvider
             $this->provider->getSetting('client_id'),
             $this->provider->getSetting('client_secret'),
             $this->redirectUrl,
-            ['host' => $this->provider->host]
+            ['host' =>  $this->provider->getSetting('host')]
         );
         return Socialite::buildProvider(Provider::class, $config->get())
             ->setConfig($config)->with(['prompt' => 'none']);
