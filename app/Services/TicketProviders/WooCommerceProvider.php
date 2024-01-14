@@ -99,6 +99,14 @@ class WooCommerceProvider extends AbstractTicketProvider
             Log::debug("{$this->provider} {$data->id} not added. Unable to find ticket type {$data->ticket_type_id}");
             return null;
         }
+        if (!$user) {
+            $email = EmailAddress::whereEmail($data->order->billing->email)
+                ->where('verified_at', '<=', Carbon::now())
+                ->with('user')->first();
+            if ($email) {
+                $user = $email->user;
+            }
+        }
         $ticket = new Ticket;
         $ticket->provider()->associate($this->provider);
         if ($user) {
