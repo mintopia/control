@@ -99,6 +99,14 @@ class WooCommerceProvider extends AbstractTicketProvider
             Log::debug("{$this->provider} {$data->id} not added. Unable to find ticket type {$data->ticket_type_id}");
             return null;
         }
+        if (!$user) {
+            $email = EmailAddress::whereEmail($data->order->billing->email)
+                ->where('verified_at', '<=', Carbon::now())
+                ->with('user')->first();
+            if ($email) {
+                $user = $email->user;
+            }
+        }
         $ticket = new Ticket;
         $ticket->provider()->associate($this->provider);
         if ($user) {
@@ -170,7 +178,7 @@ class WooCommerceProvider extends AbstractTicketProvider
 
         // Remove voided - fetch all and delete them in chunks so we trigger delete events
         if ($voided) {
-            Ticket::whereTicketProviderId($this->provider->id)->whereIn('id', $voided)->chunk(100, function ($chunk) {
+            Ticket::whereTicketProviderId($this->provider->id)->whereIn('external_id', $voided)->chunk(100, function ($chunk) {
                 foreach ($chunk as $ticket) {
                     Log::info("{$this->provider} {$ticket} Removed. Status is Voided");
                     $ticket->delete();

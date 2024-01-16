@@ -47,7 +47,7 @@
                                     'field' => 'role',
                                 ])
                             </th>
-                            <td class="w-2"></td>
+                            <th class="w-2"></th>
                         </tr>
                         </thead>
                         <tbody>
