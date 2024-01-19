@@ -45,7 +45,7 @@
 
                     @include('partials._searchselectfield', [
                         'name' => 'Ticket Provider',
-                        'property' => 'ticket_provider_id',
+                        'property' => 'provider_id',
                         'options' => $providers,
                         'valueProperty' => 'id',
                         'nameProperty' => 'name',
