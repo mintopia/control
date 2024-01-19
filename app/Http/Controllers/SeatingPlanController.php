@@ -89,7 +89,7 @@ class SeatingPlanController extends Controller
                 }
             }
         }
-        
+
         $responsibleTickets = array_unique($responsibleTickets);
         $responsibleSeats = array_unique($responsibleSeats);
 
