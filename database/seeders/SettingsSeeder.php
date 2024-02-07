@@ -42,6 +42,11 @@ class SettingsSeeder extends Seeder
                 'validation' => 'sometimes|nullable|string|url:http,https',
                 'description' => 'URL for the large image shown during login and signup',
             ],
+            'favicon' => (object)[
+                'name' => 'Favicon',
+                'validation' => 'sometimes|nullable|string|url:http,https',
+                'description' => 'URL for a favicon to use',
+            ],
             'discord.server.name' => (object)[
                 'name' => 'Discord Server Name',
                 'hidden' => true,

@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
     <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
     <title>@setting('name', config('app.name'))</title>
+    @if(App\Models\Setting::fetch('favicon'))
+        <link rel="shortcut icon" href="@setting('favicon')"/>
+    @endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @include('partials._theme')

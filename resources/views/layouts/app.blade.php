@@ -12,6 +12,9 @@
     <title>
         @setting('name')
     </title>
+    @if(App\Models\Setting::fetch('favicon'))
+        <link rel="shortcut icon" href="@setting('favicon')"/>
+    @endif
     @stack('head')
     @include('partials._theme')
 </head>
