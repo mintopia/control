@@ -128,6 +128,7 @@ class User extends Authenticatable
         return $this->hasMany(ClanMembership::class);
     }
 
+
     protected function toStringName(): string
     {
         return $this->nickname;

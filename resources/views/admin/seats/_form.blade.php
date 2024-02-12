@@ -81,6 +81,22 @@
         </div>
     </div>
     <div class="mb-3">
+        <label class="form-label">Assigned Clan</label>
+        <div>
+            <select class="form-select @error('clan_id') is-invalid @enderror" name="clan_id">
+                <option value=""></option>
+                @foreach($clans as $clan)
+                <option value="{{ $clan->id }}"
+                        @if(old('clan_id', $seat->clan_id) == $clan->id) selected @endif>{{ $clan->name }}</option>
+                @endforeach
+            </select>
+            <small class="form-hint">An optional Clan to assign to this seat.</small>
+            @error('clan_id')
+            <p class="invalid-feedback">{{ $message }}</p>
+            @enderror
+        </div>
+    </div>
+    <div class="mb-3">
         <label class="form-check form-switch">
             <input type="checkbox" class="form-check-input" name="disabled" value="1"
                    @if(old('disabled', $seat->disabled)) checked @endif>

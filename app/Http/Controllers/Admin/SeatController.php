@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\SeatUpdateRequest;
+use App\Models\Clan;
 use App\Models\Event;
 use App\Models\Seat;
 use App\Models\SeatingPlan;
@@ -40,6 +41,15 @@ class SeatController extends Controller
         $seat->description = $request->input('description');
         $seat->class = $request->input('class');
         $seat->disabled = (bool)$request->input('disabled', false);
+        if($request->has('clan_id')){
+            $clanId = $request->input('clan_id');
+            $clan = Clan::whereId($clanId)->first();
+            if($clan && $seat->clan != $clan){
+                $seat->clan()->associate($clan);
+            } else if(!$clan){
+                $seat->clan()->disassociate();
+            }
+        }
         $seat->save();
     }
 
@@ -48,7 +58,7 @@ class SeatController extends Controller
         return view('admin.seats.show', [
             'event' => $event,
             'plan' => $seatingplan,
-            'seat' => $seat,
+            'seat' => $seat
         ]);
     }
 
@@ -58,6 +68,7 @@ class SeatController extends Controller
             'event' => $event,
             'plan' => $seatingplan,
             'seat' => $seat,
+            'clans' => Clan::all()
         ]);
     }
 
