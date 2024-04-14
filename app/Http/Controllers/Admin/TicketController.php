@@ -171,7 +171,7 @@ class TicketController extends Controller
 
         $ticket->external_id = makeCode(8);
         $ticket->name = $type->name;
-        $ticket->qrcode = 'https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=' . $ticket->external_id;
+        $ticket->qrcode = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' . $ticket->external_id;
 
         $this->updateObject($ticket, $request);
         return response()->redirectToRoute('admin.tickets.show', $ticket->id)->with('successMessage', 'The ticket has been added');

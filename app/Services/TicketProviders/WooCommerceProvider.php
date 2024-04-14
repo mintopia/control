@@ -132,7 +132,7 @@ class WooCommerceProvider extends AbstractTicketProvider
 
     protected function getQrCode(object $data): string
     {
-        return "https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl={$data->id}";
+        return "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={$data->id}";
     }
 
     protected function getClient(): Client
