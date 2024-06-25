@@ -158,7 +158,7 @@ class TicketTailorProvider extends AbstractTicketProvider
 
     protected function getQrCode(object $data): string
     {
-        return str_replace(['/st/', '.jpg'], ['/qr/', '.png'], $data->barcode_url);
+        return "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={$data->barcode}";
     }
 
     protected function getClient(): Client
