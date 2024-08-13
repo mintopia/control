@@ -21,25 +21,56 @@ These are using Laravel Socialite, so any provider supported by Socialite can be
 These are custom integrations but more can be added and used if people develop them. The Internal provider allows you to manually issue tickets to users.
 
 ## Setup
+We use Laravel Sail to help speed up the development process.
+
+### Install Sail
+You can use the following command to bootstrap Sail:
+```bash
+docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$(pwd):/var/www/html" \
+    -w /var/www/html \
+    laravelsail/php83-composer:latest \
+    composer install --ignore-platform-reqs
+```
+
+#### Alias (Optional)
+You can add an optional alias to your shell to make it easier to run Sail commands. Add the following to your shell profile:
+```bash
+alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'
+```
+
+This will let you run Sail commands as `sail` instead of `./vendor/bin/sail`.
+The rest of the documentation will assume you are using the alias.
+
+### Application Setup
 
 You will need to create a Discord application and have the Client ID and Client Secret available.
 
 ```bash
 cp .env.example .env
-docker compose up -d redis db
-docker compose run --rm composer install
-docker compose run --rm artisan key:generate
-docker compose run --rm artisan migrate
-docker compose run --rm artisan db:seed
-docker compose run --rm artisan control:setup-discord
-docker compose run --rm npm install
-docker compose run --rm npm run build
-docker compose up -d
+sail up -d
+sail artisan key:generate
+sail artisan migrate
+sail artisan db:seed
+sail artisan control:setup-discord
+sail npm install
+sail npm run build
 ```
 
 Add the redirect URLs from the `control:setup-discord` step to your Discord OAuth2 configuration.
 
 You should now be able to login. The first user will be given the admin role.
+
+### Hot Reloading
+
+To allow hot reloading of frontend CSS/JS files, you can run the following command:
+
+```bash
+sail npm run dev
+```
+
+This will watch the files in `resources/` and rebuild them as you make changes.
 
 ## Production Deployment
 
