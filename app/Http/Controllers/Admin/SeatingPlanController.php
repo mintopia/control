@@ -35,6 +35,7 @@ class SeatingPlanController extends Controller
     {
         $plan->name = $request->input('name');
         $plan->image_url = $request->input('image_url');
+        $plan->scale = $request->input('scale') ? $request->input('scale') : 100;
         $plan->save();
     }
 

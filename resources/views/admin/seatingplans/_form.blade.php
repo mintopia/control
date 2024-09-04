@@ -22,4 +22,20 @@
             @enderror
         </div>
     </div>
+    <div class="mb-3">
+        <label class="form-label">Scale</label>
+        <div>
+            <div class="input-group">
+                <input type="text" name="scale" class="form-control @error('scale') is-invalid @enderror"
+                       placeholder="100" value="{{ old('scale', $plan->scale ?? '') }}">
+                <div class="input-group-prepend">
+                    <div class="input-group-text">%</div>
+                </div>
+            </div>
+            <small class="form-hint">The scale of the seating plan grid, expressed as a percentile. Valid range is 25-200.</small>
+            @error('scale')
+            <p class="invalid-feedback">{{ $message }}</p>
+            @enderror
+        </div>
+    </div>
 </div>

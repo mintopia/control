@@ -56,7 +56,7 @@
             @if($canPick)
                 href="{{ $url }}"
             @endif
-            style="left: {{ $seat->x * 2 }}em; top: {{ $seat->y * 2 }}em;"
+            style="left: {{ $seat->x * 0.02 * $plan->scale }}em; top: {{ $seat->y * 0.02 * $plan->scale }}em; width: {{ 0.019 * $plan->scale }}em; height: {{ 0.019 * $plan->scale }}em;"
             data-bs-trigger="hover" data-bs-toggle="popover"
             data-bs-placement="right" data-bs-html="true"
             title="{{ $seat->description }} {{ $seat->label }}"

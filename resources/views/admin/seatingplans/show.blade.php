@@ -58,6 +58,10 @@
                                 </span>
                             </div>
                         </div>
+                        <div class="datagrid-item">
+                            <div class="datagrid-title">Scale</div>
+                            <div class="datagrid-content">{{ $plan->scale }}%</div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-footer align-content-end d-flex btn-list">
@@ -148,7 +152,7 @@
                             @endphp
                             <a class="d-block seat {{ $seat->class }} {{ $class }}"
                                href="{{ route('admin.events.seatingplans.seats.show', [$event->code, $plan->id, $seat->id]) }}"
-                               style="left: {{ $seat->x * 2 }}em; top: {{ $seat->y * 2 }}em;"
+                               style="left: {{ $seat->x * 0.02 * $plan->scale }}em; top: {{ $seat->y * 0.02 * $plan->scale }}em; width: {{ 0.019 * $plan->scale }}em; height: {{ 0.019 * $plan->scale }}em;"
                                data-bs-trigger="hover" data-bs-toggle="popover"
                                data-bs-placement="right" data-bs-html="true"
                                title="{{ $seat->description }} {{ $seat->label }}"

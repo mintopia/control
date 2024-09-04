@@ -38,6 +38,7 @@ class SeatingPlanUpdateRequest extends FormRequest
                 },
             ],
             'image_url' => 'sometimes|url:http,https|nullable',
+            'scale' => 'sometimes|integer|numeric|min:25|max:200|nullable',
         ];
     }
 }
