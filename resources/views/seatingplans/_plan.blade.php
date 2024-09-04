@@ -2,10 +2,10 @@
     <div class="seating-plan" style="
         @if($plan->image_url)
             background-image:url('{{ $plan->image_url }}');
-            background-size: contain;
-            background-repeat: no-repeat;
+            min-height: {{ getimagesize($plan->image_url)[1] }}px"
+        @else
+             min-height: {{ (collect($seats[$plan->id] ?? [])->max('y') * 2) + 4 }}em;"
         @endif
-        min-height: {{ (collect($seats[$plan->id] ?? [])->max('y') * 2) + 4 }}em;"
     >
         @foreach($seats[$plan->id] ?? [] as $seat)
             @php
