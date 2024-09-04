@@ -2,6 +2,8 @@
     <div class="seating-plan" style="
         @if($plan->image_url)
             background-image:url('{{ $plan->image_url }}');
+            background-size: contain;
+            background-repeat: no-repeat;
         @endif
         min-height: {{ (collect($seats[$plan->id] ?? [])->max('y') * 2) + 4 }}em;"
     >
