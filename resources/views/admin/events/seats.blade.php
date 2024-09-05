@@ -127,7 +127,8 @@
                                 <div class="seating-plan" style="
                                    @if($plan->image_url)
                                        background-image:url('{{ $plan->image_url }}');
-                                       min-height: {{ getimagesize($plan->image_url)[1] }}px"
+                                       min-height: {{ $plan->image_height}}px;
+                                       min-width: {{ $plan->image_width}}px";
                                    @else
                                        min-height: {{ (collect($seats[$plan->id] ?? [])->max('y') * 2) + 4 }}em;"
                                    @endif
