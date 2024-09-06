@@ -12,7 +12,7 @@ class SeatingPlanController extends Controller
     public function index(Request $request)
     {
         $query = Event::query();
-        if (!$request->user()->hasRole('admin')) {
+        if (!$request->user()->hasAnyRole(['admin','manager'])) {
             $query = $query->whereDraft(false);
         }
         $events = $query->orderBy('starts_at', 'DESC')->with('seatingPlans')->paginate();

@@ -13,6 +13,6 @@ class EventPolicy
         if (!$event->draft) {
             return true;
         }
-        return $user->hasRole('admin');
+        return $user->hasAnyRole(['admin', 'manager']);
     }
 }

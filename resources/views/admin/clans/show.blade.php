@@ -30,11 +30,13 @@
                             <div class="datagrid-title">Code</div>
                             <div class="datagrid-content">{{ $clan->code }}</div>
                         </div>
-                        <div class="datagrid-item">
-                            <div class="datagrid-title">Invite Code</div>
-                            <div class="datagrid-content"><span class="user-select-all">{{ $clan->invite_code }}</span>
+                        @can('admin')
+                            <div class="datagrid-item">
+                                <div class="datagrid-title">Invite Code</div>
+                                <div class="datagrid-content"><span class="user-select-all">{{ $clan->invite_code }}</span>
+                                </div>
                             </div>
-                        </div>
+                        @endcan
                         <div class="datagrid-item">
                             <div class="datagrid-title">Created</div>
                             <div class="datagrid-content">
@@ -45,21 +47,23 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-footer align-content-end d-flex btn-list">
-                    <a href="{{ route('admin.clans.delete', $clan->code) }}" class="btn btn-outline-danger">
-                        <i class="icon ti ti-trash"></i>
-                        Delete
-                    </a>
-                    <a href="{{ route('admin.clans.regenerate', $clan->code) }}"
-                       class="btn btn-primary-outline ms-auto">
-                        <i class="icon ti ti-refresh"></i>
-                        Generate New Invite Code
-                    </a>
-                    <a href="{{ route('admin.clans.edit', $clan->code) }}" class="btn btn-primary">
-                        <i class="icon ti ti-edit"></i>
-                        Edit
-                    </a>
-                </div>
+                @can('admin')
+                    <div class="card-footer align-content-end d-flex btn-list">
+                        <a href="{{ route('admin.clans.delete', $clan->code) }}" class="btn btn-outline-danger">
+                            <i class="icon ti ti-trash"></i>
+                            Delete
+                        </a>
+                        <a href="{{ route('admin.clans.regenerate', $clan->code) }}"
+                           class="btn btn-primary-outline ms-auto">
+                            <i class="icon ti ti-refresh"></i>
+                            Generate New Invite Code
+                        </a>
+                        <a href="{{ route('admin.clans.edit', $clan->code) }}" class="btn btn-primary">
+                            <i class="icon ti ti-edit"></i>
+                            Edit
+                        </a>
+                    </div>
+                @endcan
             </div>
         </div>
     </div>
@@ -113,18 +117,20 @@
                                         {{ $member->created_at->diffForHumans() }}
                                     </span>
                                 </td>
-                                <td class="btn-list">
-                                    <a class="btn btn-outline-primary ms-auto"
-                                       href="{{ route('admin.clans.members.edit', [$clan->code, $member->id]) }}">
-                                        <i class="icon ti ti-edit"></i>
-                                        Edit
-                                    </a>
-                                    <a class="btn btn-outline-danger @if(!$member->canDelete()) disabled @endif"
-                                       @if ($member->canDelete()) href="{{ route('admin.clans.members.delete', [$clan->code, $member->id]) }}" @endif>
-                                        <i class="icon ti ti-trash"></i>
-                                        Remove
-                                    </a>
-                                </td>
+                                @can('admin')
+                                    <td class="btn-list">
+                                        <a class="btn btn-outline-primary ms-auto"
+                                           href="{{ route('admin.clans.members.edit', [$clan->code, $member->id]) }}">
+                                            <i class="icon ti ti-edit"></i>
+                                            Edit
+                                        </a>
+                                        <a class="btn btn-outline-danger @if(!$member->canDelete()) disabled @endif"
+                                           @if ($member->canDelete()) href="{{ route('admin.clans.members.delete', [$clan->code, $member->id]) }}" @endif>
+                                            <i class="icon ti ti-trash"></i>
+                                            Remove
+                                        </a>
+                                    </td>
+                                @endcan
                             </tr>
 
                         @empty

@@ -94,8 +94,13 @@
                                         {{ $user->nickname }}
                                     </a>
                                 </td>
-                                <td>{{ $user->name }}</td>
-                                <td>{{ $user->primaryEmail->email ?? 'None' }}</td>
+                                @can('admin')
+                                    <td>{{ $user->name }}</td>
+                                    <td>{{ $user->primaryEmail->email ?? 'None' }}</td>
+                                @else
+                                    <td>{{ explode(" ", $user->name)[0] }}</td>
+                                    <td>****</td>
+                                @endcan
                                 <td>
                                     @if($user->last_login)
                                         <span title="{{ $user->last_login->format('Y-m-d H:i:s') }}">

@@ -14,7 +14,11 @@
 
     @if ($currentTicket)
         <p>
-            Choose a seat for <strong>{{ $currentTicket->user->nickname ?? $currentTicket->original_email }}</strong>.
+            @can('admin')
+                Choose a seat for <strong>{{ $currentTicket->user->nickname ?? $currentTicket->original_email }}</strong>.
+            @else
+                Choose a seat for <strong>{{ $currentTicket->user->nickname ?? $currentTicket->external_id }}</strong>.
+            @endcan
         </p>
     @else
         <p>
@@ -27,7 +31,11 @@
             @if($currentTicket)
                 <div class="card mb-4">
                     <div class="card-body">
-                        <h3 class="card-title">{{ $currentTicket->user->nickname ?? $currentTicket->original_email }}</h3>
+                        @can('admin')
+                            <h3 class="card-title">{{ $currentTicket->user->nickname ?? $currentTicket->original_email }}</h3>
+                        @else
+                            <h3 class="card-title">{{ $currentTicket->user->nickname ?? $currentTicket->external_id }}</h3>
+                        @endcan
                         @if($currentTicket->user && $currentTicket->user->clanMemberships)
                             <p class="card-subtitle">
 
@@ -86,7 +94,12 @@
                             @foreach($tickets as $ticket)
                                 <li class="my-1">
                                     <a href="{{ route('admin.events.seats', ['event' => $event, 'ticket_id' => $ticket->id]) }}">
-                                        {{ $ticket->user->nickname ?? $ticket->original_email }}</a>
+                                        @can('admin')
+                                            {{ $ticket->user->nickname ?? $ticket->original_email }}
+                                        @else
+                                            {{ $ticket->user->nickname ?? $ticket->external_id }}
+                                        @endcan
+                                    </a>
                                     <span class="badge-list">
                                     @if ($ticket->user)
                                         @foreach($ticket->user->clanMemberships as $clanMember)
@@ -149,7 +162,10 @@
                                             }
                                             if ($seat->ticket) {
                                                 $class = 'taken';
-                                                $name = $seat->original_email;
+                                                if(Request::user()->hasRole('admin'))
+                                                    $name = $seat->original_email;
+                                                else
+                                                    $name = $seat->external_id;
                                             }
                                             if ($seat->nickname) {
                                                 $name = $seat->nickname;

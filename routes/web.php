@@ -106,75 +106,91 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('/admin/unimpersonate', [AdminHomeController::class, 'unimpersonate'])->name('admin.unimpersonate');
 
-        Route::middleware('can:admin')->name('admin.')->prefix('admin')->group(function () {
+        Route::middleware(['can:anyPrivilegedRole'])->name('admin.')->prefix('admin')->group(function () {
             Route::get('/', [AdminHomeController::class, 'dashboard'])->name('dashboard');
 
-            Route::resource('events', AdminEventController::class);
-            Route::get('events/{event}/delete', [AdminEventController::class, 'delete'])->name('events.delete');
-            Route::get('events/{event}/export', [AdminEventController::class, 'export_tickets'])->name('events.export');
+            Route::middleware(['can:admin'])->group(function () {
+                Route::resource('clans', AdminClanController::class);
+                Route::get('clans/{clan}/delete', [AdminClanController::class, 'delete'])->name('clans.delete');
+                Route::get('clans/{clan}/regenerate', [AdminClanController::class, 'regenerate'])->name('clans.regenerate');
+
+                Route::resource('clans.members', AdminClanMembershipController::class)->only(['edit', 'update', 'destroy'])->scoped();
+                Route::get('clans/{clan}/members/{member}/delete', [AdminClanMembershipController::class, 'delete'])->name('clans.members.delete')->scopeBindings();
+
+                Route::resource('events', AdminEventController::class);
+                Route::get('events/{event}/delete', [AdminEventController::class, 'delete'])->name('events.delete');
+                Route::get('events/{event}/export', [AdminEventController::class, 'export_tickets'])->name('events.export');
+
+                Route::resource('events.mappings', EventMappingController::class)->except(['index', 'show'])->scoped();
+                Route::get('events/{event}/mappings/{mapping}/delete', [EventMappingController::class, 'delete'])->name('events.mappings.delete')->scopeBindings();
+
+                Route::resource('events.seatingplans', AdminSeatingPlanController::class)->except(['index'])->scoped();
+                Route::get('events/{event}/seatingplans/{seatingplan}/refresh', [AdminSeatingPlanController::class, 'refresh'])->name('events.seatingplans.refresh')->scopeBindings();
+                Route::get('events/{event}/seatingplans/{seatingplan}/up', [AdminSeatingPlanController::class, 'up'])->name('events.seatingplans.up')->scopeBindings();
+                Route::get('events/{event}/seatingplans/{seatingplan}/down', [AdminSeatingPlanController::class, 'down'])->name('events.seatingplans.down')->scopeBindings();
+                Route::get('events/{event}/seatingplans/{seatingplan}/delete', [AdminSeatingPlanController::class, 'delete'])->name('events.seatingplans.delete')->scopeBindings();
+                Route::get('events/{event}/seatingplans/{seatingplan}/export', [AdminSeatingPlanController::class, 'export'])->name('events.seatingplans.export')->scopeBindings();
+                Route::get('events/{event}/seatingplans/{seatingplan}/import', [AdminSeatingPlanController::class, 'import'])->name('events.seatingplans.import')->scopeBindings();
+                Route::post('events/{event}/seatingplans/{seatingplan}/import', [AdminSeatingPlanController::class, 'import_process'])->name('events.seatingplans.import_process')->scopeBindings();
+                Route::resource('events.seatingplans.seats', AdminSeatController::class)->except(['index'])->scoped();
+                Route::get('events/{event}/seatingplans/{seatingplan}/seats/{seat}/delete', [AdminSeatController::class, 'delete'])->name('events.seatingplans.seats.delete')->scopeBindings();
+                Route::get('events/{event}/seatingplans/{seatingplan}/seats/{seat}/unseat', [AdminSeatController::class, 'unseat'])->name('events.seatingplans.seats.unseat')->scopeBindings();
+
+                Route::resource('events.tickettypes', TicketTypeController::class)->except(['index'])->scoped();
+                Route::get('events/{event}/tickettypes/{tickettype}/delete', [TicketTypeController::class, 'delete'])->name('events.tickettypes.delete')->scopeBindings();
+                Route::resource('events.tickettypes.mappings', TicketTypeMappingController::class)->except(['show', 'index'])->scoped();
+                Route::get('/events/{event}/tickettypes/{tickettype}/mappings/{mapping}/delete', [TicketTypeMappingController::class, 'delete'])->name('events.tickettypes.mappings.delete')->scopeBindings();
+
+                Route::get('settings', [AdminSettingController::class, 'index'])->name('settings.index');
+                Route::match(['PUT', 'PATCH'], 'settings', [AdminSettingController::class, 'update'])->name('settings.update');
+                Route::get('settings/ticketproviders/{provider}/edit', [TicketProviderController::class, 'edit'])->name('settings.ticketproviders.edit');
+                Route::match(['PUT', 'PATCH'], 'settings/ticketproviders/{provider}', [TicketProviderController::class, 'update'])->name('settings.ticketproviders.update');
+                Route::get('settings/ticketproviders/{provider}/clearcache', [TicketProviderController::class, 'clearcache'])->name('settings.ticketproviders.clearcache');
+                Route::get('settings/ticketproviders/{provider}/sync', [TicketProviderController::class, 'sync'])->name('settings.ticketproviders.sync');
+                Route::get('settings/socialproviders/{provider}/edit', [SocialProviderController::class, 'edit'])->name('settings.socialproviders.edit');
+                Route::match(['PUT', 'PATCH'], 'settings/socialproviders/{provider}', [SocialProviderController::class, 'update'])->name('settings.socialproviders.update');
+                Route::prefix('settings')->name('settings.')->group(function() {
+                    Route::get('discord', [AdminSettingController::class, 'add_discord'])->name('discord');
+                    Route::get('discord/return', [AdminSettingController::class, 'add_discord_return'])->name('discord_return');
+                    Route::resource('themes', ThemeController::class)->except(['index', 'show']);
+                    Route::get('themes/{theme}/delete', [ThemeController::class, 'delete'])->name('themes.delete');
+                });
+
+                Route::get('tickets/import', [AdminTicketController::class, 'import'])->name('tickets.import');
+                Route::post('tickets/import', [AdminTicketController::class, 'import_show'])->name('tickets.import.show');
+                Route::post('tickets/import/process', [AdminTicketController::class, 'import_process'])->name('tickets.import.process');
+
+                Route::resource('tickets', AdminTicketController::class);
+                Route::get('tickets/{ticket}/delete', [AdminTicketController::class, 'delete'])->name('tickets.delete');
+
+                Route::resource('users', AdminUserController::class);
+
+                Route::get('users/{user}/delete', [AdminUserController::class, 'delete'])->name('users.delete');
+                Route::get('users/{user}/impersonate', [AdminUserController::class, 'impersonate'])->name('users.impersonate');
+                Route::get('users/{user}/sync', [AdminUserController::class, 'sync_tickets'])->name('users.sync');
+
+                Route::get('users/{user}/accounts/{account}', [AdminLinkedAccountController::class, 'delete'])->name('users.accounts.delete')->scopeBindings();
+                Route::delete('users/{user}/accounts/{account}', [AdminLinkedAccountController::class, 'destroy'])->name('users.accounts.destroy')->scopeBindings();
+
+                Route::resource('users.emails', AdminEmailAddressController::class)->except(['index'])->scoped();
+                Route::get('users/{user}/emails/{email}', [AdminEmailAddressController::class, 'delete'])->name('users.emails.delete')->scopeBindings();
+            });
+
+            //Manager routes
+            Route::resource('events', AdminEventController::class)->only([
+                'index', 'show'
+            ]);
             Route::get('events/{event}/seats', [AdminEventController::class, 'seats'])->name('events.seats');
             Route::get('events/{event}/seats/{ticket}/unseat', [AdminEventController::class, 'unseat'])->name('events.seats.unseat')->scopeBindings();
             Route::get('events/{event}/seats/{ticket}/pick/{seat}', [AdminEventController::class, 'pickseat'])->name('events.seats.pick');
 
-            Route::resource('events.mappings', EventMappingController::class)->except(['index', 'show'])->scoped();
-            Route::get('events/{event}/mappings/{mapping}/delete', [EventMappingController::class, 'delete'])->name('events.mappings.delete')->scopeBindings();
+            Route::resource('clans', AdminClanController::class)->only([
+                'index', 'show'
+            ]);
 
-            Route::resource('events.seatingplans', AdminSeatingPlanController::class)->except(['index'])->scoped();
-            Route::get('events/{event}/seatingplans/{seatingplan}/refresh', [AdminSeatingPlanController::class, 'refresh'])->name('events.seatingplans.refresh')->scopeBindings();
-            Route::get('events/{event}/seatingplans/{seatingplan}/up', [AdminSeatingPlanController::class, 'up'])->name('events.seatingplans.up')->scopeBindings();
-            Route::get('events/{event}/seatingplans/{seatingplan}/down', [AdminSeatingPlanController::class, 'down'])->name('events.seatingplans.down')->scopeBindings();
-            Route::get('events/{event}/seatingplans/{seatingplan}/delete', [AdminSeatingPlanController::class, 'delete'])->name('events.seatingplans.delete')->scopeBindings();
-            Route::get('events/{event}/seatingplans/{seatingplan}/export', [AdminSeatingPlanController::class, 'export'])->name('events.seatingplans.export')->scopeBindings();
-            Route::get('events/{event}/seatingplans/{seatingplan}/import', [AdminSeatingPlanController::class, 'import'])->name('events.seatingplans.import')->scopeBindings();
-            Route::post('events/{event}/seatingplans/{seatingplan}/import', [AdminSeatingPlanController::class, 'import_process'])->name('events.seatingplans.import_process')->scopeBindings();
-            Route::resource('events.seatingplans.seats', AdminSeatController::class)->except(['index'])->scoped();
-            Route::get('events/{event}/seatingplans/{seatingplan}/seats/{seat}/delete', [AdminSeatController::class, 'delete'])->name('events.seatingplans.seats.delete')->scopeBindings();
-            Route::get('events/{event}/seatingplans/{seatingplan}/seats/{seat}/unseat', [AdminSeatController::class, 'unseat'])->name('events.seatingplans.seats.unseat')->scopeBindings();
-
-            Route::resource('events.tickettypes', TicketTypeController::class)->except(['index'])->scoped();
-            Route::get('events/{event}/tickettypes/{tickettype}/delete', [TicketTypeController::class, 'delete'])->name('events.tickettypes.delete')->scopeBindings();
-            Route::resource('events.tickettypes.mappings', TicketTypeMappingController::class)->except(['show', 'index'])->scoped();
-            Route::get('/events/{event}/tickettypes/{tickettype}/mappings/{mapping}/delete', [TicketTypeMappingController::class, 'delete'])->name('events.tickettypes.mappings.delete')->scopeBindings();
-
-            Route::get('tickets/import', [AdminTicketController::class, 'import'])->name('tickets.import');
-            Route::post('tickets/import', [AdminTicketController::class, 'import_show'])->name('tickets.import.show');
-            Route::post('tickets/import/process', [AdminTicketController::class, 'import_process'])->name('tickets.import.process');
-
-            Route::resource('tickets', AdminTicketController::class);
-            Route::get('tickets/{ticket}/delete', [AdminTicketController::class, 'delete'])->name('tickets.delete');
-
-            Route::resource('clans', AdminClanController::class);
-            Route::get('clans/{clan}/delete', [AdminClanController::class, 'delete'])->name('clans.delete');
-            Route::get('clans/{clan}/regenerate', [AdminClanController::class, 'regenerate'])->name('clans.regenerate');
-
-            Route::resource('clans.members', AdminClanMembershipController::class)->only(['edit', 'update', 'destroy'])->scoped();
-            Route::get('clans/{clan}/members/{member}/delete', [AdminClanMembershipController::class, 'delete'])->name('clans.members.delete')->scopeBindings();
-
-            Route::resource('users', AdminUserController::class);
-            Route::get('users/{user}/delete', [AdminUserController::class, 'delete'])->name('users.delete');
-            Route::get('users/{user}/impersonate', [AdminUserController::class, 'impersonate'])->name('users.impersonate');
-            Route::get('users/{user}/sync', [AdminUserController::class, 'sync_tickets'])->name('users.sync');
-
-            Route::resource('users.emails', AdminEmailAddressController::class)->except(['index'])->scoped();
-            Route::get('users/{user}/emails/{email}', [AdminEmailAddressController::class, 'delete'])->name('users.emails.delete')->scopeBindings();
-
-            Route::get('users/{user}/accounts/{account}', [AdminLinkedAccountController::class, 'delete'])->name('users.accounts.delete')->scopeBindings();
-            Route::delete('users/{user}/accounts/{account}', [AdminLinkedAccountController::class, 'destroy'])->name('users.accounts.destroy')->scopeBindings();
-
-            Route::get('settings', [AdminSettingController::class, 'index'])->name('settings.index');
-            Route::match(['PUT', 'PATCH'], 'settings', [AdminSettingController::class, 'update'])->name('settings.update');
-            Route::get('settings/ticketproviders/{provider}/edit', [TicketProviderController::class, 'edit'])->name('settings.ticketproviders.edit');
-            Route::match(['PUT', 'PATCH'], 'settings/ticketproviders/{provider}', [TicketProviderController::class, 'update'])->name('settings.ticketproviders.update');
-            Route::get('settings/ticketproviders/{provider}/clearcache', [TicketProviderController::class, 'clearcache'])->name('settings.ticketproviders.clearcache');
-            Route::get('settings/ticketproviders/{provider}/sync', [TicketProviderController::class, 'sync'])->name('settings.ticketproviders.sync');
-            Route::get('settings/socialproviders/{provider}/edit', [SocialProviderController::class, 'edit'])->name('settings.socialproviders.edit');
-            Route::match(['PUT', 'PATCH'], 'settings/socialproviders/{provider}', [SocialProviderController::class, 'update'])->name('settings.socialproviders.update');
-            Route::prefix('settings')->name('settings.')->group(function() {
-                Route::get('discord', [AdminSettingController::class, 'add_discord'])->name('discord');
-                Route::get('discord/return', [AdminSettingController::class, 'add_discord_return'])->name('discord_return');
-                Route::resource('themes', ThemeController::class)->except(['index', 'show']);
-                Route::get('themes/{theme}/delete', [ThemeController::class, 'delete'])->name('themes.delete');
-            });
+            Route::resource('users', AdminUserController::class)->only([
+                'index', 'show'
+            ]);
         });
     });
 });

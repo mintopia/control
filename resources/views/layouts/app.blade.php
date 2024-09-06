@@ -90,7 +90,7 @@
                             </span>
                         </a>
                     </li>
-                    @can('admin')
+                    @canany(['admin', 'manager'])
                         <li class="nav-item dropdown @if(($activenav ?? null) === 'admin') active @endif">
                             <a class="nav-link dropdown-toggle  @if(($activenav ?? null) === 'admin') show @endif"
                                href="#navbar-admin" data-bs-toggle="dropdown" data-bs-auto-close="false" role="button">
@@ -107,11 +107,13 @@
                                 <a class="dropdown-item" href="{{ route('admin.users.index') }}">Users</a>
                                 <a class="dropdown-item" href="{{ route('admin.clans.index') }}">Clans</a>
                                 <a class="dropdown-item" href="{{ route('admin.events.index') }}">Events</a>
-                                <a class="dropdown-item" href="{{ route('admin.tickets.index') }}">Tickets</a>
-                                <a class="dropdown-item" href="{{ route('admin.settings.index') }}">Settings</a>
+                                @can('admin')
+                                    <a class="dropdown-item" href="{{ route('admin.tickets.index') }}">Tickets</a>
+                                    <a class="dropdown-item" href="{{ route('admin.settings.index') }}">Settings</a>
+                                @endcan
                             </div>
                         </li>
-                    @endcan
+                    @endcanany
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('logout') }}">
                         <span class="nav-link-icon d-md-none d-lg-inline-block">
