@@ -101,7 +101,7 @@ class SeatingPlanController extends Controller
 
         $seatGroups = [];
         foreach ($event->seatGroups as $seatGroup) {
-            if($request->user()->allowedSeatGroup($seatGroup)) {
+            if ($currentTicket->user->allowedSeatGroup($seatGroup)) {
                 array_push($seatGroups, $seatGroup->id);
             }
         }
@@ -148,7 +148,7 @@ class SeatingPlanController extends Controller
             return response()->redirectToRoute('seatingplans.show', $event->code)->with('errorMessage', 'You cannot pick a seat for this ticket')->withFragment("tab-plan-{$seat->plan->code}");
         }
 
-        if (!$seat->canPick($request->user())) {
+        if (!$seat->canPick($ticket->user)) {
             return response()->redirectToRoute('seatingplans.show', [$event->code, $ticket->id])->with('errorMessage', "That seat is not available")->withFragment("tab-plan-{$seat->plan->code}");
         }
 

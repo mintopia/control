@@ -96,8 +96,27 @@
                         @forelse($group->assignments as $assignment)
                             <tr>
                                 <td class="text-muted">{{ $assignment->id }}</td>
-                                <td>{{ $assignment->assignment_type }}</td>
-                                <td>{{ $assignment->assignment_type_id }}</td>
+                                <td>{{ ucwords(str_replace('_', ' ', $assignment->assignment_type)) }}</td>
+                                <td>
+                                    @switch($assignment->assignment_type)
+                                        @case('user')
+                                            <a href="{{ route('admin.users.show', $assignment->assignment_type_id) }}">
+                                                {{ \App\Models\User::find($assignment->assignment_type_id)->nickname }}
+                                            </a>
+                                            @break
+                                        @case('clan')
+                                            @php($clan = \App\Models\Clan::find($assignment->assignment_type_id))
+                                            <a href="{{ route('admin.clans.show', $clan->code) }}">
+                                                {{ $clan->name }}
+                                            </a>
+                                            @break
+                                        @case('ticket_type')
+                                            <a href="{{ route('admin.events.tickettypes.show', [$assignment->group->event->code, $assignment->assignment_type_id]) }}">
+                                                {{ \App\Models\TicketType::find($assignment->assignment_type_id)->name }}
+                                            </a>
+                                            @break
+                                    @endswitch
+                                </td>
 
                                 <td class="btn-list">
                                     <a class="btn btn-outline-primary ms-auto"

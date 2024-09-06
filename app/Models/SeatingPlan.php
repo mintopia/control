@@ -172,6 +172,7 @@ class SeatingPlan extends Model implements Sortable
                 $seat->label = $row[5];
                 $seat->description = $row[6] ?? null;
                 $seat->class = $row[7] ?? null;
+                $seat->seat_group_id = (int)$row[8] ?? null;
                 $seat->disabled = (bool)$row[8];
 
                 $seat->saveQuietly();

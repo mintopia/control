@@ -21,9 +21,12 @@ return new class extends Migration
         foreach (SeatingPlan::all() as $plan) {
             if ($plan->image_url)
             {
-                $plan->image_height = getimagesize($plan->image_url)[1];
-                $plan->image_width =  getimagesize($plan->image_url)[0];
-                $plan->save();
+                $imageSizeArr = getimagesize($plan->image_url);
+                if($imageSizeArr) {
+                    $plan->image_height = $imageSizeArr[1];
+                    $plan->image_width = $imageSizeArr[0];
+                    $plan->save();
+                }
             }
         }
     }

@@ -74,7 +74,11 @@
                         </div>
                         <div class="datagrid-item">
                             <div class="datagrid-title">Seat Group</div>
-                            <div class="datagrid-content">{{ $seat->group ? $seat->group->id : '' }}</div>
+                            @if ($seat->group)
+                                <div class="datagrid-content"><a href="{{ route('admin.events.seatgroups.show', [$seat->plan->event->code, $seat->group->id]) }}">{{ $seat->group->id }}</a></div>
+                            @else
+                                <span class="text-muted">None</span>
+                            @endif
                         </div>
                     </div>
                 </div>
