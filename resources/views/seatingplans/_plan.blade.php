@@ -14,7 +14,7 @@
                 if ($currentTicket) {
                     $url = route('seatingplans.select', [$event->code, $currentTicket->id, $seat->id]);
                 }
-                $seat->class ? $class = $seat->class : $class = 'available';
+                $class = 'available';
                 $name = 'Available';
                 $canPick = $seat->canPick;
                 if ($seat->disabled) {
@@ -61,7 +61,7 @@
                 }
 
             @endphp
-            <{{ $canPick ? 'a' : 'div' }} class="d-block seat {{ $class }}"
+        <{{ $canPick ? 'a' : 'div' }} class="d-block seat {{ $seat->class }} {{ $class }}"
             @if($canPick)
                 href="{{ $url }}"
             @endif

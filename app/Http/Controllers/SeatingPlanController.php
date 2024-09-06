@@ -100,9 +100,11 @@ class SeatingPlanController extends Controller
         }
 
         $seatGroups = [];
-        foreach ($event->seatGroups as $seatGroup) {
-            if ($currentTicket->user->allowedSeatGroup($seatGroup)) {
-                array_push($seatGroups, $seatGroup->id);
+        if ($currentTicket) {
+            foreach ($event->seatGroups as $seatGroup) {
+                if ($currentTicket->user->allowedSeatGroup($seatGroup)) {
+                    array_push($seatGroups, $seatGroup->id);
+                }
             }
         }
 
