@@ -2,8 +2,11 @@
     <div class="seating-plan" style="
         @if($plan->image_url)
             background-image:url('{{ $plan->image_url }}');
+            min-height: {{ $plan->image_height}}px;
+            min-width: {{ $plan->image_width}}px";
+        @else
+            min-height: {{ (collect($seats[$plan->id] ?? [])->max('y') * 2) + 4 }}em;"
         @endif
-        min-height: {{ (collect($seats[$plan->id] ?? [])->max('y') * 2) + 4 }}em;"
     >
         @foreach($seats[$plan->id] ?? [] as $seat)
             @php
@@ -56,7 +59,7 @@
             @if($canPick)
                 href="{{ $url }}"
             @endif
-            style="left: {{ $seat->x * 2 }}em; top: {{ $seat->y * 2 }}em;"
+            style="left: {{ $seat->x * 0.02 * $plan->scale }}em; top: {{ $seat->y * 0.02 * $plan->scale }}em; width: {{ 0.019 * $plan->scale }}em; height: {{ 0.019 * $plan->scale }}em;"
             data-bs-trigger="hover" data-bs-toggle="popover"
             data-bs-placement="right" data-bs-html="true"
             title="{{ $seat->description }} {{ $seat->label }}"
