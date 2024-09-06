@@ -8,7 +8,40 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * App\Models\LinkedAccount
+ *
  * @mixin IdeHelperLinkedAccount
+ * @property int $id
+ * @property int $user_id
+ * @property int|null $email_address_id
+ * @property int|null $social_provider_id
+ * @property string|null $external_id
+ * @property string|null $name
+ * @property string|null $avatar_url
+ * @property mixed|null $access_token
+ * @property mixed|null $refresh_token
+ * @property string|null $access_token_expires_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\EmailAddress|null $email
+ * @property-read \App\Models\SocialProvider|null $provider
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount query()
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereAccessToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereAccessTokenExpiresAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereAvatarUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereEmailAddressId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereExternalId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereRefreshToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereSocialProviderId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|LinkedAccount whereUserId($value)
+ * @mixin \Eloquent
  */
 class LinkedAccount extends Model
 {

@@ -131,7 +131,7 @@
                     >
                         @foreach($seats as $seat)
                             @php
-                                $class = 'available';
+                                $seat->class ? $class = $seat->class : $class = 'available';
                                 $name = 'Available';
                                 if ($seat->disabled) {
                                     $class = 'disabled';
@@ -153,7 +153,7 @@
                                     $tooltipContents .= '</span>';
                                 }
                             @endphp
-                            <a class="d-block seat {{ $seat->class }} {{ $class }}"
+                            <a class="d-block seat {{ $class }}"
                                href="{{ route('admin.events.seatingplans.seats.show', [$event->code, $plan->id, $seat->id]) }}"
                                style="left: {{ $seat->x * 0.02 * $plan->scale }}em; top: {{ $seat->y * 0.02 * $plan->scale }}em; width: {{ 0.019 * $plan->scale }}em; height: {{ 0.019 * $plan->scale }}em;"
                                data-bs-trigger="hover" data-bs-toggle="popover"

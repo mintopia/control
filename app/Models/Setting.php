@@ -14,7 +14,38 @@ use Spatie\EloquentSortable\Sortable;
 use Spatie\EloquentSortable\SortableTrait;
 
 /**
+ * App\Models\Setting
+ *
  * @mixin IdeHelperSetting
+ * @property int $id
+ * @property string $code
+ * @property string $name
+ * @property string|null $description
+ * @property int $encrypted
+ * @property int $hidden
+ * @property mixed|null|null $value
+ * @property string|null $validation
+ * @property SettingType $type
+ * @property int $order
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting ordered(string $direction = 'asc')
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereEncrypted($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereHidden($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereOrder($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereValidation($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting whereValue($value)
+ * @mixin \Eloquent
  */
 class Setting extends Model implements Sortable
 {

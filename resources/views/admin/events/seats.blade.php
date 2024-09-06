@@ -154,7 +154,7 @@
                                             } elseif ($seat->ticketId) {
                                                 $link = route('admin.events.seats', ['event' => $event->code, 'ticket_id' => $seat->ticketId]);
                                             }
-                                            $class = 'available';
+                                            $seat->class ? $class = $seat->class : $class = 'available';
                                             $name = 'Available';
                                             if ($seat->disabled) {
                                                 $class = 'disabled';
@@ -183,7 +183,7 @@
                                                 $tooltipContents .= '</span>';
                                             }
                                         @endphp
-                                        <a class="d-block seat {{ $seat->class }} {{ $class }}"
+                                        <a class="d-block seat {{ $class }}"
                                            @if($link)
                                                href="{{ $link }}"
                                            @endif

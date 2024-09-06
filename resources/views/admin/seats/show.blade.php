@@ -72,6 +72,10 @@
                                 @endif
                             </div>
                         </div>
+                        <div class="datagrid-item">
+                            <div class="datagrid-title">Seat Group</div>
+                            <div class="datagrid-content">{{ $seat->group ? $seat->group->id : '' }}</div>
+                        </div>
                     </div>
                 </div>
                 <div class="card-footer align-content-end d-flex btn-list">

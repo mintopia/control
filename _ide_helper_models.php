@@ -307,6 +307,7 @@ namespace App\Models{
  * @property string $label
  * @property string|null $description
  * @property string|null $class
+ *  @property int $seat_group_id
  * @property int $disabled
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at

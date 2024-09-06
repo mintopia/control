@@ -99,7 +99,7 @@ class SeatingPlanController extends Controller
     public function export(Event $event, SeatingPlan $seatingplan)
     {
         $csv = [[
-            'ID', 'X', 'Y', 'Row', 'Number', 'Label', 'Description', 'CSS Class', 'Disabled',
+            'ID', 'X', 'Y', 'Row', 'Number', 'Label', 'Description', 'CSS Class', 'Seat Group ID', 'Disabled',
         ]];
         $seatingplan->seats()->chunk(100, function ($chunk) use (&$csv) {
             foreach ($chunk as $seat) {
@@ -112,6 +112,7 @@ class SeatingPlanController extends Controller
                     $seat->label,
                     $seat->description,
                     $seat->class,
+                    $seat->group ? $seat->group->id : null,
                     $seat->disabled ? 1 : 0,
                 ];
             }

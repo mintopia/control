@@ -11,7 +11,37 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\Request;
 
 /**
+ * App\Models\TicketProvider
+ *
  * @mixin IdeHelperTicketProvider
+ * @property int $id
+ * @property string $name
+ * @property string $code
+ * @property string $provider_class
+ * @property int $enabled
+ * @property string $cache_prefix
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventMapping> $events
+ * @property-read int|null $events_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProviderSetting> $settings
+ * @property-read int|null $settings_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
+ * @property-read int|null $tickets_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketTypeMapping> $types
+ * @property-read int|null $types_count
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider query()
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCachePrefix($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereEnabled($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereProviderClass($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class TicketProvider extends Model
 {

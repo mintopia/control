@@ -226,6 +226,64 @@
 
         <div class="row align-items-center">
             <div class="col page-header mt-2">
+                <h2>Seat Groups</h2>
+            </div>
+            <div class="col-auto ms-auto d-print-none">
+                <div class="btn-list">
+                    <a href="{{ route('admin.events.seatgroups.create', $event->code) }}"
+                       class="btn btn-primary d-inline-block">
+                        <i class="icon ti ti-plus"></i>
+                        Add Seat Group
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <p>
+            This is where you can define seat groups. Seat groups allow you to restrict the picking of seats to an individual user,
+            ticket type or clan.
+        </p>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Seats</th>
+                                <th>Assignments</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @forelse($seatGroups as $group)
+                                <tr>
+                                    <td class="text-muted">{{ $group->id }}</td>
+                                    <td>
+                                        <a href="{{ route('admin.events.seatgroups.show', [$event->code, $group->id]) }}">{{ $group->name }}</a>
+                                    </td>
+                                    <td>{{ $group->seats_count }}</td>
+                                    <td>{{ $group->assignments_count }}</td>
+                                </tr>
+
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="text-center p-4">
+                                        <p>There are no seat groups</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row align-items-center">
+            <div class="col page-header mt-2">
                 <h2>Ticket Types</h2>
             </div>
             <div class="col-auto ms-auto d-print-none">

@@ -99,6 +99,13 @@ class SeatingPlanController extends Controller
             $seats[$plan->id] = $plan->getData();
         }
 
+        $seatGroups = [];
+        foreach ($event->seatGroups as $seatGroup) {
+            if($request->user()->allowedSeatGroup($seatGroup)) {
+                array_push($seatGroups, $seatGroup->id);
+            }
+        }
+
         $params = [
             'allTickets' => $allTickets,
             'event' => $event,
@@ -108,6 +115,7 @@ class SeatingPlanController extends Controller
             'responsibleSeats' => $responsibleSeats,
             'responsibleTickets' => $responsibleTickets,
             'currentTicket' => $currentTicket,
+            'seatGroups' => $seatGroups
         ];
 
         $view = 'seatingplans.show';

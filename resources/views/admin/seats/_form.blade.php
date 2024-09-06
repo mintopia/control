@@ -81,6 +81,17 @@
         </div>
     </div>
     <div class="mb-3">
+        <label class="form-label">Seat Group ID</label>
+        <div>
+            <input type="text" name="seat_group" class="form-control @error('seat_group') is-invalid @enderror"
+                   placeholder="1" value="{{ old('seat_group', $seat->seat_group_id ?? '') }}">
+            <small class="form-hint">Add seat to seat group</small>
+            @error('seat_group')
+            <p class="invalid-feedback">{{ $message }}</p>
+            @enderror
+        </div>
+    </div>
+    <div class="mb-3">
         <label class="form-check form-switch">
             <input type="checkbox" class="form-check-input" name="disabled" value="1"
                    @if(old('disabled', $seat->disabled)) checked @endif>

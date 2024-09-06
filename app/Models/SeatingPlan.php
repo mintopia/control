@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,7 +18,41 @@ use Spatie\EloquentSortable\Sortable;
 use Spatie\EloquentSortable\SortableTrait;
 
 /**
+ * App\Models\SeatingPlan
+ *
  * @mixin IdeHelperSeatingPlan
+ * @property int $id
+ * @property int $event_id
+ * @property string $name
+ * @property string $code
+ * @property int $order
+ * @property int $scale
+ * @property int $revision
+ * @property string|null $image_url
+ * @property int|null $image_height
+ * @property int|null $image_width
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Event $event
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Seat> $seats
+ * @property-read int|null $seats_count
+ * @method static Builder|SeatingPlan newModelQuery()
+ * @method static Builder|SeatingPlan newQuery()
+ * @method static Builder|SeatingPlan ordered(string $direction = 'asc')
+ * @method static Builder|SeatingPlan query()
+ * @method static Builder|SeatingPlan whereCode($value)
+ * @method static Builder|SeatingPlan whereCreatedAt($value)
+ * @method static Builder|SeatingPlan whereEventId($value)
+ * @method static Builder|SeatingPlan whereId($value)
+ * @method static Builder|SeatingPlan whereImageHeight($value)
+ * @method static Builder|SeatingPlan whereImageUrl($value)
+ * @method static Builder|SeatingPlan whereImageWidth($value)
+ * @method static Builder|SeatingPlan whereName($value)
+ * @method static Builder|SeatingPlan whereOrder($value)
+ * @method static Builder|SeatingPlan whereRevision($value)
+ * @method static Builder|SeatingPlan whereScale($value)
+ * @method static Builder|SeatingPlan whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class SeatingPlan extends Model implements Sortable
 {
@@ -58,7 +93,7 @@ class SeatingPlan extends Model implements Sortable
         }
 
         $seats = $this->seats()
-            ->with(['ticket', 'ticket.user', 'plan', 'ticket.user.clanMemberships.clan'])
+            ->with(['ticket', 'ticket.user', 'plan', 'ticket.user.clanMemberships.clan', 'group.assignments'])
             ->orderBy('row', 'ASC')
             ->orderBy('number', 'ASC')
             ->get();
@@ -73,11 +108,12 @@ class SeatingPlan extends Model implements Sortable
                 'id' => $seat->id,
                 'x' => $seat->x,
                 'y' => $seat->y,
-                'class' => $seat->class,
+                'class' => $seat->group ? $seat->group->class : $seat->class,
                 'label' => $seat->label,
                 'row' => $seat->row,
                 'number' => $seat->number,
                 'disabled' => $seat->disabled,
+                'group' => $seat->group ? $seat->group->id : null,
                 'description' => $seat->description,
                 'nickname' => $seat->ticket->user->nickname ?? null,
                 'original_email' => $seat->ticket->original_email ?? null,

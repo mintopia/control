@@ -94,11 +94,13 @@ class EventController extends Controller
     public function show(Event $event)
     {
         $seatingPlans = $event->seatingPlans()->withCount('seats')->orderBy('order', 'ASC')->get();
+        $seatGroups = $event->seatGroups()->withCount('seats')->withCount('assignments')->get();
         $ticketTypes = $event->ticketTypes()->withCount('tickets')->get();
 
         return view('admin.events.show', [
             'event' => $event,
             'seatingPlans' => $seatingPlans,
+            'seatGroups' => $seatGroups,
             'ticketTypes' => $ticketTypes,
         ]);
     }

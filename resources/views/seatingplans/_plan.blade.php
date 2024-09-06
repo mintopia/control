@@ -14,7 +14,7 @@
                 if ($currentTicket) {
                     $url = route('seatingplans.select', [$event->code, $currentTicket->id, $seat->id]);
                 }
-                $class = 'available';
+                $seat->class ? $class = $seat->class : $class = 'available';
                 $name = 'Available';
                 $canPick = $seat->canPick;
                 if ($seat->disabled) {
@@ -25,6 +25,12 @@
                     $class = 'taken';
                     $canPick = false;
                     $name = 'Occupied';
+                }
+                if($seat->group) {
+                    if(!in_array($seat->group, $seatGroups)) {
+                        $canPick = false;
+                        $name = 'Not Available';
+                    }
                 }
                 if ($seat->nickname) {
                     $name = $seat->nickname;
@@ -55,7 +61,7 @@
                 }
 
             @endphp
-            <{{ $canPick ? 'a' : 'div' }} class="d-block seat {{ $seat->class }} {{ $class }}"
+            <{{ $canPick ? 'a' : 'div' }} class="d-block seat {{ $class }}"
             @if($canPick)
                 href="{{ $url }}"
             @endif

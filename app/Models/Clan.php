@@ -10,7 +10,27 @@ use InvalidArgumentException;
 use function App\makeCode;
 
 /**
+ * App\Models\Clan
+ *
  * @mixin IdeHelperClan
+ * @property int $id
+ * @property string $name
+ * @property string $code
+ * @property string $invite_code
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClanMembership> $members
+ * @property-read int|null $members_count
+ * @method static \Illuminate\Database\Eloquent\Builder|Clan newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Clan newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Clan query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Clan whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Clan whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Clan whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Clan whereInviteCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Clan whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Clan whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class Clan extends Model
 {

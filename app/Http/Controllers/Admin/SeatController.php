@@ -39,6 +39,7 @@ class SeatController extends Controller
         $seat->label = $request->input('label');
         $seat->description = $request->input('description');
         $seat->class = $request->input('class');
+        $seat->seat_group_id = $request->input('seat_group');
         $seat->disabled = (bool)$request->input('disabled', false);
         $seat->save();
     }
