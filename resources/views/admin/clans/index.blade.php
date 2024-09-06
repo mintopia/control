@@ -32,11 +32,12 @@
                         'name' => 'Code',
                         'property' => 'code',
                     ])
-                    @include('partials._searchtextfield', [
-                        'name' => 'Invite Code',
-                        'property' => 'invite_code',
-                    ])
-
+                    @can('admin')
+                        @include('partials._searchtextfield', [
+                            'name' => 'Invite Code',
+                            'property' => 'invite_code',
+                        ])
+                    @endcan
                 </div>
                 <div class="card-footer d-flex">
                     <button class="btn btn-primary ms-auto" type="submit">Search</button>
@@ -74,12 +75,14 @@
                                     'field' => 'members_count',
                                 ])
                             </th>
-                            <th>
-                                @include('partials._sortheader', [
-                                    'title' => 'Invitation Code',
-                                    'field' => 'invite_code',
-                                ])
-                            </th>
+                            @can('admin')
+                                <th>
+                                    @include('partials._sortheader', [
+                                        'title' => 'Invitation Code',
+                                        'field' => 'invite_code',
+                                    ])
+                                </th>
+                            @endcan
                             <th>
                                 @include('partials._sortheader', [
                                     'title' => 'Created',
@@ -100,7 +103,9 @@
                                 </td>
                                 <td>{{ $clan->code }}</td>
                                 <td>{{ $clan->members_count }}</td>
-                                <td><span class="user-select-all">{{ $clan->invite_code }}</span></td>
+                                @can('admin')
+                                    <td><span class="user-select-all">{{ $clan->invite_code }}</span></td>
+                                @endcan
                                 <td>
                                         <span title="{{ $clan->created_at->format('Y-m-d H:i:s') }}">
                                             {{ $clan->created_at->diffForHumans() }}

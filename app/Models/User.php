@@ -60,6 +60,18 @@ class User extends Authenticatable
         return (bool)$this->roles()->whereCode($role)->count();
     }
 
+    public function hasAnyRole(array $roles): bool
+    {
+        foreach ($roles as $role) {
+            if ($role instanceof Role) {
+                $role = $role->code;
+            }
+            if ($this->roles()->whereCode($role)->count())
+                return true;
+        }
+        return false;
+    }
+
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class);
