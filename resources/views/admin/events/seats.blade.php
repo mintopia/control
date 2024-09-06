@@ -183,7 +183,7 @@
                                                 $tooltipContents .= '</span>';
                                             }
                                         @endphp
-                                        <a class="d-block seat {{ $seat->class }} {{ $class }}"
+                                    <a class="d-block seat {{ $seat->class }} {{ $class }}"
                                            @if($link)
                                                href="{{ $link }}"
                                            @endif

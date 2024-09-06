@@ -5,7 +5,7 @@ namespace App\Http\Requests\Admin;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
-class SeatUpdateRequest extends FormRequest
+class SeatGroupUpdateRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,15 +23,8 @@ class SeatUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'x' => 'required|integer|min:0',
-            'y' => 'required|integer|min:0',
-            'row' => 'required|string|max:8',
-            'number' => 'required|integer|min:0',
-            'label' => 'required|string|max:100',
-            'description' => 'sometimes|string|nullable|max:255',
+            'name' => 'required|string|max:100',
             'class' => 'sometimes|string|nullable|max:255',
-            'seat_group' => 'sometimes|exists:seat_groups,id|nullable',
-            'disabled' => 'sometimes|boolean|nullable',
         ];
     }
 }

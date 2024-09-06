@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\EventMappingController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\Admin\LinkedAccountController as AdminLinkedAccountController;
 use App\Http\Controllers\Admin\SeatController as AdminSeatController;
+use App\Http\Controllers\Admin\SeatGroupController;
+use App\Http\Controllers\Admin\SeatGroupAssignmentController;
 use App\Http\Controllers\Admin\SeatingPlanController as AdminSeatingPlanController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\SocialProviderController;
@@ -135,6 +137,11 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::resource('events.seatingplans.seats', AdminSeatController::class)->except(['index'])->scoped();
                 Route::get('events/{event}/seatingplans/{seatingplan}/seats/{seat}/delete', [AdminSeatController::class, 'delete'])->name('events.seatingplans.seats.delete')->scopeBindings();
                 Route::get('events/{event}/seatingplans/{seatingplan}/seats/{seat}/unseat', [AdminSeatController::class, 'unseat'])->name('events.seatingplans.seats.unseat')->scopeBindings();
+
+                Route::resource('events.seatgroups', SeatGroupController::class)->except(['index'])->scoped();
+                Route::get('events/{event}/seatgroups/{seatgroup}/delete', [SeatGroupController::class, 'delete'])->name('events.seatgroups.delete')->scopeBindings();
+                Route::resource('events.seatgroups.assignments', SeatGroupAssignmentController::class)->except(['show', 'index'])->scoped();
+                Route::get('/events/{event}/seatgroups/{seatgroup}/assignments/{assignment}/delete', [SeatGroupAssignmentController::class, 'delete'])->name('events.seatgroups.assignments.delete')->scopeBindings();
 
                 Route::resource('events.tickettypes', TicketTypeController::class)->except(['index'])->scoped();
                 Route::get('events/{event}/tickettypes/{tickettype}/delete', [TicketTypeController::class, 'delete'])->name('events.tickettypes.delete')->scopeBindings();

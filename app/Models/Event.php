@@ -8,7 +8,47 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
+ * App\Models\Event
+ *
  * @mixin IdeHelperEvent
+ * @property int $id
+ * @property string $name
+ * @property string $code
+ * @property int $draft
+ * @property string|null $boxoffice_url
+ * @property \Illuminate\Support\Carbon|null $starts_at
+ * @property \Illuminate\Support\Carbon|null $ends_at
+ * @property int $seating_locked
+ * @property \Illuminate\Support\Carbon|null $seating_opens_at
+ * @property \Illuminate\Support\Carbon|null $seating_closes_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventMapping> $mappings
+ * @property-read int|null $mappings_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SeatGroup> $seatGroups
+ * @property-read int|null $seat_groups_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SeatingPlan> $seatingPlans
+ * @property-read int|null $seating_plans_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketType> $ticketTypes
+ * @property-read int|null $ticket_types_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
+ * @property-read int|null $tickets_count
+ * @method static \Illuminate\Database\Eloquent\Builder|Event newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Event newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Event query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereBoxofficeUrl($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereDraft($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereEndsAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereSeatingClosesAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereSeatingLocked($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereSeatingOpensAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereStartsAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Event whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class Event extends Model
 {
@@ -44,6 +84,11 @@ class Event extends Model
     public function seatingPlans(): HasMany
     {
         return $this->hasMany(SeatingPlan::class);
+    }
+
+    public function seatGroups(): HasMany
+    {
+        return $this->hasMany(SeatGroup::class);
     }
 
     public function getAvailableEventMappings(?EventMapping $existing = null): array

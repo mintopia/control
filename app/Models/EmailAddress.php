@@ -15,7 +15,32 @@ use Illuminate\Support\Facades\Mail;
 use function App\makeCode;
 
 /**
+ * App\Models\EmailAddress
+ *
  * @mixin IdeHelperEmailAddress
+ * @property int $id
+ * @property int $user_id
+ * @property string $email
+ * @property string|null $verification_code
+ * @property \Illuminate\Support\Carbon|null $verification_sent_at
+ * @property \Illuminate\Support\Carbon|null $verified_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\LinkedAccount> $linkedAccounts
+ * @property-read int|null $linked_accounts_count
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress query()
+ * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereVerificationCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereVerificationSentAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereVerifiedAt($value)
+ * @mixin \Eloquent
  */
 class EmailAddress extends Model
 {

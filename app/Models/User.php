@@ -18,7 +18,53 @@ use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
+ * App\Models\User
+ *
  * @mixin IdeHelperUser
+ * @property int $id
+ * @property string $nickname
+ * @property string|null $name
+ * @property string|null $avatar
+ * @property \Illuminate\Support\Carbon|null $terms_agreed_at
+ * @property int $first_login
+ * @property \Illuminate\Support\Carbon|null $last_login
+ * @property int $suspended
+ * @property int|null $primary_email_id
+ * @property \Illuminate\Support\Carbon|null $tickets_synced_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\LinkedAccount> $accounts
+ * @property-read int|null $accounts_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClanMembership> $clanMemberships
+ * @property-read int|null $clan_memberships_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EmailAddress> $emails
+ * @property-read int|null $emails_count
+ * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
+ * @property-read int|null $notifications_count
+ * @property-read \App\Models\EmailAddress|null $primaryEmail
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Role> $roles
+ * @property-read int|null $roles_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
+ * @property-read int|null $tickets_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
+ * @property-read int|null $tokens_count
+ * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder|User newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|User newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|User query()
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereAvatar($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereFirstLogin($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereLastLogin($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereNickname($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User wherePrimaryEmailId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereSuspended($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereTermsAgreedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereTicketsSyncedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class User extends Authenticatable
 {
@@ -203,5 +249,33 @@ class User extends Authenticatable
         Artisan::queue('control:sync-discord-roles', [
             'user' => $this->id,
         ]);
+    }
+
+    public function allowedSeatGroup(SeatGroup $group): bool
+    {
+        foreach ($group->assignments as $assignment) {
+            switch ($assignment->assignment_type) {
+                case 'user':
+                    if ($assignment->assignment_type_id == $this->id) {
+                        return true;
+                    }
+                    break;
+                case 'clan':
+                    foreach ($this->clanMemberships as $clanMembership) {
+                        if ($clanMembership->clan->id == $assignment->assignment_type_id) {
+                            return true;
+                        }
+                    }
+                    break;
+                case 'ticket_type':
+                    foreach($this->tickets as $ticket) {
+                        if ($ticket->type->id == $assignment->assignment_type_id) {
+                            return true;
+                        }
+                    }
+                    break;
+            }
+        }
+        return false;
     }
 }

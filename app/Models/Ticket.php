@@ -13,7 +13,44 @@ use Illuminate\Support\Facades\DB;
 use function App\makeCode;
 
 /**
+ * App\Models\Ticket
+ *
  * @mixin IdeHelperTicket
+ * @property int $id
+ * @property int $ticket_provider_id
+ * @property int|null $user_id
+ * @property int $event_id
+ * @property int $ticket_type_id
+ * @property string $external_id
+ * @property string|null $original_email
+ * @property string $name
+ * @property string $reference
+ * @property string|null $qrcode
+ * @property string|null $transfer_code
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\Event $event
+ * @property-read \App\Models\TicketProvider $provider
+ * @property-read \App\Models\Seat|null $seat
+ * @property-read \App\Models\TicketType $type
+ * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereEventId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereExternalId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereOriginalEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereQrcode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereReference($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereTicketProviderId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereTicketTypeId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereTransferCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereUserId($value)
+ * @mixin \Eloquent
  */
 class Ticket extends Model
 {

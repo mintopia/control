@@ -26,10 +26,10 @@
                     optional header row. If it is detected, it will be ignored.
                 </p>
                 <p>An example format would be:</p>
-                <pre><code>ID,X,Y,Row,Number,Label,Description,CSS Class,Disabled
-1,2,22,A,1,A1,,,0
-2,3,22,A,2,A2,,,0
-3,4,22,A,3,A3,,,0
+                <pre><code>ID,X,Y,Row,Number,Label,Description,CSS Class,Seat Group ID,Disabled
+1,2,22,A,1,A1,,1,0
+2,3,22,A,2,A2,,2,0
+3,4,22,A,3,A3,,,1
 4,5,22,A,4,A4,,,0</code></pre>
                 <p>
                     If the ID field is included for a seat, then an existing seat with that ID in the plan will be

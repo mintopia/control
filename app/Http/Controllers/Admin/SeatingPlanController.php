@@ -35,8 +35,11 @@ class SeatingPlanController extends Controller
     {
         $plan->name = $request->input('name');
         $plan->image_url = $request->input('image_url');
-        $plan->image_height = getimagesize($request->input('image_url'))[1];
-        $plan->image_width = getimagesize($request->input('image_url'))[0];
+        $imageSizeArr = getimagesize($request->input('image_url'));
+        if($imageSizeArr) {
+            $plan->image_height = $imageSizeArr[1];
+            $plan->image_width = $imageSizeArr[0];
+        }
         $plan->scale = $request->input('scale') ? $request->input('scale') : 100;
         $plan->save();
     }
@@ -99,7 +102,7 @@ class SeatingPlanController extends Controller
     public function export(Event $event, SeatingPlan $seatingplan)
     {
         $csv = [[
-            'ID', 'X', 'Y', 'Row', 'Number', 'Label', 'Description', 'CSS Class', 'Disabled',
+            'ID', 'X', 'Y', 'Row', 'Number', 'Label', 'Description', 'CSS Class', 'Seat Group ID', 'Disabled',
         ]];
         $seatingplan->seats()->chunk(100, function ($chunk) use (&$csv) {
             foreach ($chunk as $seat) {
@@ -112,6 +115,7 @@ class SeatingPlanController extends Controller
                     $seat->label,
                     $seat->description,
                     $seat->class,
+                    $seat->group ? $seat->group->id : null,
                     $seat->disabled ? 1 : 0,
                 ];
             }
