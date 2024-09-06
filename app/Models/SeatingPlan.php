@@ -81,6 +81,7 @@ class SeatingPlan extends Model implements Sortable
                 'description' => $seat->description,
                 'nickname' => $seat->ticket->user->nickname ?? null,
                 'original_email' => $seat->ticket->original_email ?? null,
+                'external_id' => $seat->ticket->external_id ?? null,
                 'ticket' => $seat->ticket->type->name ?? null,
                 'ticketId' => $seat->ticket->id ?? null,
                 'clans' => $clans,
