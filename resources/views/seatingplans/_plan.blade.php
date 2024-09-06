@@ -30,6 +30,9 @@
                     if(!in_array($seat->group, $seatGroups)) {
                         $canPick = false;
                         $name = 'Not Available';
+                        if ($class === 'available') {
+                            $class = 'disabled';
+                        }
                     }
                 }
                 if ($seat->nickname) {
