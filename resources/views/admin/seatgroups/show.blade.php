@@ -87,8 +87,8 @@
                         <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Assignment Type</th>
-                            <th>Assignment Type ID</th>
+                            <th>Type</th>
+                            <th>Name</th>
                             <th></th>
                         </tr>
                         </thead>
