@@ -28,7 +28,7 @@ class UpdateEventSeatingLock extends Command
      */
     public function handle()
     {
-        Event::where('seating_opens_at', '<', Carbon::now())->chunk(100, function($chunk) {
+        Event::where('seating_opens_at', '<=', Carbon::now())->chunk(100, function($chunk) {
             foreach ($chunk as $event) {
                 $this->output->writeln("{$event} Unlocking seating");
                 Log::info("{$event}: Unlocking seating");
@@ -37,11 +37,11 @@ class UpdateEventSeatingLock extends Command
                 $event->save();
             }
         });
-        Event::where('seating_closes_at', '<', Carbon::now())->chunk(100, function($chunk) {
+        Event::where('seating_closes_at', '<=', Carbon::now())->chunk(100, function($chunk) {
             foreach ($chunk as $event) {
                 $this->output->writeln("{$event} Locking seating");
                 Log::info("{$event}: Locking seating");
-                $event->seating_locked = false;
+                $event->seating_locked = true;
                 $event->seating_closes_at = null;
                 $event->save();
             }
