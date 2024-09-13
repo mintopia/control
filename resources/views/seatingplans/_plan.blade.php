@@ -31,7 +31,7 @@
                         $canPick = false;
                         $name = 'Not Available';
                         if ($class === 'available') {
-                            $class = 'disabled';
+                            $class = '';
                         }
                     }
                 }
