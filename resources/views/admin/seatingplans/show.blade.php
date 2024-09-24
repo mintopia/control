@@ -121,14 +121,14 @@
             <div class="card">
                 <div class="card-body p-0">
                     <div class="seating-plan" style="
-                        @if($plan->image_url)
+                        @if($plan->image_height && $plan->image_width)
                             background-image:url('{{ $plan->image_url }}');
                             min-height: {{ $plan->image_height}}px;
-                            min-width: {{ $plan->image_width}}px";
+                            min-width: {{ $plan->image_width}}px;
                         @else
-                             min-height: {{ (collect($seats[$plan->id] ?? [])->max('y') * 2) + 4 }}em;"
+                            min-height: {{ (collect($seats)->max('y') * 2) + 4 }}em;
                         @endif
-                    >
+                        ">
                         @foreach($seats as $seat)
                             @php
                                 $class = 'available';
