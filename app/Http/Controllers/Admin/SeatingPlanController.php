@@ -35,10 +35,14 @@ class SeatingPlanController extends Controller
     {
         $plan->name = $request->input('name');
         $plan->image_url = $request->input('image_url');
-        $imageSizeArr = getimagesize($request->input('image_url'));
-        if($imageSizeArr) {
-            $plan->image_height = $imageSizeArr[1];
-            $plan->image_width = $imageSizeArr[0];
+        $plan->image_height = null;
+        $plan->image_width = null;
+        if ($plan->image_url) {
+            $imageSizeArr = getimagesize($request->input('image_url'));
+            if ($imageSizeArr) {
+                $plan->image_height = $imageSizeArr[1];
+                $plan->image_width = $imageSizeArr[0];
+            }
         }
         $plan->scale = $request->input('scale') ? $request->input('scale') : 100;
         $plan->save();

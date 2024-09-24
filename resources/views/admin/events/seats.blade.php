@@ -138,14 +138,14 @@
                              style="min-width: {{ collect($seats[$plan->id] ?? [])->max('x') * 2 + 4 }}em;">
                             <div class="card-body p-0">
                                 <div class="seating-plan" style="
-                                   @if($plan->image_url)
-                                       background-image:url('{{ $plan->image_url }}');
-                                       min-height: {{ $plan->image_height}}px;
-                                       min-width: {{ $plan->image_width}}px";
-                                   @else
-                                       min-height: {{ (collect($seats[$plan->id] ?? [])->max('y') * 2) + 4 }}em;"
-                                   @endif
-                                >
+                                    @if($plan->image_height && $plan->image_width)
+                                        background-image:url('{{ $plan->image_url }}');
+                                        min-height: {{ $plan->image_height}}px;
+                                        min-width: {{ $plan->image_width}}px;
+                                    @else
+                                        min-height: {{ (collect($seats[$plan->id])->max('y') * 2) + 4 }}em;
+                                    @endif
+                                    ">
                                     @foreach($seats[$plan->id] as $seat)
                                         @php
                                             $link = null;
