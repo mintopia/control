@@ -20,15 +20,11 @@ class UpdateEventSeatingLock extends Command
      * The console command description.
      *
      * @var string
-     */
-    protected $description = 'Lock and unlock Seating Plans at specific times';
-
-    /**
-     * Execute the console command.
+     *
      */
     public function handle()
     {
-        Event::where('seating_opens_at', '<=', Carbon::now())->chunk(100, function($chunk) {
+        Event::where('seating_opens_at', '<=', Carbon::now())->chunk(100, function ($chunk) {
             foreach ($chunk as $event) {
                 $this->output->writeln("{$event} Unlocking seating");
                 Log::info("{$event}: Unlocking seating");
@@ -37,7 +33,7 @@ class UpdateEventSeatingLock extends Command
                 $event->save();
             }
         });
-        Event::where('seating_closes_at', '<=', Carbon::now())->chunk(100, function($chunk) {
+        Event::where('seating_closes_at', '<=', Carbon::now())->chunk(100, function ($chunk) {
             foreach ($chunk as $event) {
                 $this->output->writeln("{$event} Locking seating");
                 Log::info("{$event}: Locking seating");

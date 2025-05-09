@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Mail;
+
 use function App\makeCode;
 
 /**
@@ -44,7 +45,8 @@ use function App\makeCode;
  */
 class EmailAddress extends Model
 {
-    use HasFactory, ToString;
+    use HasFactory;
+    use ToString;
 
     protected $casts = [
         'verified_at' => 'datetime',

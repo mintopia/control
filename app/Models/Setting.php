@@ -49,7 +49,9 @@ use Spatie\EloquentSortable\SortableTrait;
  */
 class Setting extends Model implements Sortable
 {
-    use HasFactory, SortableTrait, ToString;
+    use HasFactory;
+    use SortableTrait;
+    use ToString;
 
     protected static array $cached = [];
 

@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Event;
+
 use function App\makePermalink;
 
 class EventObserver

@@ -15,7 +15,7 @@ class DiscordApiServiceProvider extends ServiceProvider implements DeferrablePro
      */
     public function register(): void
     {
-        $this->app->singleton(DiscordApi::class, function($app) {
+        $this->app->singleton(DiscordApi::class, function ($app) {
             $provider = SocialProvider::whereCode('discord')->first();
             $id = Setting::fetch('discord.server.id');
             if (!$provider || !$id) {

@@ -14,7 +14,8 @@ use Illuminate\Queue\SerializesModels;
 
 class VerifyEmail extends Mailable
 {
-    use Queueable, SerializesModels;
+    use Queueable;
+    use SerializesModels;
 
     /**
      * Create a new message instance.

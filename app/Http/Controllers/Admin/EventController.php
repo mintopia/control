@@ -114,7 +114,7 @@ class EventController extends Controller
 
     public function store(EventUpdateRequest $request)
     {
-        $event = new Event;
+        $event = new Event();
         $this->updateObject($event, $request);
         return response()->redirectToRoute('admin.events.show', $event->code)->with('successMessage', 'The event has been created');
     }

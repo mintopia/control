@@ -107,7 +107,7 @@ class WooCommerceProvider extends AbstractTicketProvider
                 $user = $email->user;
             }
         }
-        $ticket = new Ticket;
+        $ticket = new Ticket();
         $ticket->provider()->associate($this->provider);
         if ($user) {
             $ticket->user()->associate($user);

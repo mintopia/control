@@ -98,7 +98,7 @@ class TicketTailorProvider extends AbstractTicketProvider
             if ($email) {
                 $user = $email->user;
             }
-            $ticket = $this->makeTicket($user , $data);
+            $ticket = $this->makeTicket($user, $data);
             if ($ticket) {
                 Log::info("{$this->provider} {$ticket} has been added for {$data->email}");
             }
@@ -126,7 +126,7 @@ class TicketTailorProvider extends AbstractTicketProvider
                 $user = $email->user;
             }
         }
-        $ticket = new Ticket;
+        $ticket = new Ticket();
         $ticket->provider()->associate($this->provider);
         if ($user) {
             $ticket->user()->associate($user);

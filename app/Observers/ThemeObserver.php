@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\Theme;
+
 use function App\makePermalink;
 
 class ThemeObserver

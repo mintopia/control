@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Clan;
 use App\Models\SeatingPlan;
+
 use function App\makePermalink;
 
 class ClanObserver

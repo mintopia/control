@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\TicketProviders\Traits;
 
 use App\Models\EmailAddress;

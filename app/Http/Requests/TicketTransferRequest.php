@@ -31,7 +31,7 @@ class TicketTransferRequest extends FormRequest
                 function (string $attribute, mixed $value, Closure $fail) {
                     $query = Ticket::whereTransferCode(strtoupper($value));
                     if (!$this->user()->hasRole('admin')) {
-                        $query = $query->whereHas('event', function($query) {
+                        $query = $query->whereHas('event', function ($query) {
                             $query->whereDraft(false);
                         });
                     }

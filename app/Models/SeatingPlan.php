@@ -56,7 +56,9 @@ use Spatie\EloquentSortable\SortableTrait;
  */
 class SeatingPlan extends Model implements Sortable
 {
-    use HasFactory, ToString, SortableTrait;
+    use HasFactory;
+    use ToString;
+    use SortableTrait;
 
     // Cache the plan for 30 days
     protected const CACHE_TTL = 30 * 86400;

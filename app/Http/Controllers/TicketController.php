@@ -16,14 +16,14 @@ class TicketController extends Controller
             ->tickets();
 
         if (!$request->user()->hasRole('admin')) {
-            $query->whereHas('event', function($query) {
+            $query->whereHas('event', function ($query) {
                 $query->whereDraft(false);
             });
         }
 
         $tickets = $query->with(['event' => function ($query) {
                 $query->orderBy('starts_at', 'DESC');
-            }, 'type', 'seat'])
+        }, 'type', 'seat'])
             ->paginate();
 
         return view('tickets.index', [
@@ -40,7 +40,7 @@ class TicketController extends Controller
 
     public function update(Request $request, Ticket $ticket)
     {
-        if(Setting::fetch('disable-ticket-transfers')){
+        if (Setting::fetch('disable-ticket-transfers')) {
             return response()->redirectToRoute('tickets.show', $ticket->id)->with('errorMessage', 'Ticket transfers are disabled.');
         }
         if ($request->has('generate')) {
@@ -56,7 +56,7 @@ class TicketController extends Controller
 
     public function transfer(TicketTransferRequest $request)
     {
-        if(Setting::fetch('disable-ticket-transfers')){
+        if (Setting::fetch('disable-ticket-transfers')) {
             return response()->redirectToRoute('tickets.index')->with('errorMessage', 'Ticket transfers are disabled.');
         }
         $ticket = Ticket::whereTransferCode($request->input('code'))->first();

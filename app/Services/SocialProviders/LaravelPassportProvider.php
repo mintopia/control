@@ -19,7 +19,7 @@ class LaravelPassportProvider extends AbstractSocialProvider
     public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null)
     {
         parent::__construct($provider, $redirectUrl);
-        if($provider != null) {
+        if ($provider != null) {
             $this->name = $provider->name;
         }
     }
