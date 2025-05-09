@@ -10,6 +10,7 @@ use App\Models\Ticket;
 use App\Models\TicketProvider;
 use App\Models\TicketType;
 use Illuminate\Http\Request;
+
 use function App\makeCode;
 
 class TicketController extends Controller
@@ -243,5 +244,4 @@ class TicketController extends Controller
 
         return response()->redirectToRoute('admin.tickets.index')->with('successMessage', 'The tickets have been imported');
     }
-
 }

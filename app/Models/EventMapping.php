@@ -34,7 +34,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class EventMapping extends Model
 {
-    use HasFactory, ToString;
+    use HasFactory;
+    use ToString;
 
     public function provider(): BelongsTo
     {
@@ -45,5 +46,4 @@ class EventMapping extends Model
     {
         return $this->belongsTo(Event::class);
     }
-
 }

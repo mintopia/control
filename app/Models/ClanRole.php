@@ -30,7 +30,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class ClanRole extends Model
 {
-    use HasFactory, ToString;
+    use HasFactory;
+    use ToString;
 
     public function members(): HasMany
     {

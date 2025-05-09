@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models\Helpers;
 
 use App\Models\Event;
@@ -14,6 +15,5 @@ class TicketImport
         public TicketType $type,
         public ?Seat $seat = null,
     ) {
-
     }
 }

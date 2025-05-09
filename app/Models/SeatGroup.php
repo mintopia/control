@@ -35,7 +35,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class SeatGroup extends Model
 {
-    use HasFactory, ToString;
+    use HasFactory;
+    use ToString;
 
     public function event(): BelongsTo
     {

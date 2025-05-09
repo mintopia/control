@@ -6,6 +6,7 @@ use App\Models\Clan;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+
 use function App\makePermalink;
 
 class ClanRequest extends FormRequest

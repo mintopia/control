@@ -25,7 +25,7 @@ class SeatGroupAssignmentUpdateRequest extends FormRequest
         $assignmentType = $this->input('assignment_type');
         return [
             'assignment_type' => 'required',
-            'assignment_type_id' => 'required|integer|exists:'.$assignmentType.'s,id',
+            'assignment_type_id' => 'required|integer|exists:' . $assignmentType . 's,id',
         ];
     }
 }

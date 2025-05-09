@@ -6,6 +6,7 @@ use App\Models\Event;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+
 use function App\makePermalink;
 
 class EventUpdateRequest extends FormRequest

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 class GenericTicketProvider extends AbstractTicketProvider
 {
     use GenericSyncAllTrait;
+
     protected const TICKET_TYPES_CACHE_TTL = 86400;
     protected const EVENTS_CACHE_TTL = 86400;
 
@@ -58,12 +59,13 @@ class GenericTicketProvider extends AbstractTicketProvider
         return true;
     }
 
-    protected function processTicket(object $data): ?Ticket {
+    protected function processTicket(object $data): ?Ticket
+    {
         $ticket = Ticket::whereTicketProviderId($this->provider->id)->whereExternalId($data->id)->first();
-        if($ticket && $data->status === 'voided'){
+        if ($ticket && $data->status === 'voided') {
             Log::info("{$this->provider} {$ticket} Removed. Status is Voided");
             $ticket->delete();
-        } else if(!$ticket) {
+        } else if (!$ticket) {
             $email = EmailAddress::whereEmail($data->email)->whereNotNull('verified_at')->first();
             $event = Event::whereHas('mappings', function ($query) use ($data) {
                 $query->whereTicketProviderId($this->provider->id)->whereExternalId($data->event_id);
@@ -123,7 +125,7 @@ class GenericTicketProvider extends AbstractTicketProvider
                 $user = $email->user;
             }
         }
-        $ticket = new Ticket;
+        $ticket = new Ticket();
         $ticket->provider()->associate($this->provider);
         if ($user) {
             $ticket->user()->associate($user);
@@ -234,7 +236,7 @@ class GenericTicketProvider extends AbstractTicketProvider
                 $query["after"] = $event->id;
                 $events[$event->id] = $event->name;
             }
-        } while($data->hasMore);
+        } while ($data->hasMore);
         Cache::put($key, $events, self::EVENTS_CACHE_TTL);
         return $events;
     }
@@ -252,10 +254,12 @@ class GenericTicketProvider extends AbstractTicketProvider
         $query = [
             'event' => $eventExternalId
         ];
-        $response = $this->getClient()->get("tickettypes",
-        [
+        $response = $this->getClient()->get(
+            "tickettypes",
+            [
             'query' => $query,
-        ]);
+            ]
+        );
         $data = json_decode($response->getBody());
         foreach ($data->ticket_types as $type) {
             $types[$type->id] = $type->name;
