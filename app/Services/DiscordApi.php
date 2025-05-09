@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\SocialProvider;
@@ -13,7 +14,6 @@ class DiscordApi
 
     public function __construct(protected SocialProvider $provider, protected string $serverId)
     {
-
     }
 
 

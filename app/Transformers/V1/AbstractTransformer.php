@@ -9,7 +9,6 @@ abstract class AbstractTransformer extends TransformerAbstract
 {
     public function __construct(protected ?User $user = null)
     {
-
     }
 
     protected function modifyForUser(array $data, object $object): array

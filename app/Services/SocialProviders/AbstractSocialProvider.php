@@ -150,14 +150,14 @@ abstract class AbstractSocialProvider implements SocialProviderContract
                 } elseif (!$this->provider->auth_enabled) {
                     throw new SocialProviderException('Unable to login with this account');
                 } else {
-                    $localUser = new User;
+                    $localUser = new User();
                     $localUser->nickname = $remoteUser->getNickname();
                     $localUser->save();
                 }
             }
 
             if ($account === null) {
-                $account = new LinkedAccount;
+                $account = new LinkedAccount();
                 $account->provider()->associate($this->provider);
                 $account->user()->associate($localUser);
                 $account->external_id = $remoteUser->getId();

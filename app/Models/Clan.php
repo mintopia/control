@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use InvalidArgumentException;
+
 use function App\makeCode;
 
 /**
@@ -34,7 +35,8 @@ use function App\makeCode;
  */
 class Clan extends Model
 {
-    use HasFactory, ToString;
+    use HasFactory;
+    use ToString;
 
     public function getRouteKeyName()
     {

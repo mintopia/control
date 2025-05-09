@@ -1,0 +1,80 @@
+services:
+  control:
+    image: ghcr.io/mintopia/control:develop
+    env_file: .env
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - database
+    volumes:
+      - ./logs:/app/storage/logs
+      - ./public:/app/storage/public
+
+  redis:
+    image: redis:6.2.6
+    restart: unless-stopped
+
+  database:
+    image: mariadb:10.5-focal
+    env_file: .env.mariadb
+    restart: unless-stopped
+    volumes:
+      - ./database:/var/lib/mysql
+
+  horizon:
+    image: ghcr.io/mintopia/control:develop
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - database
+      - redis
+    volumes:
+      - ./logs:/app/storage/logs
+      - ./public:/app/storage/public
+    entrypoint: [ "php", "artisan", "horizon" ]
+    healthcheck:
+        disable: true
+
+
+  scheduler:
+    image: ghcr.io/mintopia/control:develop
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - database
+      - redis
+    volumes:
+      - ./logs:/app/storage/logs
+      - ./public:/app/storage/public
+    entrypoint: [ "php", "artisan", "schedule:work"]
+    healthcheck:
+        disable: true
+
+  reverb:
+    image: ghcr.io/mintopia/control:develop
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - database
+      - redis
+    volumes:
+      - ./logs:/app/storage/logs
+      - ./public:/app/storage/public
+    entrypoint: [ "php", "artisan", "reverb:start", "--host=0.0.0.0", "--debug", "--port=80" ]
+    healthcheck:
+      disable: true
+
+  artisan:
+    image: ghcr.io/mintopia/control:develop
+    profiles:
+      - artisan
+    env_file: .env
+    depends_on:
+      - database
+      - redis
+    volumes:
+      - ./logs:/app/storage/logs
+      - ./public:/app/storage/public
+    entrypoint: [ "php", "artisan" ]
+    healthcheck:
+      disable: true

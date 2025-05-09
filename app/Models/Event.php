@@ -52,7 +52,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Event extends Model
 {
-    use HasFactory, ToString;
+    use HasFactory;
+    use ToString;
 
     protected $casts = [
         'starts_at' => 'datetime',

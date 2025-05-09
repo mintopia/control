@@ -20,7 +20,18 @@ These are using Laravel Socialite, so any provider supported by Socialite can be
 
 These are custom integrations but more can be added and used if people develop them. The Internal provider allows you to manually issue tickets to users.
 
-## Setup
+
+## Technology
+
+This project is written in PHP 8.4 using the Laravel 12 framework. It was migrated from Laravel 10 and 11 so has some
+legacy project structure - but this is the intended upgrade path.
+
+Horizon and Telescope are installed and enabled, with access limited to the admin role. The application itself is
+served using Laravel Octane and FrankenPHP.
+
+Websocket communications are handled using Laravel Reverb.
+
+## Development Setup
 
 You will need to create a Discord application and have the Client ID and Client Secret available.
 
@@ -43,107 +54,51 @@ You should now be able to login. The first user will be given the admin role.
 
 ## Production Deployment
 
-I use the following docker-compose for running this in production:
+In the `example` directory there is a docker compose file and some .env example files. These are for the setup I use.
+Just rename the .env files and edit them accordingly. You can get a [random Laravel application key here](https://generate-random.org/laravel-key-generator).
 
-```yaml
-version: '3'
-services:
-  nginx:
-    image: ghcr.io/mintopia/control-nginx:develop
-    env_file: .env.nginx
-    restart: unless-stopped
-    depends_on:
-      - php-fpm
-    networks:
-      - frontend
-      - default
-    volumes:
-      - ./public:/var/www/storage/public
+You need to expose the `control` container to the public. This is configured to listen on port 80
+in the docker compose, so you probably want something like Traefik or Caddy in-front as a reverse proxy.
 
-  php-fpm:
-    image: ghcr.io/mintopia/control-php-fpm:develop
-    env_file: .env
-    restart: unless-stopped
-    depends_on:
-      - redis
-      - database
-    volumes:
-      - ./logs:/var/www/storage/logs
-      - ./public:/var/www/storage/public
+I'm running this with an external docker network called `frontend` with Caddy running as HTTP/HTTPS ingress. You will
+need to add a network section for the `control` service to add it to the `frontend` network if you
+want to do this.
 
-  redis:
-    image: redis:6.2.6
-    restart: unless-stopped
+You will need to make a logs directory and chmod it 777 as I still need to sort permissions out.
 
-  database:
-    image: mariadb:10.5-focal
-    env_file: .env.mariadb
-    restart: unless-stopped
-    volumes:
-      - ./database:/var/lib/mysql
-
-  worker:
-    image: ghcr.io/mintopia/control-php-fpm:develop
-    restart: unless-stopped
-    deploy:
-      replicas: 2
-    env_file: .env
-    depends_on:
-      - database
-      - redis
-    volumes:
-      - ./logs:/var/www/storage/logs
-      - ./public:/var/www/storage/public
-    entrypoint: ['php']
-    command: 'artisan queue:work'
-
-
-  scheduler:
-    image: ghcr.io/mintopia/control-php-fpm:develop
-    restart: unless-stopped
-    env_file: .env
-    depends_on:
-      - database
-      - redis
-    volumes:
-      - ./logs:/var/www/storage/logs
-      - ./public:/var/www/storage/public
-    entrypoint: ['php']
-    command: 'artisan schedule:work'
-
-  artisan:
-    image: ghcr.io/mintopia/control-php-fpm:develop
-    profiles:
-      - artisan
-    env_file: .env
-    depends_on:
-      - database
-      - redis
-    volumes:
-      - ./logs:/var/www/storage/logs
-      - ./public:/var/www/storage/public
-    entrypoint: ['php', 'artisan']
-
-networks:
-  frontend:
-    external: true
-```
-
-I'm running with an external docker network called `frontend` with Caddy running as HTTP/HTTPS ingress. To bring up the site, run the following:
-
+To bring up the site, run the following:
 
 ```bash
-# Create your docker compose file
-# Create your .env file from the project's .env.example and edit as required.
 docker compose up -d redis database
-docker compose run --rm artisan key:generate
 docker compose run --rm artisan migrate
 docker compose run --rm artisan db:seed
-docker compose run --rm artisan control:setup-discord
+docker compose run --rm artisan setup:discord
 docker compose up -d
 ```
 
 You should now be able to visit the site and login. From here you can use the admin menu to configure the site.
+
+## Observability
+
+Control supports basic observability functionality in using an OpenTelemetry collector. It can support traces, logs
+and metrics. If enabled, it will create traces for all HTTP requests. To enable it, add the following to your `.env`:
+
+```dotenv
+OPENTELEMETRY_ENABLED=true
+```
+
+For logging output, a logger is defined and can be used. I suggest you use this with your usual logger, eg. `daily`.
+You can specify this logging with the following environment variables:
+
+```dotenv
+LOG_CHANNEL=stack
+LOG_STACK=opentelemetry,daily
+```
+
+By default it is configured to send to an OpenTelemetry container running with the name `collector`. An example config
+is supplied with placeholders for sending data to [Honeycomb](https://www.honeycomb.io/).
+
+The plan will be to add further spans within individual requests and have spans for the jobs and queued actions.
 
 ## Contributing
 

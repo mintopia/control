@@ -34,7 +34,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class TicketTypeMapping extends Model
 {
-    use HasFactory, ToString;
+    use HasFactory;
+    use ToString;
 
     public function provider(): BelongsTo
     {

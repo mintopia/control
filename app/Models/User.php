@@ -68,7 +68,10 @@ use Laravel\Sanctum\HasApiTokens;
  */
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, ToString;
+    use HasApiTokens;
+    use HasFactory;
+    use Notifiable;
+    use ToString;
 
     protected ?Collection $pickableTickets = null;
 
@@ -112,8 +115,9 @@ class User extends Authenticatable
             if ($role instanceof Role) {
                 $role = $role->code;
             }
-            if ($this->roles()->whereCode($role)->count())
+            if ($this->roles()->whereCode($role)->count()) {
                 return true;
+            }
         }
         return false;
     }
@@ -202,7 +206,7 @@ class User extends Authenticatable
 
     protected function getDiscordAccount()
     {
-        return $this->accounts()->whereHas('provider', function($query) {
+        return $this->accounts()->whereHas('provider', function ($query) {
             $query->whereCode('discord');
         })->first();
     }
@@ -268,7 +272,7 @@ class User extends Authenticatable
                     }
                     break;
                 case 'ticket_type':
-                    foreach($this->tickets as $ticket) {
+                    foreach ($this->tickets as $ticket) {
                         if ($ticket->type->id == $assignment->assignment_type_id) {
                             return true;
                         }

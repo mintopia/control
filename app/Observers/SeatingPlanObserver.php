@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Models\SeatingPlan;
+
 use function App\makePermalink;
 
 class SeatingPlanObserver

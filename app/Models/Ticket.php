@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
+
 use function App\makeCode;
 
 /**
@@ -54,7 +55,8 @@ use function App\makeCode;
  */
 class Ticket extends Model
 {
-    use HasFactory, ToString;
+    use HasFactory;
+    use ToString;
 
     public function user(): BelongsTo
     {
@@ -121,7 +123,7 @@ class Ticket extends Model
         }
 
         $thisTicketClans = $this->user->clanMemberships()->pluck('clan_id');
-        $userClans = $user->clanMemberships()->whereHas('role', function($query) {
+        $userClans = $user->clanMemberships()->whereHas('role', function ($query) {
             $query->whereIn('code', ['leader', 'seatmanager']);
         })->pluck('clan_id');
         $common = $thisTicketClans->intersect($userClans);
@@ -150,7 +152,7 @@ class Ticket extends Model
             }
             $seat = null;
             if ($row[2] && $type->has_seat) {
-                $seat = Seat::whereHas('plan', function($query) use ($type) {
+                $seat = Seat::whereHas('plan', function ($query) use ($type) {
                     $query->where('event_id', $type->event_id);
                 })->whereLabel($row[2])->first();
             }
@@ -163,7 +165,7 @@ class Ticket extends Model
     {
         $provider = TicketProvider::whereCode('internal')->first();
 
-        $ticket = new Ticket;
+        $ticket = new Ticket();
         $ticket->event()->associate($import->event);
         $ticket->provider()->associate($provider);
         $ticket->user()->associate($import->user);

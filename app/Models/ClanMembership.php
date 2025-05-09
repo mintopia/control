@@ -33,7 +33,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class ClanMembership extends Model
 {
-    use HasFactory, ToString;
+    use HasFactory;
+    use ToString;
 
     public function user(): BelongsTo
     {

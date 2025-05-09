@@ -1,6 +1,7 @@
 <?php
 
 namespace App;
+
 function makePermalink(string $input): string
 {
     $input = strtolower($input);

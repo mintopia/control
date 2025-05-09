@@ -45,7 +45,9 @@ use Illuminate\Http\Request;
  */
 class TicketProvider extends Model
 {
-    use HasFactory, ToString;
+    use HasFactory;
+    use ToString;
+
     protected array $_settings = [];
 
     public function tickets(): HasMany
@@ -101,7 +103,6 @@ class TicketProvider extends Model
 
         $data = [];
         foreach ($providerEvents as $providerEvent) {
-
             $types = $this->getProvider()->getTicketTypes($providerEvent->external_id);
             if (!$types) {
                 return [];

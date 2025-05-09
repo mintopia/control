@@ -5,6 +5,7 @@ namespace App\Http\Requests\Admin;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+
 use function App\makePermalink;
 
 class SeatingPlanUpdateRequest extends FormRequest

@@ -50,7 +50,8 @@ use Spatie\EloquentSortable\SortableTrait;
  */
 class ProviderSetting extends Model implements Sortable
 {
-    use HasFactory, SortableTrait;
+    use HasFactory;
+    use SortableTrait;
 
     protected $casts = [
         'value' => SettingValue::class,

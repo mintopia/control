@@ -50,7 +50,8 @@ use Illuminate\Support\Collection;
  */
 class Seat extends Model
 {
-    use HasFactory, ToString;
+    use HasFactory;
+    use ToString;
 
     public function ticket(): BelongsTo
     {
@@ -82,15 +83,15 @@ class Seat extends Model
         if (!$tickets) {
             return false;
         }
-        if($this->group) {
-            if(!$user->allowedSeatGroup($this->group)) {
+        if ($this->group) {
+            if (!$user->allowedSeatGroup($this->group)) {
                 return false;
             }
         }
         if ($this->ticket) {
             foreach ($tickets as $ticket) {
                 if ($ticket->id === $this->ticket->id) {
-                   return true;
+                    return true;
                 }
                 return false;
             }

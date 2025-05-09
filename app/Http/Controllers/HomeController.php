@@ -13,7 +13,7 @@ class HomeController extends Controller
         $tickets = $request
             ->user()
             ->tickets()
-            ->whereHas('event', function($query) use ($request)  {
+            ->whereHas('event', function ($query) use ($request) {
                 $query->where('ends_at', '>=', Carbon::now());
                 if (!$request->user()->hasRole('admin')) {
                     $query->whereDraft(false);

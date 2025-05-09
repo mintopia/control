@@ -53,7 +53,7 @@ abstract class AbstractTicketProvider implements TicketProviderContract
             $provider->code = $this->code;
             $provider->provider_class = get_called_class();
             $provider->enabled = false;
-            DB::transaction(function() use ($provider) {
+            DB::transaction(function () use ($provider) {
                 $provider->save();
 
                 $this->installSettings();

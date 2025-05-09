@@ -64,7 +64,7 @@ class SyncDiscordRoles extends Command
         $query->whereSocialProviderId($discordProvider->id)
             ->whereIn('external_id', $ids)
             ->with(['user', 'user.tickets', 'user.tickets.type'])
-            ->chunk(100, function($accounts) use ($members) {
+            ->chunk(100, function ($accounts) use ($members) {
                 foreach ($accounts as $linkedAccount) {
                     $this->syncAccount($linkedAccount, $members[$linkedAccount->external_id]);
                 }
