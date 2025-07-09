@@ -60,18 +60,22 @@ class EventController extends Controller
                 $params['order'] = $request->input('order');
                 break;
             case 'id':
-            default:
                 $params['order'] = 'id';
+                break;
+            default:
+                $params['order'] = 'starts_at';
                 break;
         }
 
-        switch ($request->input('order_direction', 'asc')) {
+        switch ($request->input('order_direction', 'desc')) {
             case 'desc':
                 $params['order_direction'] = 'desc';
                 break;
             case 'asc':
-            default:
                 $params['order_direction'] = 'asc';
+                break;
+            default:
+                $params['order_direction'] = 'desc';
         }
 
         $query = $query->orderBy($params['order'], $params['order_direction']);
