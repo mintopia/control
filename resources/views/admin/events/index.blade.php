@@ -103,7 +103,12 @@
                         </thead>
                         <tbody>
                         @foreach($events as $event)
+                            @if($event->isOld())
+                            <tr class="table-secondary">
+                            @else
                             <tr>
+                            @endif
+
                                 <td class="text-muted">{{ $event->id }}</td>
                                 <td>
                                     <a href="{{ route('admin.events.show', $event->code) }}">{{ $event->name }}</a>
@@ -124,8 +129,8 @@
                                 </td>
                             </tr>
                         @endforeach
-                        </tbody>
-                    </table>
+                        </tbody>                       
+                    </table>                   
                 </div>
                 @include('partials._pagination', [
                     'page' => $events

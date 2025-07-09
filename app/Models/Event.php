@@ -92,6 +92,11 @@ class Event extends Model
         return $this->hasMany(SeatGroup::class);
     }
 
+    public function isOld(): bool
+    {
+        return $this->ends_at < date("Y-m-d H:i:s"); 
+    }
+
     public function getAvailableEventMappings(?EventMapping $existing = null): array
     {
         $allProviders = TicketProvider::all();
