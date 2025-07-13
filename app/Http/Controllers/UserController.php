@@ -46,6 +46,10 @@ class UserController extends Controller
 
     public function login_return(SocialProvider $socialprovider)
     {
+        // If we get 2 redirects back from the auth provider, handle it here.
+        if (Auth::hasUser()) {
+            return response()->redirectToIntended(route('home'))->with('successMessage', 'You have been logged in');
+        }
         if (!$socialprovider->enabled || !$socialprovider->auth_enabled) {
             return response()->redirectToRoute('login')->with('errorMessage', 'Unable to login');
         }

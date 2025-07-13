@@ -2,7 +2,8 @@
 
 ## Introduction
 
-LAN Party user accounts, ticket management and seat picker. It is designed to work with multiple social authentication providers and ticket providers.
+LAN Party user accounts, ticket management and seat picker. It is designed to work with multiple social authentication
+providers and ticket providers.
 
 ### Social Provider Support
 
@@ -18,7 +19,8 @@ These are using Laravel Socialite, so any provider supported by Socialite can be
  - WooCommerce
  - Internal
 
-These are custom integrations but more can be added and used if people develop them. The Internal provider allows you to manually issue tickets to users.
+These are custom integrations but more can be added and used if people develop them. The Internal provider allows you to
+manually issue tickets to users.
 
 
 ## Technology
@@ -64,6 +66,19 @@ I'm running this with an external docker network called `frontend` with Caddy ru
 need to add a network section for the `control` service to add it to the `frontend` network if you
 want to do this.
 
+The Caddyfile config I'm using for this is:
+
+```
+control.example.com {
+  @websockets {
+    header Connection *Upgrade*
+    header Upgrade    websocket
+  }
+  reverse_proxy @websockets control-reverb-1
+  reverse_proxy control-control-1
+}
+```
+
 You will need to make a logs directory and chmod it 777 as I still need to sort permissions out.
 
 To bring up the site, run the following:
@@ -80,29 +95,71 @@ You should now be able to visit the site and login. From here you can use the ad
 
 ## Observability
 
-Control supports basic observability functionality in using an OpenTelemetry collector. It can support traces, logs
-and metrics. If enabled, it will create traces for all HTTP requests. To enable it, add the following to your `.env`:
+## Observability
+
+The docker images from the project have the Open Telemetry PHP extension and the project includes the appropriate Open
+Telemetry libraries from Packagist. You can use Protobuf or GRPC transport if needed. You should just be able to
+configure it using ENV variables and run a collector container. eg.
 
 ```dotenv
-OPENTELEMETRY_ENABLED=true
+OTEL_PHP_AUTOLOAD_ENABLED=true
+OTEL_SERVICE_NAME=control
+OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4317
 ```
 
-For logging output, a logger is defined and can be used. I suggest you use this with your usual logger, eg. `daily`.
-You can specify this logging with the following environment variables:
+The docker container already sets `OTEL_PHP_EXCLUDED_URLS` to remove common URLs that are used a lot and add no value
+to monitoring. The default value is:
 
 ```dotenv
-LOG_CHANNEL=stack
-LOG_STACK=opentelemetry,daily
+OTEL_PHP_EXCLUDED_URLS="pulse,telescope/.*,horizon/.*,api/v1/ping,_ignition/.*,_debugbar/.*"
 ```
 
-By default it is configured to send to an OpenTelemetry container running with the name `collector`. An example config
-is supplied with placeholders for sending data to [Honeycomb](https://www.honeycomb.io/).
+For the container:
 
-The plan will be to add further spans within individual requests and have spans for the jobs and queued actions.
+```yaml
+  collector:
+    image: otel/opentelemetry-collector-contrib
+    volumes:
+      - ./collector.yml:/etc/otelcol-contrib/config.yaml
+```
+
+And finally the config in `collector.yml`, adapt this as you need.
+
+```yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+
+exporters:
+  debug:
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]
+```
 
 ## Contributing
 
-It's an open source project and I'm happy to accept pull requests. I am terrible at UI and UX, which is why this is entirely using server-side rendering. If someone wants to use Vue/Laravel Livewire - please go ahead!
+It's an open source project and I'm happy to accept pull requests. I am terrible at UI and UX, which is why this is
+entirely using server-side rendering. If someone wants to use Vue/Laravel Livewire - please go ahead!
 
 ## Roadmap
 
