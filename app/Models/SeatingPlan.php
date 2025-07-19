@@ -174,8 +174,8 @@ class SeatingPlan extends Model implements Sortable
                 $seat->label = $row[5];
                 $seat->description = $row[6] ?? null;
                 $seat->class = $row[7] ?? null;
-                $seat->seat_group_id = (int)$row[8] ?? null;
-                $seat->disabled = (bool)$row[9];
+                $seat->seat_group_id = (int)($row[8] ?? null);
+                $seat->disabled = (bool)($row[9] ?? false);
 
                 $seat->saveQuietly();
             }
@@ -193,5 +193,31 @@ class SeatingPlan extends Model implements Sortable
     protected function toStringName(): string
     {
         return $this->code;
+    }
+
+    /**
+     * Randomise seat allocation - CHANGE PLACES!
+     * @return void
+     */
+    public function randomise(): void
+    {
+        Log::debug("{$this} Randomising seats");
+        $this->refresh();
+        $tickets = $this->event->tickets()->whereHas('type', function ($query) {
+            $query->where('has_seat', true);
+        })->inRandomOrder()->get();
+        foreach ($this->seats as $seat) {
+            $seat->ticket()->dissociate();
+            $seat->saveQuietly();
+        }
+
+        $seats = $this->seats()->inRandomOrder()->get();
+        foreach ($tickets as $ticket) {
+            $seat = $seats->pop();
+            Log::debug("{$this} Allocating {$seat} to {$ticket}");
+            $seat->ticket()->associate($ticket);
+            $seat->saveQuietly();
+        }
+        $this->updateRevision();
     }
 }
