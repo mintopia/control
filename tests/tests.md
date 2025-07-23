@@ -55,10 +55,20 @@ NOTE: The first entry point "PHPUnit" did not successfully run with this configu
 ## TODO
 
 - [ ] Create custom script/shortcut to test individual files by hand?
-- [ ] Remove non-workable `PHPunit` hive in Test adapter? Different extension?
+- [ ] Troubleshoot non-workable `PHPunit` hive in Test adapter? Different extension?
+  - [ ] "Run Test" in the file directly is using that...
 - [ ] Create Github action to run PHPunit tests with a build in GitHub (hook on commit/PR?)
 - [ ] Define scope for unit tests
 
 
 ### Unit Test Scope
 
+General - Recreate folder structure from root, i.e. tests for `app\x.php` are located in `tests\app\x.php`.
+
+- [ ] app (main)
+- [ ] public (index and PHP files)
+- [ ] meta
+  - [ ] config - what to test?
+  - [ ] database - seeders and factories only?
+  - [ ] docker - test requirements for PROD/DEV files?
+  - [ ] root - other meta tests for package json, composer etc to be in sync?
