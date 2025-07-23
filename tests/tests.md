@@ -58,3 +58,7 @@ NOTE: The first entry point "PHPUnit" did not successfully run with this configu
 - [ ] Remove non-workable `PHPunit` hive in Test adapter? Different extension?
 - [ ] Create Github action to run PHPunit tests with a build in GitHub (hook on commit/PR?)
 - [ ] Define scope for unit tests
+
+
+### Unit Test Scope
+
