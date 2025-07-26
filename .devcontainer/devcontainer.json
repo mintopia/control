@@ -1,11 +1,10 @@
 {
     "name": "Control",
     "dockerComposeFile": [
-        "../docker-compose.yaml"
-        // "../docker-compose.override.traefik.yml"
+        "./docker-compose.yaml"
     ],
     "service": "control",
-    "workspaceFolder": "/public",
+    "workspaceFolder": "/workspaces/Public/control",
     "customizations": {
         "vscode": {
             "extensions": [
