@@ -4,8 +4,6 @@ namespace Tests\App;
 
 use PHPUnit\Framework\TestCase;
 
-require_once __DIR__ . '/../../app/helpers.php';
-
 class HelpersTest extends TestCase
 {
     public function test_makePermalink_basic()

@@ -1,0 +1,30 @@
+{
+    "name": "Control",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "control",
+    "workspaceFolder": "/public",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "lavarell.laravel-extension-pack",
+                "ryannaddy.laravel-artisan",
+                "esbenp.prettier-vscode",
+                "ms-vscode.powershell",
+                "ms-azuretools.vscode-docker",
+                "streetsidesoftware.code-spell-checker",
+                "streetsidesoftware.code-spell-checker-cspell",
+                "streetsidesoftware.code-spell-checker-cspell-dictionary-en-gb",
+                "streetsidesoftware.code-spell-checker-cspell-dictionary-en-us",
+                "streetsidesoftware.code-spell-checker-cspell-dictionary-php",
+                "streetsidesoftware.code-spell-checker-cspell-dictionary-markdown",
+                "streetsidesoftware.code-spell-checker-cspell-dictionary-json",
+                "streetsidesoftware.code-spell-checker-cspell-dictionary-yaml",
+                "streetsidesoftware.code-spell-checker-cspell-dictionary-html",
+                "streetsidesoftware.code-spell-checker-cspell-dictionary-css",
+                "streetsidesoftware.code-spell-checker-cspell-dictionary-javascript",
+                "streetsidesoftware.code-spell-checker-cspell-dictionary-typescript",
+                "streetsidesoftware.code-spell-checker-cspell-dictionary-python"
+            ]
+        }
+    }
+}
