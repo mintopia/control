@@ -1,13 +1,14 @@
 {
     "name": "Control",
-    "dockerComposeFile": "docker-compose.yml",
+    "dockerComposeFile": [
+        "../docker-compose.yaml"
+        // "../docker-compose.override.traefik.yml"
+    ],
     "service": "control",
     "workspaceFolder": "/public",
     "customizations": {
         "vscode": {
             "extensions": [
-                "lavarell.laravel-extension-pack",
-                "ryannaddy.laravel-artisan",
                 "esbenp.prettier-vscode",
                 "ms-vscode.powershell",
                 "ms-azuretools.vscode-docker",
@@ -23,8 +24,17 @@
                 "streetsidesoftware.code-spell-checker-cspell-dictionary-css",
                 "streetsidesoftware.code-spell-checker-cspell-dictionary-javascript",
                 "streetsidesoftware.code-spell-checker-cspell-dictionary-typescript",
-                "streetsidesoftware.code-spell-checker-cspell-dictionary-python"
+                "streetsidesoftware.code-spell-checker-cspell-dictionary-python",
+                "bmewburn.vscode-intelephense-client",
+                "felixfbecker.php-intellisense",
+                "mikael.vscode-laravel-goto-view",
+                "onecentlin.laravel-blade",
+                "ryannaddy.laravel-artisan",
+                "stefanburt.see-all-php-errors",
+                "xdebug.php-debug"
             ]
         }
-    }
+    },
+    "postCreateCommand": "composer install && npm install && npm run dev",
+    "remoteUser": "vscode"
 }
