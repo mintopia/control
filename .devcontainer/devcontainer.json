@@ -3,8 +3,8 @@
     "dockerComposeFile": [
         "./docker-compose.yaml"
     ],
-    "service": "control",
-    "workspaceFolder": "/workspaces/Public/control",
+    "service": "",
+    "workspaceFolder": "",
     "customizations": {
         "vscode": {
             "extensions": [
