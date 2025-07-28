@@ -9,32 +9,6 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
-/* EmailAddressFactory is commented out because we are missing a factory for EmailAddress.
- * The EmailAddressFactory class is missing; to fix, factory file must exists and is correctly registered in the Database\Factories namespace.
-
-<?php
-
-namespace Database\Factories;
-
-use App\Models\EmailAddress;
-use Illuminate\Database\Eloquent\Factories\Factory;
-
-class EmailAddressFactory extends Factory
-{
-    protected $model = EmailAddress::class;
-
-    public function definition()
-    {
-        return [
-            'email' => $this->faker->unique()->safeEmail,
-            'verification_code' => null,
-            'verification_sent_at' => null,
-            'user_id' => \App\Models\User::factory(),
-        ];
-    }
-}
-*/
-
 class VerifyEmailTest extends TestCase
 {
     public function testEnvelopeContainsCorrectSubjectAndSender()
@@ -47,8 +21,8 @@ class VerifyEmailTest extends TestCase
         $envelope = $mailable->envelope();
 
         $this->assertEquals('Test App - Verify Email Address', $envelope->subject);
-        $this->assertEquals('no-reply@test.com', $envelope->from[0]->address);
-        $this->assertEquals('Test App', $envelope->from[0]->name);
+        $this->assertEquals('no-reply@test.com', $envelope->from->address);
+        $this->assertEquals('Test App', $envelope->from->name);
     }
 
     public function testContentContainsCorrectData()

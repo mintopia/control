@@ -6,9 +6,15 @@ use App\Casts\SettingValue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 use PHPUnit\Framework\TestCase;
+use Illuminate\Support\Facades\Facade;
 
-class SettingValueTest extends TestCase
-{
+class SettingValueTest extends TestCase {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Facade::setFacadeApplication(app());
+    }
+
     public function testGetDecryptsEncryptedValue()
     {
         $model = $this->createMock(Model::class);
