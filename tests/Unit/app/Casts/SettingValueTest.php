@@ -1,18 +1,18 @@
 <?php
 
-namespace Tests\App;
+namespace Tests\Unit\App\Casts;
+
+use Tests\TestCase;
 
 use App\Casts\SettingValue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
-use PHPUnit\Framework\TestCase;
-use Illuminate\Support\Facades\Facade;
 
 class SettingValueTest extends TestCase {
+
     protected function setUp(): void
     {
         parent::setUp();
-        Facade::setFacadeApplication(app());
     }
 
     public function testGetDecryptsEncryptedValue()

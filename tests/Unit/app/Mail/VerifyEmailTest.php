@@ -2,12 +2,13 @@
 
 namespace Tests\Unit\App\Mail;
 
+use Tests\TestCase;
+
 use App\Mail\VerifyEmail;
 use App\Models\EmailAddress;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
-use Tests\TestCase;
 
 class VerifyEmailTest extends TestCase
 {
