@@ -2,7 +2,8 @@
 
 namespace Tests\Unit\App\Models\Traits;
 
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
+
 use App\Models\Traits\ToString;
 
 class ToStringTest extends TestCase
