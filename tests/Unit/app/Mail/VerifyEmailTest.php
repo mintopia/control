@@ -11,6 +11,10 @@ use Tests\TestCase;
 
 class VerifyEmailTest extends TestCase
 {
+    // These tests currently do not work, the EmailAddressFactory
+    // FIXME: Using the EmailAddress::factory() resulted in a database connection error (User:Factory() needs it..?)
+    // TEST: SettingFactory was stood up, but does not work yet...
+
     public function testEnvelopeContainsCorrectSubjectAndSender()
     {
         $emailAddress = EmailAddress::factory()->make();
