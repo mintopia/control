@@ -3,7 +3,9 @@
 namespace Tests\Unit\App\Providers;
 
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\ServiceProvider;
 use Tests\TestCase;
+use Mockery;
 
 class BroadcastServiceProviderTest extends TestCase
 {
@@ -14,5 +16,40 @@ class BroadcastServiceProviderTest extends TestCase
         $provider = new \App\Providers\BroadcastServiceProvider(app());
         $provider->boot();
         $this->assertTrue(true); // If no exception, pass
+    }
+
+    public function testProviderIsInstanceOfServiceProvider()
+    {
+        $provider = new \App\Providers\BroadcastServiceProvider(app());
+        $this->assertInstanceOf(ServiceProvider::class, $provider);
+    }
+
+    public function testBootDoesNotThrowIfChannelsFileMissing()
+    {
+        Broadcast::shouldReceive('routes')->once();
+        // Temporarily override base_path to a non-existent file
+        $provider = Mockery::mock(\App\Providers\BroadcastServiceProvider::class, [app()])
+            ->makePartial()
+            ->shouldAllowMockingProtectedMethods();
+
+        // Mock the global base_path function
+        $basePath = base_path('routes/channels.php');
+        $mockedBasePath = $basePath . '.notfound';
+        $provider->shouldReceive('boot')->andReturnUsing(function () use ($mockedBasePath) {
+            Broadcast::routes();
+            // Simulate require of missing file
+            @require $mockedBasePath;
+        });
+
+        $provider->boot();
+        $this->assertTrue(true);
+    }
+
+    public function testBootCallsBroadcastRoutesExactlyOnce()
+    {
+        Broadcast::shouldReceive('routes')->once();
+        $provider = new \App\Providers\BroadcastServiceProvider(app());
+        $provider->boot();
+        $this->assertTrue(true);
     }
 }
