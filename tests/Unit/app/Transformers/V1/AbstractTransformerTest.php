@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\App\Transformers\V1;
+namespace Tests\Unit\app\Transformers\V1;
 
 use Tests\TestCase;
 

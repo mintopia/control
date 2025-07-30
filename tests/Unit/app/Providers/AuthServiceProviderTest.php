@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\App\Providers;
+namespace Tests\Unit\app\Providers;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
@@ -15,7 +15,7 @@ class AuthServiceProviderTest extends TestCase
         Gate::shouldReceive('define')->with('viewPulse', \Closure::class)->once();
         Gate::shouldReceive('define')->with('manager', \Closure::class)->once();
         Gate::shouldReceive('define')->with('anyPrivilegedRole', \Closure::class)->once();
-        $provider = new \App\Providers\AuthServiceProvider(app());
+        $provider = new \app\Providers\AuthServiceProvider(app());
         $provider->boot();
     }
 }

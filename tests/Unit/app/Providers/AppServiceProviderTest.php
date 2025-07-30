@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\App\Providers;
+namespace Tests\Unit\app\Providers;
 
 use Tests\TestCase;
 
@@ -16,7 +16,7 @@ class AppServiceProviderTest extends TestCase
     public function testBladeDirectiveIsRegistered()
     {
         Blade::shouldReceive('directive')->once();
-        $provider = new \App\Providers\AppServiceProvider(app());
+        $provider = new \app\Providers\AppServiceProvider(app());
         $provider->boot();
     }
 
@@ -42,7 +42,7 @@ class AppServiceProviderTest extends TestCase
         View::shouldReceive('composer')->andReturnUsing(function ($views, $callback) use ($view) {
             $callback($view);
         });
-        $provider = new \App\Providers\AppServiceProvider(app());
+        $provider = new \app\Providers\AppServiceProvider(app());
         $provider->boot();
     }
 }

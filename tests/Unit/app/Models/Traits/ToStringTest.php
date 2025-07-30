@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\App\Models\Traits;
+namespace Tests\Unit\app\Models\Traits;
 
 use Tests\TestCase;
 
@@ -13,8 +13,14 @@ class ToStringTest extends TestCase
         $model = new class {
             use ToString;
             public $id = 42;
-            public function toStringModelName() { return 'CustomModel'; }
-            public function toStringName() { return 'TestName'; }
+            public function toStringModelName()
+            {
+                return 'CustomModel';
+            }
+            public function toStringName()
+            {
+                return 'TestName';
+            }
         };
 
         $this->assertEquals('[CustomModel:42] TestName', (string)$model);
@@ -47,11 +53,13 @@ class ToStringTest extends TestCase
         $model = new class {
             use ToString;
             public $id = 5;
-            public function toStringName() { return 'OnlyName'; }
+            public function toStringName()
+            {
+                return 'OnlyName';
+            }
         };
 
         $expectedClass = (new \ReflectionClass($model))->getShortName();
         $this->assertEquals("[$expectedClass:5] OnlyName", (string)$model);
     }
-
 }

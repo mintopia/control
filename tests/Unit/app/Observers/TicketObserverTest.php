@@ -11,11 +11,27 @@ class TicketObserverTest extends TestCase
 {
     public function testSavedUpdatesPlanRevisionIfDirtyAndHasSeat()
     {
-        $ticket = $this->getMockBuilder(Ticket::class)->onlyMethods(['isDirty'])->getMock();
+        // Mock the plan with updateRevision expectation
+        $planMock = $this->getMockBuilder('stdClass')->onlyMethods(['updateRevision'])->getMock();
+        $planMock->expects($this->once())->method('updateRevision');
+
+        // Mock the seat with a plan property
+        $seatMock = $this->getMockBuilder('stdClass')->getMock();
+        $seatMock->plan = $planMock;
+
+        // Mock the Ticket and override isDirty and seat property via constructor or mocking
+        $ticket = $this->getMockBuilder(Ticket::class)
+            ->onlyMethods(['isDirty'])
+            ->disableOriginalConstructor()
+            ->getMock();
+
         $ticket->method('isDirty')->willReturn(true);
-        $ticket->seat = $this->getMockBuilder('stdClass')->addMethods(['plan'])->getMock();
-        $ticket->seat->plan = $this->getMockBuilder('stdClass')->addMethods(['updateRevision'])->getMock();
-        $ticket->seat->plan->expects($this->once())->method('updateRevision');
+
+        // Use Reflection to set readonly property seat
+        $reflection = new \ReflectionClass($ticket);
+        $property = $reflection->getProperty('seat');
+        $property->setValue($ticket, $seatMock);
+
         $observer = new TicketObserver();
         $observer->saved($ticket);
     }

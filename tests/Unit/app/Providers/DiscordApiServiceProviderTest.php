@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\App\Providers;
+namespace Tests\Unit\app\Providers;
 
 use Tests\TestCase;
 
@@ -15,7 +15,7 @@ class DiscordApiServiceProviderTest extends TestCase
 {
     public function testRegistersDiscordApiSingleton()
     {
-        $provider = new \App\Providers\DiscordApiServiceProvider(app());
+        $provider = new \app\Providers\DiscordApiServiceProvider(app());
         // Mock SocialProvider and Setting
         SocialProvider::shouldReceive('whereCode')->with('discord')->andReturnSelf();
         SocialProvider::shouldReceive('first')->andReturn((object)['id' => 1]);
@@ -27,7 +27,7 @@ class DiscordApiServiceProviderTest extends TestCase
 
     public function testProvidesReturnsDiscordApiClass()
     {
-        $provider = new \App\Providers\DiscordApiServiceProvider(app());
+        $provider = new \app\Providers\DiscordApiServiceProvider(app());
         $this->assertContains(DiscordApi::class, $provider->provides());
     }
 }

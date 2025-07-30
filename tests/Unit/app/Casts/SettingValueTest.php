@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\App\Casts;
+namespace Tests\Unit\app\Casts;
 
 use Tests\TestCase;
 
@@ -8,7 +8,8 @@ use App\Casts\SettingValue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 
-class SettingValueTest extends TestCase {
+class SettingValueTest extends TestCase
+{
 
     protected function setUp(): void
     {

@@ -8,6 +8,8 @@ use App\Models\Clan;
 use App\Models\SeatingPlan;
 use Mockery;
 
+use function App\makePermalink;
+
 class ClanObserverTest extends TestCase
 {
     public function testSavedUpdatesPlansIfNameDirty()
@@ -74,11 +76,8 @@ class ClanObserverTest extends TestCase
         $clan->invite_code = null;
         $clan->name = 'Test Clan';
         $clan->expects($this->once())->method('generateCode');
-        // Mock makePermalink global function
-        require_once __DIR__ . '/../../../app/Helpers.php';
-        if (!function_exists('App\makePermalink')) {
-            function App\makePermalink($name) { return strtolower(str_replace(' ', '-', $name)); }
-        }
+        // We are using makePermalink from  our helpers
+        $clan->code = makePermalink($clan->name);
 
         $observer = new ClanObserver();
         $observer->saving($clan);
@@ -93,11 +92,6 @@ class ClanObserverTest extends TestCase
         $clan->invite_code = 'abc123';
         $clan->name = 'Another Clan';
         $clan->expects($this->never())->method('generateCode');
-        // Mock makePermalink global function
-        require_once __DIR__ . '/../../../app/Helpers.php';
-        if (!function_exists('App\makePermalink')) {
-            function App\makePermalink($name) { return strtolower(str_replace(' ', '-', $name)); }
-        }
 
         $observer = new ClanObserver();
         $observer->saving($clan);

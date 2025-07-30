@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\App\Providers;
+namespace Tests\Unit\app\Providers;
 
 use Tests\TestCase;
 
@@ -18,7 +18,7 @@ class PrometheusServiceProviderTest extends TestCase
 
         Prometheus::shouldReceive('addGauge')->atLeast()->once()->andReturn($gaugeMock);
         Redis::shouldReceive('get')->andReturn(1);
-        $provider = new \App\Providers\PrometheusServiceProvider(app());
+        $provider = new \app\Providers\PrometheusServiceProvider(app());
         $provider->register();
         $this->assertTrue(true);
     }
@@ -31,7 +31,7 @@ class PrometheusServiceProviderTest extends TestCase
         Redis::shouldReceive('mget')->andReturnUsing(function () {
             return [5, 10];
         });
-        $provider = new \App\Providers\PrometheusServiceProvider(app());
+        $provider = new \app\Providers\PrometheusServiceProvider(app());
         $result = $this->invokeProtected($provider, 'getMultipleFromRedis', ['metrics.http.method']);
         $this->assertIsArray($result);
     }

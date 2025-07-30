@@ -12,11 +12,10 @@ class EmailAddressObserverTest extends TestCase
     public function testCreatedAssociatesPrimaryEmailIfMissing()
     {
         $user = $this->getMockBuilder(User::class)->onlyMethods(['primaryEmail', 'save'])->getMock();
-        $user->primaryEmail = null;
-        $user->expects($this->once())->method('primaryEmail')->willReturnSelf();
+        $user->expects($this->once())->method('primaryEmail')->willReturn(null);
         $user->expects($this->once())->method('save');
         $emailAddress = new EmailAddress();
-        $emailAddress->user = $user;
+        $emailAddress->user_id = $user->id;
         $observer = new EmailAddressObserver();
         $observer->created($emailAddress);
     }

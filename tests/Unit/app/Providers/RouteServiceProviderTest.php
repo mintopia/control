@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\App\Providers;
+namespace Tests\Unit\app\Providers;
 
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
@@ -20,7 +20,7 @@ class RouteServiceProviderTest extends TestCase
         Route::shouldReceive('group')->with(base_path('routes/api.php'))->andReturnSelf();
         Route::shouldReceive('middleware')->with('web')->andReturnSelf();
         Route::shouldReceive('group')->with(base_path('routes/web.php'))->andReturnSelf();
-        $provider = new \App\Providers\RouteServiceProvider(app());
+        $provider = new \app\Providers\RouteServiceProvider(app());
         $provider->boot();
         $this->assertTrue(true);
     }

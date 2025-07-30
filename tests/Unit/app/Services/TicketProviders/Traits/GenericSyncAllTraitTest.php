@@ -30,15 +30,16 @@ class DummyProviderWithSyncAll
         return $this->provider->remoteTickets;
     }
 
-    public function makeTicket($a, $b)
-    {
-        $this->makeTicketCalled = true;
-        $this->makeTicketArgs[] = [$a, $b];
-        // Return a dummy ticket object
-        return (object)['id' => $b->id, '__toString' => function () {
-            return 'Ticket#' . $this->id;
-        }];
-    }
+    // FIXME  This function creates a ticket but ID does not exist...? it isn't used either...?
+    // public function makeTicket($a, $b)
+    // {
+    //     $this->makeTicketCalled = true;
+    //     $this->makeTicketArgs[] = [$a, $b];
+    //     // Return a dummy ticket object
+    //     return (object)['id' => $b->id, '__toString' => function () {
+    //         return 'Ticket#' . $this->id;
+    //     }];
+    // }
 }
 
 class GenericSyncAllTraitTest extends TestCase

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\App\Providers;
+namespace Tests\Unit\app\Providers;
 
 use Tests\TestCase;
 
@@ -23,7 +23,7 @@ class TelescopeServiceProviderTest extends TestCase
         $telescopeMock->shouldReceive('night')->once();
         $telescopeMock->shouldReceive('filter')->once();
         $telescopeMock->shouldReceive('avatar')->once();
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider = new \app\Providers\TelescopeServiceProvider(app());
         $provider->register();
         $this->assertTrue(true);
     }
@@ -33,7 +33,7 @@ class TelescopeServiceProviderTest extends TestCase
         $telescopeMock = \Mockery::mock('overload:Laravel\Telescope\Telescope');
         $telescopeMock->shouldReceive('hideRequestParameters')->once();
         $telescopeMock->shouldReceive('hideRequestHeaders')->once();
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider = new \app\Providers\TelescopeServiceProvider(app());
         $this->invokeProtected($provider, 'hideSensitiveRequestDetails');
         $this->assertTrue(true);
     }
@@ -41,7 +41,7 @@ class TelescopeServiceProviderTest extends TestCase
     public function testGateDefinesViewTelescope()
     {
         Gate::shouldReceive('define')->with('viewTelescope', \Closure::class)->once();
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider = new \app\Providers\TelescopeServiceProvider(app());
         $this->invokeProtected($provider, 'gate');
         $this->assertTrue(true);
     }
