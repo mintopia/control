@@ -28,6 +28,8 @@ class KernelTest extends TestCase
         $method->setAccessible(true);
         $method->invoke($kernel, $schedule);
         $events = collect($schedule->events())->map(fn($e) => $e->command)->all();
+        
+        // FIXME the assertion fails here for some reason unknown to me - kernel might not be loaded correctly in the test environment?
         $this->assertContains('sanctum:prune-expired --hours=24', $events);
         $this->assertContains('telescope:prune', $events);
         $this->assertContains('control:prune-clans', $events);
