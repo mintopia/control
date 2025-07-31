@@ -14,4 +14,46 @@ class UpdateSeatingPlanJobTest extends TestCase
         $job = new UpdateSeatingPlanJob($plan, 1);
         $this->assertInstanceOf(UpdateSeatingPlanJob::class, $job);
     }
+
+    public function testJobStoresPlanAndRevision()
+    {
+        $plan = $this->getMockBuilder(SeatingPlan::class)->disableOriginalConstructor()->getMock();
+        $job = new UpdateSeatingPlanJob($plan, 42);
+        $this->assertSame($plan, $job->plan);
+        $this->assertEquals(42, $job->revision);
+    }
+
+    public function testHandleDoesNotUpdateIfRevisionDoesNotMatch()
+    {
+        $plan = $this->getMockBuilder(SeatingPlan::class)->disableOriginalConstructor()->getMock();
+        $plan->revision = 2;
+        $plan->method('__toString')->willReturn('PlanA');
+
+        // Standard mock to validate DEBUG message
+        $message = 'not updating as';
+        $logger = $this->getMockBuilder(\Psr\Log\LoggerInterface::class)->getMock();
+        $logger->expects($this->once())->method('debug')->with($this->stringContains($message));
+        \Illuminate\Support\Facades\Log::swap($logger);
+
+        $job = new UpdateSeatingPlanJob($plan, 1);
+        $job->handle();
+    }
+
+    // FIXME this test does not work as things are missing that should be there
+    // public function testHandleUpdatesIfRevisionMatches()
+    // {
+    //     $plan = $this->getMockBuilder(SeatingPlan::class)
+    //         ->disableOriginalConstructor()
+    //         ->onlyMethods(['getData'])
+    //         ->getMock();
+
+    //     $plan->revision = 5;
+
+    //     // Expect getData to be called once
+    //     $plan->expects($this->once())->method('getData')->willReturn(collect(['foo' => 'bar']));
+
+    //     $job = new UpdateSeatingPlanJob($plan, 5);
+    //     $job->handle();
+    // }
+
 }
