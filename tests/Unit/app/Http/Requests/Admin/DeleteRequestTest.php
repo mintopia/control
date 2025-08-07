@@ -19,4 +19,13 @@ class DeleteRequestTest extends TestCase
         $rules = $request->rules();
         $this->assertArrayHasKey('confirm', $rules);
     }
+
+    public function testRulesConfirmIncludesRequiredStringInDelete()
+    {
+        $request = new DeleteRequest();
+        $rule = $request->rules()['confirm'];
+        $this->assertStringContainsString('required', $rule);
+        $this->assertStringContainsString('string', $rule);
+        $this->assertStringContainsString('in:delete', $rule);
+    }
 }

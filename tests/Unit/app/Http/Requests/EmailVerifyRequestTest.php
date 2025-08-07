@@ -32,16 +32,12 @@ class EmailVerifyRequestTest extends TestCase
 
     public function testCodeRuleClosurePassesIfNoException()
     {
-        $request = new EmailVerifyRequest();
-        $mockEmail = $this->getMockBuilder(\stdClass::class)
-            ->addMethods(['checkCode'])
-            ->getMock();
-        $mockEmail->expects($this->once())->method('checkCode')->with('abc123');
-        // Set the property dynamically to avoid undefined property error
-        $request->emailaddress = $this->getMockBuilder(\App\Models\EmailAddress::class)
+        $request = new EmailVerifyRequestStub();
+        $mockEmail = $this->getMockBuilder(\App\Models\EmailAddress::class)
             ->onlyMethods(['checkCode'])
             ->getMock();
-        $request->emailaddress->expects($this->once())->method('checkCode')->with('abc123');
+        $mockEmail->expects($this->once())->method('checkCode')->with('abc123');
+        $request->emailaddress = $mockEmail;
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['code'] as $rule) {
@@ -58,13 +54,12 @@ class EmailVerifyRequestTest extends TestCase
 
     public function testCodeRuleClosureFailsOnException()
     {
-        $request = new EmailVerifyRequest();
+        $request = new EmailVerifyRequestStub();
         $mockEmail = $this->getMockBuilder(\App\Models\EmailAddress::class)
             ->onlyMethods(['checkCode'])
             ->getMock();
         $mockEmail->expects($this->once())->method('checkCode')->with('badcode')
             ->willThrowException(new \App\Exceptions\EmailVerificationException('Invalid code'));
-        // Set the property dynamically to avoid undefined property error
         $request->emailaddress = $mockEmail;
         $rules = $request->rules();
         $closure = null;
@@ -82,4 +77,9 @@ class EmailVerifyRequestTest extends TestCase
         $closure('code', 'badcode', $fail);
         $this->assertTrue($called, 'Fail closure was not called');
     }
+}
+
+class EmailVerifyRequestStub extends EmailVerifyRequest
+{
+    public $emailaddress;
 }

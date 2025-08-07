@@ -19,4 +19,36 @@ class TicketImportRequestTest extends TestCase
         $rules = $request->rules();
         $this->assertArrayHasKey('csv', $rules);
     }
+
+    public function testRulesReturnsArray()
+    {
+        $request = new TicketImportRequest();
+        $rules = $request->rules();
+        $this->assertIsArray($rules);
+    }
+
+    public function testCsvRuleContainsFileAndMimetypes()
+    {
+        $request = new TicketImportRequest();
+        $rules = $request->rules();
+        $this->assertArrayHasKey('csv', $rules);
+        $this->assertStringContainsString('file', $rules['csv']);
+        $this->assertTrue(
+            str_contains($rules['csv'], 'mimetypes:') || str_contains($rules['csv'], 'mimes:')
+        );
+    }
+
+    public function testRulesDoesNotContainUnexpectedFields()
+    {
+        $request = new TicketImportRequest();
+        $rules = $request->rules();
+        $this->assertCount(1, $rules);
+        $this->assertArrayHasKey('csv', $rules);
+    }
+
+    public function testAuthorizeAlwaysTrue()
+    {
+        $request = new TicketImportRequest();
+        $this->assertTrue($request->authorize());
+    }
 }
