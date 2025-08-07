@@ -12,4 +12,9 @@ class EventControllerTest extends TestCase
         $controller = new EventController();
         $this->assertInstanceOf(EventController::class, $controller);
     }
+
+    public function testIndexFailsForStaticEventQuery()
+    {
+        $this->fail('Static method mocking for Event::query() is not supported in this environment.');
+    }
 }

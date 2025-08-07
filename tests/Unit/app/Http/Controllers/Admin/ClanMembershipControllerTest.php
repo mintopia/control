@@ -12,4 +12,9 @@ class ClanMembershipControllerTest extends TestCase
         $controller = new ClanMembershipController();
         $this->assertInstanceOf(ClanMembershipController::class, $controller);
     }
+
+    public function testUpdateFailsForStaticClanRoleWhereCode()
+    {
+        $this->fail('Static method mocking for ClanRole::whereCode() is not supported in this environment.');
+    }
 }

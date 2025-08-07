@@ -12,4 +12,14 @@ class SeatingPlanControllerTest extends TestCase
         $controller = new SeatingPlanController();
         $this->assertInstanceOf(SeatingPlanController::class, $controller);
     }
+
+    public function testIndexFailsForStaticFractal()
+    {
+        $this->fail('Static method mocking for fractal() is not supported in this environment.');
+    }
+
+    public function testShowFailsForStaticFractal()
+    {
+        $this->fail('Static method mocking for fractal() is not supported in this environment.');
+    }
 }

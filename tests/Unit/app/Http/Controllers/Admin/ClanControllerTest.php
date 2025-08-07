@@ -12,4 +12,9 @@ class ClanControllerTest extends TestCase
         $controller = new ClanController();
         $this->assertInstanceOf(ClanController::class, $controller);
     }
+
+    public function testIndexFailsForStaticClanQuery()
+    {
+        $this->fail('Static method mocking for Clan::query() is not supported in this environment.');
+    }
 }

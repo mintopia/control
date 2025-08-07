@@ -12,4 +12,9 @@ class EventMappingControllerTest extends TestCase
         $controller = new EventMappingController();
         $this->assertInstanceOf(EventMappingController::class, $controller);
     }
+
+    public function testStoreFailsForStaticResponseOrRoute()
+    {
+        $this->fail('Static method mocking for response() or Route facade is not supported in this environment.');
+    }
 }

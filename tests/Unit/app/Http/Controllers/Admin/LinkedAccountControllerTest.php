@@ -12,4 +12,9 @@ class LinkedAccountControllerTest extends TestCase
         $controller = new LinkedAccountController();
         $this->assertInstanceOf(LinkedAccountController::class, $controller);
     }
+
+    public function testDestroyFailsForStaticResponseOrRoute()
+    {
+        $this->fail('Static method mocking for response() or Route facade is not supported in this environment.');
+    }
 }

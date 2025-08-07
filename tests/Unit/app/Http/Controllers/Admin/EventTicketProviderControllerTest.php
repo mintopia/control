@@ -12,4 +12,9 @@ class EventTicketProviderControllerTest extends TestCase
         $controller = new EventTicketProviderController();
         $this->assertInstanceOf(EventTicketProviderController::class, $controller);
     }
+
+    public function testNoMethodsToTest()
+    {
+        $this->assertTrue(true, 'No methods to test in EventTicketProviderController.');
+    }
 }
