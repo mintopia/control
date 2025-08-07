@@ -18,4 +18,55 @@ class ClanMembershipRequestTest extends TestCase
         $request = new ClanMembershipRequest();
         $this->assertIsArray($request->rules());
     }
+
+    public function testRulesContainCodeWithRequiredAndString()
+    {
+        $request = new ClanMembershipRequest();
+        $rules = $request->rules();
+        $this->assertArrayHasKey('code', $rules);
+        $codeRules = $rules['code'];
+        $this->assertContains('required', $codeRules);
+        $this->assertContains('string', $codeRules);
+    }
+
+    public function testCodeRuleClosureFailsIfNoClanFound()
+    {
+        \App\Models\Clan::shouldReceive('whereInviteCode')->with('ABC123')->andReturnSelf();
+        \App\Models\Clan::shouldReceive('count')->andReturn(0);
+        $request = new ClanMembershipRequest();
+        $rules = $request->rules();
+        $closure = null;
+        foreach ($rules['code'] as $rule) {
+            if ($rule instanceof \Closure) {
+                $closure = $rule;
+                break;
+            }
+        }
+        $called = false;
+        $fail = function ($message) use (&$called) {
+            $called = true;
+            $this->assertEquals('The invite code is invalid', $message);
+        };
+        $closure('code', 'abc123', $fail);
+        $this->assertTrue($called, 'Fail closure was not called for invalid code');
+    }
+
+    public function testCodeRuleClosurePassesIfClanFound()
+    {
+        \App\Models\Clan::shouldReceive('whereInviteCode')->with('ABC123')->andReturnSelf();
+        \App\Models\Clan::shouldReceive('count')->andReturn(1);
+        $request = new ClanMembershipRequest();
+        $rules = $request->rules();
+        $closure = null;
+        foreach ($rules['code'] as $rule) {
+            if ($rule instanceof \Closure) {
+                $closure = $rule;
+                break;
+            }
+        }
+        $fail = function () {
+            $this->fail('Fail closure should not be called when clan exists');
+        };
+        $closure('code', 'abc123', $fail);
+    }
 }

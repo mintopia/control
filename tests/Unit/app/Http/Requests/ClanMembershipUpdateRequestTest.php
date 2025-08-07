@@ -18,4 +18,13 @@ class ClanMembershipUpdateRequestTest extends TestCase
         $request = new ClanMembershipUpdateRequest();
         $this->assertIsArray($request->rules());
     }
+
+    public function testRulesContainRoleWithRequiredAndExists()
+    {
+        $request = new ClanMembershipUpdateRequest();
+        $rules = $request->rules();
+        $this->assertArrayHasKey('role', $rules);
+        $this->assertStringContainsString('required', $rules['role']);
+        $this->assertStringContainsString('exists:clan_roles,code', $rules['role']);
+    }
 }
