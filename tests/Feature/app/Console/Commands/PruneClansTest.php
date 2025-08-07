@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\app\Console\Commands;
+namespace Tests\Feature\app\Console\Commands;
 
 use Tests\TestCase;
 use App\Console\Commands\PruneClans;
@@ -14,7 +14,6 @@ class PruneClansTest extends TestCase
 {
     use RefreshDatabase;
 
-    // TODO Tests do not work with the current setup, need to fix
     public function testCanInstantiateCommand()
     {
         $command = new PruneClans();
