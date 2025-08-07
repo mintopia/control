@@ -16,13 +16,23 @@ class MetricsCollectorTest extends TestCase
             ->getMock();
         $middleware->expects($this->once())->method('storeMetrics')->with('GET', 200);
         $request = $this->createMock(Request::class);
-        $request->method('getRequestUri')->willReturn('/not-prometheus');
-        $request->method('getMethod')->willReturn('GET');
+        $request->expects($this->any())->method('getRequestUri')->willReturn('/not-prometheus');
+        $request->expects($this->any())->method('getMethod')->willReturn('GET');
         $response = $this->createMock(Response::class);
-        $response->method('getStatusCode')->willReturn(200);
+        $response->expects($this->any())->method('getStatusCode')->willReturn(200);
         $next = function () use ($response) {
             return $response;
         };
         $middleware->handle($request, $next);
+    }
+
+    public function testHandleDoesNotStoreMetricsForPrometheusUrl()
+    {
+        $this->fail('Static method mocking for config() or Config facade is not supported in this environment.');
+    }
+
+    public function testStaticMethodCannotBeTested()
+    {
+        $this->fail('Static method testing is not supported in this environment.');
     }
 }
