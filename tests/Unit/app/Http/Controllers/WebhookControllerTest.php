@@ -12,4 +12,9 @@ class WebhookControllerTest extends TestCase
         $controller = new WebhookController();
         $this->assertInstanceOf(WebhookController::class, $controller);
     }
+
+    public function testTicketsFailsForStaticResponse()
+    {
+        $this->fail('Static method mocking for response() is not supported in this environment.');
+    }
 }
