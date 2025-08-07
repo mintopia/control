@@ -25,11 +25,13 @@
                 "streetsidesoftware.code-spell-checker-cspell-dictionary-typescript",
                 "streetsidesoftware.code-spell-checker-cspell-dictionary-python",
                 "bmewburn.vscode-intelephense-client",
+                "satiromarra.vscode-php-test-explorer-docker",
                 "felixfbecker.php-intellisense",
                 "mikael.vscode-laravel-goto-view",
                 "onecentlin.laravel-blade",
                 "ryannaddy.laravel-artisan",
                 "stefanburt.see-all-php-errors",
+                "junstyle.php-cs-fixer",
                 "xdebug.php-debug"
             ]
         }
