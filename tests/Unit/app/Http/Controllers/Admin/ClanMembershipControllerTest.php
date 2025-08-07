@@ -15,66 +15,86 @@ class ClanMembershipControllerTest extends TestCase
         $this->assertInstanceOf(ClanMembershipController::class, $controller);
     }
 
-    public function testAddMemberReturnsSuccessResponse()
+    // FIXME Database connection needed - move to Feature?
+    // public function testEditReturnsViewWithCorrectData()
+    // {
+    //     $clan = Mockery::mock(\App\Models\Clan::class, []);
+    //     $member = Mockery::mock(\App\Models\ClanMembership::class, []);
+
+    //     $controller = Mockery::mock(ClanMembershipController::class, [])->makePartial();
+
+    //     $controller->shouldReceive('edit')
+    //         ->once()
+    //         ->with($clan, $member)
+    //         ->andReturn(view('admin.clanmemberships.edit', [
+    //             'clan' => $clan,
+    //             'member' => $member,
+    //         ]));
+
+    //     $response = $controller->edit($clan, $member);
+
+    //     $this->assertEquals('admin.clanmemberships.edit', $response->name());
+    //     $this->assertArrayHasKey('clan', $response->getData());
+    //     $this->assertArrayHasKey('member', $response->getData());
+    // }
+
+    // public function testUpdateRedirectsWithSuccessMessage()
+    // {
+    //     $request = Mockery::mock(\App\Http\Requests\ClanMembershipUpdateRequest::class);
+    //     $clan = Mockery::mock(\App\Models\Clan::class);
+    //     $member = Mockery::mock(\App\Models\ClanMembership::class);
+    //     $role = Mockery::mock(\App\Models\ClanRole::class);
+
+    //     $request->shouldReceive('input')->with('role')->andReturn('test-role');
+    //     $role->shouldReceive('first')->andReturn($role);
+    //     $member->shouldReceive('role')->andReturnSelf();
+    //     $member->shouldReceive('associate')->with($role);
+    //     $member->shouldReceive('save');
+
+    //     $controller = Mockery::mock(ClanMembershipController::class)->makePartial();
+
+    //     $response = $controller->update($request, $clan, $member);
+
+    //     $this->assertEquals(302, $response->getStatusCode());
+    //     $this->assertEquals('The clan member has been updated', $response->getSession()->get('successMessage'));
+    // }
+
+    // public function testDestroyRedirectsWithSuccessMessage()
+    // {
+    //     $clan = Mockery::mock(\App\Models\Clan::class);
+    //     $member = Mockery::mock(\App\Models\ClanMembership::class);
+
+    //     $member->shouldReceive('canDelete')->andReturn(true);
+    //     $member->shouldReceive('delete');
+
+    //     $controller = Mockery::mock(ClanMembershipController::class)->makePartial();
+
+    //     $response = $controller->destroy($clan, $member);
+
+    //     $this->assertEquals(302, $response->getStatusCode());
+    //     $this->assertEquals('The clan member has been removed', $response->getSession()->get('successMessage'));
+    // }
+
+
+    public function testDeleteReturnsViewWithCorrectData()
     {
-        $request = Mockery::mock(Request::class);
-        $request->shouldReceive('all')->once()->andReturn(['member_id' => 1, 'clan_id' => 2]);
+        $clan = Mockery::mock(\App\Models\Clan::class);
+        $member = Mockery::mock(\App\Models\ClanMembership::class);
 
         $controller = Mockery::mock(ClanMembershipController::class)->makePartial();
 
-        $controller->shouldReceive('addMember')
+        $controller->shouldReceive('delete')
             ->once()
-            ->with(Mockery::type(Request::class))
-            ->andReturn(response()->json(['message' => 'Member added'], 200));
+            ->with($clan, $member)
+            ->andReturn(view('admin.clanmemberships.delete', [
+                'clan' => $clan,
+                'member' => $member,
+            ]));
 
-        $response = $controller->addMember($request);
+        $response = $controller->delete($clan, $member);
 
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['message' => 'Member added']),
-            $response->getContent()
-        );
-    }
-
-    public function testRemoveMemberReturnsSuccessResponse()
-    {
-        $controller = Mockery::mock(ClanMembershipController::class)->makePartial();
-
-        $controller->shouldReceive('removeMember')
-            ->once()
-            ->with(1, 2)
-            ->andReturn(response()->json(['message' => 'Member removed'], 200));
-
-        $response = $controller->removeMember(1, 2);
-
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['message' => 'Member removed']),
-            $response->getContent()
-        );
-    }
-
-    public function testListMembersReturnsExpectedResponse()
-    {
-        $controller = Mockery::mock(ClanMembershipController::class)->makePartial();
-
-        $controller->shouldReceive('listMembers')
-            ->once()
-            ->with(2)
-            ->andReturn(response()->json(['members' => ['member1', 'member2']], 200));
-
-        $response = $controller->listMembers(2);
-
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['members' => ['member1', 'member2']]),
-            $response->getContent()
-        );
-    }
-
-    protected function tearDown(): void
-    {
-        Mockery::close();
-        parent::tearDown();
+        $this->assertEquals('admin.clanmemberships.delete', $response->name());
+        $this->assertArrayHasKey('clan', $response->getData());
+        $this->assertArrayHasKey('member', $response->getData());
     }
 }
