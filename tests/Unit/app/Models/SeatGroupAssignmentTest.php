@@ -12,4 +12,10 @@ class SeatGroupAssignmentTest extends TestCase
         $assignment = new SeatGroupAssignment();
         $this->assertInstanceOf(SeatGroupAssignment::class, $assignment);
     }
+
+    public function testGroupRelationship()
+    {
+        $assignment = new SeatGroupAssignment();
+        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $assignment->group());
+    }
 }
