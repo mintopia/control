@@ -26,9 +26,51 @@
 
 ### Environment discovery
 
-- [-] Tests running locally - not desired (php not installed locally)
-- [-] Tests running in VScode DevContainer - tried, works, but struggling with test adapter
-- [x] Tests running in VsCode with Lavarel extension and auto-config (no settings needed) - Docker-compose is invoked through Lavarel extension
+Tests running in VsCode with [PHP Unit Test Explorer Lavarel](https://marketplace.visualstudio.com/items?itemName=recca0120.vscode-phpunit) extension and the following config
+
+#### Workspace setting
+
+These settings are located in personal workspace due to different local folder structure
+
+```json
+{
+    // Laravel Extra Intellisense: this may not work for all features, but allows some PHP code execution via Docker
+    // This may not be needed if PHP is installed locally
+    // "LaravelExtraIntellisense.phpCommand": "docker compose run --rm php -r \"{code}\"",
+
+    // Enable running artisan commands in Docker
+    "artisan.docker.enabled": true,
+    "artisan.docker.command": "docker compose run --rm artisan",
+
+    // PHPUnit Text Explorer (recca0120.vscode-phpunit) - Configuration for CONTROL
+    "phpunit.command": "docker compose run --rm artisan test",
+    "phpunit.php": "", // this needs to be empty (default is php)
+    "phpunit.paths": { // working on Windows and translating paths to docker/linux relative paths
+        "d:\\Code\\Public\\control\\tests": "tests",
+        "d:\\Code\\Public\\control\\app": "app"
+    },
+}
+```
+
+
+#### Test Environment creation
+
+Copied from README, adapted as needed
+
+```bash
+cp .env.example .env
+docker compose up -d redis db
+docker compose run --rm composer install
+docker compose run --rm artisan key:generate
+docker compose run --rm artisan migrate
+docker compose run --rm artisan db:seed
+docker compose run --rm artisan control:setup-discord
+docker compose run --rm npm install
+docker compose run --rm npm run build
+docker compose up -d
+```
+
+
 
 ## Changes (so far)
 

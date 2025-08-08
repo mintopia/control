@@ -18,4 +18,92 @@ class AuthServiceProviderTest extends TestCase
         $provider = new \app\Providers\AuthServiceProvider(app());
         $provider->boot();
     }
+
+    public function testAdminGateLogic()
+    {
+        $provider = new \App\Providers\AuthServiceProvider(app());
+        $provider->boot();
+
+        $user = $this->getMockBuilder(User::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['hasRole'])
+            ->getMock();
+        $user->expects($this->atLeastOnce())
+            ->method('hasRole')
+            ->with('admin')
+            ->willReturnOnConsecutiveCalls(true, false);
+
+        $this->assertTrue(Gate::forUser($user)->allows('admin'));
+        $this->assertFalse(Gate::forUser($user)->allows('admin'));
+    }
+
+    public function testManagerGateLogic()
+    {
+        $provider = new \App\Providers\AuthServiceProvider(app());
+        $provider->boot();
+
+        $user = $this->getMockBuilder(User::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['hasRole'])
+            ->getMock();
+        $user->expects($this->atLeastOnce())
+            ->method('hasRole')
+            ->with('manager')
+            ->willReturnOnConsecutiveCalls(true, false);
+
+        $this->assertTrue(Gate::forUser($user)->allows('manager'));
+        $this->assertFalse(Gate::forUser($user)->allows('manager'));
+    }
+
+    public function testAnyPrivilegedRoleGateLogic()
+    {
+        $provider = new \App\Providers\AuthServiceProvider(app());
+        $provider->boot();
+
+        // manager true, admin false
+        $user = $this->getMockBuilder(User::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['hasRole'])
+            ->getMock();
+        $user->method('hasRole')->willReturnCallback(function ($role) {
+            return $role === 'manager';
+        });
+        $this->assertTrue(Gate::forUser($user)->allows('anyPrivilegedRole'));
+
+        // manager false, admin true
+        $user = $this->getMockBuilder(User::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['hasRole'])
+            ->getMock();
+        $user->method('hasRole')->willReturnCallback(function ($role) {
+            return $role === 'admin';
+        });
+        $this->assertTrue(Gate::forUser($user)->allows('anyPrivilegedRole'));
+
+        // manager false, admin false
+        $user = $this->getMockBuilder(User::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['hasRole'])
+            ->getMock();
+        $user->method('hasRole')->willReturn(false);
+        $this->assertFalse(Gate::forUser($user)->allows('anyPrivilegedRole'));
+    }
+
+    public function testViewPulseGateLogic()
+    {
+        $provider = new \App\Providers\AuthServiceProvider(app());
+        $provider->boot();
+
+        $user = $this->getMockBuilder(User::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['hasRole'])
+            ->getMock();
+        $user->expects($this->atLeastOnce())
+            ->method('hasRole')
+            ->with('admin')
+            ->willReturnOnConsecutiveCalls(true, false);
+
+        $this->assertTrue(Gate::forUser($user)->allows('viewPulse'));
+        $this->assertFalse(Gate::forUser($user)->allows('viewPulse'));
+    }
 }

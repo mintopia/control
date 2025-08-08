@@ -12,43 +12,47 @@ use Illuminate\Support\Facades\Route;
 
 class VerifyEmailTest extends TestCase
 {
-    // These tests currently do not work, the EmailAddressFactory
-    // FIXME: Using the EmailAddress::factory() resulted in a database connection error (User:Factory() needs it..?)
-    // TEST: SettingFactory was stood up, but does not work yet...
-
-    public function testEnvelopeContainsCorrectSubjectAndSender()
+    public function testAttachmentsReturnsEmptyArray()
     {
         $emailAddress = EmailAddress::factory()->make();
-        Setting::factory()->create(['code' => 'name', 'value' => 'Test App']);
-        Config::set('mail.from.address', 'no-reply@test.com');
+        $mailable = new VerifyEmail($emailAddress);
+
+        $this->assertIsArray($mailable->attachments());
+        $this->assertEmpty($mailable->attachments());
+    }
+
+    public function testEnvelopeUsesSettingNameAndConfigFromAddress()
+    {
+        $emailAddress = EmailAddress::factory()->make();
+        Setting::factory()->create(['code' => 'name', 'value' => 'Control Panel']);
+        Config::set('mail.from.address', 'admin@control.test');
 
         $mailable = new VerifyEmail($emailAddress);
         $envelope = $mailable->envelope();
 
-        $this->assertEquals('Test App - Verify Email Address', $envelope->subject);
-        $this->assertEquals('no-reply@test.com', $envelope->from->address);
-        $this->assertEquals('Test App', $envelope->from->name);
+        $this->assertEquals('Control Panel - Verify Email Address', $envelope->subject);
+        $this->assertEquals('admin@control.test', $envelope->from->address);
+        $this->assertEquals('Control Panel', $envelope->from->name);
     }
 
-    public function testContentContainsCorrectData()
+    public function testContentWithDifferentVerificationCode()
     {
         $emailAddress = EmailAddress::factory()->make([
-            'id' => 1,
-            'verification_code' => '123456',
+            'id' => 42,
+            'verification_code' => 'abcdef',
         ]);
-        Setting::factory()->create(['code' => 'name', 'value' => 'Test App']);
+        Setting::factory()->create(['code' => 'name', 'value' => 'MyApp']);
         Route::shouldReceive('route')->with('emails.verify.code', [
-            'emailaddress' => 1,
-            'code' => '123456',
-        ])->andReturn('http://test.app/verify/1/123456');
+            'emailaddress' => 42,
+            'code' => 'abcdef',
+        ])->andReturn('http://myapp.test/verify/42/abcdef');
 
         $mailable = new VerifyEmail($emailAddress);
         $content = $mailable->content();
 
         $this->assertEquals('emails.verifyemail', $content->markdown);
-        $this->assertArrayHasKey('url', $content->with);
-        $this->assertEquals('http://test.app/verify/1/123456', $content->with['url']);
+        $this->assertEquals('http://myapp.test/verify/42/abcdef', $content->with['url']);
         $this->assertEquals($emailAddress, $content->with['email']);
-        $this->assertEquals('Test App', $content->with['name']);
+        $this->assertEquals('MyApp', $content->with['name']);
     }
 }

@@ -13,9 +13,62 @@ use Laravel\Telescope\Telescope;
 class TelescopeServiceProviderTest extends TestCase
 {
 
+    // FIXME Facade being used does not implement the required getFacadeAccessor method?
+    /*
+    use Illuminate\Support\Facades\Gate;
+    use Laravel\Telescope\IncomingEntry;
+    use Laravel\Telescope\Facades\Telescope;
+    use Laravel\Telescope\TelescopeApplicationServiceProvider;
+
+    class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
+    {
+        public function register()
+        {
+            parent::register();
+            Telescope::night();
+            Telescope::filter(function (IncomingEntry $entry) {
+                if ($this->app->environment('local')) {
+                    return true;
+                }
+
+                // Filter out the seating plan API
+                if ($entry->isRequest() && str_starts_with($entry->content['uri'], '/api/v1/')) {
+                    return false;
+                }
+
+                if (config('telescope.nofilter', false)) {
+                    return true;
+                }
+
+                return $entry->isReportableException() ||
+                    $entry->isFailedRequest() ||
+                    $entry->isFailedJob() ||
+                    $entry->isScheduledTask() ||
+                    $entry->hasMonitoredTag();
+            });
+            Telescope::avatar(function ($id, $email) {
+                // Provide a default avatar logic or mock as needed
+                return null;
+            });
+        }
+
+        protected function hideSensitiveRequestDetails()
+        {
+            Telescope::hideRequestParameters(['_token']);
+            Telescope::hideRequestHeaders(['cookie', 'x-csrf-token', 'x-xsrf-token']);
+        }
+
+        protected function gate()
+        {
+            Gate::define('viewTelescope', function ($user) {
+                // Provide logic for viewing Telescope, e.g., only admin users
+                return true;
+            });
+        }
+    }
+    */
     public function testRegisterConfiguresTelescope()
     {
-        // Facade being used does not implement the required getFacadeAccessor method?
 
         Facade::shouldReceive('getFacadeApplication')->andReturn(app());
         Facade::clearResolvedInstance('telescope');

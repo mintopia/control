@@ -13,23 +13,36 @@ class BroadcastServiceProviderTest extends TestCase
     {
         Broadcast::shouldReceive('routes')->once();
         // We can't easily test require base_path('routes/channels.php') without integration, but we can check no exceptions
-        $provider = new \app\Providers\BroadcastServiceProvider(app());
+        $provider = new \App\Providers\BroadcastServiceProvider(app());
         $provider->boot();
         $this->assertTrue(true); // If no exception, pass
     }
 
     public function testProviderIsInstanceOfServiceProvider()
     {
-        $provider = new \app\Providers\BroadcastServiceProvider(app());
+        $provider = new \App\Providers\BroadcastServiceProvider(app());
         $this->assertInstanceOf(ServiceProvider::class, $provider);
     }
 
-    // FIXME
+
+    /*
+    FIXME The error occurs because the implementation in BroadcastServiceProvider directly requires the channels file without checking if it exists, so you should update the implementation to check for the file's existence before requiring it.
+    <?php
+    public function boot(): void
+    {
+        Broadcast::routes();
+
+        $channelsFile = base_path('routes/channels.php');
+        if (file_exists($channelsFile)) {
+            require $channelsFile;
+        }
+    }
+    */
     // public function testBootDoesNotThrowIfChannelsFileMissing()
     // {
     //     Broadcast::shouldReceive('routes')->once();
     //     // Temporarily override base_path to a non-existent file
-    //     $provider = Mockery::mock(\app\Providers\BroadcastServiceProvider::class, [app()])
+    //     $provider = Mockery::mock(\App\Providers\BroadcastServiceProvider::class, [app()])
     //         ->makePartial()
     //         ->shouldAllowMockingProtectedMethods();
 
@@ -49,7 +62,7 @@ class BroadcastServiceProviderTest extends TestCase
     public function testBootCallsBroadcastRoutesExactlyOnce()
     {
         Broadcast::shouldReceive('routes')->once();
-        $provider = new \app\Providers\BroadcastServiceProvider(app());
+        $provider = new \App\Providers\BroadcastServiceProvider(app());
         $provider->boot();
         $this->assertTrue(true);
     }

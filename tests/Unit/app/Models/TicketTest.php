@@ -62,6 +62,7 @@ class TicketTest extends TestCase
         $this->assertFalse($ticket->canTransfer());
     }
 
+    // TODO Function is not yet built TBC
     public function testCanTransferReturnsTrueIfEventNotEnded()
     {
         $ticket = new Ticket();
