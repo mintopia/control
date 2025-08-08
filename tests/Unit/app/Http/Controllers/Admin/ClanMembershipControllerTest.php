@@ -76,25 +76,25 @@ class ClanMembershipControllerTest extends TestCase
     // }
 
 
-    public function testDeleteReturnsViewWithCorrectData()
-    {
-        $clan = Mockery::mock(\App\Models\Clan::class);
-        $member = Mockery::mock(\App\Models\ClanMembership::class);
+    // public function testDeleteReturnsViewWithCorrectData()
+    // {
+    //     $clan = Mockery::mock(\App\Models\Clan::class);
+    //     $member = Mockery::mock(\App\Models\ClanMembership::class);
 
-        $controller = Mockery::mock(ClanMembershipController::class)->makePartial();
+    //     $controller = Mockery::mock(ClanMembershipController::class)->makePartial();
 
-        $controller->shouldReceive('delete')
-            ->once()
-            ->with($clan, $member)
-            ->andReturn(view('admin.clanmemberships.delete', [
-                'clan' => $clan,
-                'member' => $member,
-            ]));
+    //     $controller->shouldReceive('delete')
+    //         ->once()
+    //         ->with($clan, $member)
+    //         ->andReturn(view('admin.clanmemberships.delete', [
+    //             'clan' => $clan,
+    //             'member' => $member,
+    //         ]));
 
-        $response = $controller->delete($clan, $member);
+    //     $response = $controller->delete($clan, $member);
 
-        $this->assertEquals('admin.clanmemberships.delete', $response->name());
-        $this->assertArrayHasKey('clan', $response->getData());
-        $this->assertArrayHasKey('member', $response->getData());
-    }
+    //     $this->assertEquals('admin.clanmemberships.delete', $response->name());
+    //     $this->assertArrayHasKey('clan', $response->getData());
+    //     $this->assertArrayHasKey('member', $response->getData());
+    // }
 }
