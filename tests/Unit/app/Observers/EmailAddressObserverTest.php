@@ -11,11 +11,18 @@ class EmailAddressObserverTest extends TestCase
 {
     public function testCreatedAssociatesPrimaryEmailIfMissing()
     {
-        $user = $this->getMockBuilder(User::class)->onlyMethods(['primaryEmail', 'save'])->getMock();
-        $user->expects($this->once())->method('primaryEmail')->willReturn(null);
-        $user->expects($this->once())->method('save');
+        $belongsToMock = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+        $belongsToMock->shouldReceive('getResults')->once()->andReturn(null);
+        $belongsToMock->shouldReceive('associate')->once();
+
+        $user = \Mockery::mock(User::class)->makePartial();
+        $user->shouldReceive('primaryEmail')->once()->andReturn($belongsToMock);
+        $user->shouldReceive('save')->once();
+
         $emailAddress = new EmailAddress();
         $emailAddress->user_id = $user->id;
+        $emailAddress->setRelation('user', $user);
+
         $observer = new EmailAddressObserver();
         $observer->created($emailAddress);
     }
