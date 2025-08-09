@@ -53,7 +53,7 @@ class Seat extends Model
     use HasFactory;
     use ToString;
 
-    protected $fillable = ['row'];
+    protected $fillable = ['row', 'seat_group_id', 'seating_plan_id', 'ticket_id', 'x', 'y', 'number', 'label', 'description', 'class', 'disabled'];
 
     public function ticket(): BelongsTo
     {

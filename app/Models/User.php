@@ -73,6 +73,8 @@ class User extends Authenticatable
     use Notifiable;
     use ToString;
 
+    protected $fillable = ['id', 'nickname', 'name', 'avatar', 'terms_agreed_at', 'first_login', 'last_login', 'suspended', 'primary_email_id', 'tickets_synced_at', 'created_at', 'updated_at'];
+
     protected ?Collection $pickableTickets = null;
 
     protected $casts = [

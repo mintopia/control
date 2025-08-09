@@ -48,6 +48,8 @@ class LinkedAccount extends Model
     use HasFactory;
     use ToString;
 
+    protected $fillable = ['id', 'user_id', 'email_address_id', 'social_provider_id', 'external_id', 'name', 'avatar_url', 'access_token', 'refresh_token', 'access_token_expires_at', 'created_at', 'updated_at'];
+
     protected $hidden = [
         'access_token',
         'refresh_token',

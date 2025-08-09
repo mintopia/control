@@ -48,6 +48,12 @@ class EmailAddress extends Model
     use HasFactory;
     use ToString;
 
+    protected $fillable = ['id', 'user_id', 'email', 'verification_code', 'verification_sent_at', 'verified_at', 'created_at', 'updated_at'];
+
+    protected $hidden = [
+        'verification_code',
+    ];
+
     protected $casts = [
         'verified_at' => 'datetime',
         'verification_sent_at' => 'datetime',

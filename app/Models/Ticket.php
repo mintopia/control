@@ -58,6 +58,8 @@ class Ticket extends Model
     use HasFactory;
     use ToString;
 
+    protected $fillable = ['id', 'ticket_provider_id', 'user_id', 'event_id', 'ticket_type_id', 'external_id', 'original_email', 'name', 'reference', 'qrcode', 'transfer_code', 'created_at', 'updated_at'];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
