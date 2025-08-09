@@ -55,7 +55,7 @@ class Event extends Model
     use HasFactory;
     use ToString;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'code', 'draft', 'boxoffice_url', 'starts_at', 'ends_at', 'seating_locked', 'seating_opens_at', 'seating_closes_at'];
 
     protected $casts = [
         'starts_at' => 'datetime',
