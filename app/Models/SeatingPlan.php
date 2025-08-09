@@ -63,6 +63,8 @@ class SeatingPlan extends Model implements Sortable
     // Cache the plan for 30 days
     protected const CACHE_TTL = 30 * 86400;
 
+    protected $fillable = ['name'];
+
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
