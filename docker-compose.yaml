@@ -15,6 +15,8 @@ services:
       - XDEBUG_SESSION=start
       - CADDY_SERVER_FRANKENPHP_OPTIONS=
       - APP_INDEX_FILE=index.php
+    ports:
+      - "9003:9003"
     depends_on:
       - redis
       - db
