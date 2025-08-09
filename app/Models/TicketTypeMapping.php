@@ -37,6 +37,13 @@ class TicketTypeMapping extends Model
     use HasFactory;
     use ToString;
 
+    protected $fillable = [
+        'ticket_type_id',
+        'ticket_provider_id',
+        'external_id',
+        'name',
+    ];
+
     public function provider(): BelongsTo
     {
         return $this->belongsTo(TicketProvider::class, 'ticket_provider_id');

@@ -45,6 +45,14 @@ class TicketType extends Model
     use HasFactory;
     use ToString;
 
+    protected $fillable = [
+        'event_id',
+        'name',
+        'has_seat',
+        'discord_role_id',
+        'discord_role_name',
+    ];
+
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);

@@ -48,6 +48,14 @@ class TicketProvider extends Model
     use HasFactory;
     use ToString;
 
+    protected $fillable = [
+        'name',
+        'code',
+        'provider_class',
+        'enabled',
+        'cache_prefix',
+    ];
+    
     protected array $_settings = [];
 
     public function tickets(): HasMany
