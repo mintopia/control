@@ -53,6 +53,8 @@ class Seat extends Model
     use HasFactory;
     use ToString;
 
+    protected $fillable = ['row'];
+
     public function ticket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class);
