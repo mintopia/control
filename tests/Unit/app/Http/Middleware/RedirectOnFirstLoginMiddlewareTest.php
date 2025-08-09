@@ -39,13 +39,14 @@ class RedirectOnFirstLoginMiddlewareTest extends TestCase
             ->getMock();
         $mockRequest->expects($this->any())->method('user')->willReturn($mockUser);
         $called = false;
-        $next = function ($request) use (&$called) {
+        $next = function () use (&$called) {
             $called = true;
-            return 'next-called';
+            return new \Illuminate\Http\Response('next-called');
         };
         $result = $middleware->handle($mockRequest, $next);
         $this->assertTrue($called, 'Next middleware was not called');
-        $this->assertEquals('next-called', $result);
+        $this->assertInstanceOf(\Illuminate\Http\Response::class, $result);
+        $this->assertEquals('next-called', $result->getContent());
     }
 
     public function testHandleWithNoUserDoesNotRedirect()
@@ -58,11 +59,12 @@ class RedirectOnFirstLoginMiddlewareTest extends TestCase
         $called = false;
         $next = function ($request) use (&$called) {
             $called = true;
-            return 'next-called';
+            return new \Illuminate\Http\Response('next-called');
         };
         $result = $middleware->handle($mockRequest, $next);
         $this->assertTrue($called, 'Next middleware was not called');
-        $this->assertEquals('next-called', $result);
+        $this->assertInstanceOf(\Illuminate\Http\Response::class, $result);
+        $this->assertEquals('next-called', $result->getContent());
     }
 
     public function testHandleWithUserWithoutFirstLoginPropertyDoesNotRedirect()
@@ -76,11 +78,11 @@ class RedirectOnFirstLoginMiddlewareTest extends TestCase
         $called = false;
         $next = function ($request) use (&$called) {
             $called = true;
-            return 'next-called';
+            return new \Illuminate\Http\Response('next-called');
         };
         $result = $middleware->handle($mockRequest, $next);
         $this->assertTrue($called, 'Next middleware was not called');
-        $this->assertEquals('next-called', $result);
+        $this->assertInstanceOf(\Illuminate\Http\Response::class, $result);
+        $this->assertEquals('next-called', $result->getContent());
     }
-
 }
