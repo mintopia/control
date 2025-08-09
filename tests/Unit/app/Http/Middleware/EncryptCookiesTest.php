@@ -34,8 +34,27 @@ class EncryptCookiesTest extends TestCase
         $this->assertInstanceOf(\Illuminate\Cookie\Middleware\EncryptCookies::class, $middleware);
     }
 
-    public function testStaticMethodCannotBeTested()
+    public function testDefaultExceptPropertyIsEmpty()
     {
-        $this->fail('Static method testing is not supported in this environment.');
+        $middleware = new EncryptCookiesStub();
+        $reflection = new \ReflectionClass($middleware);
+        $property = $reflection->getProperty('except');
+        $property->setAccessible(true);
+        $except = $property->getValue($middleware);
+        $this->assertEmpty($except);
     }
+
+    public function testCustomExceptPropertyInSubclass()
+    {
+        $middleware = new class extends EncryptCookies {
+            protected $except = ['foo_cookie', 'bar_cookie'];
+            public function __construct() {}
+        };
+        $reflection = new \ReflectionClass($middleware);
+        $property = $reflection->getProperty('except');
+        $property->setAccessible(true);
+        $except = $property->getValue($middleware);
+        $this->assertEquals(['foo_cookie', 'bar_cookie'], $except);
+    }
+
 }

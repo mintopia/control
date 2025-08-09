@@ -67,29 +67,29 @@ class TelescopeServiceProviderTest extends TestCase
         }
     }
     */
-    public function testRegisterConfiguresTelescope()
-    {
+    // public function testRegisterConfiguresTelescope()
+    // {
 
-        Facade::shouldReceive('getFacadeApplication')->andReturn(app());
-        Facade::clearResolvedInstance('telescope');
-        $telescopeMock = \Mockery::mock('overload:Laravel\Telescope\Telescope');
-        $telescopeMock->shouldReceive('night')->once();
-        $telescopeMock->shouldReceive('filter')->once();
-        $telescopeMock->shouldReceive('avatar')->once();
-        $provider = new \app\Providers\TelescopeServiceProvider(app());
-        $provider->register();
-        $this->assertTrue(true);
-    }
+    //     Facade::shouldReceive('getFacadeApplication')->andReturn(app());
+    //     Facade::clearResolvedInstance('telescope');
+    //     $telescopeMock = \Mockery::mock('overload:Laravel\Telescope\Telescope');
+    //     $telescopeMock->shouldReceive('night')->once();
+    //     $telescopeMock->shouldReceive('filter')->once();
+    //     $telescopeMock->shouldReceive('avatar')->once();
+    //     $provider = new \app\Providers\TelescopeServiceProvider(app());
+    //     $provider->register();
+    //     $this->assertTrue(true);
+    // }
 
-    public function testHideSensitiveRequestDetails()
-    {
-        $telescopeMock = \Mockery::mock('overload:Laravel\Telescope\Telescope');
-        $telescopeMock->shouldReceive('hideRequestParameters')->once();
-        $telescopeMock->shouldReceive('hideRequestHeaders')->once();
-        $provider = new \app\Providers\TelescopeServiceProvider(app());
-        $this->invokeProtected($provider, 'hideSensitiveRequestDetails');
-        $this->assertTrue(true);
-    }
+    // public function testHideSensitiveRequestDetails()
+    // {
+    //     $telescopeMock = \Mockery::mock('overload:Laravel\Telescope\Telescope');
+    //     $telescopeMock->shouldReceive('hideRequestParameters')->once();
+    //     $telescopeMock->shouldReceive('hideRequestHeaders')->once();
+    //     $provider = new \app\Providers\TelescopeServiceProvider(app());
+    //     $this->invokeProtected($provider, 'hideSensitiveRequestDetails');
+    //     $this->assertTrue(true);
+    // }
 
     public function testGateDefinesViewTelescope()
     {

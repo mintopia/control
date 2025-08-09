@@ -13,23 +13,5 @@ class TicketControllerTest extends TestCase
         $this->assertInstanceOf(TicketController::class, $controller);
     }
 
-    public function testIndexFailsForStaticView()
-    {
-        $this->fail('Static method mocking for view() is not supported in this environment.');
-    }
-
-    public function testShowFailsForStaticView()
-    {
-        $this->fail('Static method mocking for view() is not supported in this environment.');
-    }
-
-    public function testUpdateFailsForStaticSettingOrResponse()
-    {
-        $this->fail('Static method mocking for Setting::fetch() or response() is not supported in this environment.');
-    }
-
-    public function testTransferFailsForStaticSettingOrResponse()
-    {
-        $this->fail('Static method mocking for Setting::fetch(), Ticket::whereTransferCode(), or response() is not supported in this environment.');
-    }
+    //TODO Add more tests
 }

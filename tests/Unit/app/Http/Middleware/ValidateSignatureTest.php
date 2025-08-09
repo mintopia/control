@@ -12,30 +12,26 @@ class ValidateSignatureStub extends ValidateSignature
 
 class ValidateSignatureTest extends TestCase
 {
-    public function testCanInstantiateValidateSignature()
-    {
-        $middleware = new ValidateSignatureStub();
-        $this->assertInstanceOf(ValidateSignature::class, $middleware);
-    }
-
-    public function testExceptPropertyIsArray()
+    public function testDefaultExceptPropertyIsEmpty()
     {
         $middleware = new ValidateSignatureStub();
         $reflection = new \ReflectionClass($middleware);
         $property = $reflection->getProperty('except');
         $property->setAccessible(true);
         $except = $property->getValue($middleware);
-        $this->assertIsArray($except);
+        $this->assertEmpty($except);
     }
 
-    public function testExtendsIlluminateValidateSignature()
+    public function testCustomExceptPropertyInSubclass()
     {
-        $middleware = new ValidateSignatureStub();
-        $this->assertInstanceOf(\Illuminate\Routing\Middleware\ValidateSignature::class, $middleware);
-    }
-
-    public function testStaticMethodCannotBeTested()
-    {
-        $this->fail('Static method testing is not supported in this environment.');
+        $middleware = new class extends ValidateSignature {
+            protected $except = ['foo', 'bar'];
+            public function __construct() {}
+        };
+        $reflection = new \ReflectionClass($middleware);
+        $property = $reflection->getProperty('except');
+        $property->setAccessible(true);
+        $except = $property->getValue($middleware);
+        $this->assertEquals(['foo', 'bar'], $except);
     }
 }

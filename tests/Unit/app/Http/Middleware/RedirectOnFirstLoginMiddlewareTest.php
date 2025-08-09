@@ -48,8 +48,39 @@ class RedirectOnFirstLoginMiddlewareTest extends TestCase
         $this->assertEquals('next-called', $result);
     }
 
-    public function testStaticMethodCannotBeTested()
+    public function testHandleWithNoUserDoesNotRedirect()
     {
-        $this->fail('Static method testing is not supported in this environment.');
+        $middleware = new RedirectOnFirstLoginMiddlewareStub();
+        $mockRequest = $this->getMockBuilder(\Illuminate\Http\Request::class)
+            ->onlyMethods(['user'])
+            ->getMock();
+        $mockRequest->expects($this->any())->method('user')->willReturn(null);
+        $called = false;
+        $next = function ($request) use (&$called) {
+            $called = true;
+            return 'next-called';
+        };
+        $result = $middleware->handle($mockRequest, $next);
+        $this->assertTrue($called, 'Next middleware was not called');
+        $this->assertEquals('next-called', $result);
     }
+
+    public function testHandleWithUserWithoutFirstLoginPropertyDoesNotRedirect()
+    {
+        $middleware = new RedirectOnFirstLoginMiddlewareStub();
+        $mockUser = (object)[];
+        $mockRequest = $this->getMockBuilder(\Illuminate\Http\Request::class)
+            ->onlyMethods(['user'])
+            ->getMock();
+        $mockRequest->expects($this->any())->method('user')->willReturn($mockUser);
+        $called = false;
+        $next = function ($request) use (&$called) {
+            $called = true;
+            return 'next-called';
+        };
+        $result = $middleware->handle($mockRequest, $next);
+        $this->assertTrue($called, 'Next middleware was not called');
+        $this->assertEquals('next-called', $result);
+    }
+
 }

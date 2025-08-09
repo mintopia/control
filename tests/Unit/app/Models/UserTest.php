@@ -54,13 +54,13 @@ class UserTest extends TestCase
         $user = $this->getMockBuilder(User::class)
             ->onlyMethods(['roles'])
             ->getMock();
-        $mockRelation = $this->getMockBuilder(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['whereCode', 'count'])
-            ->getMock();
-        $mockRelation->method('whereCode')->willReturnSelf();
-        $mockRelation->method('count')->willReturn(1);
-        $user->method('roles')->willReturn($mockRelation);
+
+        $mockRoles = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class);
+        $mockRoles->shouldReceive('whereCode')->with('admin')->andReturnSelf();
+        $mockRoles->shouldReceive('count')->andReturn(1);
+
+        $user->method('roles')->willReturn($mockRoles);
+
         $this->assertTrue($user->hasRole('admin'));
     }
 
@@ -69,29 +69,32 @@ class UserTest extends TestCase
         $user = $this->getMockBuilder(User::class)
             ->onlyMethods(['roles'])
             ->getMock();
-        $mockRelation = $this->getMockBuilder(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['whereCode', 'count'])
-            ->getMock();
-        $mockRelation->method('whereCode')->willReturnSelf();
-        $mockRelation->method('count')->willReturn(0);
-        $user->method('roles')->willReturn($mockRelation);
-        $this->assertFalse($user->hasRole('admin'));
+
+        $mockRoles = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class);
+        $mockRoles->shouldReceive('whereCode')->with('user')->andReturnSelf();
+        $mockRoles->shouldReceive('count')->andReturn(0);
+
+        $user->method('roles')->willReturn($mockRoles);
+
+        $this->assertFalse($user->hasRole('user'));
     }
 
-    public function testHasAnyRoleReturnsTrueIfAnyRoleExists()
+    public function testHasAnyRoleReturnsTrueForFirstMatchingRole()
     {
         $user = $this->getMockBuilder(User::class)
             ->onlyMethods(['roles'])
             ->getMock();
-        $mockRelation = $this->getMockBuilder(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['whereCode', 'count'])
-            ->getMock();
-        $mockRelation->method('whereCode')->willReturnSelf();
-        $mockRelation->method('count')->willReturnOnConsecutiveCalls(0, 1);
-        $user->method('roles')->willReturn($mockRelation);
-        $this->assertTrue($user->hasAnyRole(['user', 'admin']));
+
+        $mockRoles = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class);
+
+        // Simulate: first role ('admin') exists, so should return true and not check further
+        $mockRoles->shouldReceive('whereCode')->with('admin')->once()->andReturnSelf();
+        $mockRoles->shouldReceive('count')->once()->andReturn(1);
+
+        // The roles() method will be called for each role checked, but should stop at first match
+        $user->method('roles')->willReturn($mockRoles);
+
+        $this->assertTrue($user->hasAnyRole(['admin', 'editor', 'user']));
     }
 
     public function testHasAnyRoleReturnsFalseIfNoRolesExist()
@@ -99,14 +102,16 @@ class UserTest extends TestCase
         $user = $this->getMockBuilder(User::class)
             ->onlyMethods(['roles'])
             ->getMock();
-        $mockRelation = $this->getMockBuilder(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['whereCode', 'count'])
-            ->getMock();
-        $mockRelation->method('whereCode')->willReturnSelf();
-        $mockRelation->method('count')->willReturn(0);
-        $user->method('roles')->willReturn($mockRelation);
-        $this->assertFalse($user->hasAnyRole(['user', 'admin']));
+
+        $mockRoles = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class);
+        $mockRoles->shouldReceive('whereCode')->with('editor')->andReturnSelf();
+        $mockRoles->shouldReceive('count')->andReturn(0);
+        $mockRoles->shouldReceive('whereCode')->with('user')->andReturnSelf();
+        $mockRoles->shouldReceive('count')->andReturn(0);
+
+        $user->method('roles')->willReturn($mockRoles);
+
+        $this->assertFalse($user->hasAnyRole(['editor', 'user']));
     }
 
     public function testAvatarUrlReturnsAccountAvatarIfExists()

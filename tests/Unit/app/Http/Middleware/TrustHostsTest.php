@@ -36,8 +36,54 @@ class TrustHostsTest extends TestCase
         $this->assertInstanceOf(\Illuminate\Http\Middleware\TrustHosts::class, $middleware);
     }
 
-    public function testStaticMethodCannotBeTested()
+    public function testHostsReturnsNullIfAllSubdomainsReturnsNull()
     {
-        $this->fail('Static method testing is not supported in this environment.');
+        $app = app();
+        $stub = new class($app) extends TrustHosts {
+            public function allSubdomainsOfApplicationUrl()
+            {
+                return null;
+            }
+        };
+        $hosts = $stub->hosts();
+        $this->assertIsArray($hosts);
+        $this->assertCount(1, $hosts);
+        $this->assertNull($hosts[0]);
+    }
+
+    public function testHostsReturnsCustomString()
+    {
+        $app = app();
+        $stub = new class($app) extends TrustHosts {
+            public function allSubdomainsOfApplicationUrl()
+            {
+                return 'subdomain.example.org';
+            }
+        };
+        $hosts = $stub->hosts();
+        $this->assertEquals(['subdomain.example.org'], $hosts);
+    }
+
+    public function testHostsAlwaysReturnsArray()
+    {
+        $app = app();
+        $stub = new class($app) extends TrustHosts {
+            public function allSubdomainsOfApplicationUrl()
+            {
+                return 123;
+            }
+        };
+        $hosts = $stub->hosts();
+        $this->assertIsArray($hosts);
+        $this->assertEquals([123], $hosts);
+    }
+
+    public function testAllSubdomainsOfApplicationUrlCanBeMocked()
+    {
+        $app = app();
+        $mock = \Mockery::mock(TrustHosts::class, [$app])->makePartial();
+        $mock->shouldAllowMockingProtectedMethods();
+        $mock->shouldReceive('allSubdomainsOfApplicationUrl')->andReturn('mocked.example.com');
+        $this->assertEquals(['mocked.example.com'], $mock->hosts());
     }
 }

@@ -34,8 +34,27 @@ class PreventRequestsDuringMaintenanceTest extends TestCase
         $this->assertInstanceOf(\Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance::class, $middleware);
     }
 
-    public function testStaticMethodCannotBeTested()
+    public function testDefaultExceptPropertyIsEmpty()
     {
-        $this->fail('Static method testing is not supported in this environment.');
+        $middleware = new PreventRequestsDuringMaintenanceStub();
+        $reflection = new \ReflectionClass($middleware);
+        $property = $reflection->getProperty('except');
+        $property->setAccessible(true);
+        $except = $property->getValue($middleware);
+        $this->assertEmpty($except);
     }
+
+    public function testCustomExceptPropertyInSubclass()
+    {
+        $middleware = new class extends PreventRequestsDuringMaintenance {
+            protected $except = ['/foo', '/bar'];
+            public function __construct() {}
+        };
+        $reflection = new \ReflectionClass($middleware);
+        $property = $reflection->getProperty('except');
+        $property->setAccessible(true);
+        $except = $property->getValue($middleware);
+        $this->assertEquals(['/foo', '/bar'], $except);
+    }
+
 }

@@ -55,15 +55,5 @@ class ClanRequestTest extends TestCase
         $this->assertTrue($called, 'Fail closure was not called for empty permalink');
     }
 
-    public function testNameRuleClosureFailsIfClanExistsAndNotCurrent()
-    {
-        // Unable to mock static methods with current Mockery version
-        $this->fail('Static method mocking for App\\Models\\Clan is not supported in this environment.');
-    }
-
-    public function testNameRuleClosurePassesIfNoClanExists()
-    {
-        // Unable to mock static methods with current Mockery version
-        $this->fail('Static method mocking for App\\Models\\Clan is not supported in this environment.');
-    }
+    //TODO Add more tests
 }

@@ -36,8 +36,26 @@ class TrimStringsTest extends TestCase
         $this->assertInstanceOf(\Illuminate\Foundation\Http\Middleware\TrimStrings::class, $middleware);
     }
 
-    public function testStaticMethodCannotBeTested()
+    public function testExceptPropertyIsArray()
     {
-        $this->fail('Static method testing is not supported in this environment.');
+        $middleware = new TrimStringsStub();
+        $reflection = new \ReflectionClass($middleware);
+        $property = $reflection->getProperty('except');
+        $property->setAccessible(true);
+        $except = $property->getValue($middleware);
+        $this->assertIsArray($except);
+    }
+
+    public function testCustomExceptPropertyInSubclass()
+    {
+        $middleware = new class extends TrimStrings {
+            protected $except = ['foo', 'bar'];
+            public function __construct() {}
+        };
+        $reflection = new \ReflectionClass($middleware);
+        $property = $reflection->getProperty('except');
+        $property->setAccessible(true);
+        $except = $property->getValue($middleware);
+        $this->assertEquals(['foo', 'bar'], $except);
     }
 }

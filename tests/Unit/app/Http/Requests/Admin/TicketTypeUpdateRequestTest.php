@@ -40,8 +40,11 @@ class TicketTypeUpdateRequestTest extends TestCase
     {
         $request = new TicketTypeUpdateRequest();
         $rules = $request->rules();
-        $this->assertCount(1, $rules);
-        $this->assertArrayHasKey('name', $rules);
+        $expectedKeys = ['discord_role_id', 'has_seat', 'name']; // Hardcoded, so may fail if extended later on
+        sort($expectedKeys);
+        $actualKeys = array_keys($rules);
+        sort($actualKeys);
+        $this->assertEquals($expectedKeys, $actualKeys);
     }
 
     public function testAuthorizeAlwaysTrue()
