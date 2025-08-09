@@ -34,4 +34,4 @@ class UserObserverTest extends TestCase
 //         $observer = new UserObserver();
 //         $observer->created($user);
 //     }
-// }
+}
