@@ -50,6 +50,8 @@ class Theme extends Model
 {
     use HasFactory;
 
+    protected $fillable = ['name'];
+
     public function rgb(string $property): string
     {
         $colour = $this->{$property};
