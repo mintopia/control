@@ -50,7 +50,21 @@ class Theme extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'code', 'readonly', 'active', 'dark_mode', 'primary', 'nav_background', 'seat_available', 'seat_disabled', 'seat_taken', 'seat_clan', 'seat_selected', 'css'];
+    protected $fillable = [
+        'name',
+        'code',
+        'readonly',
+        'active',
+        'dark_mode',
+        'primary',
+        'nav_background',
+        'seat_available',
+        'seat_disabled',
+        'seat_taken',
+        'seat_clan',
+        'seat_selected',
+        'css'
+    ];
 
     public function rgb(string $property): string
     {
