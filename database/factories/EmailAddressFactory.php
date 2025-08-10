@@ -14,8 +14,6 @@ class EmailAddressFactory extends Factory
      * @return array<string, mixed>
      */
 
-    // FIXME: Using the User::factory() resulted in a database connection error
-
     protected $model = EmailAddress::class;
 
     public function definition()
@@ -24,8 +22,7 @@ class EmailAddressFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'verification_code' => null,
             'verification_sent_at' => null,
-            // 'user_id' => User::factory(),
-            'user_id' => fake()->unique()->uuid(),
+            'user_id' => User::factory(),
         ];
     }
 }

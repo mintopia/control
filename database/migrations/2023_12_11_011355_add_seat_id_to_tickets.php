@@ -23,8 +23,8 @@ return new class extends Migration {
         Schema::table('tickets', function (Blueprint $table) {
             if (Schema::getConnection()->getDriverName() !== 'sqlite') {
                 $table->dropForeign(['seat_id']);
+                $table->dropColumn('seat_id');
             }
-            $table->dropColumn('seat_id');
         });
     }
 };

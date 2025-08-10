@@ -22,7 +22,10 @@ class ClanMembershipControllerTest extends TestCase
 
     public function testStoreAddsUserIfNotMember()
     {
-        $user = \App\Models\User::factory()->create();
+        // Ensure the 'member' role exists for default clan membership
+        \App\Models\ClanRole::factory()->create(['code' => 'member']);
+
+        $user = \App\Models\User::factory()->withEmailAddress()->create();
         $clan = \App\Models\Clan::factory()->create(['name' => 'TestClan', 'code' => 'abc123', 'invite_code' => 'abc123']);
 
         $request = new \App\Http\Requests\ClanMembershipRequest([
@@ -32,7 +35,7 @@ class ClanMembershipControllerTest extends TestCase
 
         $controller = new \App\Http\Controllers\ClanMembershipController();
         $response = $controller->store($request);
-        $this->assertStringContainsString('redirect', get_class($response));
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
         $this->assertDatabaseHas('clan_memberships', [
             'clan_id' => $clan->id,
             'user_id' => $user->id,
@@ -41,7 +44,10 @@ class ClanMembershipControllerTest extends TestCase
 
     public function testStoreDoesNotAddUserIfAlreadyMember()
     {
-        $user = \App\Models\User::factory()->create();
+        // Ensure the 'member' role exists for default clan membership
+        \App\Models\ClanRole::factory()->create(['code' => 'member']);
+
+        $user = \App\Models\User::factory()->withEmailAddress()->create();
         $clan = \App\Models\Clan::factory()->create(['name' => 'TestClan', 'code' => 'abc123', 'invite_code' => 'abc123']);
         $clan->addUser($user); // Already a member
 
@@ -52,7 +58,7 @@ class ClanMembershipControllerTest extends TestCase
 
         $controller = new \App\Http\Controllers\ClanMembershipController();
         $response = $controller->store($request);
-        $this->assertStringContainsString('redirect', get_class($response));
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
         $this->assertEquals(1, $clan->members()->where('user_id', $user->id)->count());
     }
 
@@ -69,7 +75,7 @@ class ClanMembershipControllerTest extends TestCase
 
     public function testUpdateAssociatesRoleAndSaves()
     {
-        $user = \App\Models\User::factory()->create(['nickname' => 'TestUser']);
+        $user = \App\Models\User::factory()->withEmailAddress()->create(['nickname' => 'TestUser']);
         $clan = \App\Models\Clan::factory()->create(['code' => 'abc123']);
         $role = \App\Models\ClanRole::factory()->create(['code' => 'admin']);
         $membership = \App\Models\ClanMembership::factory()->create([
@@ -83,13 +89,13 @@ class ClanMembershipControllerTest extends TestCase
 
         $controller = new \App\Http\Controllers\ClanMembershipController();
         $response = $controller->update($request, $clan, $membership);
-        $this->assertStringContainsString('redirect', get_class($response));
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
         $this->assertEquals('admin', $membership->role->code);
     }
 
     public function testDestroyRemovesMemberAndRedirects()
     {
-        $user = \App\Models\User::factory()->create(['nickname' => 'TestUser']);
+        $user = \App\Models\User::factory()->withEmailAddress()->create(['nickname' => 'TestUser']);
         $clan = \App\Models\Clan::factory()->create(['code' => 'abc123']);
         $membership = \App\Models\ClanMembership::factory()->create([
             'clan_id' => $clan->id,
@@ -100,7 +106,7 @@ class ClanMembershipControllerTest extends TestCase
 
         $controller = new \App\Http\Controllers\ClanMembershipController();
         $response = $controller->destroy($clan, $membership);
-        $this->assertStringContainsString('redirect', get_class($response));
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
         $this->assertDatabaseMissing('clan_memberships', [
             'id' => $membership->id,
         ]);
@@ -108,7 +114,7 @@ class ClanMembershipControllerTest extends TestCase
 
     public function testDeleteReturnsView()
     {
-        $user = \App\Models\User::factory()->create();
+        $user = \App\Models\User::factory()->withEmailAddress()->create();
         $clan = \App\Models\Clan::factory()->create();
         $membership = \App\Models\ClanMembership::factory()->create([
             'clan_id' => $clan->id,
