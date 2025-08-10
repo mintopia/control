@@ -204,7 +204,7 @@ class SeatingPlan extends Model implements Sortable
 
     protected function toStringName(): string
     {
-        return $this->code;
+        return $this->code ?? '';
     }
 
     /**
