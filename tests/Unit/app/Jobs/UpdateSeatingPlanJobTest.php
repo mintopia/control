@@ -40,20 +40,22 @@ class UpdateSeatingPlanJobTest extends TestCase
     }
 
     // FIXME this test does not work as things are missing that should be there
-    // public function testHandleUpdatesIfRevisionMatches()
-    // {
-    //     $plan = $this->getMockBuilder(SeatingPlan::class)
-    //         ->disableOriginalConstructor()
-    //         ->onlyMethods(['getData'])
-    //         ->getMock();
+    public function testHandleUpdatesIfRevisionMatches()
+    {
+        $plan = $this->getMockBuilder(SeatingPlan::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getData', 'save'])
+            ->getMock();
 
-    //     $plan->revision = 5;
+        $plan->revision = 5;
 
-    //     // Expect getData to be called once
-    //     $plan->expects($this->once())->method('getData')->willReturn(collect(['foo' => 'bar']));
+        // Expect getData to be called once
+        $plan->expects($this->once())->method('getData')->willReturn(collect(['foo' => 'bar']));
+        // Mock save if handle() calls it
+        $plan->expects($this->any())->method('save')->willReturn(true);
 
-    //     $job = new UpdateSeatingPlanJob($plan, 5);
-    //     $job->handle();
-    // }
+        $job = new UpdateSeatingPlanJob($plan, 5);
+        $job->handle();
+    }
 
 }
