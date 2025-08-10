@@ -39,7 +39,6 @@ class UpdateSeatingPlanJobTest extends TestCase
         $job->handle();
     }
 
-    // FIXME this test does not work as things are missing that should be there
     public function testHandleUpdatesIfRevisionMatches()
     {
         $plan = $this->getMockBuilder(SeatingPlan::class)
