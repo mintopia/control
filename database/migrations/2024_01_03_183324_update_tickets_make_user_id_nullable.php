@@ -13,7 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tickets', function (Blueprint $table) {
-            $table->dropForeign('tickets_user_id_foreign');
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                $table->dropForeign('tickets_user_id_foreign');
+            }
             $table->unsignedBigInteger('user_id')->nullable(true)->default(null)->change();
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
             $table->string('original_email')->nullable()->default(null)->after('external_id');
@@ -26,7 +28,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('tickets', function (Blueprint $table) {
-            $table->dropForeign('tickets_user_id_foreign');
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                $table->dropForeign('tickets_user_id_foreign');
+            }
             $table->unsignedBigInteger('user_id')->nullable(false)->change();
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
             $table->dropColumn('original_email');

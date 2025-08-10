@@ -14,7 +14,9 @@ return new class extends Migration {
             $table->foreignId('ticket_id')->after('seating_plan_id')->nullable()->default(null)->constrained()->nullOnDelete();
         });
         Schema::table('tickets', function (Blueprint $table) {
-            $table->dropForeign(['seat_id']);
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                $table->dropForeign(['seat_id']);
+            }
             $table->dropColumn('seat_id');
         });
     }
@@ -25,7 +27,9 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('seats', function (Blueprint $table) {
-            $table->dropForeign(['ticket_id']);
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                $table->dropForeign(['ticket_id']);
+            }
             $table->dropColumn('ticket_id');
         });
 
