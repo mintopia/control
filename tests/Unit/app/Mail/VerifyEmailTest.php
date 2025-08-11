@@ -15,7 +15,7 @@ class VerifyEmailTest extends TestCase
 
     public function testAttachmentsReturnsEmptyArray()
     {
-        $emailAddress = EmailAddress::factory()->make();
+        $emailAddress = EmailAddress::factory()->make(['user_id' => null]);
         $mailable = new VerifyEmail($emailAddress);
 
         $this->assertIsArray($mailable->attachments());

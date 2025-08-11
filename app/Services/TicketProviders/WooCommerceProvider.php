@@ -28,6 +28,14 @@ class WooCommerceProvider extends AbstractTicketProvider
 
     protected ?Client $client = null;
 
+    /**
+     * Public getter for the provider property (for testing and cache key access)
+     */
+    public function getProvider(): ?\App\Models\TicketProvider
+    {
+        return $this->provider;
+    }
+
     protected string $name = 'Woo Commerce';
     protected string $code = 'woocommerce';
 

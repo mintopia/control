@@ -8,6 +8,13 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 class Kernel extends ConsoleKernel
 {
     /**
+     * Define the application's commands.
+     */
+    protected $commands = [
+        \App\Console\Commands\UpdateEventSeatingLock::class,
+    ];
+
+    /**
      * Define the application's command schedule.
      */
     protected function schedule(Schedule $schedule): void
