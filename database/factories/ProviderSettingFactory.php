@@ -17,7 +17,7 @@ class ProviderSettingFactory extends Factory
             'provider_id' => SocialProvider::factory(),
             'name' => $this->faker->word(),
             'code' => $this->faker->unique()->word(),
-            'type' => 'string',
+            'type' => \App\Enums\SettingType::stString,
             'encrypted' => false,
             'validation' => null,
             'value' => $this->faker->word(),
