@@ -13,7 +13,7 @@ class UpdateEventSeatingLockTest extends TestCase
 {
     use RefreshDatabase;
 
-    // TODO Tests do not work with the current setup, need to fix
+    // CHECK Proposal to fix this is to rework the handle method, feasible?
     public function testCanInstantiateCommand()
     {
         $command = new UpdateEventSeatingLock();
