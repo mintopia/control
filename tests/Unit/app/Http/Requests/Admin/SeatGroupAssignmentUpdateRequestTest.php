@@ -22,13 +22,16 @@ class SeatGroupAssignmentUpdateRequestTest extends TestCase
 
     public function testRulesContainAssignmentTypeIdKey()
     {
-        $request = $this->getMockBuilder(SeatGroupAssignmentUpdateRequest::class)
-            ->onlyMethods(['input'])
-            ->getMock();
-        $request->expects($this->any())
-            ->method('input')
-            ->with('assignment_type')
-            ->willReturn('user');
+        // Use a small subclass to provide the input value without mocking framework methods
+        $request = new class extends SeatGroupAssignmentUpdateRequest {
+            public function input($key = null, $default = null)
+            {
+                if ($key === 'assignment_type') {
+                    return 'user';
+                }
+                return $default;
+            }
+        };
         $rules = $request->rules();
         $this->assertArrayHasKey('assignment_type_id', $rules);
     }
@@ -42,13 +45,15 @@ class SeatGroupAssignmentUpdateRequestTest extends TestCase
 
     public function testAssignmentTypeIdRuleIncludesExistsTable()
     {
-        $request = $this->getMockBuilder(SeatGroupAssignmentUpdateRequest::class)
-            ->onlyMethods(['input'])
-            ->getMock();
-        $request->expects($this->any())
-            ->method('input')
-            ->with('assignment_type')
-            ->willReturn('clan');
+        $request = new class extends SeatGroupAssignmentUpdateRequest {
+            public function input($key = null, $default = null)
+            {
+                if ($key === 'assignment_type') {
+                    return 'clan';
+                }
+                return $default;
+            }
+        };
         $rules = $request->rules();
         $rule = $rules['assignment_type_id'];
         $this->assertStringContainsString('exists:clans,id', $rule);

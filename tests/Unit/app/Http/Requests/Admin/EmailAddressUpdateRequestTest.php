@@ -45,9 +45,10 @@ class EmailAddressUpdateRequestTest extends TestCase
 
     public function testUniqueRuleIgnoresCurrentEmailIdIfSet()
     {
-        $request = $this->getMockBuilder(EmailAddressUpdateRequest::class)
-            ->onlyMethods([])
-            ->getMock();
+        // Use a small subclass so we can declare the public $email property (avoids dynamic property deprecation)
+        $request = new class extends EmailAddressUpdateRequest {
+            public $email;
+        };
         $request->email = (object)['id' => 42];
         $rule = $request->rules()['address'];
         $uniqueRule = null;

@@ -19,14 +19,15 @@ class RedirectOnFirstLoginMiddlewareTest extends TestCase
     {
         $middleware = new RedirectOnFirstLoginMiddlewareStub();
         $mockUser = (object)['first_login' => true];
-        $mockRequest = $this->getMockBuilder(\Illuminate\Http\Request::class)
-            ->onlyMethods(['user'])
-            ->getMock();
-        $mockRequest->expects($this->any())->method('user')->willReturn($mockUser);
+        $request = \Illuminate\Http\Request::create('/', 'GET');
+        // Use a user resolver to provide the mocked user without mocking Request methods
+        $request->setUserResolver(function () use ($mockUser) {
+            return $mockUser;
+        });
         $next = function () {
             $this->fail('Next middleware should not be called if first_login is true');
         };
-        $response = $middleware->handle($mockRequest, $next);
+        $response = $middleware->handle($request, $next);
         $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
     }
 
@@ -34,16 +35,16 @@ class RedirectOnFirstLoginMiddlewareTest extends TestCase
     {
         $middleware = new RedirectOnFirstLoginMiddlewareStub();
         $mockUser = (object)['first_login' => false];
-        $mockRequest = $this->getMockBuilder(\Illuminate\Http\Request::class)
-            ->onlyMethods(['user'])
-            ->getMock();
-        $mockRequest->expects($this->any())->method('user')->willReturn($mockUser);
+        $request = \Illuminate\Http\Request::create('/', 'GET');
+        $request->setUserResolver(function () use ($mockUser) {
+            return $mockUser;
+        });
         $called = false;
         $next = function () use (&$called) {
             $called = true;
             return new \Illuminate\Http\Response('next-called');
         };
-        $result = $middleware->handle($mockRequest, $next);
+        $result = $middleware->handle($request, $next);
         $this->assertTrue($called, 'Next middleware was not called');
         $this->assertInstanceOf(\Illuminate\Http\Response::class, $result);
         $this->assertEquals('next-called', $result->getContent());
@@ -52,16 +53,16 @@ class RedirectOnFirstLoginMiddlewareTest extends TestCase
     public function testHandleWithNoUserDoesNotRedirect()
     {
         $middleware = new RedirectOnFirstLoginMiddlewareStub();
-        $mockRequest = $this->getMockBuilder(\Illuminate\Http\Request::class)
-            ->onlyMethods(['user'])
-            ->getMock();
-        $mockRequest->expects($this->any())->method('user')->willReturn(null);
+        $request = \Illuminate\Http\Request::create('/', 'GET');
+        $request->setUserResolver(function () {
+            return null;
+        });
         $called = false;
         $next = function ($request) use (&$called) {
             $called = true;
             return new \Illuminate\Http\Response('next-called');
         };
-        $result = $middleware->handle($mockRequest, $next);
+        $result = $middleware->handle($request, $next);
         $this->assertTrue($called, 'Next middleware was not called');
         $this->assertInstanceOf(\Illuminate\Http\Response::class, $result);
         $this->assertEquals('next-called', $result->getContent());
@@ -71,16 +72,16 @@ class RedirectOnFirstLoginMiddlewareTest extends TestCase
     {
         $middleware = new RedirectOnFirstLoginMiddlewareStub();
         $mockUser = (object)[];
-        $mockRequest = $this->getMockBuilder(\Illuminate\Http\Request::class)
-            ->onlyMethods(['user'])
-            ->getMock();
-        $mockRequest->expects($this->any())->method('user')->willReturn($mockUser);
+        $request = \Illuminate\Http\Request::create('/', 'GET');
+        $request->setUserResolver(function () use ($mockUser) {
+            return $mockUser;
+        });
         $called = false;
         $next = function ($request) use (&$called) {
             $called = true;
             return new \Illuminate\Http\Response('next-called');
         };
-        $result = $middleware->handle($mockRequest, $next);
+        $result = $middleware->handle($request, $next);
         $this->assertTrue($called, 'Next middleware was not called');
         $this->assertInstanceOf(\Illuminate\Http\Response::class, $result);
         $this->assertEquals('next-called', $result->getContent());

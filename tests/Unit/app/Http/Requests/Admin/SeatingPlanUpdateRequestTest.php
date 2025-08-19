@@ -72,10 +72,14 @@ class SeatingPlanUpdateRequestTest extends TestCase
                 return $this->mockPlans;
             }
         };
-        $request = $this->getMockBuilder(SeatingPlanUpdateRequest::class)
-            ->onlyMethods([])
-            ->getMock();
-        $request->event = $mockEvent;
+        $request = new class($mockEvent) extends SeatingPlanUpdateRequest {
+            public $event;
+            public $seatingplan;
+            public function __construct($event)
+            {
+                $this->event = $event;
+            }
+        };
         $request->seatingplan = (object)['id' => 1];
         $rules = $request->rules();
         $closure = null;
@@ -117,10 +121,14 @@ class SeatingPlanUpdateRequestTest extends TestCase
                 return $this->mockPlans;
             }
         };
-        $request = $this->getMockBuilder(SeatingPlanUpdateRequest::class)
-            ->onlyMethods([])
-            ->getMock();
-        $request->event = $mockEvent;
+        $request = new class($mockEvent) extends SeatingPlanUpdateRequest {
+            public $event;
+            public $seatingplan;
+            public function __construct($event)
+            {
+                $this->event = $event;
+            }
+        };
         $request->seatingplan = null;
         $rules = $request->rules();
         $closure = null;

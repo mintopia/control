@@ -18,7 +18,9 @@ class MetricsCollectorTest extends TestCase
             ->onlyMethods(['storeMetrics'])
             ->getMock();
         $middleware->expects($this->once())->method('storeMetrics')->with('GET', 200);
-        $request = $this->createMock(Request::class);
+        $request = $this->getMockBuilder(Request::class)
+            ->onlyMethods(['getRequestUri', 'getMethod'])
+            ->getMock();
         $request->expects($this->any())->method('getRequestUri')->willReturn('/not-prometheus');
         $request->expects($this->any())->method('getMethod')->willReturn('GET');
         $response = $this->createMock(Response::class);
@@ -35,7 +37,9 @@ class MetricsCollectorTest extends TestCase
             ->onlyMethods(['storeMetrics'])
             ->getMock();
         $middleware->expects($this->never())->method('storeMetrics');
-        $request = $this->createMock(Request::class);
+        $request = $this->getMockBuilder(Request::class)
+            ->onlyMethods(['getRequestUri', 'getMethod'])
+            ->getMock();
         $request->expects($this->any())->method('getRequestUri')->willReturn('/metrics');
         $request->expects($this->any())->method('getMethod')->willReturn('GET');
         $response = $this->createMock(Response::class);
@@ -54,7 +58,9 @@ class MetricsCollectorTest extends TestCase
             ->onlyMethods(['storeMetrics'])
             ->getMock();
         $middleware->expects($this->once())->method('storeMetrics')->willThrowException(new \Exception('fail'));
-        $request = $this->createMock(Request::class);
+        $request = $this->getMockBuilder(Request::class)
+            ->onlyMethods(['getRequestUri', 'getMethod'])
+            ->getMock();
         $request->expects($this->any())->method('getRequestUri')->willReturn('/not-prometheus');
         $request->expects($this->any())->method('getMethod')->willReturn('POST');
         $response = $this->createMock(Response::class);
@@ -82,5 +88,4 @@ class MetricsCollectorTest extends TestCase
         };
         $middleware->callStoreMetrics('GET', 201);
     }
-
 }
