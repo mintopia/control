@@ -21,12 +21,12 @@ class ProfileUpdateRequestTest extends TestCase
 
     public function testRulesContainNicknameAndNameKeys()
     {
-        $request = $this->getMockBuilder(ProfileUpdateRequest::class)
-            ->onlyMethods(['user'])
-            ->getMock();
-        $request->expects($this->any())
-            ->method('user')
-            ->willReturn((object)['id' => 42]);
+        $request = new class extends ProfileUpdateRequest {
+            public function user($guard = null)
+            {
+                return (object)['id' => 42];
+            }
+        };
         $rules = $request->rules();
         $this->assertArrayHasKey('nickname', $rules);
         $this->assertArrayHasKey('name', $rules);
@@ -34,12 +34,12 @@ class ProfileUpdateRequestTest extends TestCase
 
     public function testRulesNicknameUniqueIgnoresCurrentUserId()
     {
-        $request = $this->getMockBuilder(ProfileUpdateRequest::class)
-            ->onlyMethods(['user'])
-            ->getMock();
-        $request->expects($this->any())
-            ->method('user')
-            ->willReturn((object)['id' => 99]);
+        $request = new class extends ProfileUpdateRequest {
+            public function user($guard = null)
+            {
+                return (object)['id' => 99];
+            }
+        };
         $rules = $request->rules();
         $nicknameRules = $rules['nickname'];
         $uniqueRule = null;
