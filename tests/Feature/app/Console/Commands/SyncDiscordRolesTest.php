@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\SocialProvider;
 use App\Models\LinkedAccount;
 use App\Models\TicketType;
+use App\Models\Ticket;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -24,18 +25,20 @@ class SyncDiscordRolesTest extends TestCase
 
     public function testHandleLogsIfNoDiscordApi()
     {
-        Log::shouldReceive('debug')->once()->withArgs([
-            fn($msg) => str_contains($msg, 'no API access')
-        ]);
+        Log::shouldReceive('debug')->once()->withArgs(function ($args) {
+            $msg = is_array($args) ? ($args[0] ?? '') : $args;
+            return str_contains($msg, 'no API access');
+        });
         $command = new SyncDiscordRoles();
         $command->handle(null); // No DiscordApi injected
     }
 
     public function testHandleLogsIfNoProvider()
     {
-        Log::shouldReceive('debug')->once()->withArgs([
-            fn($msg) => str_contains($msg, 'Social Provider was not found')
-        ]);
+        Log::shouldReceive('debug')->once()->withArgs(function ($args) {
+            $msg = is_array($args) ? ($args[0] ?? '') : $args;
+            return str_contains($msg, 'Social Provider was not found');
+        });
         $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
             ->disableOriginalConstructor()
             ->getMock();
@@ -53,7 +56,8 @@ class SyncDiscordRolesTest extends TestCase
             'external_id' => '12345',
         ]);
         $ticketType = TicketType::factory()->create();
-        $user->tickets()->create(['type_id' => $ticketType->id]);
+        // create a full Ticket via factory so required fields (ticket_provider_id, event_id, etc.) are populated
+        Ticket::factory()->create(['user_id' => $user->id, 'ticket_type_id' => $ticketType->id]);
 
         $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
             ->disableOriginalConstructor()
@@ -65,7 +69,10 @@ class SyncDiscordRolesTest extends TestCase
         $mockApi->expects($this->once())->method('addRoleToMember');
         $mockApi->expects($this->never())->method('removeRoleFromMember');
 
-        $command = new SyncDiscordRoles();
-        $command->handle($mockApi);
+        // Bind the mock into the container so the command resolves it via DI
+        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+
+        // Run the command through Artisan so Eloquent and container resolution behave as in production
+        $this->artisan('control:sync-discord-roles')->assertExitCode(0);
     }
 }
