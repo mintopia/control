@@ -29,7 +29,6 @@ class UpdateEventSeatingLockTest extends TestCase
         parent::tearDown();
     }
 
-    // CHECK Proposal to fix this is to rework the handle method, feasible?
     public function testCanInstantiateCommand()
     {
         $command = new UpdateEventSeatingLock();
