@@ -37,12 +37,20 @@ class SyncTicketsTest extends TestCase
 
         $mock->expects($this->once())->method('syncAllTickets');
 
-        // Set provider_class to the mock's class and bind the mock in the container
-        $provider->update(['provider_class' => get_class($mock)]);
-        $this->app->instance(get_class($mock), $mock);
+        // Set provider_class to the concrete provider class and bind the mock instance
+        $providerClass = \App\Services\TicketProviders\FakeProvider::class;
+        $provider->update(['provider_class' => $providerClass]);
 
-        // Now when getProvider() is called, it will resolve the mock from the container
-        $this->artisan('control:sync-tickets');
+        // Bind via a factory so container->make($providerClass) returns our mock instance
+        $this->app->bind($providerClass, function () use ($mock) {
+            return $mock;
+        });
+
+        // Sanity check: container resolution should return the same mock
+        $this->assertSame($mock, app($providerClass));
+
+        // When the command runs it should resolve the mock from the container and call syncAllTickets
+        $this->artisan('control:sync-tickets')->assertExitCode(0);
     }
 
     public function testHandleWithProviderArgumentOnlySyncsThatProvider()
@@ -57,10 +65,14 @@ class SyncTicketsTest extends TestCase
 
         $mock->expects($this->once())->method('syncAllTickets');
 
-        $provider1->update(['provider_class' => get_class($mock)]);
+        $providerClass = \App\Services\TicketProviders\FakeProvider::class;
+        $provider1->update(['provider_class' => $providerClass]);
+        $this->app->bind($providerClass, function () use ($mock) {
+            return $mock;
+        });
 
-        $this->app->instance(get_class($mock), $mock);
+        $this->assertSame($mock, app($providerClass));
 
-        $this->artisan('control:sync-tickets', ['provider' => 'foo']);
+        $this->artisan('control:sync-tickets', ['provider' => 'foo'])->assertExitCode(0);
     }
 }
