@@ -10,8 +10,8 @@ use Tests\TestCase;
  */
 class AbstractTicketProviderTest extends TestCase
 {
-	public function test_placeholder_skipped()
-	{
-		$this->markTestSkipped('AbstractTicketProvider tests have been moved to Feature tests. See tests/Feature/app/Services/TicketProviders/AbstractTicketProviderTest.php');
-	}
+    public function test_placeholder_skipped()
+    {
+        $this->markTestSkipped('AbstractTicketProvider tests have been moved to Feature tests. See tests/Feature/app/Services/TicketProviders/AbstractTicketProviderTest.php');
+    }
 }

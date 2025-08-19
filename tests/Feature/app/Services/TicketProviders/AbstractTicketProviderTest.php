@@ -77,25 +77,25 @@ class AbstractTicketProviderTest extends TestCase
     }
 
     // FIXME SyncDiscordRoles may be missing some settings
-    // public function test_install_settings_updates_existing_settings()
-    // {
-    //     $provider = new DummyTicketProvider();
-    //     $ticketProvider = TicketProvider::factory()->create([
-    //         'name' => 'Dummy Provider',
-    //         'code' => 'dummy',
-    //         'provider_class' => DummyTicketProvider::class,
-    //     ]);
-    //     $providerSetting = ProviderSetting::factory()->create([
-    //         'provider_id' => $ticketProvider->id,
-    //         'code' => 'apikey',
-    //         'name' => 'Old Name',
-    //     ]);
-    //     $provider = new DummyTicketProvider($ticketProvider);
-    //     $provider->installSettings();
+    public function test_install_settings_updates_existing_settings()
+    {
+        $provider = new DummyTicketProvider();
+        $ticketProvider = TicketProvider::factory()->create([
+            'name' => 'Dummy Provider',
+            'code' => 'dummy',
+            'provider_class' => DummyTicketProvider::class,
+        ]);
+        $providerSetting = ProviderSetting::factory()->create([
+            'provider_id' => $ticketProvider->id,
+            'code' => 'apikey',
+            'name' => 'Old Name',
+        ]);
+        $provider = new DummyTicketProvider($ticketProvider);
+        $provider->installSettings();
 
-    //     $providerSetting->refresh();
-    //     $this->assertEquals('API Key', $providerSetting->name);
-    // }
+        $providerSetting->refresh();
+        $this->assertEquals('API Key', $providerSetting->name);
+    }
 
     public function test_process_webhook_returns_true()
     {
