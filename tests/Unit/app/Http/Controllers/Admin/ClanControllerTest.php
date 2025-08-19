@@ -6,10 +6,15 @@ use Tests\TestCase;
 use App\Http\Controllers\Admin\ClanController;
 use Illuminate\Http\Request;
 use App\Models\Clan;
-use Mockery;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Http\Requests\ClanRequest;
+use App\Http\Requests\Admin\DeleteRequest;
+use Illuminate\Contracts\View\View;
 
 class ClanControllerTest extends TestCase
 {
+    use RefreshDatabase;
     public function testCanInstantiateController()
     {
         $controller = new ClanController();
@@ -18,66 +23,48 @@ class ClanControllerTest extends TestCase
 
     public function testIndexReturnsExpectedResponse()
     {
-        $request = Mockery::mock(Request::class);
-        $controller = Mockery::mock(ClanController::class)->makePartial();
+        // Basic smoke test: index should return a view response when user has no clans
+        $user = User::factory()->create();
+        $request = Request::create('/admin/clans', 'GET');
+        $request->setUserResolver(fn() => $user);
 
-        $controller->shouldReceive('index')
-            ->once()
-            ->with($request)
-            ->andReturn(response()->json(['data' => 'test'], 200));
+        $controller = new ClanController();
+        $view = $controller->index($request);
 
-        $response = $controller->index($request);
-
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertJson($response->getContent());
+        // index returns a view and contains 'clans' key
+        $this->assertInstanceOf(View::class, $view);
+        $this->assertArrayHasKey('clans', $view->getData());
     }
 
-    // FIXME Mockery for these instances did not work - Class already exists
-    // public function testStoreValidatesAndSavesData()
-    // {
-    //     // Arrange
-    //     $request = Mockery::mock([Request::class]);
-    //     $request->shouldReceive('all')->once()->andReturn(json_encode(['name' => 'Test Clan']));
+    public function testStoreValidatesAndSavesData()
+    {
+        $user = User::factory()->create();
+        // Ensure the 'leader' role exists so addUser() can resolve it
+        \App\Models\ClanRole::factory()->create(['code' => 'leader', 'name' => 'Leader']);
+        $request = ClanRequest::create('/admin/clans', 'POST', ['name' => 'Test Clan']);
+        $request->setUserResolver(fn() => $user);
 
-    //     // Correct Mockery alias syntax
-    //     $clanMock = Mockery::mock([Clan::class])->makePartial();
-    //     $clanMock->shouldReceive('create')->once()->with(['name' => 'Test Clan'])->andReturnSelf();
+        // The store action lives on the non-admin controller
+        $controller = new \App\Http\Controllers\ClanController();
+        $response = $controller->store($request);
 
-    //     $controller = new ClanController();
+        $this->assertDatabaseHas('clans', ['name' => 'Test Clan']);
+    }
 
-    //     $response = $controller->store($request);
+    public function testDestroyDeletesClan()
+    {
+        $clan = Clan::factory()->create();
+        $request = DeleteRequest::create('/admin/clans/' . $clan->id, 'DELETE', ['confirm' => 'delete']);
+        $request->setUserResolver(fn() => User::factory()->create());
 
-    //     $this->assertEquals(201, $response->getStatusCode());
-    //     $this->assertJsonStringEqualsJsonString(
-    //         json_encode(['message' => 'Clan created']),
-    //         $response->getContent()
-    //     );
-    // }
+        $controller = new ClanController();
+        $response = $controller->destroy($request, $clan);
 
-    // public function testDestroyDeletesClan()
-    // {
-    //     // Arrange
-
-    //     $request = Mockery::mock([Request::class]);
-    //     $clanMock = Mockery::mock([Clan::class]);
-    //     $clanMock->shouldReceive('delete')->once()->andReturn(true);
-
-    //     $controller = new ClanController();
-
-    //     // Act
-    //     $response = $controller->destroy($request, $clanMock);
-
-    //     // Assert
-    //     $this->assertEquals(200, $response->getStatusCode());
-    //     $this->assertJsonStringEqualsJsonString(
-    //         json_encode(['message' => 'Clan deleted']),
-    //         $response->getContent()
-    //     );
-    // }
+        $this->assertDatabaseMissing('clans', ['id' => $clan->id]);
+    }
 
     protected function tearDown(): void
     {
-        Mockery::close();
         parent::tearDown();
     }
 }
