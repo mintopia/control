@@ -76,7 +76,6 @@ class AbstractTicketProviderTest extends TestCase
         $this->assertCount(1, TicketProvider::whereCode('dummy')->get());
     }
 
-    // FIXME SyncDiscordRoles may be missing some settings
     public function test_install_settings_updates_existing_settings()
     {
         $provider = new DummyTicketProvider();
@@ -86,6 +85,7 @@ class AbstractTicketProviderTest extends TestCase
             'provider_class' => DummyTicketProvider::class,
         ]);
         $providerSetting = ProviderSetting::factory()->create([
+            'provider_type' => TicketProvider::class,
             'provider_id' => $ticketProvider->id,
             'code' => 'apikey',
             'name' => 'Old Name',
