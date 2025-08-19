@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $boxoffice_url
  * @property \Illuminate\Support\Carbon|null $starts_at
  * @property \Illuminate\Support\Carbon|null $ends_at
- * @property int $seating_locked
+ * @property bool $seating_locked
  * @property \Illuminate\Support\Carbon|null $seating_opens_at
  * @property \Illuminate\Support\Carbon|null $seating_closes_at
  * @property \Illuminate\Support\Carbon|null $created_at

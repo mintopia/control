@@ -27,7 +27,7 @@ class SyncDiscordRolesTest extends TestCase
     {
         Log::shouldReceive('debug')->once()->withArgs(function ($args) {
             $msg = is_array($args) ? ($args[0] ?? '') : $args;
-            return str_contains($msg, 'no API access');
+            return (is_string($msg) || is_numeric($msg)) && strpos((string)$msg, 'no API access') !== false;
         });
         $command = new SyncDiscordRoles();
         $command->handle(null); // No DiscordApi injected
@@ -37,7 +37,7 @@ class SyncDiscordRolesTest extends TestCase
     {
         Log::shouldReceive('debug')->once()->withArgs(function ($args) {
             $msg = is_array($args) ? ($args[0] ?? '') : $args;
-            return str_contains($msg, 'Social Provider was not found');
+            return (is_string($msg) || is_numeric($msg)) && strpos((string)$msg, 'Social Provider was not found') !== false;
         });
         $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
             ->disableOriginalConstructor()
