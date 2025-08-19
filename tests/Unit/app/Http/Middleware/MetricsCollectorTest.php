@@ -18,13 +18,8 @@ class MetricsCollectorTest extends TestCase
             ->onlyMethods(['storeMetrics'])
             ->getMock();
         $middleware->expects($this->once())->method('storeMetrics')->with('GET', 200);
-        $request = $this->getMockBuilder(Request::class)
-            ->onlyMethods(['getRequestUri', 'getMethod'])
-            ->getMock();
-        $request->expects($this->any())->method('getRequestUri')->willReturn('/not-prometheus');
-        $request->expects($this->any())->method('getMethod')->willReturn('GET');
-        $response = $this->createMock(Response::class);
-        $response->expects($this->any())->method('getStatusCode')->willReturn(200);
+        $request = Request::create('/not-prometheus', 'GET');
+        $response = new Response('', 200);
         $next = function () use ($response) {
             return $response;
         };
@@ -37,13 +32,8 @@ class MetricsCollectorTest extends TestCase
             ->onlyMethods(['storeMetrics'])
             ->getMock();
         $middleware->expects($this->never())->method('storeMetrics');
-        $request = $this->getMockBuilder(Request::class)
-            ->onlyMethods(['getRequestUri', 'getMethod'])
-            ->getMock();
-        $request->expects($this->any())->method('getRequestUri')->willReturn('/metrics');
-        $request->expects($this->any())->method('getMethod')->willReturn('GET');
-        $response = $this->createMock(Response::class);
-        $response->expects($this->any())->method('getStatusCode')->willReturn(200);
+        $request = Request::create('/metrics', 'GET');
+        $response = new Response('', 200);
         $next = function () use ($response) {
             return $response;
         };
@@ -58,13 +48,8 @@ class MetricsCollectorTest extends TestCase
             ->onlyMethods(['storeMetrics'])
             ->getMock();
         $middleware->expects($this->once())->method('storeMetrics')->willThrowException(new \Exception('fail'));
-        $request = $this->getMockBuilder(Request::class)
-            ->onlyMethods(['getRequestUri', 'getMethod'])
-            ->getMock();
-        $request->expects($this->any())->method('getRequestUri')->willReturn('/not-prometheus');
-        $request->expects($this->any())->method('getMethod')->willReturn('POST');
-        $response = $this->createMock(Response::class);
-        $response->expects($this->any())->method('getStatusCode')->willReturn(500);
+        $request = Request::create('/not-prometheus', 'POST');
+        $response = new Response('', 500);
         $next = function () use ($response) {
             return $response;
         };
