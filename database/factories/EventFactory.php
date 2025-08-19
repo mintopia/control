@@ -18,4 +18,30 @@ class EventFactory extends Factory
             'seating_locked' => true,
         ];
     }
+
+    /**
+     * State: event where seating opened in the past (should be unlocked).
+     */
+    public function opened(): self
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'seating_opens_at' => now()->subMinute(),
+                'seating_locked' => false,
+            ];
+        });
+    }
+
+    /**
+     * State: event where seating closed in the past (should be locked).
+     */
+    public function closed(): self
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'seating_closes_at' => now()->subMinute(),
+                'seating_locked' => true,
+            ];
+        });
+    }
 }

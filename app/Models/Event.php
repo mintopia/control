@@ -62,6 +62,7 @@ class Event extends Model
         'ends_at' => 'datetime',
         'seating_opens_at' => 'datetime',
         'seating_closes_at' => 'datetime',
+        'seating_locked' => 'boolean',
     ];
 
     public function getRouteKeyName()

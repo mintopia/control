@@ -12,7 +12,6 @@ class SetupDiscordTest extends TestCase
 {
     use RefreshDatabase;
 
-    // TODO Tests do not work with the current setup, need to fix
     public function testCanInstantiateCommand()
     {
         $command = new SetupDiscord();

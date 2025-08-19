@@ -13,6 +13,22 @@ class UpdateEventSeatingLockTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Make times deterministic for the tests
+        Carbon::setTestNow(Carbon::parse('2025-08-19 12:00:00'));
+    }
+
+    protected function tearDown(): void
+    {
+        // Clear test now so other tests are unaffected
+        Carbon::setTestNow();
+
+        parent::tearDown();
+    }
+
     // CHECK Proposal to fix this is to rework the handle method, feasible?
     public function testCanInstantiateCommand()
     {
@@ -22,28 +38,32 @@ class UpdateEventSeatingLockTest extends TestCase
 
     public function testUnlocksSeatingWhenOpensAtIsPast()
     {
-        $event = Event::factory()->create([
-            'seating_opens_at' => Carbon::now()->subMinute(),
+        $event = Event::factory()->opened()->create([
+            // opened() sets seating_opens_at in the past; override locked to match test precondition
             'seating_locked' => true,
         ]);
-        Log::shouldReceive('info')->once();
+        Log::spy();
         $this->artisan('control:update-event-seating-locks');
         $event->refresh();
         $this->assertFalse($event->seating_locked);
         $this->assertNull($event->seating_opens_at);
+        Log::shouldHaveReceived('info')->once();
     }
 
     public function testLocksSeatingWhenClosesAtIsPast()
     {
-        $event = Event::factory()->create([
-            'seating_closes_at' => Carbon::now()->subMinute(),
+        $event = Event::factory()->closed()->create([
+            // closed() sets seating_closes_at in the past; override locked to match test precondition
             'seating_locked' => false,
         ]);
-        Log::shouldReceive('info')->once();
-        $command = new UpdateEventSeatingLock();
+
+        Log::spy(); // less brittle
         $this->artisan('control:update-event-seating-locks');
         $event->refresh();
+
         $this->assertTrue($event->seating_locked);
         $this->assertNull($event->seating_closes_at);
+
+        Log::shouldHaveReceived('info')->once();
     }
 }
