@@ -21,7 +21,6 @@ class ClanMembershipControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    // TODO Tests do not work with the current setup, need to fix
     public function testCanInstantiateController()
     {
         $controller = new ClanMembershipController();

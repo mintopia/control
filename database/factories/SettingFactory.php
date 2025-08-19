@@ -18,7 +18,13 @@ class SettingFactory extends Factory
     {
         return [
             'code' => fake()->unique()->word(),
+            'name' => fake()->words(3, true),
+            'description' => null,
+            'encrypted' => 0,
             'value' => fake()->word(),
+            'validation' => null,
+            'type' => 'stString',
+            'order' => 1,
         ];
     }
 }
