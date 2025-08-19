@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\app\Services\TicketProviders;
 
+use App\Exceptions\TicketProviderWebhookException;
 use App\Models\TicketProvider;
 use App\Models\ProviderSetting;
 use App\Models\TicketType;
@@ -30,6 +31,7 @@ class WooCommerceProviderTest extends TestCase
         foreach ($settings as $code => $value) {
             ProviderSetting::factory()->create([
                 'provider_id' => $ticketProvider->id,
+                'provider_type' => TicketProvider::class,
                 'code' => $code,
                 'value' => $value,
             ]);
@@ -56,26 +58,22 @@ class WooCommerceProviderTest extends TestCase
     {
         $provider = $this->getProvider();
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['foo' => 'bar']));
-        $this->expectException(\App\Exceptions\TicketProviderWebhookException::class);
+        $this->expectException(TicketProviderWebhookException::class);
         $verifyWebhook = \Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
         $verifyWebhook($request);
     }
 
-
-    /* VALIDATE WEBHOOK TESTS
-    The most common reason is that the test input does not actually trigger the exception (e.g., the header is present but not in the expected format, or the timestamp is not old enough).
-    Double-check that the exception class in your test matches exactly (case-sensitive) the one thrown in your provider.
-    Ensure the webhook_secret is set in the test setup when required.
-    */
-
     public function test_verify_webhook_throws_if_no_signature()
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['foo' => 'bar']));
-        $this->expectException(\app\Exceptions\TicketProviderWebhookException::class);
-        $provider->verifyWebhook($request);
+        $verifyWebhook = \Closure::bind(function ($request) {
+            return $this->verifyWebhook($request);
+        }, $provider, get_class($provider));
+        $this->expectException(TicketProviderWebhookException::class);
+        $verifyWebhook($request);
     }
 
     public function test_verify_webhook_throws_if_hash_mismatch()
@@ -84,8 +82,11 @@ class WooCommerceProviderTest extends TestCase
         $request = Request::create('/webhook', 'POST', [], [], [], [
             'HTTP_X_WC_WEBHOOK_SIGNATURE' => base64_encode('invalid'),
         ], json_encode(['foo' => 'bar']));
-        $this->expectException(\app\Exceptions\TicketProviderWebhookException::class);
-        $provider->verifyWebhook($request);
+        $verifyWebhook = \Closure::bind(function ($request) {
+            return $this->verifyWebhook($request);
+        }, $provider, get_class($provider));
+        $this->expectException(TicketProviderWebhookException::class);
+        $verifyWebhook($request);
     }
 
     public function test_verify_webhook_returns_true_on_valid_signature()
@@ -95,13 +96,15 @@ class WooCommerceProviderTest extends TestCase
         $content = json_encode(['foo' => 'bar']);
         $hash = hash_hmac('sha256', $content, $secret, true);
         $signature = base64_encode($hash);
+        $request = Request::create('/webhook', 'POST', [], [], [], [
+            'HTTP_X_WC_WEBHOOK_SIGNATURE' => $signature,
+        ], $content);
         $verifyWebhook = \Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
         $this->assertTrue($verifyWebhook($request));
     }
 
-    // App\Exceptions\TicketProviderWebhookException: No webhook secret is configured
     public function test_process_webhook_returns_true()
     {
         $secret = 'secret';
@@ -126,8 +129,14 @@ class WooCommerceProviderTest extends TestCase
             'HTTP_X_WC_WEBHOOK_SIGNATURE' => $signature,
         ], $content);
 
-        // Mock processTickets to avoid DB interaction
-        $mock = Mockery::mock(WooCommerceProvider::class . '[processTickets]', [$provider->getProvider()])->makePartial();
+        // Use the real TicketProvider Eloquent model (created by getProvider())
+        $providerModel = $provider->getProvider();
+        // ensure the model is fresh from the DB so settings() queries work
+        $providerModel->refresh();
+        // sanity check that the secret is available from the DB
+        $this->assertEquals($secret, $providerModel->getSetting('webhook_secret'));
+        // create a partial mock of the service but pass the real Eloquent model
+        $mock = Mockery::mock(WooCommerceProvider::class . '[processTickets]', [$providerModel])->makePartial();
         $mock->shouldAllowMockingProtectedMethods();
         $mock->shouldReceive('verifyWebhook')->andReturn(true);
         $mock->shouldReceive('parseOrder')->andReturn([
@@ -141,6 +150,8 @@ class WooCommerceProviderTest extends TestCase
             ]
         ]);
         $mock->shouldReceive('processTickets')->once();
+        // ensure the partial mock was constructed with the real model
+        $this->assertSame($providerModel, $mock->getProvider());
         $this->assertTrue($mock->processWebhook($request));
     }
 
@@ -182,7 +193,6 @@ class WooCommerceProviderTest extends TestCase
         $this->assertEquals('valid', $tickets['1-10-1']->status);
     }
 
-    // FIXME provider is a protected property, how to test?
     public function test_get_events_returns_expected_array()
     {
         $provider = $this->getProvider();

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\app\Services\TicketProviders;
 
+use App\Exceptions\TicketProviderWebhookException;
 use App\Models\TicketProvider;
 use App\Models\ProviderSetting;
 use App\Models\TicketType;
@@ -31,6 +32,7 @@ class TicketTailorProviderTest extends TestCase
         foreach ($settings as $code => $value) {
             ProviderSetting::factory()->create([
                 'provider_id' => $ticketProvider->id,
+                'provider_type' => TicketProvider::class,
                 'code' => $code,
                 'value' => $value,
             ]);
@@ -59,12 +61,6 @@ class TicketTailorProviderTest extends TestCase
         $this->assertTrue($verifyWebhook($request));
     }
 
-    /* VALIDATE WEBHOOK TESTS
-    The most common reason is that the test input does not actually trigger the exception (e.g., the header is present but not in the expected format, or the timestamp is not old enough).
-    Double-check that the exception class in your test matches exactly (case-sensitive) the one thrown in your provider.
-    Ensure the webhook_secret is set in the test setup when required.
-    */
-
     public function test_verify_webhook_throws_if_header_missing()
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
@@ -72,21 +68,29 @@ class TicketTailorProviderTest extends TestCase
         $verifyWebhook = \Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
-        $this->expectException(\App\Exceptions\TicketProviderWebhookException::class);
-        $verifyWebhook($request);
+        try {
+            $verifyWebhook($request);
+            $this->fail('Expected TicketProviderWebhookException was not thrown');
+        } catch (TicketProviderWebhookException $e) {
+            $this->assertStringContainsString('Unable to retrieve', $e->getMessage());
+        }
     }
-
 
     public function test_verify_webhook_throws_if_signature_invalid()
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
-        $header = 't=1234567890,v1=invalidsignature';
+        $timestamp = now()->timestamp;
+        $header = "t={$timestamp},v1=invalidsignature";
         $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], 'body');
         $verifyWebhook = \Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
-        $this->expectException(\App\Exceptions\TicketProviderWebhookException::class);
-        $verifyWebhook($request);
+        try {
+            $verifyWebhook($request);
+            $this->fail('Expected TicketProviderWebhookException was not thrown');
+        } catch (TicketProviderWebhookException $e) {
+            $this->assertStringContainsString('Hash does not match', $e->getMessage());
+        }
     }
 
     public function test_verify_webhook_throws_if_timestamp_too_old()
@@ -100,8 +104,12 @@ class TicketTailorProviderTest extends TestCase
         $verifyWebhook = \Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
-        $this->expectException(\App\Exceptions\TicketProviderWebhookException::class);
-        $verifyWebhook($request);
+        try {
+            $verifyWebhook($request);
+            $this->fail('Expected TicketProviderWebhookException was not thrown');
+        } catch (TicketProviderWebhookException $e) {
+            $this->assertStringContainsString('more than 5 minutes', $e->getMessage());
+        }
     }
 
     public function test_verify_webhook_returns_true_on_valid_signature()
