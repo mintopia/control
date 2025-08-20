@@ -6,7 +6,6 @@ use Tests\TestCase;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Http\Request;
 use App\Models\TicketProvider;
-use Mockery;
 
 class WebhookControllerTest extends TestCase
 {
@@ -18,11 +17,15 @@ class WebhookControllerTest extends TestCase
 
     public function testTicketsReturnsNoContentOnSuccess()
     {
-        $request = Mockery::mock(Request::class);
-        $ticketProvider = Mockery::mock(TicketProvider::class);
-        $ticketProvider->shouldReceive('processWebhook')
-            ->with($request)
-            ->andReturn(true);
+        $request = Request::create('/webhook', 'POST');
+
+        // Create a lightweight provider object with a processWebhook method
+        $ticketProvider = new class extends TicketProvider {
+            public function processWebhook(\Illuminate\Http\Request $request): bool
+            {
+                return true;
+            }
+        };
 
         $controller = new WebhookController();
         $response = $controller->tickets($request, $ticketProvider);
@@ -30,26 +33,24 @@ class WebhookControllerTest extends TestCase
         $this->assertEquals(204, $response->getStatusCode());
     }
 
-    // FIXME The test failure indicates that the thrown HttpException does not have the expected code 400,
-    // check the implementation of the tickets method in WebhookController and ensure it throws an HttpException with code 400 when processWebhook returns false.
-    // public function testTicketsAbortsOnFailure()
-    // {
-    //     $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
-    //     $this->expectExceptionCode(400);
-
-    //     $request = Mockery::mock(Request::class);
-    //     $ticketProvider = Mockery::mock(TicketProvider::class);
-    //     $ticketProvider->shouldReceive('processWebhook')
-    //         ->with($request)
-    //         ->andReturn(false);
-
-    //     $controller = new WebhookController();
-    //     $controller->tickets($request, $ticketProvider);
-    // }
-
-    protected function tearDown(): void
+    public function testTicketsAbortsOnFailure()
     {
-        Mockery::close();
-        parent::tearDown();
+        $request = Request::create('/webhook', 'POST');
+
+        $ticketProvider = new class extends TicketProvider {
+            public function processWebhook(\Illuminate\Http\Request $request): bool
+            {
+                return false;
+            }
+        };
+
+        $controller = new WebhookController();
+
+        try {
+            $controller->tickets($request, $ticketProvider);
+            $this->fail('Expected HttpException to be thrown');
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            $this->assertEquals(400, $e->getStatusCode());
+        }
     }
 }
