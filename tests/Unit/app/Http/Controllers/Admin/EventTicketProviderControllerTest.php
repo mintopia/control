@@ -3,78 +3,56 @@
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
 use Tests\TestCase;
-use App\Http\Controllers\Admin\EventTicketProviderController;
-use Illuminate\Http\Request;
-use Mockery;
+use App\Models\Event;
+use App\Models\EventMapping;
+use App\Models\TicketProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class EventTicketProviderControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function testCanInstantiateController()
     {
-        $controller = new EventTicketProviderController();
-        $this->assertInstanceOf(EventTicketProviderController::class, $controller);
+        // Controller is intentionally empty; ensure it can be instantiated
+        $controller = new \App\Http\Controllers\Admin\EventTicketProviderController();
+        $this->assertInstanceOf(\App\Http\Controllers\Admin\EventTicketProviderController::class, $controller);
     }
 
-    // FIXME Mockery for these instances did not work - Class already exists
-    // public function testAddTicketProviderReturnsSuccessResponse()
-    // {
-    //     $request = Mockery::mock(Request::class);
-    //     $request->shouldReceive('all')->once()->andReturn(['provider_name' => 'Test Provider', 'event_id' => 1]);
-
-    //     $controller = Mockery::mock(EventTicketProviderController::class, [])->makePartial();
-
-    //     $controller->shouldReceive('addTicketProvider')
-    //         ->once()
-    //         ->with(Mockery::type(Request::class))
-    //         ->andReturn(response()->json(['message' => 'Ticket provider added successfully'], 201));
-
-    //     $response = $controller->addTicketProvider($request);
-
-    //     $this->assertEquals(201, $response->getStatusCode());
-    //     $this->assertJsonStringEqualsJsonString(
-    //         json_encode(['message' => 'Ticket provider added successfully']),
-    //         $response->getContent()
-    //     );
-    // }
-
-    public function testRemoveTicketProviderReturnsSuccessResponse()
+    public function testAttachTicketProviderCreatesRecord()
     {
-        $controller = Mockery::mock(EventTicketProviderController::class, [])->makePartial();
+        $event = Event::factory()->create();
+        $provider = TicketProvider::factory()->create();
 
-        $controller->shouldReceive('removeTicketProvider')
-            ->once()
-            ->with(1)
-            ->andReturn(response()->json(['message' => 'Ticket provider removed successfully'], 200));
+        // Create mapping via factory (equivalent to attaching a ticket provider to an event)
+        $mapping = EventMapping::factory()->for($event)->for($provider, 'provider')->create();
 
-        $response = $controller->removeTicketProvider(1);
-
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['message' => 'Ticket provider removed successfully']),
-            $response->getContent()
-        );
+        $this->assertDatabaseHas('event_mappings', ['id' => $mapping->id, 'event_id' => $event->id, 'ticket_provider_id' => $provider->id]);
     }
 
-    public function testListTicketProvidersReturnsExpectedResponse()
+    public function testDetachTicketProviderDeletesRecord()
     {
-        $controller = Mockery::mock(EventTicketProviderController::class, [])->makePartial();
+        $event = Event::factory()->create();
+        $provider = TicketProvider::factory()->create();
+        $mapping = EventMapping::factory()->for($event)->for($provider, 'provider')->create();
 
-        $controller->shouldReceive('listTicketProviders')
-            ->once()
-            ->andReturn(response()->json(['providers' => ['provider1', 'provider2']], 200));
+        $mapping->delete();
 
-        $response = $controller->listTicketProviders();
-
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['providers' => ['provider1', 'provider2']]),
-            $response->getContent()
-        );
+        $this->assertDatabaseMissing('event_mappings', ['id' => $mapping->id]);
     }
 
-    protected function tearDown(): void
+    public function testListReturnsEventMappings()
     {
-        Mockery::close();
-        parent::tearDown();
+        $event = Event::factory()->create();
+        $provider1 = TicketProvider::factory()->create();
+        $provider2 = TicketProvider::factory()->create();
+
+        EventMapping::factory()->for($event)->for($provider1, 'provider')->create();
+        EventMapping::factory()->for($event)->for($provider2, 'provider')->create();
+
+        $mappings = $event->mappings()->with('provider')->get();
+
+        $this->assertCount(2, $mappings);
+        $this->assertEqualsCanonicalizing([$provider1->id, $provider2->id], $mappings->pluck('ticket_provider_id')->toArray());
     }
 }
