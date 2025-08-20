@@ -34,5 +34,38 @@ class VerifyCsrfTokenTest extends TestCase
         $this->assertInstanceOf(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class, $middleware);
     }
 
-    //CHECK whether more advanced tests are needed here and/or whether the stub can be improved
+    public function testExceptPropertyIsArrayAndContainsWebhookPattern()
+    {
+        $middleware = new VerifyCsrfTokenStub();
+        $reflection = new \ReflectionClass($middleware);
+        $property = $reflection->getProperty('except');
+        $property->setAccessible(true);
+        $except = $property->getValue($middleware);
+        $this->assertIsArray($except);
+        $this->assertNotEmpty($except);
+        $this->assertStringContainsString('webhooks/tickets', $except[0]);
+        $this->assertStringEndsWith('*', $except[0]);
+    }
+
+    public function testWebhookPatternMatchesSampleUri()
+    {
+        $middleware = new VerifyCsrfTokenStub();
+        $reflection = new \ReflectionClass($middleware);
+        $property = $reflection->getProperty('except');
+        $property->setAccessible(true);
+        $except = $property->getValue($middleware);
+
+        $pattern = $except[0];
+        // normalize wildcard: remove trailing '*' and ensure sample starts with prefix
+        $prefix = rtrim($pattern, '*');
+        $this->assertStringStartsWith($prefix, '/webhooks/tickets/123');
+    }
+
+    public function testExceptPropertyIsProtected()
+    {
+        $middleware = new VerifyCsrfTokenStub();
+        $reflection = new \ReflectionClass($middleware);
+        $property = $reflection->getProperty('except');
+        $this->assertTrue($property->isProtected());
+    }
 }
