@@ -4,148 +4,83 @@ namespace Tests\Unit\app\Http\Controllers\Admin;
 
 use Tests\TestCase;
 use App\Http\Controllers\Admin\LinkedAccountController;
-use Illuminate\Http\Request;
-use Mockery;
+use App\Models\User;
+use App\Models\LinkedAccount;
+use App\Models\SocialProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 
 class LinkedAccountControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function testCanInstantiateController()
     {
         $controller = new LinkedAccountController();
         $this->assertInstanceOf(LinkedAccountController::class, $controller);
     }
 
-    /* FIXME The error indicates that the linkAccount method in LinkedAccountController does not call $request->all(),
-    which is expected by the test; you should update the implementation of linkAccount to call $request->all().
-    * Test the linkAccount method
-
-    public function linkAccount(Request $request)
+    public function testDeleteShowsViewWhenAccountCanBeDeleted()
     {
-        $data = $request->all();
-        // TODO: Implement account linking logic using $data
-        return response()->json(['message' => 'Account linked successfully'], 200);
-    }
-    */
+        $user = User::factory()->create();
+        $provider = SocialProvider::factory()->create(['auth_enabled' => true]);
 
-    // public function testLinkAccountReturnsSuccessResponse()
-    // {
-    //     $request = Mockery::mock(Request::class);
-    //     $request->shouldReceive('all')->once()->andReturn(['user_id' => 1, 'account_id' => 2]);
+        // Create two accounts for the user so canDelete() will allow deletion
+        $account1 = LinkedAccount::factory()->for($user)->for($provider, 'provider')->create();
+        $account2 = LinkedAccount::factory()->for($user)->for($provider, 'provider')->create();
 
-    //     $controller = Mockery::mock(LinkedAccountController::class, [])->makePartial();
+        $controller = new LinkedAccountController();
+        $response = $controller->delete($user, $account1);
 
-    //     $controller->shouldReceive('linkAccount')
-    //         ->once()
-    //         ->with(Mockery::type(Request::class))
-    //         ->andReturn(response()->json(['message' => 'Account linked successfully'], 200));
-
-    //     $response = $controller->linkAccount($request);
-
-    //     $this->assertEquals(200, $response->getStatusCode());
-    //     $this->assertJsonStringEqualsJsonString(
-    //         json_encode(['message' => 'Account linked successfully']),
-    //         $response->getContent()
-    //     );
-    // }
-
-    // public function testLinkAccountHandlesInvalidRequest()
-    // {
-    //     $request = Mockery::mock(Request::class);
-    //     $request->shouldReceive('all')->once()->andReturn([]); // Simulate missing data
-
-    //     $controller = Mockery::mock(LinkedAccountController::class, [])->makePartial();
-
-    //     $controller->shouldReceive('linkAccount')
-    //         ->once()
-    //         ->with(Mockery::type(Request::class))
-    //         ->andReturn(response()->json(['error' => 'Invalid data'], 400));
-
-    //     $response = $controller->linkAccount($request);
-
-    //     $this->assertEquals(400, $response->getStatusCode());
-    //     $this->assertJsonStringEqualsJsonString(
-    //         json_encode(['error' => 'Invalid data']),
-    //         $response->getContent()
-    //     );
-    // }
-
-    // public function testLinkAccountHandlesDuplicateLinking()
-    // {
-    //     $request = Mockery::mock(Request::class);
-    //     $request->shouldReceive('all')->once()->andReturn(['user_id' => 1, 'account_id' => 2]);
-
-    //     $controller = Mockery::mock(LinkedAccountController::class, [])->makePartial();
-
-    //     $controller->shouldReceive('linkAccount')
-    //         ->once()
-    //         ->with(Mockery::type(Request::class))
-    //         ->andReturn(response()->json(['error' => 'Account already linked'], 409));
-
-    //     $response = $controller->linkAccount($request);
-
-    //     $this->assertEquals(409, $response->getStatusCode());
-    //     $this->assertJsonStringEqualsJsonString(
-    //         json_encode(['error' => 'Account already linked']),
-    //         $response->getContent()
-    //     );
-    // }
-
-    public function testUnlinkAccountReturnsSuccessResponse()
-    {
-        $controller = Mockery::mock(LinkedAccountController::class, [])->makePartial();
-
-        $controller->shouldReceive('unlinkAccount')
-            ->once()
-            ->with(1)
-            ->andReturn(response()->json(['message' => 'Account unlinked successfully'], 200));
-
-        $response = $controller->unlinkAccount(1);
-
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['message' => 'Account unlinked successfully']),
-            $response->getContent()
-        );
+        $this->assertInstanceOf(View::class, $response);
+        // View data should include the account we passed
+        $this->assertArrayHasKey('account', $response->getData());
+        $this->assertEquals($account1->id, $response->getData()['account']->id);
     }
 
-    public function testUnlinkAccountHandlesNonexistentAccount()
+    public function testDeleteRedirectsWhenAccountCannotBeDeleted()
     {
-        $controller = Mockery::mock(LinkedAccountController::class, [])->makePartial();
+        $user = User::factory()->create();
+        $provider = SocialProvider::factory()->create(['auth_enabled' => true]);
 
-        $controller->shouldReceive('unlinkAccount')
-            ->once()
-            ->with(999)
-            ->andReturn(response()->json(['error' => 'Account not found'], 404));
+        // Single account -> cannot delete
+        $account = LinkedAccount::factory()->for($user)->for($provider, 'provider')->create();
 
-        $response = $controller->unlinkAccount(999);
+        $controller = new LinkedAccountController();
+        $response = $controller->delete($user, $account);
 
-        $this->assertEquals(404, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['error' => 'Account not found']),
-            $response->getContent()
-        );
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        // Account should still exist in DB
+        $this->assertDatabaseHas('linked_accounts', ['id' => $account->id]);
     }
 
-    public function testListLinkedAccountsReturnsExpectedResponse()
+    public function testDestroyDeletesAccountWhenAllowed()
     {
-        $controller = Mockery::mock(LinkedAccountController::class, [])->makePartial();
+        $user = User::factory()->create();
+        $provider = SocialProvider::factory()->create(['auth_enabled' => true]);
 
-        $controller->shouldReceive('listLinkedAccounts')
-            ->once()
-            ->andReturn(response()->json(['accounts' => ['account1', 'account2']], 200));
+        $account1 = LinkedAccount::factory()->for($user)->for($provider, 'provider')->create();
+        $account2 = LinkedAccount::factory()->for($user)->for($provider, 'provider')->create();
 
-        $response = $controller->listLinkedAccounts();
+        $controller = new LinkedAccountController();
+        $response = $controller->destroy($user, $account1);
 
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['accounts' => ['account1', 'account2']]),
-            $response->getContent()
-        );
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertDatabaseMissing('linked_accounts', ['id' => $account1->id]);
     }
 
-    protected function tearDown(): void
+    public function testDestroyDoesNotDeleteWhenOnlyOneAccount()
     {
-        Mockery::close();
-        parent::tearDown();
+        $user = User::factory()->create();
+        $provider = SocialProvider::factory()->create(['auth_enabled' => true]);
+
+        $account = LinkedAccount::factory()->for($user)->for($provider, 'provider')->create();
+
+        $controller = new LinkedAccountController();
+        $response = $controller->destroy($user, $account);
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertDatabaseHas('linked_accounts', ['id' => $account->id]);
     }
 }
