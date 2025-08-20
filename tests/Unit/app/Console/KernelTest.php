@@ -5,9 +5,11 @@ namespace Tests\Unit\app\Console;
 use Tests\TestCase;
 use App\Console\Kernel;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class KernelTest extends TestCase
 {
+    use RefreshDatabase;
     public function testCanInstantiateKernel()
     {
         $app = $this->createMock(\Illuminate\Contracts\Foundation\Application::class);
@@ -36,12 +38,10 @@ class KernelTest extends TestCase
         $this->assertContains('control:sync-discord-roles', $descriptions);
     }
 
-    // CHECK No such table clans - seeding missing?
-    // Testing Function Commands
-    // public function testFunctionCommands()
-    // {
-    //     $this->artisan('control:prune-clans')->assertSuccessful();
-    //     $this->artisan('control:update-event-seating-locks')->assertSuccessful();
-    //     $this->artisan('control:sync-discord-roles')->assertSuccessful();
-    // }
+    public function testFunctionCommands()
+    {
+        $this->artisan('control:prune-clans')->assertSuccessful();
+        $this->artisan('control:update-event-seating-locks')->assertSuccessful();
+        $this->artisan('control:sync-discord-roles')->assertSuccessful();
+    }
 }
