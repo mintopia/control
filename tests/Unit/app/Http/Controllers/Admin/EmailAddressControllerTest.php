@@ -5,83 +5,63 @@ namespace Tests\Unit\app\Http\Controllers\Admin;
 use Tests\TestCase;
 use App\Http\Controllers\Admin\EmailAddressController;
 use Illuminate\Http\Request;
-use Mockery;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\User;
+use App\Models\EmailAddress;
+use App\Http\Requests\Admin\EmailAddressUpdateRequest;
+use Illuminate\Support\Facades\Route;
 
 class EmailAddressControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function testCanInstantiateController()
     {
         $controller = new EmailAddressController();
         $this->assertInstanceOf(EmailAddressController::class, $controller);
     }
 
-    // FIXME Mockery for these instances did not work - Class already exists
-    // public function testValidateEmailReturnsSuccessResponse()
-    // {
-    //     $request = Mockery::mock(Request::class);
-    //     $request->shouldReceive('all')->once()->andReturn(['email' => 'test@example.com']);
-
-    //     $controller = Mockery::mock(EmailAddressController::class, [])->makePartial();
-
-    //     $controller->shouldReceive('validateEmail')
-    //         ->once()
-    //         ->with(Mockery::type(Request::class))
-    //         ->andReturn(response()->json(['message' => 'Email is valid'], 200));
-
-    //     $response = $controller->validateEmail($request);
-
-    //     $this->assertEquals(200, $response->getStatusCode());
-    //     $this->assertJsonStringEqualsJsonString(
-    //         json_encode(['message' => 'Email is valid']),
-    //         $response->getContent()
-    //     );
-    // }
-
-    // public function testValidateEmailReturnsErrorForInvalidEmail()
-    // {
-    //     $request = Mockery::mock(Request::class);
-    //     $request->shouldReceive('all')->once()->andReturn(['email' => 'invalid-email']);
-
-    //     $controller = Mockery::mock(EmailAddressController::class, [])->makePartial();
-
-    //     $controller->shouldReceive('validateEmail')
-    //         ->once()
-    //         ->with(Mockery::type(Request::class))
-    //         ->andReturn(response()->json(['error' => 'Invalid email address'], 422));
-
-    //     $response = $controller->validateEmail($request);
-
-    //     $this->assertEquals(422, $response->getStatusCode());
-    //     $this->assertJsonStringEqualsJsonString(
-    //         json_encode(['error' => 'Invalid email address']),
-    //         $response->getContent()
-    //     );
-    // }
-
-    // public function testStoreEmailReturnsSuccessResponse()
-    // {
-    //     $request = Mockery::mock(Request::class);
-    //     $request->shouldReceive('all')->once()->andReturn(['email' => 'test@example.com']);
-
-    //     $controller = Mockery::mock(EmailAddressController::class, [])->makePartial();
-
-    //     $controller->shouldReceive('storeEmail')
-    //         ->once()
-    //         ->with(Mockery::type(Request::class))
-    //         ->andReturn(response()->json(['message' => 'Email stored successfully'], 201));
-
-    //     $response = $controller->storeEmail($request);
-
-    //     $this->assertEquals(201, $response->getStatusCode());
-    //     $this->assertJsonStringEqualsJsonString(
-    //         json_encode(['message' => 'Email stored successfully']),
-    //         $response->getContent()
-    //     );
-    // }
-
-    protected function tearDown(): void
+    public function testStoreCreatesEmailForUser()
     {
-        Mockery::close();
-        parent::tearDown();
+        $user = User::factory()->create();
+        $request = EmailAddressUpdateRequest::create('/admin/users/' . $user->id . '/emails', 'POST', ['address' => 'test@example.com']);
+        $request->setUserResolver(fn() => $user);
+
+        $controller = new EmailAddressController();
+        $response = $controller->store($user, $request);
+
+        $this->assertDatabaseHas('email_addresses', ['email' => 'test@example.com']);
+    }
+
+    public function testDestroyDeletesEmail()
+    {
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['user_id' => $user->id]);
+
+        // Ensure route exists for redirects
+        Route::get('admin/users/{user?}', fn() => '')->name('admin.users.show');
+
+        // Authenticate as the user to simulate admin action and make deletion deterministic
+        $this->actingAs($user);
+
+        // Clear primary email on user and on loaded relation
+        $user->primary_email_id = null;
+        $user->save();
+        $email->load('user');
+        $email->user->primary_email_id = null;
+        $email->user->save();
+
+        // Ensure no linked accounts block deletion
+        if ($email->linkedAccounts()->count() > 0) {
+            $email->linkedAccounts()->delete();
+            $email->refresh();
+        }
+
+        $this->assertTrue($email->canDelete(), 'Email should be deletable in test setup');
+
+        $controller = new EmailAddressController();
+        $response = $controller->destroy($user, $email);
+
+        $this->assertDatabaseMissing('email_addresses', ['id' => $email->id]);
     }
 }
