@@ -5,10 +5,12 @@ namespace Tests\Unit\app\Http\Requests;
 use Tests\TestCase;
 use App\Http\Requests\ClanRequest;
 use App\Http\Requests\ClanMembershipRequest;
-use Mockery;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ClanRequestTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function testAuthorizeReturnsTrue()
     {
         $request = new ClanRequest();
@@ -71,51 +73,47 @@ class ClanRequestTest extends TestCase
         $this->assertTrue($closureFound, 'Closure rule not found for code');
     }
 
-    // FIXME Illuminate\Database\QueryException: SQLSTATE[HY000]: General error: 1 no such table: clans (Connection: sqlite, SQL: select count(*) as aggregate from "clans" where "invite_code" = )
-    // public function testCodeRuleClosureFailsWithEmptyValue()
-    // {
-    //     $clanMock = Mockery::mock(['App\\Models\\Clan' => 'alias']);
-    //     $clanMock->shouldReceive('whereInviteCode')->with('')->andReturnSelf();
-    //     $clanMock->shouldReceive('count')->andReturn(0);
+    public function testCodeRuleClosureFailsWithEmptyValue()
+    {
+        // No clans in DB -> empty code should fail
+        $request = new ClanMembershipRequest();
+        $rules = $request->rules();
+        $closure = null;
+        foreach ($rules['code'] as $rule) {
+            if ($rule instanceof \Closure) {
+                $closure = $rule;
+                break;
+            }
+        }
+        $called = false;
+        $fail = function ($message) use (&$called) {
+            $called = true;
+            $this->assertEquals('The invite code is invalid', $message);
+        };
+        $closure('code', '', $fail);
+        $this->assertTrue($called, 'Fail closure was not called for empty code');
+    }
 
-    //     $request = new ClanMembershipRequest();
-    //     $rules = $request->rules();
-    //     $closure = null;
-    //     foreach ($rules['code'] as $rule) {
-    //         if ($rule instanceof \Closure) {
-    //             $closure = $rule;
-    //             break;
-    //         }
-    //     }
-    //     $called = false;
-    //     $fail = function ($message) use (&$called) {
-    //         $called = true;
-    //         $this->assertEquals('The invite code is invalid', $message);
-    //     };
-    //     $closure('code', '', $fail);
-    //     $this->assertTrue($called, 'Fail closure was not called for empty code');
-    // }
-
-    // public function testCodeRuleClosureIsCaseInsensitive()
-    // {
-    //     $clanMock = Mockery::mock(['App\\Models\\Clan' => 'alias']);
-    //     $clanMock->shouldReceive('whereInviteCode')->with('ABCDEF')->andReturnSelf();
-    //     $clanMock->shouldReceive('count')->andReturn(1);
-
-    //     $request = new ClanMembershipRequest();
-    //     $rules = $request->rules();
-    //     $closure = null;
-    //     foreach ($rules['code'] as $rule) {
-    //         if ($rule instanceof \Closure) {
-    //             $closure = $rule;
-    //             break;
-    //         }
-    //     }
-    //     $fail = function () {
-    //         $this->fail('Fail closure should not be called for valid code');
-    //     };
-    //     $closure('code', 'abcdef', $fail);
-    // }
+    public function testCodeRuleClosureIsCaseInsensitive()
+    {
+        // Create a clan with invite_code ABCDEF
+        \App\Models\Clan::factory()->create(['invite_code' => 'ABCDEF']);
+        $request = new ClanMembershipRequest();
+        $rules = $request->rules();
+        $closure = null;
+        foreach ($rules['code'] as $rule) {
+            if ($rule instanceof \Closure) {
+                $closure = $rule;
+                break;
+            }
+        }
+        $called = false;
+        $fail = function () use (&$called) {
+            $called = true;
+        };
+        $closure('code', 'abcdef', $fail);
+        $this->assertFalse($called, 'Fail closure was called for valid code (case-insensitive check failed)');
+    }
 
     public function testRulesArrayStructure()
     {
