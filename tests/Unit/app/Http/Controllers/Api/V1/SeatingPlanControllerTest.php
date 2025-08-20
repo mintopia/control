@@ -3,49 +3,13 @@
 namespace Tests\Unit\app\Http\Controllers\Api\V1;
 
 use Tests\TestCase;
-use Mockery;
 use App\Http\Controllers\Api\V1\SeatingPlanController;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 
 class SeatingPlanControllerTest extends TestCase
 {
-    //FIXME Mocking for these classes does not work properlyu
-    private function mockEvent(array $props = [])
-    {
-        $mock = Mockery::mock(\App\Models\Event::class);
-        foreach ($props as $k => $v) {
-            $mock->$k = $v;
-        }
-        return $mock;
-    }
-    private function mockTicket(array $methods = [], array $props = [])
-    {
-        $mock = Mockery::mock(\App\Models\Ticket::class);
-        foreach ($methods as $method => $return) {
-            $mock->shouldReceive($method)->andReturn($return);
-        }
-        foreach ($props as $k => $v) {
-            $mock->$k = $v;
-        }
-        return $mock;
-    }
-    private function mockSeat()
-    {
-        return Mockery::mock(\App\Models\Seat::class);
-    }
-    private function mockPlan(array $props = [])
-    {
-        $mock = Mockery::mock(\App\Models\SeatingPlan::class);
-        foreach ($props as $k => $v) {
-            $mock->$k = $v;
-        }
-        return $mock;
-    }
-    private function mockBelongsTo($result)
-    {
-        $mock = Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsTo::class);
-        $mock->shouldReceive('getResults')->andReturn($result);
-        return $mock;
-    }
+    use RefreshDatabase;
 
     public function testCanInstantiateController()
     {
@@ -53,123 +17,192 @@ class SeatingPlanControllerTest extends TestCase
         $this->assertInstanceOf(SeatingPlanController::class, $controller);
     }
 
-    // // --- Tests for index ---
-    // public function testIndexReturnsViewWithEventsForAdmin()
-    // {
-    //     $controller = new \App\Http\Controllers\SeatingPlanController();
-    //     $mockUser = Mockery::mock();
-    //     $mockUser->shouldReceive('hasAnyRole')->with(['admin', 'manager'])->once()->andReturn(true);
-    //     $mockRequest = Mockery::mock(\Illuminate\Http\Request::class);
-    //     $mockRequest->shouldReceive('user')->andReturn($mockUser);
-
-    //     $mockQuery = Mockery::mock();
-    //     $mockQuery->shouldReceive('orderBy')->with('starts_at', 'DESC')->once()->andReturnSelf();
-    //     $mockQuery->shouldReceive('with')->with('seatingPlans')->once()->andReturnSelf();
-    //     $mockQuery->shouldReceive('paginate')->once()->andReturn('paginated-events');
-
-    //     Mockery::mock('alias:App\Models\Event')
-    //         ->shouldReceive('query')
-    //         ->andReturn($mockQuery);
-
-    //     $response = $controller->index($mockRequest);
-    //     $this->assertEquals(view('seatingplans.index', ['events' => 'paginated-events']), $response);
-    // }
-
-    // public function testIndexReturnsViewWithEventsForNonAdmin()
-    // {
-    //     $controller = new \App\Http\Controllers\SeatingPlanController();
-    //     $mockUser = Mockery::mock();
-    //     $mockUser->shouldReceive('hasAnyRole')->with(['admin', 'manager'])->once()->andReturn(false);
-    //     $mockRequest = Mockery::mock(\Illuminate\Http\Request::class);
-    //     $mockRequest->shouldReceive('user')->andReturn($mockUser);
-
-    //     $mockQuery = Mockery::mock();
-    //     $mockQuery->shouldReceive('whereDraft')->with(false)->once()->andReturnSelf();
-    //     $mockQuery->shouldReceive('orderBy')->with('starts_at', 'DESC')->once()->andReturnSelf();
-    //     $mockQuery->shouldReceive('with')->with('seatingPlans')->once()->andReturnSelf();
-    //     $mockQuery->shouldReceive('paginate')->once()->andReturn('paginated-events');
-
-    //     Mockery::mock('alias:App\Models\Event')
-    //         ->shouldReceive('query')
-    //         ->andReturn($mockQuery);
-
-    //     $response = $controller->index($mockRequest);
-    //     $this->assertEquals(view('seatingplans.index', ['events' => 'paginated-events']), $response);
-    // }
-
-    // // --- Tests for show ---
-    // public function testShowRedirectsIfTicketCannotPickOrManage()
-    // {
-    //     $controller = new \App\Http\Controllers\SeatingPlanController();
-    //     $mockUser = Mockery::mock();
-    //     $mockUser->id = 1;
-    //     $mockUser->shouldReceive('clanMemberships')->andReturnSelf();
-    //     $mockUser->shouldReceive('hasAnyRole')->andReturn(true);
-    //     $mockRequest = Mockery::mock(\Illuminate\Http\Request::class);
-    //     $mockRequest->shouldReceive('user')->andReturn($mockUser);
-    //     $mockRequest->shouldReceive('session')->andReturnSelf();
-    //     $mockRequest->shouldReceive('isXmlHttpRequest')->andReturn(false);
-    //     $mockRequest->shouldReceive('has')->andReturn(false);
-    //     $mockEvent = $this->mockEvent(['seating_locked' => false, 'id' => 123]);
-    //     $mockTicket = $this->mockTicket([
-    //         'canPickSeat' => false,
-    //         'canBeManagedBy' => false
-    //     ]);
-    //     $response = $controller->show($mockRequest, $mockEvent, $mockTicket);
-    //     $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
-    // }
-
-    // // --- Tests for select ---
-    // public function testSelectAbortsIfSeatPlanEventMismatch()
-    // {
-    //     $controller = new \App\Http\Controllers\SeatingPlanController();
-    //     $mockRequest = Mockery::mock(\Illuminate\Http\Request::class);
-    //     $mockEvent = $this->mockEvent(['id' => 1]);
-    //     $mockTicket = $this->mockTicket();
-    //     $mockPlan = $this->mockPlan(['event_id' => 2, 'code' => 'plan1']);
-    //     $mockSeat = $this->mockSeat();
-    //     $mockBelongsTo = $this->mockBelongsTo($mockPlan);
-    //     $mockSeat->shouldReceive('plan')->andReturn($mockBelongsTo);
-    //     $mockSeat->shouldReceive('getAttribute')->with('plan')->andReturn($mockPlan);
-    //     $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
-    //     $controller->select($mockRequest, $mockEvent, $mockTicket, $mockSeat);
-    // }
-
-    // public function testSelectAbortsIfTicketEventMismatch()
-    // {
-    //     $controller = new \App\Http\Controllers\SeatingPlanController();
-    //     $mockRequest = Mockery::mock(\Illuminate\Http\Request::class);
-    //     $mockEvent = $this->mockEvent(['id' => 1]);
-    //     $mockTicket = $this->mockTicket([], ['event_id' => 2]);
-    //     $mockPlan = $this->mockPlan(['event_id' => 1, 'code' => 'plan1']);
-    //     $mockSeat = $this->mockSeat();
-    //     $mockBelongsTo = $this->mockBelongsTo($mockPlan);
-    //     $mockSeat->shouldReceive('plan')->andReturn($mockBelongsTo);
-    //     $mockSeat->shouldReceive('getAttribute')->with('plan')->andReturn($mockPlan);
-    //     $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
-    //     $controller->select($mockRequest, $mockEvent, $mockTicket, $mockSeat);
-    // }
-
-    // // --- Tests for unseat ---
-    // public function testUnseatRedirectsIfCannotPickOrManage()
-    // {
-    //     $controller = new \App\Http\Controllers\SeatingPlanController();
-    //     $mockUser = Mockery::mock();
-    //     $mockRequest = Mockery::mock(\Illuminate\Http\Request::class);
-    //     $mockRequest->shouldReceive('user')->andReturn($mockUser);
-    //     $mockEvent = $this->mockEvent(['code' => 'event1', 'id' => 123]);
-    //     $mockTicket = $this->mockTicket([
-    //         'canPickSeat' => false,
-    //         'canBeManagedBy' => false
-    //     ]);
-    //     $response = $controller->unseat($mockRequest, $mockEvent, $mockTicket);
-    //     $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
-    // }
-
-
-    public function tearDown(): void
+    public function testIndexReturnsPaginatedFractalResponse()
     {
-        Mockery::close();
-        parent::tearDown();
+        $event = \App\Models\Event::factory()->create([
+            'starts_at' => now(),
+            'ends_at' => now()->addHour(),
+        ]);
+        \App\Models\SeatingPlan::factory()->count(3)->create(['event_id' => $event->id]);
+
+        $controller = new SeatingPlanController();
+        $request = Request::create('/', 'GET', ['perPage' => 2]);
+        $response = $controller->index($request, $event);
+
+        $this->assertInstanceOf(\Illuminate\Http\JsonResponse::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $data = $response->getData(true);
+        $this->assertArrayHasKey('data', $data);
+        $this->assertCount(2, $data['data']);
+    }
+
+    public function testIndexDefaultPerPageReturnsAllWhenUnderLimit()
+    {
+        $event = \App\Models\Event::factory()->create([
+            'starts_at' => now(),
+            'ends_at' => now()->addHour(),
+        ]);
+        \App\Models\SeatingPlan::factory()->count(5)->create(['event_id' => $event->id]);
+
+        $controller = new SeatingPlanController();
+        $request = Request::create('/', 'GET');
+        $response = $controller->index($request, $event);
+
+        $this->assertInstanceOf(\Illuminate\Http\JsonResponse::class, $response);
+        $data = $response->getData(true);
+        $this->assertCount(5, $data['data']);
+    }
+
+    public function testIndexIncludesEventDataInItems()
+    {
+        $event = \App\Models\Event::factory()->create([
+            'starts_at' => now(),
+            'ends_at' => now()->addHour(),
+            'name' => 'MyEvent',
+        ]);
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id]);
+
+        $controller = new SeatingPlanController();
+        $request = Request::create('/', 'GET');
+        $response = $controller->index($request, $event);
+        $this->assertEquals(200, $response->getStatusCode());
+        $body = $response->getData(true);
+        $this->assertNotEmpty($body['data']);
+        $first = $body['data'][0];
+        $this->assertArrayHasKey('event', $first);
+        // Fractal may nest the included resource under 'data' (event => ['data' => [...]])
+        if (isset($first['event']['name'])) {
+            $this->assertEquals('MyEvent', $first['event']['name']);
+        } elseif (isset($first['event']['data']['name'])) {
+            $this->assertEquals('MyEvent', $first['event']['data']['name']);
+        } else {
+            $this->fail('Event name not present in transformed seating plan item. Received: ' . json_encode($first['event']));
+        }
+    }
+
+    public function testShowReturnsFractalResponse()
+    {
+        $event = \App\Models\Event::factory()->create([
+            'starts_at' => now(),
+            'ends_at' => now()->addHour(),
+        ]);
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $controller = new SeatingPlanController();
+        $response = $controller->show($plan);
+
+        $this->assertInstanceOf(\Illuminate\Http\JsonResponse::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+        $body = $response->getData(true);
+        $this->assertArrayHasKey('data', $body);
+        $this->assertEquals($plan->id, $body['data']['id']);
+    }
+
+    // Tests for index (Eloquent-backed)
+    public function testIndexReturnsViewWithEventsForAdmin()
+    {
+        // Admin should see draft and non-draft events
+        $eventDraft = \App\Models\Event::factory()->create(['draft' => true, 'starts_at' => now(), 'ends_at' => now()->addHour()]);
+        $eventLive = \App\Models\Event::factory()->create(['draft' => false, 'starts_at' => now()->subDay(), 'ends_at' => now()->addHour()]);
+
+        $controller = new \App\Http\Controllers\SeatingPlanController();
+        $request = Request::create('/', 'GET');
+        $userStub = new class {
+            public function hasAnyRole($roles)
+            {
+                return true;
+            }
+        };
+        $request->setUserResolver(function () use ($userStub) {
+            return $userStub;
+        });
+
+        $response = $controller->index($request);
+        $this->assertInstanceOf(\Illuminate\View\View::class, $response);
+        $data = $response->getData();
+        $this->assertArrayHasKey('events', $data);
+        $events = $data['events'];
+        $this->assertInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class, $events);
+        // both events should be present for admin
+        $ids = $events->pluck('id')->all();
+        $this->assertContains($eventDraft->id, $ids);
+        $this->assertContains($eventLive->id, $ids);
+    }
+
+    public function testIndexReturnsViewWithEventsForNonAdmin()
+    {
+        // Non-admin should only see non-draft events
+        $eventDraft = \App\Models\Event::factory()->create(['draft' => true, 'starts_at' => now(), 'ends_at' => now()->addHour()]);
+        $eventLive = \App\Models\Event::factory()->create(['draft' => false, 'starts_at' => now()->subDay(), 'ends_at' => now()->addHour()]);
+
+        $controller = new \App\Http\Controllers\SeatingPlanController();
+        $request = Request::create('/', 'GET');
+        $userStub = new class {
+            public function hasAnyRole($roles)
+            {
+                return false;
+            }
+        };
+        $request->setUserResolver(function () use ($userStub) {
+            return $userStub;
+        });
+
+        $response = $controller->index($request);
+        $this->assertInstanceOf(\Illuminate\View\View::class, $response);
+        $data = $response->getData();
+        $this->assertArrayHasKey('events', $data);
+        $events = $data['events'];
+        $this->assertInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class, $events);
+        $ids = $events->pluck('id')->all();
+        $this->assertNotContains($eventDraft->id, $ids);
+        $this->assertContains($eventLive->id, $ids);
+    }
+
+    public function testSelectAbortsIfSeatPlanEventMismatch()
+    {
+        $controller = new \App\Http\Controllers\SeatingPlanController();
+        $event1 = \App\Models\Event::factory()->create(['starts_at' => now(), 'ends_at' => now()->addHour()]);
+        $event2 = \App\Models\Event::factory()->create(['starts_at' => now(), 'ends_at' => now()->addHour()]);
+
+        $planForEvent2 = \App\Models\SeatingPlan::factory()->create(['event_id' => $event2->id]);
+        $seat = \App\Models\Seat::factory()->create(['seating_plan_id' => $planForEvent2->id]);
+        $ticket = \App\Models\Ticket::factory()->create(['event_id' => $event1->id]);
+
+        $request = Request::create('/', 'GET');
+
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $controller->select($request, $event1, $ticket, $seat);
+    }
+
+    public function testSelectAbortsIfTicketEventMismatch()
+    {
+        $controller = new \App\Http\Controllers\SeatingPlanController();
+        $event1 = \App\Models\Event::factory()->create(['starts_at' => now(), 'ends_at' => now()->addHour()]);
+        $event2 = \App\Models\Event::factory()->create(['starts_at' => now(), 'ends_at' => now()->addHour()]);
+
+        $planForEvent1 = \App\Models\SeatingPlan::factory()->create(['event_id' => $event1->id]);
+        $seat = \App\Models\Seat::factory()->create(['seating_plan_id' => $planForEvent1->id]);
+        $ticketForEvent2 = \App\Models\Ticket::factory()->create(['event_id' => $event2->id]);
+
+        $request = Request::create('/', 'GET');
+
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $controller->select($request, $event1, $ticketForEvent2, $seat);
+    }
+
+    public function testShowSetsInfoMessageWhenSeatingLocked()
+    {
+        $controller = new \App\Http\Controllers\SeatingPlanController();
+        $event = \App\Models\Event::factory()->create(['seating_locked' => true, 'starts_at' => now(), 'ends_at' => now()->addHour()]);
+        $user = \App\Models\User::factory()->create();
+
+        $request = Request::create('/', 'GET');
+        $request->setUserResolver(function () use ($user) {
+            return $user;
+        });
+        $request->setLaravelSession(app('session.store'));
+
+        $response = $controller->show($request, $event, null);
+        // show returns a view; ensure session has the infoMessage set
+        $this->assertEquals('Seating is locked', $request->session()->get('infoMessage'));
     }
 }
