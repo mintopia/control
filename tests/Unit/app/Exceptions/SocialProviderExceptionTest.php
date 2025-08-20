@@ -27,12 +27,11 @@ class SocialProviderExceptionTest extends TestCase
         $this->assertSame($previous, $exception->getPrevious());
     }
 
-    // CHECK Function is not implemented yet, test deactivated
-    // public function testDefaultValues()
-    // {
-    //     $exception = new SocialProviderException();
-    //     $this->assertNull($exception->getMessage());
-    //     $this->assertEquals(0, $exception->getCode());
-    //     $this->assertNull($exception->getPrevious());
-    // }
+    public function testDefaultValues()
+    {
+        $exception = new SocialProviderException();
+        $this->assertSame('', $exception->getMessage());
+        $this->assertEquals(0, $exception->getCode());
+        $this->assertNull($exception->getPrevious());
+    }
 }
