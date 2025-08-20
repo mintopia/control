@@ -4,78 +4,64 @@ namespace Tests\Unit\app\Http\Controllers\Admin;
 
 use Tests\TestCase;
 use App\Http\Controllers\Admin\EventMappingController;
-use Illuminate\Http\Request;
-use Mockery;
+use App\Models\Event;
+use App\Models\EventMapping;
+use App\Models\TicketProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
 class EventMappingControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function testCanInstantiateController()
     {
         $controller = new EventMappingController();
         $this->assertInstanceOf(EventMappingController::class, $controller);
     }
 
-    // FIXME Mockery for these instances did not work - Class already exists
-
-    // public function testMapEventReturnsSuccessResponse()
-    // {
-    //     $request = Mockery::mock(Request::class);
-    //     $request->shouldReceive('all')->once()->andReturn(['event_id' => 1, 'mapping' => 'Test Mapping']);
-
-    //     $controller = Mockery::mock(EventMappingController::class, [])->makePartial();
-
-    //     $controller->shouldReceive('mapEvent')
-    //         ->once()
-    //         ->with(Mockery::type(Request::class))
-    //         ->andReturn(response()->json(['message' => 'Event mapped successfully'], 200));
-
-    //     $response = $controller->mapEvent($request);
-
-    //     $this->assertEquals(200, $response->getStatusCode());
-    //     $this->assertJsonStringEqualsJsonString(
-    //         json_encode(['message' => 'Event mapped successfully']),
-    //         $response->getContent()
-    //     );
-    // }
-
-    public function testUnmapEventReturnsSuccessResponse()
+    public function testStoreCreatesMappingAndRedirects()
     {
-        $controller = Mockery::mock(EventMappingController::class, [])->makePartial();
+        $event = Event::factory()->create();
+        $provider = TicketProvider::factory()->create();
 
-        $controller->shouldReceive('unmapEvent')
-            ->once()
-            ->with(1)
-            ->andReturn(response()->json(['message' => 'Event unmapped successfully'], 200));
+        // external_id format: providerId:externalId (externalId can be any string/number here)
+        $requestData = [
+            'external_id' => "{$provider->id}:12345",
+        ];
 
-        $response = $controller->unmapEvent(1);
+        $controller = new EventMappingController();
+        $response = $controller->store(\App\Http\Requests\Admin\EventMappingUpdateRequest::create('/', 'POST', $requestData), $event);
 
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['message' => 'Event unmapped successfully']),
-            $response->getContent()
-        );
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertDatabaseHas('event_mappings', ['event_id' => $event->id]);
     }
 
-    public function testListMappingsReturnsExpectedResponse()
+    public function testUpdateModifiesMappingAndRedirects()
     {
-        $controller = Mockery::mock(EventMappingController::class, [])->makePartial();
+        $event = Event::factory()->create();
+        $provider = TicketProvider::factory()->create();
+        $mapping = EventMapping::factory()->for($event)->for($provider, 'provider')->create(['external_id' => '12345']);
 
-        $controller->shouldReceive('listMappings')
-            ->once()
-            ->andReturn(response()->json(['mappings' => ['mapping1', 'mapping2']], 200));
+        $controller = new EventMappingController();
+        $requestData = ['external_id' => "{$provider->id}:54321"];
+        $response = $controller->update(\App\Http\Requests\Admin\EventMappingUpdateRequest::create('/', 'POST', $requestData), $event, $mapping);
 
-        $response = $controller->listMappings();
-
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['mappings' => ['mapping1', 'mapping2']]),
-            $response->getContent()
-        );
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertDatabaseHas('event_mappings', ['id' => $mapping->id, 'external_id' => '54321']);
     }
 
-    protected function tearDown(): void
+    public function testDestroyDeletesMappingAndRedirects()
     {
-        Mockery::close();
-        parent::tearDown();
+        $event = Event::factory()->create();
+        $provider = TicketProvider::factory()->create();
+        $mapping = EventMapping::factory()->for($event)->for($provider, 'provider')->create(['external_id' => '123']);
+
+        $controller = new EventMappingController();
+        $response = $controller->destroy($event, $mapping);
+
+        $this->assertInstanceOf(RedirectResponse::class, $response);
+        $this->assertDatabaseMissing('event_mappings', ['id' => $mapping->id]);
     }
 }
