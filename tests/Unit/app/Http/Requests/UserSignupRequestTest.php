@@ -4,101 +4,126 @@ namespace Tests\Unit\app\Http\Requests;
 
 use Tests\TestCase;
 use App\Http\Requests\UserSignupRequest;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UserSignupRequestTest extends TestCase
 {
-    //FIXME See tests/SettingsTestabilityRefactor.md for details
-    protected $settingMock;
+    use RefreshDatabase;
 
-    // protected function setUp(): void
-    // {
-    //     parent::setUp();
-    //     \Mockery::close();
-    //     $this->settingMock = \Mockery::mock('overload:App\\Models\\Setting');
-    // }
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Ensure any static cache on Setting is cleared between tests so each test is isolated.
+        // Reset the protected static::$cached property via reflection.
+        try {
+            $settingClass = \App\Models\Setting::class;
+            $ref = new \ReflectionClass($settingClass);
+            if ($ref->hasProperty('cached')) {
+                $prop = $ref->getProperty('cached');
+                $prop->setAccessible(true);
+                $prop->setValue([]);
+            }
+        } catch (\ReflectionException $e) {
+            // ignore - best effort
+        }
+        // Also clear application cache used by Setting::fetch
+        \Illuminate\Support\Facades\Cache::flush();
+    }
+
     public function testAuthorizeReturnsTrue()
     {
         $request = new UserSignupRequest();
         $this->assertTrue($request->authorize());
     }
 
-    // public function testRulesReturnsArray()
-    // {
-    //     // Mock user() to avoid null user error
-    //     $request = $this->getMockBuilder(UserSignupRequest::class)
-    //         ->onlyMethods(['user'])
-    //         ->getMock();
-    //     $request->expects($this->any())
-    //         ->method('user')
-    //         ->willReturn((object)['id' => 1]);
-    //     $this->assertIsArray($request->rules());
-    // }
+    public function testRulesReturnsArray()
+    {
+        // Mock user() to avoid null user error
+        $request = $this->getMockBuilder(UserSignupRequest::class)
+            ->onlyMethods(['user'])
+            ->getMock();
+        $request->expects($this->any())
+            ->method('user')
+            ->willReturn((object)['id' => 1]);
+        $this->assertIsArray($request->rules());
+    }
 
-    // public function testMessagesReturnsCombinedMessageIfTermsAndPrivacySet()
-    // {
-    //     $this->settingMock->shouldReceive('fetch')->with('terms')->andReturn(true);
-    //     $this->settingMock->shouldReceive('fetch')->with('privacypolicy')->andReturn(true);
-    //     $request = new UserSignupRequest();
-    //     $messages = $request->messages();
-    //     $this->assertArrayHasKey('terms.accepted', $messages);
-    //     $this->assertStringContainsString('Terms and Conditions', $messages['terms.accepted']);
-    //     $this->assertStringContainsString('Privacy Policy', $messages['terms.accepted']);
-    // }
+    public function testMessagesReturnsCombinedMessageIfTermsAndPrivacySet()
+    {
+        // create settings in the DB so Setting::fetch reads them
+        \App\Models\Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => true]);
+        \App\Models\Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => true]);
+        // clear any cached value
+        \App\Models\Setting::first()->clearCache();
+        $request = new UserSignupRequest();
+        $messages = $request->messages();
+        $this->assertArrayHasKey('terms.accepted', $messages);
+        $this->assertStringContainsString('Terms and Conditions', $messages['terms.accepted']);
+        $this->assertStringContainsString('Privacy Policy', $messages['terms.accepted']);
+    }
 
-    // public function testMessagesReturnsMessageIfOnlyTermsSet()
-    // {
-    //     $this->settingMock->shouldReceive('fetch')->with('terms')->andReturn(true);
-    //     $this->settingMock->shouldReceive('fetch')->with('privacypolicy')->andReturn(false);
-    //     $request = new UserSignupRequest();
-    //     $messages = $request->messages();
-    //     $this->assertArrayHasKey('terms.accepted', $messages);
-    //     $this->assertStringContainsString('Terms and Conditions', $messages['terms.accepted']);
-    // }
+    public function testMessagesReturnsMessageIfOnlyTermsSet()
+    {
+        \App\Models\Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => true]);
+        \App\Models\Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => false]);
+        \App\Models\Setting::first()->clearCache();
+        $request = new UserSignupRequest();
+        $messages = $request->messages();
+        $this->assertArrayHasKey('terms.accepted', $messages);
+        $this->assertStringContainsString('Terms and Conditions', $messages['terms.accepted']);
+    }
 
-    // public function testMessagesReturnsMessageIfOnlyPrivacySet()
-    // {
-    //     $this->settingMock->shouldReceive('fetch')->with('terms')->andReturn(false);
-    //     $this->settingMock->shouldReceive('fetch')->with('privacypolicy')->andReturn(true);
-    //     $request = new UserSignupRequest();
-    //     $messages = $request->messages();
-    //     $this->assertArrayHasKey('terms.accepted', $messages);
-    //     $this->assertStringContainsString('Privacy Policy', $messages['terms.accepted']);
-    // }
+    public function testMessagesReturnsMessageIfOnlyPrivacySet()
+    {
+        \App\Models\Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => false]);
+        \App\Models\Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => true]);
+        \App\Models\Setting::first()->clearCache();
+        $request = new UserSignupRequest();
+        $messages = $request->messages();
+        $this->assertArrayHasKey('terms.accepted', $messages);
+        $this->assertStringContainsString('Privacy Policy', $messages['terms.accepted']);
+    }
 
-    // public function testMessagesReturnsEmptyArrayIfNeitherSet()
-    // {
-    //     $this->settingMock->shouldReceive('fetch')->with('terms')->andReturn(false);
-    //     $this->settingMock->shouldReceive('fetch')->with('privacypolicy')->andReturn(false);
-    //     $request = new UserSignupRequest();
-    //     $messages = $request->messages();
-    //     $this->assertEquals([], $messages);
-    // }
+    public function testMessagesReturnsEmptyArrayIfNeitherSet()
+    {
+        // no settings created -> fetch should return defaults
+        $request = new UserSignupRequest();
+        $messages = $request->messages();
+        $this->assertEquals([], $messages);
+    }
 
-    // public function testRulesIncludesTermsIfTermsOrPrivacySet()
-    // {
-    //     $this->settingMock->shouldReceive('fetch')->with('terms')->andReturn(true);
-    //     $this->settingMock->shouldReceive('fetch')->with('privacypolicy')->andReturn(false);
-    //     $request = $this->getMockBuilder(UserSignupRequest::class)
-    //         ->onlyMethods(['user'])
-    //         ->getMock();
-    //     $request->expects($this->any())
-    //         ->method('user')
-    //         ->willReturn((object)['id' => 1]);
-    //     $rules = $request->rules();
-    //     $this->assertArrayHasKey('terms', $rules);
-    // }
+    public function testRulesIncludesTermsIfTermsOrPrivacySet()
+    {
+        \App\Models\Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => true]);
+        \App\Models\Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => false]);
+        \App\Models\Setting::first()->clearCache();
+        $request = $this->getMockBuilder(UserSignupRequest::class)
+            ->onlyMethods(['user'])
+            ->getMock();
+        $request->expects($this->any())
+            ->method('user')
+            ->willReturn((object)['id' => 1]);
+        $rules = $request->rules();
+        $this->assertArrayHasKey('terms', $rules);
+    }
 
-    // public function testRulesDoesNotIncludeTermsIfNeitherSet()
-    // {
-    //     $this->settingMock->shouldReceive('fetch')->with('terms')->andReturn(false);
-    //     $this->settingMock->shouldReceive('fetch')->with('privacypolicy')->andReturn(false);
-    //     $request = $this->getMockBuilder(UserSignupRequest::class)
-    //         ->onlyMethods(['user'])
-    //         ->getMock();
-    //     $request->expects($this->any())
-    //         ->method('user')
-    //         ->willReturn((object)['id' => 1]);
-    //     $rules = $request->rules();
-    //     $this->assertArrayNotHasKey('terms', $rules);
-    // }
+    public function testRulesDoesNotIncludeTermsIfNeitherSet()
+    {
+        // ensure fetch returns false for both
+        // do not create settings
+        $request = $this->getMockBuilder(UserSignupRequest::class)
+            ->onlyMethods(['user'])
+            ->getMock();
+        $request->expects($this->any())
+            ->method('user')
+            ->willReturn((object)['id' => 1]);
+        $rules = $request->rules();
+        $this->assertArrayNotHasKey('terms', $rules);
+    }
+
+    protected function tearDown(): void
+    {
+        \Mockery::close();
+        parent::tearDown();
+    }
 }
