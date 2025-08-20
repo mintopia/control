@@ -18,11 +18,10 @@
 ## Test Setup
 
 - Added `.vscode` folder
-    - `extensions.json` with recommmended extensions to build/test incl. `Lavarel Artisan` and `Lavarel Blade Snippets` and the VsCode PHP Test Explorer Docker
+    - `extensions.json` with recommended extensions to build/test incl. `Lavarel Artisan` and `Lavarel Blade Snippets` and the VsCode PHP Test Explorer Docker
     - `launch.json` - currently empty/not used, was prepped for Xdebug
     - `settings.json` - currently empty, for required settings for this folder (deferred to workspace file)
     - `tasks.json` - adding task "Run Laravel Tests in Docker" which is TBD, currently not used.
-- Added Lavarel configuraion in
 
 ### Environment discovery
 
@@ -34,6 +33,8 @@ These settings are located in personal workspace due to different local folder s
 
 ```json
 {
+    // Laravel Extra Intellisense: may need PHP installed locally. I couldn't make it work using the docker compose command to run inside the docker image.
+    // This _did_ work when running inside a DEV container as all paths were treated as local then.
     // Laravel Extra Intellisense: this may not work for all features, but allows some PHP code execution via Docker
     // This may not be needed if PHP is installed locally
     // "LaravelExtraIntellisense.phpCommand": "docker compose run --rm php -r \"{code}\"",
@@ -43,7 +44,8 @@ These settings are located in personal workspace due to different local folder s
     "artisan.docker.command": "docker compose run --rm artisan",
 
     // PHPUnit Text Explorer (recca0120.vscode-phpunit) - Configuration for CONTROL
-    "phpunit.command": "docker compose run --rm artisan test",
+    "phpunit.command": "docker compose run --rm",
+    "phpunit.phpunit": "artisan test",
     "phpunit.php": "", // this needs to be empty (default is php)
     "phpunit.paths": { // working on Windows and translating paths to docker/linux relative paths
         "d:\\Code\\Public\\control\\tests": "tests",
@@ -51,7 +53,6 @@ These settings are located in personal workspace due to different local folder s
     },
 }
 ```
-
 
 #### Test Environment creation
 

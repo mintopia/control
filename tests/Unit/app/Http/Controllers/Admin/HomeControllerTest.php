@@ -4,54 +4,85 @@ namespace Tests\Unit\app\Http\Controllers\Admin;
 
 use Tests\TestCase;
 use App\Http\Controllers\Admin\HomeController;
+use App\Models\Event;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Mockery;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class HomeControllerTest extends TestCase
 {
+    use RefreshDatabase;
     public function testCanInstantiateController()
     {
         $controller = new HomeController();
         $this->assertInstanceOf(HomeController::class, $controller);
     }
 
-    public function testIndexReturnsExpectedResponse()
+    public function testDashboardReturnsExpectedViewAndData()
     {
-        $controller = Mockery::mock(HomeController::class, [])->makePartial();
+        // create some users and upcoming events so the dashboard has data
+        User::factory()->count(3)->create();
+        $futureEvent = Event::factory()->create([
+            'starts_at' => now()->addDay(),
+            'ends_at' => now()->addDays(2),
+        ]);
 
-        $controller->shouldReceive('index')
-            ->once()
-            ->andReturn(response()->json(['message' => 'Welcome to the admin dashboard'], 200));
+        $controller = new HomeController();
 
-        $response = $controller->index();
+        $response = $controller->dashboard();
 
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['message' => 'Welcome to the admin dashboard']),
-            $response->getContent()
-        );
+        // view() helper returns an instance of \Illuminate\View\View
+        $this->assertInstanceOf(\Illuminate\View\View::class, $response);
+
+        $data = $response->getData();
+
+        $this->assertArrayHasKey('stats', $data);
+        $this->assertArrayHasKey('events', $data);
+        $this->assertNotEmpty($data['events']);
+
+        // ensure the future event is included
+        $this->assertTrue(collect($data['events'])->contains('id', $futureEvent->id));
     }
 
-    public function testDashboardStatsReturnsExpectedResponse()
+    public function testUnimpersonateWithoutImpersonatingAborts()
     {
-        $controller = Mockery::mock(HomeController::class, [])->makePartial();
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
 
-        $controller->shouldReceive('dashboardStats')
-            ->once()
-            ->andReturn(response()->json(['stats' => ['users' => 100, 'sales' => 200]], 200));
+        $controller = new HomeController();
+        $request = Request::create('/', 'GET');
+        $request->setLaravelSession(app('session.store'));
 
-        $response = $controller->dashboardStats();
-
-        $this->assertEquals(200, $response->getStatusCode());
-        $this->assertJsonStringEqualsJsonString(
-            json_encode(['stats' => ['users' => 100, 'sales' => 200]]),
-            $response->getContent()
-        );
+        // no 'impersonating' flag in session -> should abort with 403
+        $controller->unimpersonate($request);
     }
 
-    protected function tearDown(): void
+    public function testUnimpersonateRedirectsToUserShow()
     {
-        Mockery::close();
-        parent::tearDown();
+        // create a route so route generation works during the test
+        Route::get('admin/users/{user}', function () {
+            return 'ok';
+        })->name('admin.users.show');
+
+        $originalUser = User::factory()->create();
+        $impersonated = User::factory()->create();
+
+        $request = Request::create('/', 'GET');
+        $request->setLaravelSession(app('session.store'));
+        $request->session()->put('impersonating', true);
+        $request->session()->put('originalUserId', $originalUser->id);
+
+        // make sure request()->user() returns the impersonated user
+        $this->be($impersonated);
+        $request->setUserResolver(function () use ($impersonated) {
+            return $impersonated;
+        });
+
+        $controller = new HomeController();
+
+        $response = $controller->unimpersonate($request);
+
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
+        $this->assertEquals(route('admin.users.show', $impersonated->id), $response->getTargetUrl());
     }
 }
