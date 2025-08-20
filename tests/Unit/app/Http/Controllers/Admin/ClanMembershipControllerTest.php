@@ -4,11 +4,13 @@ namespace Tests\Unit\app\Http\Controllers\Admin;
 
 use Tests\TestCase;
 use App\Http\Controllers\Admin\ClanMembershipController;
-use Illuminate\Http\Request;
+use App\Http\Requests\ClanMembershipUpdateRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Clan;
 use App\Models\ClanMembership;
 use App\Models\ClanRole;
+use App\Models\User;
+use Illuminate\Support\Facades\Route;
 
 class ClanMembershipControllerTest extends TestCase
 {
@@ -41,8 +43,11 @@ class ClanMembershipControllerTest extends TestCase
         $role = ClanRole::factory()->create(['code' => 'test-role']);
         $member = ClanMembership::factory()->for($clan)->create(['clan_role_id' => $leaderRole->id]);
 
-        // Build a request that supplies the new role code
-        $request = Request::create('/', 'POST', ['role' => 'test-role']);
+        // Build a request that supplies the new role code using the proper FormRequest class
+        $request = ClanMembershipUpdateRequest::create('/', 'POST', ['role' => 'test-role']);
+
+        // Ensure admin routes exist so redirectToRoute() can generate urls
+        Route::get('admin/clans/{clan}', fn() => '')->name('admin.clans.show');
 
         $controller = new ClanMembershipController();
 
@@ -59,8 +64,22 @@ class ClanMembershipControllerTest extends TestCase
     public function testDestroyRedirectsWithSuccessMessage()
     {
         $clan = Clan::factory()->create(['code' => 'test-clan']);
+        // Ensure leader role exists for canDelete() logic
+        ClanRole::factory()->create(['code' => 'leader']);
         $role = ClanRole::factory()->create(['code' => 'member']);
         $member = ClanMembership::factory()->for($clan)->create(['clan_role_id' => $role->id]);
+
+        // Ensure admin routes exist for redirects
+        Route::get('admin/clans/{clan}', fn() => '')->name('admin.clans.show');
+        Route::get('admin/clans', fn() => '')->name('admin.clans.index');
+
+        // Ensure the membership has a user (canDelete() accesses $this->user)
+        $member->load('user');
+        if (!$member->user) {
+            $member->user()->associate(User::factory()->create());
+            $member->save();
+            $member->refresh();
+        }
 
         $controller = new ClanMembershipController();
 
@@ -74,9 +93,14 @@ class ClanMembershipControllerTest extends TestCase
     public function testDeleteReturnsViewWithCorrectData()
     {
         $clan = Clan::factory()->create();
+        // Ensure leader role exists for canDelete() logic
+        ClanRole::factory()->create(['code' => 'leader']);
         $member = ClanMembership::factory()->for($clan)->create();
 
         $controller = new ClanMembershipController();
+
+        // Ensure admin route exists for delete redirect checks (if any)
+        Route::get('admin/clans/{clan}', fn() => '')->name('admin.clans.show');
 
         $response = $controller->delete($clan, $member);
 
