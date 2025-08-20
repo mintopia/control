@@ -75,8 +75,7 @@ class TicketTest extends TestCase
     public function testCanPickSeatReturnsFalseIfTypeHasNoSeat()
     {
         $ticket = new Ticket();
-        $mockType = $this->createMock(\App\Models\TicketType::class);
-        $mockType->has_seat = false;
+        $mockType = (object)['has_seat' => false];
         $ticket->setRelation('type', $mockType);
         $this->assertFalse($ticket->canPickSeat());
     }
@@ -84,11 +83,8 @@ class TicketTest extends TestCase
     public function testCanPickSeatReturnsFalseIfEventEnded()
     {
         $ticket = new Ticket();
-        $mockType = $this->createMock(\App\Models\TicketType::class);
-        $mockType->has_seat = true;
-        $mockEvent = $this->createMock(\App\Models\Event::class);
-        $mockEvent->ends_at = now()->subDay();
-        $mockEvent->seating_locked = false;
+        $mockType = (object)['has_seat' => true];
+        $mockEvent = (object)['ends_at' => now()->subDay(), 'seating_locked' => false];
         $ticket->setRelation('type', $mockType);
         $ticket->setRelation('event', $mockEvent);
         $this->assertFalse($ticket->canPickSeat());
@@ -97,51 +93,31 @@ class TicketTest extends TestCase
     public function testCanPickSeatReturnsFalseIfSeatingLocked()
     {
         $ticket = new Ticket();
-        $mockType = $this->createMock(\App\Models\TicketType::class);
-        $mockType->has_seat = true;
-        $mockEvent = $this->createMock(\App\Models\Event::class);
-        $mockEvent->ends_at = now()->addDay();
-        $mockEvent->seating_locked = true;
+        $mockType = (object)['has_seat' => true];
+        $mockEvent = (object)['ends_at' => now()->addDay(), 'seating_locked' => true];
         $ticket->setRelation('type', $mockType);
         $ticket->setRelation('event', $mockEvent);
         $this->assertFalse($ticket->canPickSeat());
     }
 
-    /* VALIDATE is canPickSeat right?
-        public function canPickSeat()
+    public function testCanPickSeatReturnsTrueIfAllConditionsMet()
     {
-        $type = $this->getRelation('type') ?? $this->type;
-        $event = $this->getRelation('event') ?? $this->event;
-
-        if (!$type || !$type->has_seat) {
-            return false;
-        }
-        if (!$event || $event->ends_at->isPast() || $event->seating_locked) {
-            return false;
-        }
-        return true;
+        $ticket = new Ticket();
+        $mockType = (object)['has_seat' => true];
+        $mockEvent = (object)['ends_at' => now()->addDay(), 'seating_locked' => false];
+        $ticket->setRelation('type', $mockType);
+        $ticket->setRelation('event', $mockEvent);
+        $this->assertTrue($ticket->canPickSeat());
     }
-    */
 
-    // public function testCanPickSeatReturnsTrueIfAllConditionsMet()
-    // {
-    //     $ticket = new Ticket();
-    //     $mockType = $this->createMock(\App\Models\TicketType::class);
-    //     $mockType->has_seat = true;
-    //     $mockEvent = $this->createMock(\App\Models\Event::class);
-    //     $mockEvent->ends_at = now()->addDay();
-    //     $mockEvent->seating_locked = false;
-    //     $ticket->setRelation('type', $mockType);
-    //     $ticket->setRelation('event', $mockEvent);
-    //     $this->assertTrue($ticket->canPickSeat());
-    // }
-
-    // public function testCanBeManagedByReturnsTrueIfUserOwnsTicket()
-    // {
-    //     $ticket = new Ticket();
-    //     $ticket->user_id = 1;
-    //     $mockUser = $this->createMock(\App\Models\User::class);
-    //     $mockUser->id = 1;
-    //     $this->assertTrue($ticket->canBeManagedBy($mockUser));
-    // }
+    public function testCanBeManagedByReturnsTrueIfUserOwnsTicket()
+    {
+        $ticket = new Ticket();
+        $ticket->user_id = 1;
+        $mockUser = new \App\Models\User();
+        $mockUser->id = 1;
+        // Ensure the ticket has its 'user' relation set so the method won't attempt to lazy-load from DB
+        $ticket->setRelation('user', $mockUser);
+        $this->assertTrue($ticket->canBeManagedBy($mockUser));
+    }
 }
