@@ -5,45 +5,40 @@ namespace Tests\Unit\app\Console\Commands;
 use App\Console\Commands\PruneClans;
 use App\Models\Clan;
 use Illuminate\Support\Facades\App;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class PruneClansTest extends TestCase
 {
-    public function tearDown(): void
+    use RefreshDatabase;
+
+    public function testHandleOutputsZeroWhenNoClansToPrune()
     {
-        \Mockery::close();
-        parent::tearDown();
+        // No clans exist in the database
+        $this->assertSame(0, Clan::count());
+
+        $command = App::make(PruneClans::class);
+        $command->setLaravel($this->app);
+        $input = new \Symfony\Component\Console\Input\ArrayInput([]);
+        $output = new \Symfony\Component\Console\Output\BufferedOutput();
+        $command->run($input, $output);
+        $this->assertStringContainsString('0 clans with 0 members', trim($output->fetch()));
     }
 
-    // FIXME Cannot execute commands
-    // public function testHandleOutputsZeroWhenNoClansToPrune()
-    // {
-    //     // Use Laravel's partialMock for the Clan model
-    //     $clanMock = $this->partialMock(Clan::class, function ($mock) {
-    //         $mock->shouldReceive('doesntHave')->with('members')->andReturnSelf();
-    //         $mock->shouldReceive('count')->andReturn(0);
-    //     });
+    public function testHandleDeletesClansWhenCountGreaterThanZero()
+    {
+        // Create 3 clans with no members
+        Clan::factory()->count(3)->create();
+        $this->assertSame(3, Clan::count());
 
-    //     // Use Laravel's Artisan command testing
-    //     $this->artisan('prune:clans')
-    //         ->expectsOutput('0 clans with 0 members')
-    //         ->assertExitCode(0);
-    // }
+        $command = App::make(PruneClans::class);
+        $command->setLaravel($this->app);
+        $input = new \Symfony\Component\Console\Input\ArrayInput([]);
+        $output = new \Symfony\Component\Console\Output\BufferedOutput();
+        $command->run($input, $output);
+        $this->assertStringContainsString('3 clans with 0 members', trim($output->fetch()));
 
-    // public function testHandleDeletesClansWhenCountGreaterThanZero()
-    // {
-    //     $clanMock = $this->partialMock(Clan::class, function ($mock) {
-    //         $mock->shouldReceive('doesntHave')->with('members')->andReturnSelf();
-    //         $mock->shouldReceive('count')->andReturn(3);
-    //         $mock->shouldReceive('delete')->once();
-    //     });
-
-    //     $command = App::make(PruneClans::class);
-    //     $command = App::make(PruneClans::class);
-    //     $outputMock = \Mockery::mock(\Symfony\Component\Console\Output\OutputInterface::class);
-    //     // Use Laravel's Artisan command testing
-    //     $this->artisan('prune:clans')
-    //         ->expectsOutput('3 clans with 0 members')
-    //         ->assertExitCode(0);
-    // }
+        // After running the command, those clans should be removed
+        $this->assertSame(0, Clan::count());
+    }
 }
