@@ -5,96 +5,83 @@ namespace Tests\Unit\app\Http\Controllers\Admin;
 use Tests\TestCase;
 use App\Http\Controllers\Admin\ClanMembershipController;
 use Illuminate\Http\Request;
-use Mockery;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\Clan;
+use App\Models\ClanMembership;
+use App\Models\ClanRole;
 
 class ClanMembershipControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function testCanInstantiateController()
     {
         $controller = new ClanMembershipController();
         $this->assertInstanceOf(ClanMembershipController::class, $controller);
     }
 
-    // FIXME Database connection needed - move to Feature?
-    // public function testEditReturnsViewWithCorrectData()
-    // {
-    //     $clan = Mockery::mock(\App\Models\Clan::class, []);
-    //     $member = Mockery::mock(\App\Models\ClanMembership::class, []);
+    public function testEditReturnsViewWithCorrectData()
+    {
+        $clan = Clan::factory()->create();
+        $member = ClanMembership::factory()->for($clan)->create();
 
-    //     $controller = Mockery::mock(ClanMembershipController::class, [])->makePartial();
+        $controller = new ClanMembershipController();
 
-    //     $controller->shouldReceive('edit')
-    //         ->once()
-    //         ->with($clan, $member)
-    //         ->andReturn(view('admin.clanmemberships.edit', [
-    //             'clan' => $clan,
-    //             'member' => $member,
-    //         ]));
+        $response = $controller->edit($clan, $member);
 
-    //     $response = $controller->edit($clan, $member);
+        $this->assertEquals('admin.clanmemberships.edit', $response->name());
+        $this->assertArrayHasKey('clan', $response->getData());
+        $this->assertArrayHasKey('member', $response->getData());
+    }
 
-    //     $this->assertEquals('admin.clanmemberships.edit', $response->name());
-    //     $this->assertArrayHasKey('clan', $response->getData());
-    //     $this->assertArrayHasKey('member', $response->getData());
-    // }
+    public function testUpdateRedirectsWithSuccessMessage()
+    {
+        $clan = Clan::factory()->create(['code' => 'test-clan']);
+        $leaderRole = ClanRole::factory()->create(['code' => 'leader']);
+        $role = ClanRole::factory()->create(['code' => 'test-role']);
+        $member = ClanMembership::factory()->for($clan)->create(['clan_role_id' => $leaderRole->id]);
 
-    // public function testUpdateRedirectsWithSuccessMessage()
-    // {
-    //     $request = Mockery::mock(\App\Http\Requests\ClanMembershipUpdateRequest::class);
-    //     $clan = Mockery::mock(\App\Models\Clan::class);
-    //     $member = Mockery::mock(\App\Models\ClanMembership::class);
-    //     $role = Mockery::mock(\App\Models\ClanRole::class);
+        // Build a request that supplies the new role code
+        $request = Request::create('/', 'POST', ['role' => 'test-role']);
 
-    //     $request->shouldReceive('input')->with('role')->andReturn('test-role');
-    //     $role->shouldReceive('first')->andReturn($role);
-    //     $member->shouldReceive('role')->andReturnSelf();
-    //     $member->shouldReceive('associate')->with($role);
-    //     $member->shouldReceive('save');
+        $controller = new ClanMembershipController();
 
-    //     $controller = Mockery::mock(ClanMembershipController::class)->makePartial();
+        $response = $controller->update($request, $clan, $member);
 
-    //     $response = $controller->update($request, $clan, $member);
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals('The clan member has been updated', $response->getSession()->get('successMessage'));
 
-    //     $this->assertEquals(302, $response->getStatusCode());
-    //     $this->assertEquals('The clan member has been updated', $response->getSession()->get('successMessage'));
-    // }
+        // Refresh and assert role changed
+        $member->refresh();
+        $this->assertEquals($role->id, $member->clan_role_id);
+    }
 
-    // public function testDestroyRedirectsWithSuccessMessage()
-    // {
-    //     $clan = Mockery::mock(\App\Models\Clan::class);
-    //     $member = Mockery::mock(\App\Models\ClanMembership::class);
+    public function testDestroyRedirectsWithSuccessMessage()
+    {
+        $clan = Clan::factory()->create(['code' => 'test-clan']);
+        $role = ClanRole::factory()->create(['code' => 'member']);
+        $member = ClanMembership::factory()->for($clan)->create(['clan_role_id' => $role->id]);
 
-    //     $member->shouldReceive('canDelete')->andReturn(true);
-    //     $member->shouldReceive('delete');
+        $controller = new ClanMembershipController();
 
-    //     $controller = Mockery::mock(ClanMembershipController::class)->makePartial();
+        $response = $controller->destroy($clan, $member);
 
-    //     $response = $controller->destroy($clan, $member);
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals('The clan member has been removed', $response->getSession()->get('successMessage'));
+        $this->assertDatabaseMissing('clan_memberships', ['id' => $member->id]);
+    }
 
-    //     $this->assertEquals(302, $response->getStatusCode());
-    //     $this->assertEquals('The clan member has been removed', $response->getSession()->get('successMessage'));
-    // }
+    public function testDeleteReturnsViewWithCorrectData()
+    {
+        $clan = Clan::factory()->create();
+        $member = ClanMembership::factory()->for($clan)->create();
 
+        $controller = new ClanMembershipController();
 
-    // public function testDeleteReturnsViewWithCorrectData()
-    // {
-    //     $clan = Mockery::mock(\App\Models\Clan::class);
-    //     $member = Mockery::mock(\App\Models\ClanMembership::class);
+        $response = $controller->delete($clan, $member);
 
-    //     $controller = Mockery::mock(ClanMembershipController::class)->makePartial();
-
-    //     $controller->shouldReceive('delete')
-    //         ->once()
-    //         ->with($clan, $member)
-    //         ->andReturn(view('admin.clanmemberships.delete', [
-    //             'clan' => $clan,
-    //             'member' => $member,
-    //         ]));
-
-    //     $response = $controller->delete($clan, $member);
-
-    //     $this->assertEquals('admin.clanmemberships.delete', $response->name());
-    //     $this->assertArrayHasKey('clan', $response->getData());
-    //     $this->assertArrayHasKey('member', $response->getData());
-    // }
+        $this->assertEquals('admin.clanmemberships.delete', $response->name());
+        $this->assertArrayHasKey('clan', $response->getData());
+        $this->assertArrayHasKey('member', $response->getData());
+    }
 }
