@@ -7,6 +7,7 @@ use App\Services\SocialProviders\SteamProvider;
 use App\Models\SocialProvider;
 use App\Models\ProviderSetting;
 use App\Models\LinkedAccount;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Socialite\Facades\Socialite;
 use SocialiteProviders\Manager\Config;
 use SocialiteProviders\Steam\Provider as SteamSocialiteProvider;
@@ -15,78 +16,81 @@ use Mockery;
 
 class SteamProviderTest extends TestCase
 {
-    // CHECK Seeding issue? - or other artisan issue: Cannot run artisan commands
-    // protected function getProvider(array $settings = [], ?string $redirectUrl = null)
-    // {
-    //     $socialProvider = SocialProvider::factory()->create([
-    //         'name' => 'Steam',
-    //         'code' => 'steam',
-    //         'provider_class' => SteamProvider::class,
-    //     ]);
-    //     foreach ($settings as $code => $value) {
-    //         ProviderSetting::factory()->create([
-    //             'provider_id' => $socialProvider->id,
-    //             'code' => $code,
-    //             'value' => $value,
-    //         ]);
-    //     }
-    //     return new SteamProvider($socialProvider, $redirectUrl);
-    // }
+    use RefreshDatabase;
 
-    // public function test_config_mapping_returns_expected_array()
-    // {
-    //     $provider = $this->getProvider();
-    //     $mapping = $provider->configMapping();
+    protected function getProvider(array $settings = [], ?string $redirectUrl = null)
+    {
+        $socialProvider = SocialProvider::factory()->create([
+            'name' => 'Steam',
+            'code' => 'steam',
+            'provider_class' => SteamProvider::class,
+        ]);
+        foreach ($settings as $code => $value) {
+            ProviderSetting::factory()->create([
+                'provider_id' => $socialProvider->id,
+                'code' => $code,
+                'value' => $value,
+            ]);
+        }
+        return new SteamProvider($socialProvider, $redirectUrl);
+    }
 
-    //     $this->assertArrayHasKey('client_secret', $mapping);
-    //     $this->assertEquals('API Key', $mapping['client_secret']->name);
-    //     $this->assertEquals('required|string', $mapping['client_secret']->validation);
-    //     $this->assertTrue($mapping['client_secret']->encrypted);
-    // }
+    public function test_config_mapping_returns_expected_array()
+    {
+        $provider = $this->getProvider();
+        $mapping = $provider->configMapping();
 
-    // public function test_get_socialite_provider_builds_provider_with_config()
-    // {
-    //     $provider = $this->getProvider(['client_secret' => 'secret-key'], 'https://redirect.url');
-    //     $mockSocialiteProvider = Mockery::mock(SteamSocialiteProvider::class);
-    //     $mockSocialiteProvider->shouldReceive('setConfig')->once()->andReturnSelf();
+        $this->assertArrayHasKey('client_secret', $mapping);
+        $this->assertEquals('API Key', $mapping['client_secret']->name);
+        $this->assertEquals('required|string', $mapping['client_secret']->validation);
+        $this->assertTrue($mapping['client_secret']->encrypted);
+    }
 
-    //     // Mock request()->getHost()
-    //     $request = Mockery::mock(Request::class);
-    //     $request->shouldReceive('getHost')->andReturn('localhost');
-    //     $this->app->instance('request', $request);
+    public function test_get_socialite_provider_builds_provider_with_config()
+    {
+        $provider = $this->getProvider(['client_secret' => 'secret-key'], 'https://redirect.url');
+        $mockSocialiteProvider = Mockery::mock(SteamSocialiteProvider::class);
+        $mockSocialiteProvider->shouldReceive('setConfig')->once()->andReturnSelf();
 
-    //     Socialite::shouldReceive('buildProvider')
-    //         ->with(SteamSocialiteProvider::class, Mockery::type('array'))
-    //         ->andReturn($mockSocialiteProvider);
+        // Mock request()->getHost()
+        $request = Mockery::mock(Request::class);
+        $request->shouldReceive('getHost')->andReturn('localhost');
+        // allow other request methods to be called by the framework during the test
+        $request->shouldIgnoreMissing();
+        $this->app->instance('request', $request);
 
-    //     $method = new \ReflectionMethod($provider, 'getSocialiteProvider');
-    //     $method->setAccessible(true);
-    //     $result = $method->invoke($provider);
+        Socialite::shouldReceive('buildProvider')
+            ->with(SteamSocialiteProvider::class, Mockery::type('array'))
+            ->andReturn($mockSocialiteProvider);
 
-    //     $this->assertSame($mockSocialiteProvider, $result);
-    // }
+        $method = new \ReflectionMethod($provider, 'getSocialiteProvider');
+        $method->setAccessible(true);
+        $result = $method->invoke($provider);
 
-    // public function test_update_account_sets_fields()
-    // {
-    //     $provider = $this->getProvider();
-    //     $account = new LinkedAccount();
+        $this->assertSame($mockSocialiteProvider, $result);
+    }
 
-    //     $remoteUser = new class {
-    //         public function getAvatar()
-    //         {
-    //             return 'avatar_url';
-    //         }
-    //         public function getNickname()
-    //         {
-    //             return 'nickname';
-    //         }
-    //     };
+    public function test_update_account_sets_fields()
+    {
+        $provider = $this->getProvider();
+        $account = new LinkedAccount();
 
-    //     $method = new \ReflectionMethod($provider, 'updateAccount');
-    //     $method->setAccessible(true);
-    //     $method->invoke($provider, $account, $remoteUser);
+        $remoteUser = new class {
+            public function getAvatar()
+            {
+                return 'avatar_url';
+            }
+            public function getNickname()
+            {
+                return 'nickname';
+            }
+        };
 
-    //     $this->assertEquals('avatar_url', $account->avatar_url);
-    //     $this->assertEquals('nickname', $account->name);
-    // }
+        $method = new \ReflectionMethod($provider, 'updateAccount');
+        $method->setAccessible(true);
+        $method->invoke($provider, $account, $remoteUser);
+
+        $this->assertEquals('avatar_url', $account->avatar_url);
+        $this->assertEquals('nickname', $account->name);
+    }
 }
