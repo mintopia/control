@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Http\Request;
 use Mockery;
+use Laravel\Sanctum\Sanctum;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class EmailAddressControllerTest extends TestCase
@@ -53,7 +54,7 @@ class EmailAddressControllerTest extends TestCase
         $user = User::factory()->create();
         $email = $user->emails()->create(['email' => 'delete-me@example.com']);
 
-        $this->actingAs($user);
+        Sanctum::actingAs($user);
         $user->primary_email_id = null;
         $user->save();
 
@@ -69,7 +70,7 @@ class EmailAddressControllerTest extends TestCase
         $email = $user->emails()->create(['email' => 'remove-me@example.com']);
 
         // Ensure the user is authenticated and the email is deletable
-        $this->actingAs($user);
+        Sanctum::actingAs($user);
         $user->primary_email_id = null;
         $user->save();
         // Reload the email's user relation so canDelete() sees the updated primary_email_id
@@ -89,5 +90,83 @@ class EmailAddressControllerTest extends TestCase
 
         $this->assertTrue(is_object($response));
         $this->assertDatabaseMissing('email_addresses', ['id' => $email->id]);
+    }
+
+    public function testStoreRouteCreatesEmailAndRedirects()
+    {
+        Mail::fake();
+
+        $user = User::factory()->create();
+
+        // Disable middleware so we can exercise the controller logic in this test environment
+        $this->withoutMiddleware();
+
+        Sanctum::actingAs($user);
+
+        $response = $this->post(route('emails.store'), ['email' => 'web-test@example.com']);
+
+        $response->assertStatus(302, $response->getContent());
+        $response->assertSessionHasNoErrors();
+
+        $location = $response->headers->get('Location');
+        $this->assertIsString($location);
+        $this->assertStringContainsString('/profile/emails', $location);
+        $this->assertStringContainsString('/verify', $location);
+
+        $this->assertDatabaseHas('email_addresses', [
+            'email' => 'web-test@example.com',
+            'user_id' => $user->id,
+        ]);
+    }
+
+    public function testVerifyProcessControllerMethodVerifiesEmail()
+    {
+        $user = User::factory()->create();
+
+        $email = EmailAddress::factory()->create([
+            'user_id' => $user->id,
+            'verification_code' => 'CODE123',
+            'verification_sent_at' => now(),
+        ]);
+
+        $request = \App\Http\Requests\EmailVerifyRequest::create('/emails/' . $email->id . '/verify', 'POST', ['code' => 'CODE123']);
+        $request->setUserResolver(fn() => $user);
+
+        $controller = new \App\Http\Controllers\EmailAddressController();
+        $response = $controller->verify_process($request, $email);
+
+        $this->assertTrue(method_exists($response, 'getTargetUrl'));
+        $this->assertNotNull($email->fresh()->verified_at);
+    }
+
+    //FIXME These do not work properly
+    public function testVerifyProcessRouteVerifiesEmail()
+    {
+        $user = User::factory()->create();
+
+        $email = EmailAddress::factory()->create([
+            'user_id' => $user->id,
+            'verification_code' => 'CODE123',
+            'verification_sent_at' => now(),
+        ]);
+
+        // Disable middleware so we can exercise the controller logic in this test environment
+        $this->withoutMiddleware();
+
+        // Show the underlying exception during tests so we get a full stack trace instead of a 500 response
+        $this->withoutExceptionHandling();
+
+        // Ensure route-model binding returns a model instance (some test flows surface the raw id)
+        \Illuminate\Support\Facades\Route::bind('emailaddress', fn($value) => EmailAddress::findOrFail($value));
+
+        Sanctum::actingAs($user);
+
+        $response = $this->post(route('emails.verify.process', $email->id), ['code' => 'CODE123']);
+
+        $response->assertStatus(302, $response->getContent());
+        $response->assertRedirect(route('user.profile'));
+        $response->assertSessionHasNoErrors();
+
+        $this->assertNotNull($email->fresh()->verified_at);
     }
 }
