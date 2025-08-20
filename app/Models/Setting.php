@@ -55,6 +55,18 @@ class Setting extends Model implements Sortable
 
     protected static array $cached = [];
 
+    protected $fillable = [
+        'code',
+        'name',
+        'description',
+        'encrypted',
+        'hidden',
+        'value',
+        'validation',
+        'type',
+        'order'
+    ];
+
     protected $casts = [
         'value' => SettingValue::class,
         'type' => SettingType::class,
