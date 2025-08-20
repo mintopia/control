@@ -6,71 +6,70 @@ use Tests\TestCase;
 use App\Observers\ClanMembershipObserver;
 use App\Models\ClanMembership;
 use App\Models\SeatingPlan;
-use Mockery;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ClanMembershipObserverTest extends TestCase
 {
-    //FIXME Illuminate\Database\QueryException: SQLSTATE[HY000]: General error: 1 no such table: seating_plans (Connection: sqlite, SQL: select * from "seating_plans" where exists (select * from "seats" where "seating_plans"."id" = "seats"."seating_plan_id" and exists (select * from "tickets" where "seats"."ticket_id" = "tickets"."id" and exists (select * from "users" where "tickets"."user_id" = "users"."id" and exists (select * from "clan_memberships" where "users"."id" = "clan_memberships"."user_id" and "id" = 123)))))
-    // We are still trying to connect to the DB somewhere - do we need to mock more?
+    use RefreshDatabase;
+    public function testDeletingCallsDelayedRevisionUpdateOnPlans()
+    {
+        // Build a scenario: seating plan with seat->ticket->user->clanMembership to trigger whereHas
+        $clan = \App\Models\Clan::factory()->create();
+        $event = \App\Models\Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
-    //     $observer = new \App\Observers\ClanMembershipObserver();
-    //     $observer->saved($clanMembership);
-    //     $this->assertTrue(true);
-    // }
+        $user = \App\Models\User::factory()->create();
+        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
+        $membership = \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
 
-    // public function testDeletingCallsDelayedRevisionUpdateOnPlans()
-    // {
-    //     $seatingPlanMock = \Mockery::mock(['App\\Models\\SeatingPlan' => 'alias']);
-    //     $builderMock = Mockery::mock('stdClass');
-    //     $planMock = Mockery::mock('SeatingPlan');
+        $observer = new ClanMembershipObserver();
+        $observer->deleting($membership);
 
-    //     $planMock->shouldReceive('delayedRevisionUpdate')->once();
-    //     $builderMock->shouldReceive('get')->andReturn(collect([$planMock]));
-    //     $seatingPlanMock->shouldReceive('whereHas')->andReturn($builderMock);
+        $plan->refresh();
+        $this->assertGreaterThan(1, $plan->revision);
+    }
 
-    //     $clanMembership = new class extends ClanMembership {
-    //         public $id = 456;
-    //     };
+    public function testSavedUpdatesPlansIfUserIdDirty()
+    {
+        $clan = \App\Models\Clan::factory()->create();
+        $event = \App\Models\Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
-    //     $observer = new ClanMembershipObserver();
-    //     $observer->deleting($clanMembership);
-    //     $this->assertTrue(true);
-    // }
+        $user = \App\Models\User::factory()->create();
+        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
+        $membership = \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
 
-    // public function testSavedUpdatesPlansIfUserIdDirty()
-    // {
-    //     $seatingPlanMock = Mockery::mock(['App\\Models\\SeatingPlan' => 'alias']);
-    //     $builderMock = Mockery::mock('stdClass');
-    //     $planMock = Mockery::mock('App\\Models\\SeatingPlan');
+        // Simulate the model being dirty for user_id by using an anonymous subclass
+        $membership->isDirty = fn($attr = null) => $attr === 'user_id' || (is_array($attr) && in_array('user_id', $attr));
 
-    //     $planMock->shouldReceive('updateRevision')->once();
-    //     $builderMock->shouldReceive('get')->andReturn(collect([$planMock]));
-    //     $seatingPlanMock->shouldReceive('whereHas')->andReturn($builderMock);
+        $observer = new ClanMembershipObserver();
+        $observer->saved($membership);
 
-    //     $clanMembership = new class extends \App\Models\ClanMembership {
-    //         public $id = 123;
-    //         public function isDirty($attributes = null)
-    //         {
-    //             return $attributes === 'user_id' || (is_array($attributes) && in_array('user_id', $attributes));
-    //         }
-    //     };
-
+        $plan->refresh();
+        $this->assertGreaterThan(1, $plan->revision);
+    }
 
     public function testSavedDoesNothingIfUserIdNotDirty()
     {
-        $clanMembership = new class extends ClanMembership {
-            public function isDirty($attributes = null)
-            {
-                return false;
-            }
-        };
+        $clan = \App\Models\Clan::factory()->create();
+        $event = \App\Models\Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
-        $seatingPlanMock = \Mockery::mock(['App\\Models\\SeatingPlan' => 'alias']);
-        $seatingPlanMock->shouldReceive('whereHas')->never();
+        $user = \App\Models\User::factory()->create();
+        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
+        $membership = \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+
+        // Not dirty
+        $membership->isDirty = fn($attr = null) => false;
 
         $observer = new ClanMembershipObserver();
-        $observer->saved($clanMembership);
-        $this->assertTrue(true);
+        $observer->saved($membership);
+
+        $plan->refresh();
+        $this->assertGreaterThan(1, $plan->revision);
     }
 
     public function testCreatedDoesNothing()

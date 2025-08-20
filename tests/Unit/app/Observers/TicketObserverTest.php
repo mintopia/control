@@ -5,29 +5,27 @@ namespace Tests\Unit\app\Observers;
 use Tests\TestCase;
 use App\Observers\TicketObserver;
 use App\Models\Ticket;
-use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class TicketObserverTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function testSavedUpdatesPlanRevisionIfDirtyAndHasSeat()
     {
-        // Mock the plan with updateRevision expectation
-        $planMock = \Mockery::mock();
-        $planMock->shouldReceive('updateRevision')->once();
+        $event = \App\Models\Event::factory()->create();
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
-        // Mock the seat with a plan property
-        $seatMock = \Mockery::mock();
-        $seatMock->plan = $planMock;
+        $user = \App\Models\User::factory()->create();
+        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
+        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
 
-        // Create a real Ticket instance and mock only needed methods
-        $ticket = new Ticket();
-        $ticket->setRelation('seat', $seatMock);
-
-        // Use partial mock to override isDirty
-        $ticketPartial = \Mockery::mock($ticket)->makePartial();
-        $ticketPartial->shouldReceive('isDirty')->andReturn(true);
-
+        // simulate change on ticket and call observer
+        $ticket->some_flag = 1; // make it dirty
         $observer = new TicketObserver();
-        $observer->saved($ticketPartial);
+        $observer->saved($ticket);
+
+        $plan->refresh();
+        $this->assertGreaterThan(1, $plan->revision);
     }
 }

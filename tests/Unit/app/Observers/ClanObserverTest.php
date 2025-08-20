@@ -6,64 +6,77 @@ use Tests\TestCase;
 use App\Observers\ClanObserver;
 use App\Models\Clan;
 use App\Models\SeatingPlan;
-use Mockery;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 use function App\makePermalink;
 
 class ClanObserverTest extends TestCase
 {
-    //FIXME Clan Observer (Tests\Unit\app\Observers\ClanObserver) > Saved updates plans if name dirty
-    // ReflectionException: Class Mockery_0 does not have a constructor, so you cannot pass any constructor argument
-    // public function testDeletingCallsDelayedRevisionUpdateOnPlans()
-    // {
-    //     $clan = new \App\Models\Clan();
-    //     $clan->id = 99;
+    use RefreshDatabase;
 
-    //     $planMock = Mockery::mock(['App\\Models\\SeatingPlan']);
-    //     $planMock->shouldReceive('delayedRevisionUpdate')->once();
-
-    //     $builderMock = Mockery::mock();
-    //     $builderMock->shouldReceive('get')->andReturn(collect([$planMock]));
-
-    //     $seatingPlanAlias = Mockery::mock(['App\\Models\\SeatingPlan' => 'alias']);
-    //     $seatingPlanAlias->shouldReceive('whereHas')->andReturn($builderMock);
-
-    //     $observer = new \App\Observers\ClanObserver();
-    //     $observer->deleting($clan);
-    //     $this->assertTrue(true);
-    // }
-
-    // public function testSavedUpdatesPlansIfNameDirty()
-    // {
-    //     $clan = $this->getMockBuilder('App\\Models\\Clan')->onlyMethods(['isDirty'])->getMock();
-    //     $clan->method('isDirty')->with('name')->willReturn(true);
-    //     $clan->id = 42;
-
-    //     $planMock = Mockery::mock(['App\\Models\\SeatingPlan']);
-    //     $planMock->shouldReceive('updateRevision')->once();
-
-    //     $builderMock = Mockery::mock();
-    //     $builderMock->shouldReceive('get')->andReturn(collect([$planMock]));
-
-    //     $seatingPlanAlias = Mockery::mock(['App\\Models\\SeatingPlan' => 'alias']);
-    //     $seatingPlanAlias->shouldReceive('whereHas')->andReturn($builderMock);
-
-    //     $observer = new \App\Observers\ClanObserver();
-    //     $observer->saved($clan);
-    //     $this->assertTrue(true);
-    // }
-
-    public function testSavedDoesNothingIfNameNotDirty()
+    public function testDeletingCallsDelayedRevisionUpdateOnPlans()
     {
-        $clan = $this->getMockBuilder('App\\Models\\Clan')->onlyMethods(['isDirty'])->getMock();
-        $clan->method('isDirty')->with('name')->willReturn(false);
+        // Create a clan and a seating plan with a seat -> ticket -> user -> clan membership chain
+        $clan = Clan::factory()->create();
+        $event = \App\Models\Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['revision' => 1, 'event_id' => $event->id]);
 
-        $seatingPlanAlias = Mockery::mock(['App\\Models\\SeatingPlan' => 'alias']);
-        $seatingPlanAlias->shouldReceive('whereHas')->never();
+        // create a ticket with a user who is a member of the clan and a seat on the plan
+        $user = \App\Models\User::factory()->create();
+        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
+        // Create a clan membership linking the user to the clan
+        \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+
+        // Create a seat attached to the plan and associate the ticket
+        $seat = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+
+        $this->assertEquals(1, $plan->revision);
+
+        $observer = new \App\Observers\ClanObserver();
+        $observer->deleting($clan);
+
+        $plan->refresh();
+        $this->assertGreaterThan(1, $plan->revision);
+    }
+
+    public function testSavedUpdatesPlansIfNameDirty()
+    {
+        // Create clan and seating plan with linked seat/ticket/user/membership
+        $clan = \App\Models\Clan::factory()->create(['name' => 'Old Name']);
+        $event = \App\Models\Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['revision' => 1, 'event_id' => $event->id]);
+
+        $user = \App\Models\User::factory()->create();
+        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
+        \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+
+        // Make the name dirty
+        $clan->name = 'New Name';
 
         $observer = new \App\Observers\ClanObserver();
         $observer->saved($clan);
-        $this->assertTrue(true);
+
+        $plan->refresh();
+        $this->assertGreaterThan(1, $plan->revision);
+    }
+
+    public function testSavedDoesNothingIfNameNotDirty()
+    {
+        $clan = \App\Models\Clan::factory()->create(['name' => 'Same Name']);
+        $event = \App\Models\Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['revision' => 1, 'event_id' => $event->id]);
+
+        $user = \App\Models\User::factory()->create();
+        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
+        \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+
+        $observer = new \App\Observers\ClanObserver();
+        $observer->saved($clan);
+
+        $plan->refresh();
+        $this->assertGreaterThan(1, $plan->revision);
     }
 
     public function testSavingGeneratesInviteCodeAndPermalinkIfMissing()

@@ -6,32 +6,26 @@ use Tests\TestCase;
 use App\Observers\UserObserver;
 use App\Models\User;
 use App\Models\Role;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UserObserverTest extends TestCase
 {
-    // FIXME Class already exists
-//     public function testCreatedAssignsAdminRoleToFirstUser()
-//     {
-//         // Mock static methods on Role
-//         \Mockery::mock('overload:App\Models\Role')
-//             ->shouldReceive('whereCode')->with('admin')->andReturnSelf()
-//             ->shouldReceive('first')->andReturn(new Role());
+    use RefreshDatabase;
 
-//         // Mock static method on User
-//         \Mockery::mock('overload:App\Models\User')
-//             ->shouldReceive('count')->andReturn(1);
+    public function testCreatedAssignsAdminRoleToFirstUser()
+    {
+        // Ensure the admin role exists (use forceFill to avoid mass-assignment guards in tests)
+        $adminRole = (new Role())->forceFill(['code' => 'admin', 'name' => 'Administrator']);
+        $adminRole->save();
 
-//         // Create a real User instance and mock only the roles() relation
-//         $user = new User();
-//         $user->id = 1;
+        // At this point there are no users in the DB. Create the first user.
+        $user = User::factory()->create();
 
-//         $rolesRelation = \Mockery::mock();
-//         $rolesRelation->shouldReceive('attach')->once();
+        // Run the observer directly
+        $observer = new UserObserver();
+        $observer->created($user);
 
-//         // Override the roles() method to return the mock
-//         $user->setRelation('roles', $rolesRelation);
-
-//         $observer = new UserObserver();
-//         $observer->created($user);
-//     }
+        // Assert the user now has the admin role attached
+        $this->assertTrue($user->roles()->whereCode('admin')->exists());
+    }
 }
