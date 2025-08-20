@@ -4,21 +4,19 @@ namespace Tests\Unit\app\Models;
 
 use Tests\TestCase;
 use App\Models\SocialProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Services\Contracts\SocialProviderContract;
+use App\Models\ProviderSetting;
 
 class SocialProviderTest extends TestCase
 {
+    use RefreshDatabase;
     public function testCanInstantiateSocialProvider()
     {
         $provider = new SocialProvider();
         $this->assertInstanceOf(SocialProvider::class, $provider);
     }
 
-    /** Test the accounts relationship.
-     * FIXME Commented out as not working - TBC
-     * Class MockObject_SocialProviderContract_3cb0ca9b contains 4 abstract methods and must therefore be declared abstract or implement the remaining methods
-     * (App\Services\Contracts\SocialProviderContract::__construct, App\Services\Contracts\SocialProviderContract::configMapping, App\Services\Contracts\SocialProviderContract::install, ...)
-     */
-    /*
     public function testAccountsRelationship()
     {
         $provider = new SocialProvider();
@@ -33,96 +31,128 @@ class SocialProviderTest extends TestCase
 
     public function testGetProviderReturnsContract()
     {
-        $mockContract = $this->getMockBuilder(\App\Services\Contracts\SocialProviderContract::class)
-            ->disableOriginalConstructor()
-            ->getMock();
+        // Use a simple concrete stub that satisfies the contract
+        $stubClass = TestSocialProviderStub::class;
         $provider = new SocialProvider();
-        $provider->provider_class = get_class($mockContract);
+        $provider->provider_class = $stubClass;
         $result = $provider->getProvider();
-        $this->assertInstanceOf(\App\Services\Contracts\SocialProviderContract::class, $result);
+        $this->assertInstanceOf(SocialProviderContract::class, $result);
     }
 
     public function testRedirectDelegatesToProvider()
     {
-        $mockProvider = $this->getMockBuilder(\App\Services\Contracts\SocialProviderContract::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['redirect'])
-            ->getMock();
-        $mockProvider->expects($this->once())->method('redirect')->willReturn('redirected');
+        $stub = new class implements SocialProviderContract {
+            public function __construct(?\App\Models\SocialProvider $provider = null, ?string $redirectUrl = null) {}
+            public function configMapping(): array
+            {
+                return [];
+            }
+            public function install(): \App\Models\SocialProvider
+            {
+                throw new \Exception('not used');
+            }
+            public function redirect(): \Illuminate\Http\RedirectResponse
+            {
+                return new \Illuminate\Http\RedirectResponse('/stub-redirect');
+            }
+            public function user(?\App\Models\User $localUser = null)
+            {
+                return null;
+            }
+        };
         $provider = $this->getMockBuilder(SocialProvider::class)
             ->onlyMethods(['getProvider'])
             ->getMock();
-        $provider->method('getProvider')->willReturn($mockProvider);
-        $this->assertEquals('redirected', $provider->redirect());
+        $provider->method('getProvider')->willReturn($stub);
+        $response = $provider->redirect();
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
+        $this->assertEquals('/stub-redirect', $response->getTargetUrl());
     }
 
     public function testUserDelegatesToProvider()
     {
-        $mockProvider = $this->getMockBuilder(\App\Services\Contracts\SocialProviderContract::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['user'])
-            ->getMock();
-        $mockProvider->expects($this->once())->method('user')->willReturn('user-object');
+        $stub = new class implements SocialProviderContract {
+            public function __construct(?\App\Models\SocialProvider $provider = null, ?string $redirectUrl = null) {}
+            public function configMapping(): array
+            {
+                return [];
+            }
+            public function install(): \App\Models\SocialProvider
+            {
+                throw new \Exception('not used');
+            }
+            public function redirect(): \Illuminate\Http\RedirectResponse
+            {
+                return new \Illuminate\Http\RedirectResponse('/stub-redirect');
+            }
+            public function user(?\App\Models\User $localUser = null)
+            {
+                return 'user-object';
+            }
+        };
         $provider = $this->getMockBuilder(SocialProvider::class)
             ->onlyMethods(['getProvider'])
             ->getMock();
-        $provider->method('getProvider')->willReturn($mockProvider);
+        $provider->method('getProvider')->willReturn($stub);
         $this->assertEquals('user-object', $provider->user());
     }
 
     public function testConfigMappingDelegatesToProvider()
     {
-        $mockProvider = $this->getMockBuilder(\App\Services\Contracts\SocialProviderContract::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['configMapping'])
-            ->getMock();
-        $mockProvider->expects($this->once())->method('configMapping')->willReturn(['foo' => 'bar']);
+        $stub = new class implements SocialProviderContract {
+            public function __construct(?\App\Models\SocialProvider $provider = null, ?string $redirectUrl = null) {}
+            public function configMapping(): array
+            {
+                return ['foo' => 'bar'];
+            }
+            public function install(): \App\Models\SocialProvider
+            {
+                throw new \Exception('not used');
+            }
+            public function redirect(): \Illuminate\Http\RedirectResponse
+            {
+                return new \Illuminate\Http\RedirectResponse('/stub-redirect');
+            }
+            public function user(?\App\Models\User $localUser = null)
+            {
+                return null;
+            }
+        };
         $provider = $this->getMockBuilder(SocialProvider::class)
             ->onlyMethods(['getProvider'])
             ->getMock();
-        $provider->method('getProvider')->willReturn($mockProvider);
+        $provider->method('getProvider')->willReturn($stub);
         $this->assertEquals(['foo' => 'bar'], $provider->configMapping());
     }
 
     public function testGetSettingReturnsCachedValue()
     {
-        $provider = $this->getMockBuilder(SocialProvider::class)
-            ->onlyMethods(['settings'])
-            ->getMock();
-        $provider->_settings = ['foo' => 'bar'];
+        $provider = new SocialProvider();
+        // $_settings is a protected property on the model; set it via reflection so
+        // getSetting() reads the cached value instead of a newly created public prop.
+        $ref = new \ReflectionObject($provider);
+        $prop = $ref->getProperty('_settings');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, ['foo' => 'bar']);
         $this->assertEquals('bar', $provider->getSetting('foo'));
     }
 
     public function testGetSettingReturnsNullIfNotFound()
     {
-        $mockRelation = $this->getMockBuilder(\Illuminate\Database\Eloquent\Relations\MorphMany::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['whereCode', 'first'])
-            ->getMock();
-        $mockRelation->method('whereCode')->willReturnSelf();
-        $mockRelation->method('first')->willReturn(null);
-        $provider = $this->getMockBuilder(SocialProvider::class)
-            ->onlyMethods(['settings'])
-            ->getMock();
-        $provider->method('settings')->willReturn($mockRelation);
+        // Use a real provider and ensure the relation returns null when no setting exists
+        $provider = SocialProvider::factory()->make();
         $this->assertNull($provider->getSetting('notfound'));
     }
 
     public function testGetSettingReturnsValueFromRelation()
     {
-        $mockSetting = new class {
-            public $value = 'baz';
-        };
-        $mockRelation = $this->getMockBuilder(\Illuminate\Database\Eloquent\Relations\MorphMany::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['whereCode', 'first'])
-            ->getMock();
-        $mockRelation->method('whereCode')->willReturnSelf();
-        $mockRelation->method('first')->willReturn($mockSetting);
-        $provider = $this->getMockBuilder(SocialProvider::class)
-            ->onlyMethods(['settings'])
-            ->getMock();
-        $provider->method('settings')->willReturn($mockRelation);
+        $provider = SocialProvider::factory()->create();
+        ProviderSetting::factory()->create([
+            'provider_id' => $provider->id,
+            'provider_type' => get_class($provider),
+            'code' => 'foo',
+            'value' => 'baz',
+        ]);
         $this->assertEquals('baz', $provider->getSetting('foo'));
     }
 
@@ -135,5 +165,33 @@ class SocialProviderTest extends TestCase
         $method->setAccessible(true);
         $this->assertEquals('test_code', $method->invoke($provider));
     }
-    */
+}
+
+// Small concrete stub implementing the SocialProviderContract for tests.
+class TestSocialProviderStub implements SocialProviderContract
+{
+    public function __construct(?\App\Models\SocialProvider $provider = null, ?string $redirectUrl = null)
+    {
+        // no-op
+    }
+
+    public function configMapping(): array
+    {
+        return [];
+    }
+
+    public function install(): \App\Models\SocialProvider
+    {
+        throw new \Exception('Not implemented in test stub');
+    }
+
+    public function redirect(): \Illuminate\Http\RedirectResponse
+    {
+        return new \Illuminate\Http\RedirectResponse('/stub-redirect');
+    }
+
+    public function user(?\App\Models\User $localUser = null)
+    {
+        return null;
+    }
 }
