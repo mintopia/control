@@ -27,21 +27,20 @@ class TicketImportRequestTest extends TestCase
         $this->assertIsArray($rules);
     }
 
-    //FIXME: Implement test for csv rule
-    // public function testCsvRuleContainsFileAndMimetypes()
-    // {
-    //     $request = new TicketImportRequest();
-    //     $rules = $request->rules();
-    //     $this->assertArrayHasKey('csv', $rules);
+    public function testCsvRuleContainsFileAndMimetypes()
+    {
+        $request = new TicketImportRequest();
+        $rules = $request->rules();
+        $this->assertArrayHasKey('csv', $rules);
 
-    //     $csvRule = $rules['csv'];
-    //     $csvRuleString = is_array($csvRule) ? implode('|', $csvRule) : $csvRule;
+        $csvRule = $rules['csv'];
+        $csvRuleString = is_array($csvRule) ? implode('|', $csvRule) : $csvRule;
 
-    //     $this->assertStringContainsString('file', $csvRuleString);
-    //     $this->assertTrue(
-    //         str_contains($csvRuleString, 'mimetypes:') || str_contains($csvRuleString, 'mimes:')
-    //     );
-    // }
+        $this->assertStringContainsString('file', $csvRuleString);
+        $this->assertTrue(
+            str_contains($csvRuleString, 'mimetypes:') || str_contains($csvRuleString, 'mimes:')
+        );
+    }
 
     public function testRulesDoesNotContainUnexpectedFields()
     {

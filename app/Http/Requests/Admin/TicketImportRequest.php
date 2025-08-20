@@ -23,7 +23,8 @@ class TicketImportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'csv' => 'required|file',
+            // Accept common CSV mime types alongside the file requirement (see testCsvRuleContainsFileAndMimetypes)
+            'csv' => 'required|file|mimetypes:text/csv,text/plain,application/vnd.ms-excel',
         ];
     }
 }
