@@ -13,83 +13,76 @@ use Laravel\Telescope\Telescope;
 class TelescopeServiceProviderTest extends TestCase
 {
 
-    // FIXME Facade being used does not implement the required getFacadeAccessor method?
-    /*
-    use Illuminate\Support\Facades\Gate;
-    use Laravel\Telescope\IncomingEntry;
-    use Laravel\Telescope\Facades\Telescope;
-    use Laravel\Telescope\TelescopeApplicationServiceProvider;
-
-    class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
+    public function testRegisterConfiguresTelescope()
     {
-        public function register()
-        {
-            parent::register();
-            Telescope::night();
-            Telescope::filter(function (IncomingEntry $entry) {
-                if ($this->app->environment('local')) {
-                    return true;
-                }
 
-                // Filter out the seating plan API
-                if ($entry->isRequest() && str_starts_with($entry->content['uri'], '/api/v1/')) {
-                    return false;
-                }
+        // Bind a lightweight fake telescope instance to the container so the facade resolves to it
+        $fake = new class {
+            public $nightCalled = false;
+            public $filterCalled = false;
+            public $avatarCalled = false;
 
-                if (config('telescope.nofilter', false)) {
-                    return true;
-                }
+            public function night()
+            {
+                $this->nightCalled = true;
+            }
 
-                return $entry->isReportableException() ||
-                    $entry->isFailedRequest() ||
-                    $entry->isFailedJob() ||
-                    $entry->isScheduledTask() ||
-                    $entry->hasMonitoredTag();
-            });
-            Telescope::avatar(function ($id, $email) {
-                // Provide a default avatar logic or mock as needed
-                return null;
-            });
-        }
+            public function filter($callback)
+            {
+                $this->filterCalled = true;
+            }
 
-        protected function hideSensitiveRequestDetails()
-        {
-            Telescope::hideRequestParameters(['_token']);
-            Telescope::hideRequestHeaders(['cookie', 'x-csrf-token', 'x-xsrf-token']);
-        }
+            public function avatar($callback)
+            {
+                $this->avatarCalled = true;
+            }
 
-        protected function gate()
-        {
-            Gate::define('viewTelescope', function ($user) {
-                // Provide logic for viewing Telescope, e.g., only admin users
-                return true;
-            });
-        }
+            public function hideRequestParameters($params)
+            { /* noop for register test */
+            }
+            public function hideRequestHeaders($headers)
+            { /* noop for register test */
+            }
+        };
+
+        // Clear Telescope static callbacks to ensure a clean test environment
+        \Laravel\Telescope\Telescope::$filterUsing = [];
+        \Laravel\Telescope\Telescope::$tagUsing = [];
+
+        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider->register();
+
+        $this->assertIsArray(\Laravel\Telescope\Telescope::$filterUsing);
+        $this->assertNotEmpty(\Laravel\Telescope\Telescope::$filterUsing, 'Telescope filter callback was not registered');
     }
-    */
-    // public function testRegisterConfiguresTelescope()
-    // {
 
-    //     Facade::shouldReceive('getFacadeApplication')->andReturn(app());
-    //     Facade::clearResolvedInstance('telescope');
-    //     $telescopeMock = \Mockery::mock('overload:Laravel\Telescope\Telescope');
-    //     $telescopeMock->shouldReceive('night')->once();
-    //     $telescopeMock->shouldReceive('filter')->once();
-    //     $telescopeMock->shouldReceive('avatar')->once();
-    //     $provider = new \app\Providers\TelescopeServiceProvider(app());
-    //     $provider->register();
-    //     $this->assertTrue(true);
-    // }
+    public function testHideSensitiveRequestDetails()
+    {
+        $fake = new class {
+            public $hiddenParams = null;
+            public $hiddenHeaders = null;
+            public function hideRequestParameters($params)
+            {
+                $this->hiddenParams = $params;
+            }
+            public function hideRequestHeaders($headers)
+            {
+                $this->hiddenHeaders = $headers;
+            }
+        };
 
-    // public function testHideSensitiveRequestDetails()
-    // {
-    //     $telescopeMock = \Mockery::mock('overload:Laravel\Telescope\Telescope');
-    //     $telescopeMock->shouldReceive('hideRequestParameters')->once();
-    //     $telescopeMock->shouldReceive('hideRequestHeaders')->once();
-    //     $provider = new \app\Providers\TelescopeServiceProvider(app());
-    //     $this->invokeProtected($provider, 'hideSensitiveRequestDetails');
-    //     $this->assertTrue(true);
-    // }
+        // Reset Telescope hidden arrays
+        \Laravel\Telescope\Telescope::$hiddenRequestParameters = [];
+        \Laravel\Telescope\Telescope::$hiddenRequestHeaders = [];
+
+        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $this->invokeProtected($provider, 'hideSensitiveRequestDetails');
+
+        $this->assertIsArray(\Laravel\Telescope\Telescope::$hiddenRequestParameters);
+        $this->assertContains('_token', \Laravel\Telescope\Telescope::$hiddenRequestParameters);
+        $this->assertIsArray(\Laravel\Telescope\Telescope::$hiddenRequestHeaders);
+        $this->assertContains('cookie', \Laravel\Telescope\Telescope::$hiddenRequestHeaders);
+    }
 
     public function testGateDefinesViewTelescope()
     {
