@@ -4,10 +4,13 @@ namespace Tests\Unit\app\Http\Requests\Admin;
 
 use Tests\TestCase;
 use App\Http\Requests\Admin\EventUpdateRequest;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 
 class EventUpdateRequestTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function testAuthorizeReturnsTrue()
     {
         $request = new EventUpdateRequest();
@@ -49,69 +52,69 @@ class EventUpdateRequestTest extends TestCase
         $this->assertContains('max:100', $rule);
     }
 
-    // FIXME  Name rule closure fails if event name exists
-    // Illuminate\Database\QueryException: SQLSTATE[HY000]: General error: 1 no such table: events (Connection: sqlite, SQL: select * from "events" where "code" = test-event limit 1)
-    // public function testNameRuleClosureFailsIfEventNameExists()
-    // {
-    //     $request = $this->getMockBuilder(EventUpdateRequest::class)
-    //         ->onlyMethods(['__get'])
-    //         ->getMock();
-    //     $mockEvent = (object)['id' => 1];
-    //     $request->event = null;
-    //     // Mock makePermalink
-    //     \Mockery::mock('overload:App\\Http\\Requests\\Admin\\makePermalink')
-    //         ->shouldReceive('__invoke')->andReturn('event-permalink');
-    //     // Mock Event::whereCode
-    //     \Mockery::mock(['alias' => 'App\\Models\\Event'])
-    //         ->shouldReceive('whereCode')->with('event-permalink')->andReturnSelf()
-    //         ->shouldReceive('first')->andReturn($mockEvent);
+    public function testNameRuleClosureFailsIfEventNameExists()
+    {
+        // Create an event with a code matching makePermalink('Test Event') -> 'test-event'
+        \App\Models\Event::factory()->create(['code' => 'test-event']);
 
-    //     $rules = $request->rules();
-    //     $closure = null;
-    //     foreach ($rules['name'] as $rule) {
-    //         if ($rule instanceof \Closure) {
-    //             $closure = $rule;
-    //             break;
-    //         }
-    //     }
-    //     $called = false;
-    //     $fail = function ($message) use (&$called) {
-    //         $called = true;
-    //         \PHPUnit\Framework\Assert::assertEquals('The event name is already in use', $message);
-    //     };
-    //     $closure('name', 'Test Event', $fail);
-    //     $this->assertTrue($called, 'Fail closure was not called for duplicate event name');
-    // }
+        $request = new EventUpdateRequest();
+        // Ensure we're simulating creation (no existing event)
+        $ref = new \ReflectionObject($request);
+        if ($ref->hasProperty('event')) {
+            $p = $ref->getProperty('event');
+            $p->setAccessible(true);
+            $p->setValue($request, null);
+        } else {
+            $name = 'event';
+            $request->$name = null;
+        }
 
-    // public function testNameRuleClosurePassesIfEventNameIsUnique()
-    // {
-    //     $request = $this->getMockBuilder(EventUpdateRequest::class)
-    //         ->onlyMethods(['__get'])
-    //         ->getMock();
-    //     $request->event = null;
-    //     // Mock makePermalink
-    //     \Mockery::mock('overload:App\\Http\\Requests\\Admin\\makePermalink')
-    //         ->shouldReceive('__invoke')->andReturn('event-permalink');
-    //     // Mock Event::whereCode
-    //     \Mockery::mock(['alias' => 'App\\Models\\Event'])
-    //         ->shouldReceive('whereCode')->with('event-permalink')->andReturnSelf()
-    //         ->shouldReceive('first')->andReturn(null);
+        $rules = $request->rules();
+        $closure = null;
+        foreach ($rules['name'] as $rule) {
+            if ($rule instanceof \Closure) {
+                $closure = $rule;
+                break;
+            }
+        }
+        $called = false;
+        $fail = function ($message) use (&$called) {
+            $called = true;
+            \PHPUnit\Framework\Assert::assertEquals('The event name is already in use', $message);
+        };
+        // Name that will produce permalink 'test-event'
+        $closure('name', 'Test Event', $fail);
+        $this->assertTrue($called, 'Fail closure was not called for duplicate event name');
+    }
 
-    //     $rules = $request->rules();
-    //     $closure = null;
-    //     foreach ($rules['name'] as $rule) {
-    //         if ($rule instanceof \Closure) {
-    //             $closure = $rule;
-    //             break;
-    //         }
-    //     }
-    //     $fail = function ($message) {
-    //         \PHPUnit\Framework\Assert::fail('Fail closure should not be called for unique event name');
-    //     };
-    //     // Should not call fail for a unique event name
-    //     $closure('name', 'Unique Event', $fail);
-    //     $this->assertTrue(true); // If no exception, test passes
-    // }
+    public function testNameRuleClosurePassesIfEventNameIsUnique()
+    {
+        $request = new EventUpdateRequest();
+        $ref = new \ReflectionObject($request);
+        if ($ref->hasProperty('event')) {
+            $p = $ref->getProperty('event');
+            $p->setAccessible(true);
+            $p->setValue($request, null);
+        } else {
+            $name = 'event';
+            $request->$name = null;
+        }
+
+        $rules = $request->rules();
+        $closure = null;
+        foreach ($rules['name'] as $rule) {
+            if ($rule instanceof \Closure) {
+                $closure = $rule;
+                break;
+            }
+        }
+        $fail = function ($message) {
+            \PHPUnit\Framework\Assert::fail('Fail closure should not be called for unique event name');
+        };
+        // Should not call fail for a unique event name
+        $closure('name', 'A Unique Event Name', $fail);
+        $this->assertTrue(true); // If no exception, test passes
+    }
 
 
     public function tearDown(): void
