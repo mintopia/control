@@ -8,18 +8,47 @@ use App\Services\OpenTelemetry\SpanHelper;
 
 class OpenTelemetryTest extends TestCase
 {
-    //CHECK is this even needed?
-    /*
-    * config('open-telemetry.service.name') returns null, but OpenTelemetry\API\Trace\NoopTracerProvider::getTracer() requires a string as the first argument; you should provide a default string value if the config is missing.
-            $tracer = Globals::tracerProvider()->getTracer(
-            $serviceName ?? config('open-telemetry.service.name') ?? 'default-service',
-            $version ?? config('open-telemetry.service.version') ?? '1.0.0',
-            'https://opentelemetry.io/schemas/1.24.0'
-        );
-    */
-    // public function testStartSpanReturnsSpanHelper()
-    // {
-    //     $spanHelper = OpenTelemetry::startSpan('test-span');
-    //     $this->assertInstanceOf(SpanHelper::class, $spanHelper);
-    // }
+    // Ensure the tracer provider receives a non-null service name/version in tests
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config([
+            'open-telemetry.service.name' => 'test-service',
+            'open-telemetry.service.version' => '1.0',
+        ]);
+    }
+
+    public function testStartSpanReturnsSpanHelper()
+    {
+        $spanHelper = OpenTelemetry::startSpan('test-span');
+        $this->assertInstanceOf(SpanHelper::class, $spanHelper);
+        // Ensure we close the span so the SDK doesn't complain about leaked scopes
+        $spanHelper->end();
+    }
+
+    public function testStartSpanWithEmptyNameDefaults()
+    {
+        $spanHelper = OpenTelemetry::startSpan('');
+        $this->assertInstanceOf(SpanHelper::class, $spanHelper);
+        $spanHelper->end();
+    }
+
+    public function testSpanHelperSetAttributeAndAddEvent()
+    {
+        $spanHelper = OpenTelemetry::startSpan('attribute-event-span');
+        // these methods are defensive; they should not throw
+        $spanHelper->setAttribute('test.key', 'value');
+        $spanHelper->addEvent('test.event', ['k' => 'v']);
+
+        $this->assertInstanceOf(SpanHelper::class, $spanHelper);
+        $spanHelper->end();
+    }
+
+    public function testSpanHelperEndDoesNotThrow()
+    {
+        $spanHelper = OpenTelemetry::startSpan('end-span');
+        $spanHelper->end();
+
+        $this->assertInstanceOf(SpanHelper::class, $spanHelper);
+    }
 }

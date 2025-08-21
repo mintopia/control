@@ -87,6 +87,12 @@ class OpenTelemetry
 
     public static function getMeter(?string $serviceName = null, ?string $serviceVersion = null): MeterInterface
     {
+        //CHECK Alternative source defaults could be used here, instead of in the test only:
+        // return Globals::meterProvider()->getMeter(
+        //     $serviceName ?? config('open-telemetry.service.name') ?? 'app',
+        //     $serviceVersion ?? config('open-telemetry.service.version') ?? '1.0',
+        //     'https://opentelemetry.io/schemas/1.24.0'
+        // );
         return Globals::meterProvider()->getMeter(
             $serviceName ?? config('open-telemetry.service.name'),
             $serviceVersion ?? config('open-telemetry.service.version'),
