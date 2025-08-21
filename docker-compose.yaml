@@ -95,7 +95,7 @@ services:
     build:
       context: .
       dockerfile: docker/develop/Dockerfile
-    entrypoint: [ "php", "vendor/bin/phpunit" ]
+    entrypoint: [ "php", "-d", "memory_limit=512M", "vendor/bin/phpunit" ]
     volumes:
       - ./:/app
     healthcheck:

@@ -48,6 +48,14 @@ class TicketProvider extends Model
     use HasFactory;
     use ToString;
 
+    protected $fillable = [
+        'name',
+        'code',
+        'provider_class',
+        'enabled',
+        'cache_prefix',
+    ];
+
     protected array $_settings = [];
 
     public function tickets(): HasMany
@@ -57,6 +65,10 @@ class TicketProvider extends Model
 
     public function getProvider(): TicketProviderContract
     {
+        // Prefer resolving from the container if the provider class is bound there (tests may bind mocks)
+        if (app()->bound($this->provider_class)) {
+            return app()->make($this->provider_class, ['provider' => $this]);
+        }
         return new $this->provider_class($this);
     }
 

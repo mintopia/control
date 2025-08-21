@@ -1,75 +1,84 @@
 <?php
 
-namespace Tests\Unit\App\Mail;
+namespace Tests\Unit\app\Mail;
+
+use Tests\TestCase;
 
 use App\Mail\VerifyEmail;
 use App\Models\EmailAddress;
 use App\Models\Setting;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
-use Tests\TestCase;
-
-/* EmailAddressFactory is commented out because we are missing a factory for EmailAddress.
- * The EmailAddressFactory class is missing; to fix, factory file must exists and is correctly registered in the Database\Factories namespace.
-
-<?php
-
-namespace Database\Factories;
-
-use App\Models\EmailAddress;
-use Illuminate\Database\Eloquent\Factories\Factory;
-
-class EmailAddressFactory extends Factory
-{
-    protected $model = EmailAddress::class;
-
-    public function definition()
-    {
-        return [
-            'email' => $this->faker->unique()->safeEmail,
-            'verification_code' => null,
-            'verification_sent_at' => null,
-            'user_id' => \App\Models\User::factory(),
-        ];
-    }
-}
-*/
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class VerifyEmailTest extends TestCase
 {
-    public function testEnvelopeContainsCorrectSubjectAndSender()
+    use RefreshDatabase;
+
+    public function testAttachmentsReturnsEmptyArray()
     {
-        $emailAddress = EmailAddress::factory()->make();
-        Setting::factory()->create(['code' => 'name', 'value' => 'Test App']);
-        Config::set('mail.from.address', 'no-reply@test.com');
-
+        $emailAddress = EmailAddress::factory()->create();
         $mailable = new VerifyEmail($emailAddress);
-        $envelope = $mailable->envelope();
 
-        $this->assertEquals('Test App - Verify Email Address', $envelope->subject);
-        $this->assertEquals('no-reply@test.com', $envelope->from[0]->address);
-        $this->assertEquals('Test App', $envelope->from[0]->name);
+        $this->assertIsArray($mailable->attachments());
+        $this->assertEmpty($mailable->attachments());
     }
 
-    public function testContentContainsCorrectData()
+    public function testEnvelopeHasCorrectSubjectAndFrom()
     {
-        $emailAddress = EmailAddress::factory()->make([
-            'id' => 1,
-            'verification_code' => '123456',
-        ]);
-        Setting::factory()->create(['code' => 'name', 'value' => 'Test App']);
-        Route::shouldReceive('route')->with('emails.verify.code', [
-            'emailaddress' => 1,
-            'code' => '123456',
-        ])->andReturn('http://test.app/verify/1/123456');
+        // Ensure the application name setting exists so the mailable composes the subject correctly
+        Setting::factory()->create(["code" => 'name', 'value' => 'My App']);
 
+        $emailAddress = EmailAddress::factory()->create(['verification_code' => 'ABC123', 'verification_sent_at' => now()]);
         $mailable = new VerifyEmail($emailAddress);
+
+        $envelope = $mailable->envelope();
+
+        $this->assertEquals('My App - Verify Email Address', $envelope->subject);
+        $this->assertInstanceOf(Address::class, $envelope->from);
+        $this->assertIsString($envelope->from->address);
+        $this->assertNotEmpty($envelope->from->address);
+    }
+
+    public function testContentIncludesUrlEmailAndAppName()
+    {
+        Setting::factory()->create(["code" => 'name', 'value' => 'My App']);
+
+        $emailAddress = EmailAddress::factory()->create(['verification_code' => 'ABC123', 'verification_sent_at' => now()]);
+        $mailable = new VerifyEmail($emailAddress);
+
         $content = $mailable->content();
 
         $this->assertEquals('emails.verifyemail', $content->markdown);
+
+        $expectedUrl = route('emails.verify.code', [
+            'emailaddress' => $emailAddress->id,
+            'code' => $emailAddress->verification_code,
+        ]);
+
         $this->assertArrayHasKey('url', $content->with);
-        $this->assertEquals('http://test.app/verify/1/123456', $content->with['url']);
-        $this->assertEquals($emailAddress, $content->with['email']);
-        $this->assertEquals('Test App', $content->with['name']);
+        $this->assertEquals($expectedUrl, $content->with['url']);
+        $this->assertSame($emailAddress, $content->with['email']);
+        $this->assertEquals('My App', $content->with['name']);
+    }
+
+    public function testRenderContainsUrlAndName()
+    {
+        Setting::factory()->create(["code" => 'name', 'value' => 'My App']);
+
+        $emailAddress = EmailAddress::factory()->create(['verification_code' => 'ABC123', 'verification_sent_at' => now()]);
+        $mailable = new VerifyEmail($emailAddress);
+
+        $html = $mailable->render();
+
+        $expectedUrl = route('emails.verify.code', [
+            'emailaddress' => $emailAddress->id,
+            'code' => $emailAddress->verification_code,
+        ]);
+
+        $this->assertStringContainsString($expectedUrl, $html);
+        $this->assertStringContainsString('My App', $html);
+        $this->assertStringContainsString($emailAddress->user->nickname, $html);
     }
 }

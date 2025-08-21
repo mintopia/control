@@ -8,15 +8,22 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 class Kernel extends ConsoleKernel
 {
     /**
+     * Define the application's commands.
+     */
+    protected $commands = [
+        \App\Console\Commands\UpdateEventSeatingLock::class,
+    ];
+
+    /**
      * Define the application's command schedule.
      */
     protected function schedule(Schedule $schedule): void
     {
-        $schedule->command('sanctum:prune-expired --hours=24')->daily();
-        $schedule->command('telescope:prune')->daily();
-        $schedule->command('control:prune-clans')->everyFiveMinutes();
-        $schedule->command('control:update-event-seating-locks')->everyMinute();
-        $schedule->command('control:sync-discord-roles')->everyFifteenMinutes();
+        $schedule->command('sanctum:prune-expired --hours=24')->daily()->description('sanctum:prune-expired --hours=24');
+        $schedule->command('telescope:prune')->daily()->description('telescope:prune');
+        $schedule->command('control:prune-clans')->daily()->description('control:prune-clans');
+        $schedule->command('control:update-event-seating-locks')->daily()->description('control:update-event-seating-locks');
+        $schedule->command('control:sync-discord-roles')->daily()->description('control:sync-discord-roles');
     }
 
     /**

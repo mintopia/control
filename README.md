@@ -95,9 +95,7 @@ You should now be able to visit the site and login. From here you can use the ad
 
 ## Observability
 
-## Observability
-
-The docker images from the project have the Open Telemetry PHP extension and the project includes the appropriate Open
+The docker images from the project have the [Open Telemetry PHP extension](https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases) and the project includes the appropriate Open
 Telemetry libraries from Packagist. You can use Protobuf or GRPC transport if needed. You should just be able to
 configure it using ENV variables and run a collector container. eg.
 

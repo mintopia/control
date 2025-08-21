@@ -13,6 +13,7 @@ class SettingValue implements CastsAttributes
      *
      * @param array<string, mixed> $attributes
      */
+
     public function get(Model $model, string $key, mixed $value, array $attributes): mixed
     {
         if ($model->encrypted && $value !== null) {
@@ -26,6 +27,7 @@ class SettingValue implements CastsAttributes
      *
      * @param array<string, mixed> $attributes
      */
+
     public function set(Model $model, string $key, mixed $value, array $attributes): mixed
     {
         if ($model->encrypted && $value !== null) {
@@ -33,4 +35,5 @@ class SettingValue implements CastsAttributes
         }
         return $value;
     }
+
 }

@@ -31,7 +31,9 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['primary_user_id']);
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                $table->dropForeign(['primary_user_id']);
+            }
         });
         Schema::dropIfExists('email_addresses');
     }

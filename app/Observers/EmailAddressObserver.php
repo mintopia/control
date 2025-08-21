@@ -11,9 +11,13 @@ class EmailAddressObserver
      */
     public function created(EmailAddress $emailAddress): void
     {
-        if ($emailAddress->user->primaryEmail === null) {
-            $emailAddress->user->primaryEmail()->associate($emailAddress);
-            $emailAddress->user->save();
+        $user = $emailAddress->user;
+        if ($user) {
+            $primaryEmailRelation = $user->primaryEmail();
+            if ($primaryEmailRelation->getResults() === null) {
+                $primaryEmailRelation->associate($emailAddress);
+                $user->save();
+            }
         }
     }
 
