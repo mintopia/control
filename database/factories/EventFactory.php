@@ -12,7 +12,11 @@ class EventFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->word(),
+            // Use unique name and explicit unique code so concurrent test factories
+            // don't produce duplicate event codes (avoids UNIQUE constraint errors
+            // when observers generate codes from names).
+            'name' => $this->faker->unique()->word(),
+            'code' => $this->faker->unique()->bothify('EVT-####'),
             'seating_opens_at' => null,
             'seating_closes_at' => null,
             'seating_locked' => true,

@@ -73,39 +73,65 @@ class TicketTest extends TestCase
 
     public function testCanPickSeatReturnsFalseIfTypeHasNoSeat()
     {
-        $ticket = new Ticket();
-        $mockType = (object)['has_seat' => false];
-        $ticket->setRelation('type', $mockType);
+        $type = \App\Models\TicketType::factory()->create([
+            'has_seat' => false,
+        ]);
+        $event = Event::factory()->create([
+            'ends_at' => now()->addDay(),
+            'seating_locked' => false,
+        ]);
+        $ticket = \App\Models\Ticket::factory()->create([
+            'ticket_type_id' => $type->id,
+            'event_id' => $event->id,
+        ]);
         $this->assertFalse($ticket->canPickSeat());
     }
 
     public function testCanPickSeatReturnsFalseIfEventEnded()
     {
-        $ticket = new Ticket();
-        $mockType = (object)['has_seat' => true];
-        $mockEvent = (object)['ends_at' => now()->subDay(), 'seating_locked' => false];
-        $ticket->setRelation('type', $mockType);
-        $ticket->setRelation('event', $mockEvent);
+        $type = \App\Models\TicketType::factory()->create([
+            'has_seat' => true,
+        ]);
+        $event = Event::factory()->create([
+            'ends_at' => now()->subDay(),
+            'seating_locked' => false,
+        ]);
+        $ticket = \App\Models\Ticket::factory()->create([
+            'ticket_type_id' => $type->id,
+            'event_id' => $event->id,
+        ]);
         $this->assertFalse($ticket->canPickSeat());
     }
 
     public function testCanPickSeatReturnsFalseIfSeatingLocked()
     {
-        $ticket = new Ticket();
-        $mockType = (object)['has_seat' => true];
-        $mockEvent = (object)['ends_at' => now()->addDay(), 'seating_locked' => true];
-        $ticket->setRelation('type', $mockType);
-        $ticket->setRelation('event', $mockEvent);
+        $type = \App\Models\TicketType::factory()->create([
+            'has_seat' => true,
+        ]);
+        $event = Event::factory()->create([
+            'ends_at' => now()->addDay(),
+            'seating_locked' => true,
+        ]);
+        $ticket = \App\Models\Ticket::factory()->create([
+            'ticket_type_id' => $type->id,
+            'event_id' => $event->id,
+        ]);
         $this->assertFalse($ticket->canPickSeat());
     }
 
     public function testCanPickSeatReturnsTrueIfAllConditionsMet()
     {
-        $ticket = new Ticket();
-        $mockType = (object)['has_seat' => true];
-        $mockEvent = (object)['ends_at' => now()->addDay(), 'seating_locked' => false];
-        $ticket->setRelation('type', $mockType);
-        $ticket->setRelation('event', $mockEvent);
+        $type = \App\Models\TicketType::factory()->create([
+            'has_seat' => true,
+        ]);
+        $event = Event::factory()->create([
+            'ends_at' => now()->addDay(),
+            'seating_locked' => false,
+        ]);
+        $ticket = \App\Models\Ticket::factory()->create([
+            'ticket_type_id' => $type->id,
+            'event_id' => $event->id,
+        ]);
         $this->assertTrue($ticket->canPickSeat());
     }
 
@@ -118,7 +144,6 @@ class TicketTest extends TestCase
         $this->assertTrue($ticket->canBeManagedBy($user));
     }
 
-    // TODO Function is not yet built TBC
     public function testCanTransferReturnsTrueIfEventNotEnded()
     {
         $event = Event::factory()->create([
@@ -128,5 +153,22 @@ class TicketTest extends TestCase
             'event_id' => $event->id,
         ]);
         $this->assertTrue($ticket->canTransfer());
+    }
+
+    public function testGenerateTransferCodeProducesDifferentCodesWhenCalledTwice()
+    {
+        $ticket = \App\Models\Ticket::factory()->create([
+            'transfer_code' => null,
+        ]);
+
+        $ticket->generateTransferCode();
+        $first = $ticket->transfer_code;
+        $ticket->generateTransferCode();
+        $ticket->refresh();
+        $second = $ticket->transfer_code;
+
+        $this->assertMatchesRegularExpression('/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/', $first);
+        $this->assertMatchesRegularExpression('/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/', $second);
+        $this->assertNotEquals($first, $second);
     }
 }
