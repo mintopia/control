@@ -13,7 +13,10 @@ class SeatingPlanObserver
         if (!$seatingPlan->code) {
             $seatingPlan->code = makePermalink($seatingPlan->name);
         }
-        if (!$seatingPlan->isDirty('revision')) {
+        // Increment the revision when the revision attribute was changed
+        // (i.e. isDirty). Previously this was inverted and incremented when
+        // it was not dirty.
+        if ($seatingPlan->isDirty('revision')) {
             $seatingPlan->revision++;
         }
     }
