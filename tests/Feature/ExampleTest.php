@@ -15,10 +15,14 @@ class ExampleTest extends TestCase
      */
     public function test_the_application_returns_a_successful_response(): void
     {
-        // $user = User::factory()->create();
+        $user = \App\Models\User::factory()->create();
 
-        // Routes are protected by auth:sanctum — use Sanctum helper to authenticate in tests
-        // Sanctum::actingAs($user);
+        // Ensure user won't be redirected on first login by middleware
+        $user->first_login = false;
+        $user->save();
+
+        // Routes are protected by auth:sanctum — authenticate the test user
+        \Laravel\Sanctum\Sanctum::actingAs($user);
 
         $response = $this->get('/');
 
