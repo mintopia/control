@@ -5,6 +5,7 @@ namespace Tests\Unit\app\Http\Requests;
 use Tests\TestCase;
 use App\Http\Requests\UserSignupRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\User;
 
 class UserSignupRequestTest extends TestCase
 {
@@ -38,13 +39,12 @@ class UserSignupRequestTest extends TestCase
 
     public function testRulesReturnsArray()
     {
-        // Mock user() to avoid null user error
-        $request = $this->getMockBuilder(UserSignupRequest::class)
-            ->onlyMethods(['user'])
-            ->getMock();
-        $request->expects($this->any())
-            ->method('user')
-            ->willReturn((object)['id' => 1]);
+        // Use a real user and set it as the currently authenticated user so
+        // FormRequest->user() returns an Eloquent model.
+        $user = User::factory()->create();
+        $this->be($user);
+        $request = new UserSignupRequest();
+        $request->setUserResolver(fn() => $user);
         $this->assertIsArray($request->rules());
     }
 
@@ -97,12 +97,10 @@ class UserSignupRequestTest extends TestCase
         \App\Models\Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => true]);
         \App\Models\Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => false]);
         \App\Models\Setting::first()->clearCache();
-        $request = $this->getMockBuilder(UserSignupRequest::class)
-            ->onlyMethods(['user'])
-            ->getMock();
-        $request->expects($this->any())
-            ->method('user')
-            ->willReturn((object)['id' => 1]);
+        $user = User::factory()->create();
+        $this->be($user);
+        $request = new UserSignupRequest();
+        $request->setUserResolver(fn() => $user);
         $rules = $request->rules();
         $this->assertArrayHasKey('terms', $rules);
     }
@@ -111,12 +109,10 @@ class UserSignupRequestTest extends TestCase
     {
         // ensure fetch returns false for both
         // do not create settings
-        $request = $this->getMockBuilder(UserSignupRequest::class)
-            ->onlyMethods(['user'])
-            ->getMock();
-        $request->expects($this->any())
-            ->method('user')
-            ->willReturn((object)['id' => 1]);
+        $user = User::factory()->create();
+        $this->be($user);
+        $request = new UserSignupRequest();
+        $request->setUserResolver(fn() => $user);
         $rules = $request->rules();
         $this->assertArrayNotHasKey('terms', $rules);
     }

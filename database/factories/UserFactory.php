@@ -41,7 +41,7 @@ class UserFactory extends Factory
         ];
     }
 
-    //TODO that the $table->foreignId('user_id')->constrained()->cascadeOnDelete(); on table email_addresses is always unique!
+    //CHECK that the $table->foreignId('user_id')->constrained()->cascadeOnDelete(); on table email_addresses is always unique!
     /**
      * Create a related email address for the user and links it to the user account.
 
