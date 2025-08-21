@@ -139,7 +139,6 @@ class EmailAddressControllerTest extends TestCase
         $this->assertNotNull($email->fresh()->verified_at);
     }
 
-    //FIXME These do not work properly
     public function testVerifyProcessRouteVerifiesEmail()
     {
         $user = User::factory()->create();
@@ -150,14 +149,15 @@ class EmailAddressControllerTest extends TestCase
             'verification_sent_at' => now(),
         ]);
 
-        // Disable middleware so we can exercise the controller logic in this test environment
-        $this->withoutMiddleware();
-
         // Show the underlying exception during tests so we get a full stack trace instead of a 500 response
         $this->withoutExceptionHandling();
 
         // Ensure route-model binding returns a model instance (some test flows surface the raw id)
         \Illuminate\Support\Facades\Route::bind('emailaddress', fn($value) => EmailAddress::findOrFail($value));
+
+        // Ensure the authenticated user will not be redirected by the first-login middleware
+        $user->first_login = false;
+        $user->save();
 
         Sanctum::actingAs($user);
 
