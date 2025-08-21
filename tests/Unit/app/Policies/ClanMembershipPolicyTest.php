@@ -6,33 +6,40 @@ use Tests\TestCase;
 use App\Policies\ClanMembershipPolicy;
 use App\Models\ClanMembership;
 use App\Models\User;
+use App\Models\ClanRole;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ClanMembershipPolicyTest extends TestCase
 {
-    // CHECK whether we can unit-test this properly
-    // protected function setUp(): void
-    // {
-    //     parent::setUp();
-    //     // Run the migrations to create all tables, including clan_roles
-    //     $this->artisan('migrate');
-    //     // Optionally, seed the clan_roles table if needed
-    //     // \App\Models\ClanRole::factory()->create(['code' => 'leader']);
-    // }
+    use RefreshDatabase;
+    public function testDeleteReturnsTrueWhenUserIsMemberAndNotLeader()
+    {
+        // Ensure a leader role exists because the policy/methods query it
+        ClanRole::factory()->create(['code' => 'leader']);
+        $memberRole = ClanRole::factory()->create(['code' => 'member']);
 
-    // public function testDeleteCallsCanDelete()
-    // {
-    //     $user = new User();
-    //     $clanMembership = $this->getMockBuilder(ClanMembership::class)->onlyMethods(['canDelete'])->getMock();
-    //     $clanMembership->expects($this->once())->method('canDelete')->with($user)->willReturn(true);
-    //     $policy = new ClanMembershipPolicy();
-    //     $this->assertTrue($policy->delete($user, $clanMembership));
-    // }
+        $user = User::factory()->create();
+        $membership = ClanMembership::factory()->create([
+            'user_id' => $user->id,
+            'clan_role_id' => $memberRole->id,
+        ]);
 
-    // public function testUpdateReturnsFalseByDefault()
-    // {
-    //     $user = new User();
-    //     $clanMembership = new ClanMembership();
-    //     $policy = new ClanMembershipPolicy();
-    //     $this->assertFalse($policy->update($user, $clanMembership));
-    // }
+        $policy = new ClanMembershipPolicy();
+        $this->assertTrue($policy->delete($user, $membership));
+    }
+
+    public function testUpdateReturnsFalseWhenUserIsNotLeader()
+    {
+        ClanRole::factory()->create(['code' => 'leader']);
+        $memberRole = ClanRole::factory()->create(['code' => 'member']);
+
+        $user = User::factory()->create();
+        $membership = ClanMembership::factory()->create([
+            'user_id' => $user->id,
+            'clan_role_id' => $memberRole->id,
+        ]);
+
+        $policy = new ClanMembershipPolicy();
+        $this->assertFalse($policy->update($user, $membership));
+    }
 }
