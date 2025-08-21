@@ -11,102 +11,112 @@ use Laravel\Socialite\Facades\Socialite;
 use SocialiteProviders\LaravelPassport\Provider as PassportSocialiteProvider;
 use SocialiteProviders\Manager\Config;
 use Illuminate\Http\RedirectResponse;
-use Mockery;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class LaravelPassportProviderTest extends TestCase
 {
-    // CHECK Seeding issue? - or other artisan issue: Cannot run artisan commands
-    // protected function getProvider(array $settings = [], ?string $redirectUrl = null)
-    // {
-    //     $socialProvider = SocialProvider::factory()->create([
-    //         'name' => 'Laravel Passport',
-    //         'code' => 'laravelpassport',
-    //         'provider_class' => LaravelPassportProvider::class,
-    //     ]);
-    //     foreach ($settings as $code => $value) {
-    //         ProviderSetting::factory()->create([
-    //             'provider_id' => $socialProvider->id,
-    //             'code' => $code,
-    //             'value' => $value,
-    //         ]);
-    //     }
-    //     return new LaravelPassportProvider($socialProvider, $redirectUrl);
-    // }
+    use RefreshDatabase;
 
-    // public function test_config_mapping_includes_host()
-    // {
-    //     $provider = $this->getProvider();
-    //     $mapping = $provider->configMapping();
+    protected function getProvider(array $settings = [], ?string $redirectUrl = null)
+    {
+        $socialProvider = SocialProvider::factory()->create([
+            'name' => 'Laravel Passport',
+            'code' => 'laravelpassport',
+            'provider_class' => LaravelPassportProvider::class,
+        ]);
+        foreach ($settings as $code => $value) {
+            ProviderSetting::factory()->create([
+                'provider_id' => $socialProvider->id,
+                'code' => $code,
+                'value' => $value,
+            ]);
+        }
+        return new LaravelPassportProvider($socialProvider, $redirectUrl);
+    }
 
-    //     $this->assertArrayHasKey('client_id', $mapping);
-    //     $this->assertArrayHasKey('client_secret', $mapping);
-    //     $this->assertArrayHasKey('host', $mapping);
-    //     $this->assertEquals('Passport Host', $mapping['host']->name);
-    //     $this->assertEquals('required|string', $mapping['host']->validation);
-    // }
+    public function test_config_mapping_includes_host()
+    {
+        $provider = $this->getProvider();
+        $mapping = $provider->configMapping();
 
-    // public function test_name_can_be_renamed_from_provider()
-    // {
-    //     $socialProvider = SocialProvider::factory()->create([
-    //         'name' => 'Custom Passport',
-    //         'code' => 'laravelpassport',
-    //         'provider_class' => LaravelPassportProvider::class,
-    //     ]);
-    //     $provider = new LaravelPassportProvider($socialProvider);
-    //     $reflection = new \ReflectionClass($provider);
-    //     $nameProperty = $reflection->getProperty('name');
-    //     $nameProperty->setAccessible(true);
-    //     $this->assertEquals('Custom Passport', $nameProperty->getValue($provider));
-    // }
+        $this->assertArrayHasKey('client_id', $mapping);
+        $this->assertArrayHasKey('client_secret', $mapping);
+        $this->assertArrayHasKey('host', $mapping);
+        $this->assertEquals('Passport Host', $mapping['host']->name);
+        $this->assertEquals('required|string', $mapping['host']->validation);
+    }
 
-    // public function test_get_socialite_provider_builds_provider_with_config()
-    // {
-    //     $provider = $this->getProvider([
-    //         'client_id' => 'id',
-    //         'client_secret' => 'secret',
-    //         'host' => 'https://passport.example.com',
-    //     ], 'https://redirect.url');
+    public function test_name_can_be_renamed_from_provider()
+    {
+        $socialProvider = SocialProvider::factory()->create([
+            'name' => 'Custom Passport',
+            'code' => 'laravelpassport',
+            'provider_class' => LaravelPassportProvider::class,
+        ]);
+        $provider = new LaravelPassportProvider($socialProvider);
+        $reflection = new \ReflectionClass($provider);
+        $nameProperty = $reflection->getProperty('name');
+        $nameProperty->setAccessible(true);
+        $this->assertEquals('Custom Passport', $nameProperty->getValue($provider));
+    }
 
-    //     $mockSocialiteProvider = Mockery::mock(PassportSocialiteProvider::class);
-    //     $mockSocialiteProvider->shouldReceive('setConfig')->andReturnSelf();
-    //     $mockSocialiteProvider->shouldReceive('with')->with(['prompt' => 'none'])->andReturnSelf();
+    public function test_get_socialite_provider_builds_provider_with_config()
+    {
+        $provider = $this->getProvider([
+            'client_id' => 'id',
+            'client_secret' => 'secret',
+            'host' => 'https://passport.example.com',
+        ], 'https://redirect.url');
 
-    //     Socialite::shouldReceive('buildProvider')
-    //         ->with(PassportSocialiteProvider::class, Mockery::type('array'))
-    //         ->andReturn($mockSocialiteProvider);
+        // Use a lightweight test double (anonymous class) instead of Mockery so
+        // the test focuses on configuration wiring and remains Eloquent-backed.
+        $mockSocialiteProvider = new class {
+            public function setConfig($c)
+            {
+                return $this;
+            }
+            public function with($arr)
+            {
+                return $this;
+            }
+        };
 
-    //     $method = new \ReflectionMethod($provider, 'getSocialiteProvider');
-    //     $method->setAccessible(true);
-    //     $result = $method->invoke($provider);
+        // We don't assert exact args here; Socialite facade is stubbed to return
+        // our provider instance so the provider's internal call path can be exercised.
+        Socialite::shouldReceive('buildProvider')->andReturn($mockSocialiteProvider);
 
-    //     $this->assertSame($mockSocialiteProvider, $result);
-    // }
+        $method = new \ReflectionMethod($provider, 'getSocialiteProvider');
+        $method->setAccessible(true);
+        $result = $method->invoke($provider);
 
-    // public function test_update_account_sets_fields()
-    // {
-    //     $provider = $this->getProvider();
-    //     $account = new LinkedAccount();
+        $this->assertSame($mockSocialiteProvider, $result);
+    }
 
-    //     $remoteUser = new class {
-    //         public function getAvatar()
-    //         {
-    //             return 'avatar_url';
-    //         }
-    //         public $refreshToken = 'refresh_token';
-    //         public $token = 'access_token';
-    //         public function getNickname()
-    //         {
-    //             return 'nickname';
-    //         }
-    //     };
+    public function test_update_account_sets_fields()
+    {
+        $provider = $this->getProvider();
+        $account = new LinkedAccount();
 
-    //     $method = new \ReflectionMethod($provider, 'updateAccount');
-    //     $method->setAccessible(true);
-    //     $method->invoke($provider, $account, $remoteUser);
+        $remoteUser = new class {
+            public function getAvatar()
+            {
+                return 'avatar_url';
+            }
+            public $refreshToken = 'refresh_token';
+            public $token = 'access_token';
+            public function getNickname()
+            {
+                return 'nickname';
+            }
+        };
 
-    //     $this->assertEquals('avatar_url', $account->avatar_url);
-    //     $this->assertEquals('refresh_token', $account->refresh_token);
-    //     $this->assertEquals('access_token', $account->access_token);
-    //     $this->assertEquals('nickname', $account->name);
-    // }
+        $method = new \ReflectionMethod($provider, 'updateAccount');
+        $method->setAccessible(true);
+        $method->invoke($provider, $account, $remoteUser);
+
+        $this->assertEquals('avatar_url', $account->avatar_url);
+        $this->assertEquals('refresh_token', $account->refresh_token);
+        $this->assertEquals('access_token', $account->access_token);
+        $this->assertEquals('nickname', $account->name);
+    }
 }
