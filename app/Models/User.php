@@ -73,9 +73,7 @@ class User extends Authenticatable
     use Notifiable;
     use ToString;
 
-    // CHECK Policy tests require id being fillable - but this is the only class where we have the id being fillable
     protected $fillable = [
-        'id',
         'nickname',
         'name',
         'avatar',

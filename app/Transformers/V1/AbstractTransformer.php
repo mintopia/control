@@ -2,8 +2,6 @@
 
 namespace App\Transformers\V1;
 
-use Tests\TestCase;
-
 use App\Models\User;
 use League\Fractal\TransformerAbstract;
 
