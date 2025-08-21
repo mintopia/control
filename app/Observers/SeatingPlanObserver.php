@@ -14,9 +14,10 @@ class SeatingPlanObserver
             $seatingPlan->code = makePermalink($seatingPlan->name);
         }
         // Increment the revision when the revision attribute was changed
-        // (i.e. isDirty). Previously this was inverted and incremented when
-        // it was not dirty.
-        if ($seatingPlan->isDirty('revision')) {
+        // (i.e. isDirty) and the model already exists (not on initial create).
+        // This avoids bumping the revision during factory/model creation where
+        // the attribute will be considered dirty.
+        if ($seatingPlan->exists && $seatingPlan->isDirty('revision')) {
             $seatingPlan->revision++;
         }
     }
