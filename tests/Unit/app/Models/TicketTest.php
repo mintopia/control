@@ -4,9 +4,13 @@ namespace Tests\Unit\app\Models;
 
 use Tests\TestCase;
 use App\Models\Ticket;
+use App\Models\Event;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class TicketTest extends TestCase
 {
+    use RefreshDatabase;
     public function testCanInstantiateTicket()
     {
         $ticket = new Ticket();
@@ -45,32 +49,27 @@ class TicketTest extends TestCase
 
     public function testGenerateTransferCodeSetsCodeAndSaves()
     {
-        $ticket = $this->getMockBuilder(Ticket::class)
-            ->onlyMethods(['save'])
-            ->getMock();
-        $ticket->expects($this->once())->method('save');
+        $ticket = \App\Models\Ticket::factory()->create([
+            'transfer_code' => null,
+        ]);
+
         $ticket->generateTransferCode();
+        $ticket->refresh();
+
         $this->assertMatchesRegularExpression('/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/', $ticket->transfer_code);
+        $this->assertNotNull($ticket->transfer_code);
     }
 
     public function testCanTransferReturnsFalseIfEventEnded()
     {
-        $ticket = new Ticket();
-        $mockEvent = $this->createMock(\App\Models\Event::class);
-        $mockEvent->ends_at = now()->subDay();
-        $ticket->setRelation('event', $mockEvent);
+        $event = Event::factory()->create([
+            'ends_at' => now()->subDay(),
+        ]);
+        $ticket = \App\Models\Ticket::factory()->create([
+            'event_id' => $event->id,
+        ]);
         $this->assertFalse($ticket->canTransfer());
     }
-
-    // TODO Function is not yet built TBC
-    // public function testCanTransferReturnsTrueIfEventNotEnded()
-    // {
-    //     $ticket = new Ticket();
-    //     $mockEvent = $this->createMock(\App\Models\Event::class);
-    //     $mockEvent->ends_at = now()->addDay();
-    //     $ticket->setRelation('event', $mockEvent);
-    //     $this->assertTrue($ticket->canTransfer());
-    // }
 
     public function testCanPickSeatReturnsFalseIfTypeHasNoSeat()
     {
@@ -112,12 +111,22 @@ class TicketTest extends TestCase
 
     public function testCanBeManagedByReturnsTrueIfUserOwnsTicket()
     {
-        $ticket = new Ticket();
-        $ticket->user_id = 1;
-        $mockUser = new \App\Models\User();
-        $mockUser->id = 1;
-        // Ensure the ticket has its 'user' relation set so the method won't attempt to lazy-load from DB
-        $ticket->setRelation('user', $mockUser);
-        $this->assertTrue($ticket->canBeManagedBy($mockUser));
+        $user = User::factory()->create();
+        $ticket = \App\Models\Ticket::factory()->create([
+            'user_id' => $user->id,
+        ]);
+        $this->assertTrue($ticket->canBeManagedBy($user));
+    }
+
+    // TODO Function is not yet built TBC
+    public function testCanTransferReturnsTrueIfEventNotEnded()
+    {
+        $event = Event::factory()->create([
+            'ends_at' => now()->addDay(),
+        ]);
+        $ticket = \App\Models\Ticket::factory()->create([
+            'event_id' => $event->id,
+        ]);
+        $this->assertTrue($ticket->canTransfer());
     }
 }
