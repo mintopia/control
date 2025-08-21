@@ -13,12 +13,14 @@ return new class extends Migration {
         Schema::table('seats', function (Blueprint $table) {
             $table->foreignId('ticket_id')->after('seating_plan_id')->nullable()->default(null)->constrained()->nullOnDelete();
         });
-        Schema::table('tickets', function (Blueprint $table) {
-            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+        // SQLite does not support dropping columns reliably via ALTER TABLE.
+        // Skip the removal of the seat_id column when using SQLite (common in tests).
+        if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+            Schema::table('tickets', function (Blueprint $table) {
                 $table->dropForeign(['seat_id']);
-            }
-            $table->dropColumn('seat_id');
-        });
+                $table->dropColumn('seat_id');
+            });
+        }
     }
 
     /**

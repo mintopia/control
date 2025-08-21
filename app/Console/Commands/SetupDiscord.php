@@ -27,27 +27,6 @@ class SetupDiscord extends Command
      */
     protected $description = 'Configure the Discord Social Provider';
 
-    protected $promptText;
-    protected $promptPassword;
-    protected $promptConfirm;
-    protected $promptTable;
-    protected $promptInfo;
-
-    public function __construct(
-        $promptText = null,
-        $promptPassword = null,
-        $promptConfirm = null,
-        $promptTable = null,
-        $promptInfo = null
-    ) {
-        parent::__construct();
-        $this->promptText = $promptText ?: fn(...$args) => text(...$args);
-        $this->promptPassword = $promptPassword ?: fn(...$args) => password(...$args);
-        $this->promptConfirm = $promptConfirm ?: fn(...$args) => confirm(...$args);
-        $this->promptTable = $promptTable ?: fn(...$args) => table(...$args);
-        $this->promptInfo = $promptInfo ?: fn(...$args) => \Laravel\Prompts\info(...$args);
-    }
-
     /**
      * Execute the console command.
      */
@@ -62,27 +41,23 @@ class SetupDiscord extends Command
         $clientId = $provider->settings()->whereCode('client_id')->first();
         $secret = $provider->settings()->whereCode('client_secret')->first();
 
-        $clientId->value = call_user_func(
-            $this->promptText,
+        $clientId->value = text(
             label: 'Discord Client ID',
             hint: 'This can be found in your Discord Developer OAuth2 settings',
             default: $clientId->value ?? ''
         );
 
-        if (!$secret->value || call_user_func($this->promptConfirm, 'Do you want to change the Client Secret?', false)) {
-            $secret->value = call_user_func(
-                $this->promptPassword,
+        if (!$secret->value || confirm('Do you want to change the Client Secret?', false)) {
+            $secret->value = password(
                 label: 'Discord Client Secret'
             );
         }
 
-        $provider->enabled = call_user_func(
-            $this->promptConfirm,
+        $provider->enabled = confirm(
             label: 'Do you want to enable the Discord provider?'
         );
 
-        $provider->auth_enabled = call_user_func(
-            $this->promptConfirm,
+        $provider->auth_enabled = confirm(
             label: 'Do you want to enable login with Discord?'
         );
 
@@ -90,10 +65,9 @@ class SetupDiscord extends Command
         $clientId->save();
         $secret->save();
 
-        call_user_func($this->promptInfo, 'The provider has been updated');
+        \Laravel\Prompts\info('The provider has been updated');
 
-        call_user_func(
-            $this->promptTable,
+        table(
             ['OAuth2 Redirect URLs'],
             [
                 [route('login.return', 'discord')],
