@@ -11,7 +11,8 @@ class LinkedAccountPolicyTest extends TestCase
 {
     public function testUpdateReturnsTrueWhenUserOwnsLinkedAccount()
     {
-        $user = new User(['id' => 1]);
+        $user = new User();
+        $user->id = 1;
         $linkedAccount = new LinkedAccount(['user_id' => 1]);
         $policy = new LinkedAccountPolicy();
         $this->assertTrue($policy->update($user, $linkedAccount));

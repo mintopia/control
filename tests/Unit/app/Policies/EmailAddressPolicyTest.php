@@ -11,7 +11,8 @@ class EmailAddressPolicyTest extends TestCase
 {
     public function testUpdateReturnsTrueWhenUserOwnsEmailAddress()
     {
-        $user = new User(['id' => 1]);
+        $user = new User();
+        $user->id = 1;
         $emailAddress = new EmailAddress(['user_id' => 1]);
         $policy = new EmailAddressPolicy();
         $this->assertTrue($policy->update($user, $emailAddress));

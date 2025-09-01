@@ -17,8 +17,10 @@ class UserPolicyTest extends TestCase
 
     public function testUpdateReturnsFalseWhenUserIdsDoNotMatch()
     {
-        $user = new User(['id' => 1]);
-        $other = new User(['id' => 2]);
+        $user = new User();
+        $user->id = 1;
+        $other = new User();
+        $other->id = 2;
         $policy = new UserPolicy();
         $this->assertFalse($policy->update($user, $other));
     }
