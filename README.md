@@ -7,21 +7,20 @@ providers and ticket providers.
 
 ### Social Provider Support
 
- - Discord
- - Steam (No authentication, just account linking)
- - Twitch
+- Discord
+- Steam (No authentication, just account linking)
+- Twitch
 
 These are using Laravel Socialite, so any provider supported by Socialite can be integrated.
 
 ### Ticket Provider Support
 
- - Ticket Tailor
- - WooCommerce
- - Internal
+- Ticket Tailor
+- WooCommerce
+- Internal
 
 These are custom integrations but more can be added and used if people develop them. The Internal provider allows you to
 manually issue tickets to users.
-
 
 ## Technology
 
@@ -68,7 +67,7 @@ want to do this.
 
 The Caddyfile config I'm using for this is:
 
-```
+```Caddyfile
 control.example.com {
   @websockets {
     header Connection *Upgrade*
@@ -95,9 +94,7 @@ You should now be able to visit the site and login. From here you can use the ad
 
 ## Observability
 
-## Observability
-
-The docker images from the project have the Open Telemetry PHP extension and the project includes the appropriate Open
+The docker images from the project have the [Open Telemetry PHP extension](https://github.com/open-telemetry/opentelemetry-php-instrumentation/releases) and the project includes the appropriate Open
 Telemetry libraries from Packagist. You can use Protobuf or GRPC transport if needed. You should just be able to
 configure it using ENV variables and run a collector container. eg.
 

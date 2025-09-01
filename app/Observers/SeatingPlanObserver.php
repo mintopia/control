@@ -13,7 +13,8 @@ class SeatingPlanObserver
         if (!$seatingPlan->code) {
             $seatingPlan->code = makePermalink($seatingPlan->name);
         }
-        if (!$seatingPlan->isDirty('revision')) {
+
+        if ($seatingPlan->exists && $seatingPlan->isDirty('revision')) {
             $seatingPlan->revision++;
         }
     }

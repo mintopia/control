@@ -27,6 +27,14 @@ class TicketTailorProvider extends AbstractTicketProvider
     protected string $name = 'Ticket Tailor';
     protected string $code = 'tickettailor';
 
+    /**
+     * Public getter for the provider property (for testing and cache key access)
+     */
+    public function getProvider(): ?\App\Models\TicketProvider
+    {
+        return $this->provider;
+    }
+
     public function configMapping(): array
     {
         return [

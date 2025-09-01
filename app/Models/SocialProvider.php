@@ -47,6 +47,16 @@ class SocialProvider extends Model
     use HasFactory;
     use ToString;
 
+    protected $fillable = [
+        'name',
+        'code',
+        'provider_class',
+        'supports_auth',
+        'enabled',
+        'auth_enabled',
+        'can_be_renamed',
+    ];
+
     protected array $_settings = [];
 
     public function accounts(): HasMany
@@ -54,14 +64,18 @@ class SocialProvider extends Model
         return $this->hasMany(LinkedAccount::class);
     }
 
+    public function getProvider(?string $redirectUrl = null): SocialProviderContract
+    {
+        // Prefer resolving from the container if bound (tests may bind stubs)
+        if (app()->bound($this->provider_class)) {
+            return app()->make($this->provider_class, ['provider' => $this, 'redirectUrl' => $redirectUrl]);
+        }
+        return new $this->provider_class($this, $redirectUrl);
+    }
+
     public function redirect(?string $redirectUrl = null)
     {
         return $this->getProvider($redirectUrl)->redirect();
-    }
-
-    public function getProvider(?string $redirectUrl = null): SocialProviderContract
-    {
-        return new $this->provider_class($this, $redirectUrl);
     }
 
     public function user(?string $redirectUrl = null)

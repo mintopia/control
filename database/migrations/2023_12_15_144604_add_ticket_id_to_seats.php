@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
@@ -10,13 +11,21 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        Schema::clearResolvedInstances();
         Schema::table('seats', function (Blueprint $table) {
             $table->foreignId('ticket_id')->after('seating_plan_id')->nullable()->default(null)->constrained()->nullOnDelete();
         });
-        Schema::table('tickets', function (Blueprint $table) {
-            $table->dropForeign(['seat_id']);
-            $table->dropColumn('seat_id');
-        });
+
+        try {
+            Schema::table('tickets', function (Blueprint $table) {
+                if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                    $table->dropForeign(['seat_id']);
+                }
+                $table->dropColumn('seat_id');
+            });
+        } catch (QueryException $ex) {
+            // Do Nothing
+        }
     }
 
     /**
@@ -25,7 +34,9 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('seats', function (Blueprint $table) {
-            $table->dropForeign(['ticket_id']);
+            if (Schema::getConnection()->getDriverName() !== 'sqlite') {
+                $table->dropForeign(['ticket_id']);
+            }
             $table->dropColumn('ticket_id');
         });
 

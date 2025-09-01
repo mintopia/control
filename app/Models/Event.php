@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $boxoffice_url
  * @property \Illuminate\Support\Carbon|null $starts_at
  * @property \Illuminate\Support\Carbon|null $ends_at
- * @property int $seating_locked
+ * @property bool $seating_locked
  * @property \Illuminate\Support\Carbon|null $seating_opens_at
  * @property \Illuminate\Support\Carbon|null $seating_closes_at
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -55,11 +55,14 @@ class Event extends Model
     use HasFactory;
     use ToString;
 
+    protected $fillable = ['name', 'code', 'draft', 'boxoffice_url', 'starts_at', 'ends_at', 'seating_locked', 'seating_opens_at', 'seating_closes_at'];
+
     protected $casts = [
         'starts_at' => 'datetime',
         'ends_at' => 'datetime',
         'seating_opens_at' => 'datetime',
         'seating_closes_at' => 'datetime',
+        'seating_locked' => 'boolean',
     ];
 
     public function getRouteKeyName()
