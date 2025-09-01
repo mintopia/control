@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\app\Console;
 
+use Illuminate\Console\Scheduling\Event;
 use Tests\TestCase;
 use App\Console\Kernel;
 use Illuminate\Console\Scheduling\Schedule;
@@ -29,13 +30,16 @@ class KernelTest extends TestCase
         $method = $reflection->getMethod('schedule');
         $method->setAccessible(true);
         $method->invoke($kernel, $schedule);
-        $descriptions = collect($schedule->events())->map(fn($e) => $e->description)->all();
+        $commands = collect($schedule->events())->map(function(Event $event) {
+            $pos = strpos($event->command, 'artisan');
+            return substr($event->command, $pos + 9);
+        })->all();
 
-        $this->assertContains('sanctum:prune-expired --hours=24', $descriptions);
-        $this->assertContains('telescope:prune', $descriptions);
-        $this->assertContains('control:prune-clans', $descriptions);
-        $this->assertContains('control:update-event-seating-locks', $descriptions);
-        $this->assertContains('control:sync-discord-roles', $descriptions);
+        $this->assertContains('sanctum:prune-expired --hours=24', $commands);
+        $this->assertContains('telescope:prune', $commands);
+        $this->assertContains('control:prune-clans', $commands);
+        $this->assertContains('control:update-event-seating-locks', $commands);
+        $this->assertContains('control:sync-discord-roles', $commands);
     }
 
     public function testFunctionCommands()
