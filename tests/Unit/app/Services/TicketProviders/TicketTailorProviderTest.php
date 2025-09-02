@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
 use Tests\Unit\app\Services\TicketProviders\DummyTicketTailorProvider;
+use GuzzleHttp\Client;
 
 class TicketTailorProviderTest extends TestCase
 {
@@ -38,6 +39,14 @@ class TicketTailorProviderTest extends TestCase
             ]);
         }
         return new TicketTailorProvider($ticketProvider);
+    }
+
+    /**
+     * Backwards-compatible alias used by some tests.
+     */
+    protected function createProvider(array $settings = [])
+    {
+        return $this->getProvider($settings);
     }
 
     public function test_config_mapping_returns_expected_array()
@@ -228,7 +237,6 @@ class TicketTailorProviderTest extends TestCase
         $this->assertEquals(['type1' => 'VIP'], $types);
     }
 
-    // TESTS Fail currently, TBC
     public function test_sync_tickets_removes_voided_and_adds_missing()
     {
         $provider = $this->getProvider();
@@ -346,5 +354,82 @@ class TicketTailorProviderTest extends TestCase
 
         $ticket->refresh();
         $this->assertEquals($user->id, $ticket->user_id);
+    }
+
+    public function test_get_client()
+    {
+        $provider = $this->createProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+        $this->assertInstanceOf(Client::class, $dummy->getClientPublic());
+    }
+
+    public function test_get_type()
+    {
+        $provider = $this->createProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+        $this->assertInstanceOf(TicketType::class, $dummy->getTypePublic('type1'));
+    }
+
+    public function test_get_events()
+    {
+        $provider = $this->createProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+        $this->assertIsArray($dummy->getEventsPublic());
+    }
+
+    public function test_get_tickets()
+    {
+        $provider = $this->createProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+        $this->assertIsArray($dummy->getTicketsPublic());
+    }
+
+    public function test_get_ticket_types()
+    {
+        $provider = $this->createProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+        $this->assertIsArray($dummy->getTicketTypesPublic('evt-1'));
+    }
+
+    //TODO Add tests for processTicket and getClient, makeTicket, getType, getTickets, getEvents, getTicketTypes
+    public function test_process_ticket()
+    {
+        $provider = $this->createProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+        $data = (object)[
+            'id' => 't1',
+            'event_id' => 'evt1',
+            'ticket_type_id' => 'type1',
+            'email' => 'foo@example.com',
+            'description' => 'Test ticket',
+            'reference' => 'ref1',
+        ];
+
+        $this->assertNotNull($dummy->processTicketPublic($data));
+    }
+
+    public function test_make_ticket()
+    {
+        $provider = $this->createProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+        $data = (object)[
+            'id' => 't1',
+            'event_id' => 'evt1',
+            'ticket_type_id' => 'type1',
+            'email' => 'foo@example.com',
+            'description' => 'Test ticket',
+            'reference' => 'ref1',
+        ];
+
+        $ticket = $dummy->makeTicketPublic(null, $data);
+        $this->assertInstanceOf(Ticket::class, $ticket);
+        $this->assertEquals('t1', $ticket->external_id);
     }
 }
