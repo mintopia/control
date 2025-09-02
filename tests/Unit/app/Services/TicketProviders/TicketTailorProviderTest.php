@@ -364,6 +364,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertInstanceOf(Client::class, $dummy->getClientPublic());
     }
 
+    //FIX Tests
     public function test_get_type()
     {
         $provider = $this->createProvider();
@@ -396,7 +397,6 @@ class TicketTailorProviderTest extends TestCase
         $this->assertIsArray($dummy->getTicketTypesPublic('evt-1'));
     }
 
-    //TODO Add tests for processTicket and getClient, makeTicket, getType, getTickets, getEvents, getTicketTypes
     public function test_process_ticket()
     {
         $provider = $this->createProvider();

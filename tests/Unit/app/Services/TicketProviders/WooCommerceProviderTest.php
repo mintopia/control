@@ -15,6 +15,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
+use Tests\Unit\app\Services\TicketProviders\DummyWooCommerceProvider;
+use GuzzleHttp\Client;
 
 class WooCommerceProviderTest extends TestCase
 {
@@ -36,6 +38,14 @@ class WooCommerceProviderTest extends TestCase
             ]);
         }
         return new WooCommerceProvider($ticketProvider);
+    }
+
+    /**
+     * Backwards-compatible alias used by some tests.
+     */
+    protected function createProvider(array $settings = [])
+    {
+        return $this->getProvider($settings);
     }
 
     public function test_config_mapping_returns_expected_array()
@@ -219,5 +229,82 @@ class WooCommerceProviderTest extends TestCase
         Cache::put($key, ['type1' => 'VIP'], 10);
         $types = $provider->getTicketTypes($eventId);
         $this->assertEquals(['type1' => 'VIP'], $types);
+    }
+
+    public function test_get_client()
+    {
+        $provider = $this->createProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyWooCommerceProvider($prov);
+        $this->assertInstanceOf(Client::class, $dummy->getClientPublic());
+    }
+
+    public function test_get_events()
+    {
+        $provider = $this->createProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyWooCommerceProvider($prov);
+        $this->assertIsArray($dummy->getEventsPublic());
+    }
+
+    //FIX Tests
+    public function test_get_type()
+    {
+        $provider = $this->createProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyWooCommerceProvider($prov);
+        $this->assertInstanceOf(TicketType::class, $dummy->getTypePublic('type1'));
+    }
+
+    public function test_get_tickets()
+    {
+        $provider = $this->createProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyWooCommerceProvider($prov);
+        $this->assertIsArray($dummy->getTicketsPublic());
+    }
+
+    public function test_get_ticket_types()
+    {
+        $provider = $this->createProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyWooCommerceProvider($prov);
+        $this->assertIsArray($dummy->getTicketTypesPublic('evt-1'));
+    }
+
+    public function test_process_ticket()
+    {
+        $provider = $this->createProvider();
+        $data = (object)[
+            'id' => 't1',
+            'event_id' => 'evt1',
+            'ticket_type_id' => 'type1',
+            'email' => 'foo@example.com',
+            'description' => 'Test ticket',
+            'reference' => 'ref1',
+        ];
+
+        $prov = $provider->getProvider();
+        $dummy = new DummyWooCommerceProvider($prov);
+        $this->assertNotNull($dummy->processTicketPublic($data));
+    }
+
+    public function test_make_ticket()
+    {
+        $provider = $this->createProvider();
+        $data = (object)[
+            'id' => 't1',
+            'event_id' => 'evt1',
+            'ticket_type_id' => 'type1',
+            'email' => 'foo@example.com',
+            'description' => 'Test ticket',
+            'reference' => 'ref1',
+        ];
+
+        $prov = $provider->getProvider();
+        $dummy = new DummyWooCommerceProvider($prov);
+        $ticket = $dummy->makeTicketPublic(null, $data);
+        $this->assertInstanceOf(Ticket::class, $ticket);
+        $this->assertEquals('t1', $ticket->external_id);
     }
 }
