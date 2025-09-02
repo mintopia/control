@@ -146,9 +146,49 @@ Code Coverage: We currently have 50% coverage across the board.
 - [ ] Create test files for each file - no file should have 0% coverage
 - [ ] Separating Test scopes properly
 - [ ] Increase coverage distribution to at least 50%
+  - [ ] `http`
+    - [ ] `Controllers`
+      - [ ] Admin
+        - [ ] `ClanController`
+        - [ ] `EmailAddressController`
+        - [ ] `EventMappingController`
+        - [ ] `EventTicketProviderController` (new)
+        - [ ] Add missing Controller files
+      - [ ] `ClanController`
+      - [ ] `UserController`
+    - [ ] `Requests`
+      - [ ] `TicketTransferRequest`
+    - [ ] `Middleware`
+      - [ ] `RedirectIfAuthenticated` (new)
+  - [ ] `Models`
+    - [ ] `Event`
+    - [ ] `Role`
+    - [ ] `Seat`
+    - [ ] `SeatGroup`
+    - [ ] `SeatingPlan`
+    - [ ] `Ticket`
+    - [ ] `TicketProvider`
+    - [ ] `User`
+  - [ ] `Observers`
+    - [ ] `SeatObserver`
+    - [ ] `SettingObserver`
+    - [ ] `ThemeObserver`
+    - [ ] `TicketProviderObserver`
+  - [ ] `Policies`
+    - [ ] `ClanPolicy`
+  - [ ] `Services`
+    - [ ] `TicketProviders`
+      - [ ] `FakeProvider`
+      - [ ] `GenericTicketProvider`
+      - [ ] `TicketTailorProvider`
+      - [ ] `WooCommerceProvider`
 - [ ] Increase coverage for Lines to 75%
 - [ ] Increase coverage for Functions and Methods to 75%
 - [ ] Increase coverage for Classes and Traits to 75%
+- [ ] Define proper exclusions - Elements not tested:
+  - [ ] Lavarel default code (if not adapted)
+  - [ ] OpenTelemetry - Standard library
+  - [ ] ...
 - [ ] Replace Mockery with Eloquent-backed methods across the board
 - [ ] Add GitHub Action to run Unit Tests on PR
 - [ ] Add GitHub Action to run Code Coverage validation on Dispatch
