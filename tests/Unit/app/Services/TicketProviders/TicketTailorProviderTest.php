@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;
+use Tests\Unit\app\Services\TicketProviders\DummyTicketTailorProvider;
 
 class TicketTailorProviderTest extends TestCase
 {
@@ -130,7 +131,7 @@ class TicketTailorProviderTest extends TestCase
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
         $mock = new class($prov) extends TicketTailorProvider {
-            public function __construct($provider)
+            public function __construct(?\App\Models\TicketProvider $provider = null)
             {
                 parent::__construct($provider);
             }
@@ -161,6 +162,38 @@ class TicketTailorProviderTest extends TestCase
         $this->assertStringStartsWith('https://api.qrserver.com/v1/create-qr-code/', $url);
     }
 
+    public function test_dummy_verify_webhook_and_qrcode_via_helper()
+    {
+        $provider = $this->getProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+
+        // No secret configured -> verifyWebhook should return true
+        $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['payload' => []]));
+        $this->assertTrue($dummy->verifyWebhookPublic($request));
+
+        // getQrCode via helper
+        $data = (object)['barcode' => 'zz'];
+        $this->assertStringContainsString('zz', $dummy->getQrCodePublic($data));
+    }
+
+    public function test_make_ticket_returns_null_when_event_missing()
+    {
+        $provider = $this->getProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+
+        $data = (object)[
+            'id' => 'x1',
+            'event_id' => 'non-existent',
+            'ticket_type_id' => 'no-type',
+            'email' => 'noone@example.com',
+            'barcode' => 'b',
+            'description' => 'desc',
+        ];
+        $this->assertNull($dummy->makeTicketPublic(null, $data));
+    }
+
     public function test_get_events_returns_cached_data()
     {
         $provider = $this->getProvider();
@@ -182,7 +215,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertEquals(['type1' => 'VIP'], $types);
     }
 
-    /* TESTS Fail currently, TBC
+    // TESTS Fail currently, TBC
     public function test_sync_tickets_removes_voided_and_adds_missing()
     {
         $provider = $this->getProvider();
@@ -218,7 +251,7 @@ class TicketTailorProviderTest extends TestCase
         $mock = new class($prov) extends TicketTailorProvider {
             public array $stubTickets = [];
 
-            public function __construct($provider)
+            public function __construct(?\App\Models\TicketProvider $provider = null)
             {
                 parent::__construct($provider);
             }
@@ -282,7 +315,7 @@ class TicketTailorProviderTest extends TestCase
         $mock = new class($prov) extends TicketTailorProvider {
             public array $stubTickets = [];
 
-            public function __construct($provider)
+            public function __construct(?\App\Models\TicketProvider $provider = null)
             {
                 parent::__construct($provider);
             }
@@ -301,5 +334,4 @@ class TicketTailorProviderTest extends TestCase
         $ticket->refresh();
         $this->assertEquals($user->id, $ticket->user_id);
     }
-    */
 }
