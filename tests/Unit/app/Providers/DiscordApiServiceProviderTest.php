@@ -79,4 +79,24 @@ class DiscordApiServiceProviderTest extends TestCase
         \Mockery::close();
         parent::tearDown();
     }
+
+    public function testRegisterBindsDiscordApiWithDefer()
+    {
+        $providerInstance = SocialProvider::factory()->create();
+        Setting::factory()->create(['code' => 'discord.server.id', 'value' => '123456', 'name' => 'Discord Server ID']);
+
+        $app = app();
+        $serviceProvider = new \App\Providers\DiscordApiServiceProvider($app);
+        $serviceProvider->register();
+
+        $resolved = $app->make(DiscordApi::class);
+        $this->assertInstanceOf(DiscordApi::class, $resolved);
+        $ref = new \ReflectionClass($resolved);
+        $providerProp = $ref->getProperty('provider');
+        $providerProp->setAccessible(true);
+        $idProp = $ref->getProperty('serverId');
+        $idProp->setAccessible(true);
+        $this->assertEquals($providerInstance->id, $providerProp->getValue($resolved)->id);
+        $this->assertEquals('123456', $idProp->getValue($resolved));
+    }
 }
