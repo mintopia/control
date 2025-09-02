@@ -128,9 +128,18 @@ class TicketTailorProviderTest extends TestCase
 
     public function test_process_webhook_calls_verify_and_process_ticket()
     {
-        $provider = $this->getProvider();
+        $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $prov = $provider->getProvider();
+        $timestamp = now()->timestamp;
+        $body = json_encode(['payload' => (object)['id' => 'abc']]);
+        $signature = hash_hmac('sha256', $timestamp . $body, 'secret');
+        $header = "t={$timestamp},v1={$signature}";
+        $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], $body);
+
+        // Create an anonymous subclass that overrides processTicket to record invocation
         $mock = new class($prov) extends TicketTailorProvider {
+            public bool $wasCalled = false;
+
             public function __construct(?\App\Models\TicketProvider $provider = null)
             {
                 parent::__construct($provider);
@@ -138,16 +147,20 @@ class TicketTailorProviderTest extends TestCase
 
             protected function verifyWebhook(Request $request): bool
             {
+                // trust the signature we created in the test
                 return true;
             }
 
             protected function processTicket(object $data): ?Ticket
             {
+                $this->wasCalled = true;
                 return null;
             }
         };
-        $request = Request::create('/webhook', 'POST', [], [], [], ['CONTENT_TYPE' => 'application/json'], json_encode(['payload' => ['id' => 'abc']]));
-        $this->assertTrue($mock->processWebhook($request));
+
+        $result = $mock->processWebhook($request);
+        $this->assertTrue($result);
+        $this->assertTrue($mock->wasCalled, 'processTicket was not called');
     }
 
     public function test_get_qr_code_returns_expected_url()
