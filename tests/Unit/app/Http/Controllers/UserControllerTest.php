@@ -119,4 +119,84 @@ class UserControllerTest extends TestCase
         $this->assertStringContainsString(route('user.profile'), $response->getTargetUrl());
         $this->assertEquals('newnick', $user->fresh()->nickname);
     }
+
+    public function testSignupShowsView()
+    {
+        $user = User::factory()->create();
+        // create settings used by the view
+    Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => 'terms text']);
+    Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => 'privacy text']);
+
+        $controller = new UserController();
+        $request = \Illuminate\Http\Request::create('/signup', 'GET');
+        $request->setUserResolver(fn() => $user);
+
+        $resp = $controller->signup($request);
+        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $data = $resp->getData();
+        $this->assertArrayHasKey('terms', $data);
+        $this->assertArrayHasKey('privacy', $data);
+    }
+
+    public function testEditShowsView()
+    {
+        $user = User::factory()->create();
+        $controller = new UserController();
+        $request = \Illuminate\Http\Request::create('/edit', 'GET');
+        $request->setUserResolver(fn() => $user);
+
+        $resp = $controller->edit($request);
+        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $this->assertArrayHasKey('user', $resp->getData());
+    }
+
+    public function testLoginShowsProviders()
+    {
+        SocialProvider::factory()->create(['code' => 'one', 'enabled' => true, 'auth_enabled' => true]);
+        SocialProvider::factory()->create(['code' => 'two', 'enabled' => false, 'auth_enabled' => false]);
+
+        $controller = new UserController();
+        $resp = $controller->login();
+        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $data = $resp->getData();
+        $this->assertArrayHasKey('providers', $data);
+        $codes = $data['providers']->pluck('code')->all();
+        $this->assertContains('one', $codes);
+        $this->assertNotContains('two', $codes);
+    }
+
+    public function testLoginReturnRedirectsWhenAlreadyAuthenticated()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $provider = SocialProvider::factory()->create(['enabled' => true, 'auth_enabled' => true]);
+        $controller = new UserController();
+
+        $resp = $controller->login_return($provider);
+        $this->assertStringContainsString(route('home'), $resp->getTargetUrl());
+    }
+
+    public function testLoginReturnLogsInProviderUser()
+    {
+        $user = User::factory()->create(['suspended' => 0]);
+        $provider = new class extends \App\Models\SocialProvider {
+            public function user(?string $redirectUrl = null)
+            {
+                return \App\Models\User::first();
+            }
+        };
+        $provider->enabled = true;
+        $provider->auth_enabled = true;
+
+        // ensure there is a user in DB for the anonymous provider to return
+        $user->save();
+
+        $controller = new UserController();
+        $resp = $controller->login_return($provider);
+
+        $this->assertStringContainsString(route('home'), $resp->getTargetUrl());
+        $this->assertTrue(\Illuminate\Support\Facades\Auth::check());
+        $this->assertNotNull($user->fresh()->last_login);
+    }
 }
