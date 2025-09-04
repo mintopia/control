@@ -36,6 +36,25 @@ class PrometheusServiceProviderTest extends TestCase
         $this->assertIsArray($result);
     }
 
+    public function testGetMultipleFromRedisEmptyKeysReturnsEmpty()
+    {
+        Redis::shouldReceive('keys')->andReturn([]);
+        $provider = new \app\Providers\PrometheusServiceProvider(app());
+        $result = $this->invokeProtected($provider, 'getMultipleFromRedis', ['metrics.http.method']);
+        $this->assertEquals([], $result);
+    }
+
+    public function testRegisterHorizonCollectorsRegistersCollectors()
+    {
+        Prometheus::shouldReceive('registerCollectorClasses')->once()->withArgs(function ($arg) {
+            return is_array($arg) && count($arg) === 7;
+        });
+
+        $provider = new \app\Providers\PrometheusServiceProvider(app());
+        $result = $provider->registerHorizonCollectors();
+        $this->assertInstanceOf(\app\Providers\PrometheusServiceProvider::class, $result);
+    }
+
     private function invokeProtected($object, $method, $args = [])
     {
         $reflection = new \ReflectionClass($object);

@@ -21,6 +21,8 @@ class DiscordApiServiceProviderTest extends TestCase
     {
         $provider = new \App\Providers\DiscordApiServiceProvider(app());
         $this->assertContains(DiscordApi::class, $provider->provides());
+        // defer should include the same class
+        $this->assertContains(DiscordApi::class, $provider->defer());
     }
 
     public function testRegisterBindsDiscordApiWhenProviderAndIdExist()
