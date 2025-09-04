@@ -8,6 +8,14 @@ use App\Models\Event;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use App\Models\SeatingPlan;
+use App\Models\Seat;
+use App\Models\Ticket;
+use App\Models\TicketType;
+use App\Models\TicketProvider;
+use App\Models\User;
+use Carbon\Carbon;
 
 class EventControllerTest extends TestCase
 {
@@ -68,5 +76,133 @@ class EventControllerTest extends TestCase
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
         $this->assertDatabaseMissing('events', ['id' => $event->id]);
+    }
+
+    public function testIndexWithFiltersAndDesc()
+    {
+        $eventA = Event::factory()->create(['name' => 'Alpha']);
+        $eventB = Event::factory()->create(['name' => 'Beta']);
+
+        $controller = new EventController();
+        $request = Request::create('/admin/events', 'GET', ['order_direction' => 'desc']);
+        $resp = $controller->index($request);
+        $this->assertInstanceOf(View::class, $resp);
+        $data = $resp->getData();
+        $this->assertArrayHasKey('events', $data);
+    }
+
+    public function testShowDisplaysRelatedCollections()
+    {
+        $event = Event::factory()->create();
+        SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $controller = new EventController();
+        $resp = $controller->show($event);
+        $this->assertInstanceOf(View::class, $resp);
+        $data = $resp->getData();
+        $this->assertArrayHasKey('seatingPlans', $data);
+        $this->assertArrayHasKey('seatGroups', $data);
+        $this->assertArrayHasKey('ticketTypes', $data);
+    }
+
+    public function testCreateReturnsView()
+    {
+        $controller = new EventController();
+        $resp = $controller->create();
+        $this->assertInstanceOf(View::class, $resp);
+        $this->assertArrayHasKey('event', $resp->getData());
+    }
+
+    public function testEditReturnsView()
+    {
+        $event = Event::factory()->create();
+        $controller = new EventController();
+        $resp = $controller->edit($event);
+        $this->assertInstanceOf(View::class, $resp);
+        $this->assertArrayHasKey('event', $resp->getData());
+    }
+
+    public function testExportTicketsProducesStream()
+    {
+        $event = Event::factory()->create();
+        $provider = TicketProvider::factory()->create();
+        $type = TicketType::factory()->create(['has_seat' => true]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'ticket_type_id' => $type->id, 'user_id' => $user->id, 'ticket_provider_id' => $provider->id]);
+
+        $controller = new EventController();
+        $resp = $controller->export_tickets($event);
+        $this->assertTrue(method_exists($resp, 'getStatusCode') || method_exists($resp, 'send'));
+    }
+
+    public function testSeatsShowsUnseatedAndSeats()
+    {
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $type = TicketType::factory()->create(['has_seat' => true]);
+        $user = User::factory()->create();
+        // create unseated ticket
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'ticket_type_id' => $type->id, 'user_id' => $user->id]);
+
+        $controller = new EventController();
+        $resp = $controller->seats(Request::create('/admin/events/seats', 'GET'), $event);
+        $this->assertInstanceOf(View::class, $resp);
+        $data = $resp->getData();
+        $this->assertArrayHasKey('tickets', $data);
+        $this->assertArrayHasKey('seats', $data);
+    }
+
+    public function testPickseatAssignsSeat()
+    {
+        $event = Event::factory()->create(['code' => 'EV']);
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $seat = Seat::factory()->create(['seating_plan_id' => $plan->id]);
+        $type = TicketType::factory()->create(['has_seat' => true]);
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'ticket_type_id' => $type->id]);
+
+        $controller = new EventController();
+        $resp = $controller->pickseat($event, $ticket, $seat);
+        $this->assertEquals($ticket->id, $seat->fresh()->ticket_id);
+    }
+
+    public function testUnseatRemovesTicketFromSeat()
+    {
+        $event = Event::factory()->create(['code' => 'EV2']);
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $seat = Seat::factory()->create(['seating_plan_id' => $plan->id]);
+        $ticket = Ticket::factory()->create(['event_id' => $event->id]);
+        $seat->ticket()->associate($ticket);
+        $seat->save();
+        // ensure relations are present so controller can read them
+        $ticket->setRelation('seat', $seat);
+        $seat->setRelation('plan', $plan);
+
+        $controller = new EventController();
+        $resp = $controller->unseat($event, $ticket);
+        $this->assertNull($seat->fresh()->ticket_id);
+    }
+
+    public function testUpdateObjectHandlesOptionalDates()
+    {
+        $event = new Event();
+        $controller = new EventController();
+
+        $request = Request::create('/admin', 'POST', [
+            'name' => 'X',
+            'starts_at' => '2025-09-01 10:00:00',
+            'ends_at' => '2025-09-01 12:00:00',
+            'seating_locked' => true,
+            'seating_opens_at' => null,
+            'seating_closes_at' => null,
+            'draft' => false,
+        ]);
+
+        $ref = new \ReflectionClass($controller);
+        $method = $ref->getMethod('updateObject');
+        $method->setAccessible(true);
+        $method->invoke($controller, $event, $request);
+
+        $this->assertEquals('X', $event->name);
+        $this->assertNull($event->seating_opens_at);
+        $this->assertNull($event->seating_closes_at);
     }
 }

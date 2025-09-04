@@ -35,6 +35,19 @@ class ClanControllerTest extends TestCase
         $this->assertArrayHasKey('members', $view->getData());
     }
 
+    public function testIndexWithDescOrder()
+    {
+        $user = User::factory()->create();
+        $request = Request::create('/clans', 'GET', ['order_direction' => 'desc']);
+        $request->setUserResolver(fn() => $user);
+
+        $controller = new ClanController();
+        $view = $controller->index($request);
+
+        $this->assertInstanceOf(View::class, $view);
+        $this->assertArrayHasKey('members', $view->getData());
+    }
+
     public function testStoreValidatesAndSavesData()
     {
         $user = User::factory()->create();
@@ -77,6 +90,30 @@ class ClanControllerTest extends TestCase
         $view = $controller->show($request, $clan);
         $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
         $this->assertArrayHasKey('members', $view->getData());
+    }
+
+    public function testShowOrdersByNameDesc()
+    {
+        $clan = Clan::factory()->create();
+        // create two users with nicknames to check ordering
+        $userA = User::factory()->create(['nickname' => 'aaa']);
+        $userB = User::factory()->create(['nickname' => 'zzz']);
+
+        // create memberships so show() has something to paginate
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
+
+        $request = Request::create('/clans/' . $clan->code, 'GET', ['order' => 'name', 'order_direction' => 'desc']);
+        $request->setUserResolver(fn() => $userB);
+
+        $controller = new ClanController();
+        $view = $controller->show($request, $clan);
+
+        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $members = $view->getData()['members']->items();
+        $this->assertGreaterThanOrEqual(2, count($members));
+        // first member should have nickname 'zzz' due to desc ordering
+        $this->assertEquals('zzz', $members[0]->user->nickname);
     }
 
     public function testEditReturnsView()

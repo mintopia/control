@@ -108,4 +108,42 @@ class ClanMembershipControllerTest extends TestCase
         $this->assertArrayHasKey('clan', $response->getData());
         $this->assertArrayHasKey('member', $response->getData());
     }
+
+    public function testDestroyDoesNotRemoveWhenCannotDelete()
+    {
+        $clan = Clan::factory()->create(['code' => 'test-clan']);
+        // Ensure leader role exists for canDelete() logic
+        $leaderRole = ClanRole::factory()->create(['code' => 'leader']);
+        // create a single leader membership
+        $member = ClanMembership::factory()->for($clan)->create(['clan_role_id' => $leaderRole->id]);
+
+        // Ensure admin routes exist for redirects
+        Route::get('admin/clans/{clan}', fn() => '')->name('admin.clans.show');
+
+        $controller = new ClanMembershipController();
+
+        $response = $controller->destroy($clan, $member);
+
+        // Should redirect back to admin clans.show with error
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals('It is not possible to remove this clan member', $response->getSession()->get('errorMessage'));
+        $this->assertDatabaseHas('clan_memberships', ['id' => $member->id]);
+    }
+
+    public function testDeleteRedirectsWhenCannotDelete()
+    {
+        $clan = Clan::factory()->create();
+        $leaderRole = ClanRole::factory()->create(['code' => 'leader']);
+        // single leader membership
+        $member = ClanMembership::factory()->for($clan)->create(['clan_role_id' => $leaderRole->id]);
+
+        $controller = new ClanMembershipController();
+
+        Route::get('admin/clans/{clan}', fn() => '')->name('admin.clans.show');
+
+        $response = $controller->delete($clan, $member);
+
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals('It is not possible to remove this clan member', $response->getSession()->get('errorMessage'));
+    }
 }
