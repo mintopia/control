@@ -166,4 +166,89 @@ class SyncDiscordRolesTest extends TestCase
 
         $this->artisan('control:sync-discord-roles')->assertExitCode(0);
     }
+
+    public function testHandleWithEmptyDiscordMembersDoesNothing()
+    {
+        $provider = SocialProvider::factory()->create(['code' => 'discord']);
+        $user = User::factory()->create();
+        $linked = LinkedAccount::factory()->create([
+            'user_id' => $user->id,
+            'social_provider_id' => $provider->id,
+            'external_id' => 'nope',
+        ]);
+
+        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getMemberRoles', 'addRoleToMember', 'removeRoleFromMember'])
+            ->getMock();
+
+        $mockApi->expects($this->once())->method('getMemberRoles')->willReturn([]);
+        $mockApi->expects($this->never())->method('addRoleToMember');
+        $mockApi->expects($this->never())->method('removeRoleFromMember');
+
+        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+
+        $this->artisan('control:sync-discord-roles')->assertExitCode(0);
+    }
+
+    public function testGetManagedRolesMemoization()
+    {
+        TicketType::factory()->create(['discord_role_id' => '500']);
+        $cmd = new SyncDiscordRoles();
+        $rm = new \ReflectionMethod(SyncDiscordRoles::class, 'getManagedRoles');
+        $rm->setAccessible(true);
+        $roles1 = $rm->invoke($cmd);
+        $this->assertNotEmpty($roles1);
+
+        // ensure property now cached
+        $prop = new \ReflectionProperty(SyncDiscordRoles::class, 'managedRoles');
+        $prop->setAccessible(true);
+        $cached = $prop->getValue($cmd);
+        $this->assertEquals($roles1, $cached);
+
+        // second call returns same
+        $roles2 = $rm->invoke($cmd);
+        $this->assertEquals($roles1, $roles2);
+    }
+
+    public function testSyncAccountDoesNothingWhenNoDesiredOrCurrentRoles()
+    {
+        $provider = SocialProvider::factory()->create(['code' => 'discord']);
+        $user = User::factory()->create();
+        $linked = LinkedAccount::factory()->create([
+            'user_id' => $user->id,
+            'social_provider_id' => $provider->id,
+            'external_id' => 'zzz',
+        ]);
+
+        // No ticket types with discord_role_id -> shouldHave empty
+        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getMemberRoles', 'addRoleToMember', 'removeRoleFromMember'])
+            ->getMock();
+
+        $mockApi->expects($this->once())->method('getMemberRoles')->willReturn([
+            'zzz' => (object)['id' => 'zzz', 'nickname' => 'none', 'roles' => []],
+        ]);
+        $mockApi->expects($this->never())->method('addRoleToMember');
+        $mockApi->expects($this->never())->method('removeRoleFromMember');
+
+        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+        $this->artisan('control:sync-discord-roles')->assertExitCode(0);
+    }
+
+    public function testHandleWithNonExistentUserArgumentDoesNotCrash()
+    {
+        $provider = SocialProvider::factory()->create(['code' => 'discord']);
+
+        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getMemberRoles'])
+            ->getMock();
+        $mockApi->expects($this->once())->method('getMemberRoles')->willReturn([]);
+        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+
+        // Use a user id that does not exist
+        $this->artisan('control:sync-discord-roles', ['user' => 99999])->assertExitCode(0);
+    }
 }

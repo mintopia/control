@@ -99,4 +99,42 @@ class SetupDiscordTest extends TestCase
 
         $this->assertDatabaseHas('social_providers', ['id' => $provider->id, 'code' => 'discord']);
     }
+
+    public function testHandlePromptsForSecretWhenMissingAndEnablesProvider()
+    {
+        // Create provider with client_id but empty client_secret
+        $provider = SocialProvider::factory()->create(['code' => 'discord', 'enabled' => false, 'auth_enabled' => false]);
+        ProviderSetting::factory()->create([
+            'provider_id' => $provider->id,
+            'provider_type' => SocialProvider::class,
+            'code' => 'client_id',
+            'value' => 'cid',
+        ]);
+        ProviderSetting::factory()->create([
+            'provider_id' => $provider->id,
+            'provider_type' => SocialProvider::class,
+            'code' => 'client_secret',
+            'value' => '',
+        ]);
+
+        // Register minimal named routes used by the command
+        $this->app['router']->get('/login/return/{provider}', fn() => 'ok')->name('login.return');
+        $this->app['router']->get('/linkedaccounts/store/{provider}', fn() => 'ok')->name('linkedaccounts.store');
+
+        // Run the command and answer prompts: provide password, enable -> yes, auth -> yes
+        $this->artisan('control:setup-discord')
+            ->expectsQuestion('Discord Client ID', 'cid')
+            ->expectsQuestion('Discord Client Secret', 'supersecret')
+            ->expectsQuestion('Do you want to enable the Discord provider?', true)
+            ->expectsQuestion('Do you want to enable login with Discord?', true)
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('provider_settings', [
+            'provider_id' => $provider->id,
+            'provider_type' => SocialProvider::class,
+            'code' => 'client_secret',
+            'value' => 'supersecret',
+        ]);
+        $this->assertDatabaseHas('social_providers', ['id' => $provider->id, 'enabled' => 1, 'auth_enabled' => 1]);
+    }
 }

@@ -49,6 +49,32 @@ class EmailAddressControllerTest extends TestCase
         $this->assertTrue(method_exists($response, 'getTargetUrl'));
     }
 
+    public function testStoreRemovesUnverifiedEmailOwnedByAnotherUser()
+    {
+        Mail::fake();
+
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+
+        // Create an unverified email for $other
+        EmailAddress::factory()->create([
+            'email' => 'dup@example.com',
+            'user_id' => $other->id,
+            'verified_at' => null,
+        ]);
+
+        // Use web route to ensure $request->user() is populated via Sanctum
+        Sanctum::actingAs($owner);
+        $this->withoutMiddleware();
+
+        $response = $this->post(route('emails.store'), ['email' => 'dup@example.com']);
+        $response->assertStatus(302);
+
+        // After storing, there should be a single email record for that address
+        $this->assertDatabaseCount('email_addresses', 1);
+        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\VerifyEmail::class);
+    }
+
     public function testDeleteReturnsViewOrRedirects()
     {
         $user = User::factory()->create();
