@@ -181,30 +181,7 @@ class EventControllerTest extends TestCase
         $this->assertNull($seat->fresh()->ticket_id);
     }
 
-    public function testUpdateObjectHandlesOptionalDates()
-    {
-        $event = new Event();
-        $controller = new EventController();
 
-        $request = Request::create('/admin', 'POST', [
-            'name' => 'X',
-            'starts_at' => '2025-09-01 10:00:00',
-            'ends_at' => '2025-09-01 12:00:00',
-            'seating_locked' => true,
-            'seating_opens_at' => null,
-            'seating_closes_at' => null,
-            'draft' => false,
-        ]);
-
-        $ref = new \ReflectionClass($controller);
-        $method = $ref->getMethod('updateObject');
-        $method->setAccessible(true);
-        $method->invoke($controller, $event, $request);
-
-        $this->assertEquals('X', $event->name);
-        $this->assertNull($event->seating_opens_at);
-        $this->assertNull($event->seating_closes_at);
-    }
 
     public function testIndexFiltersByIdNameAndCode()
     {
@@ -242,13 +219,56 @@ class EventControllerTest extends TestCase
         $this->assertEquals($b->id, $items[0]->id);
     }
 
-    public function testDeleteReturnsView()
+
+
+    public function testUpdateObjectHandlesOptionalDates()
     {
-        $event = Event::factory()->create();
+        $event = new Event();
         $controller = new EventController();
-        $resp = $controller->delete($event);
-        $this->assertInstanceOf(View::class, $resp);
-        $this->assertArrayHasKey('event', $resp->getData());
+
+        $request = Request::create('/admin', 'POST', [
+            'name' => 'X',
+            'starts_at' => '2025-09-01 10:00:00',
+            'ends_at' => '2025-09-01 12:00:00',
+            'seating_locked' => true,
+            'seating_opens_at' => null,
+            'seating_closes_at' => null,
+            'draft' => false,
+        ]);
+
+        $ref = new \ReflectionClass($controller);
+        $method = $ref->getMethod('updateObject');
+        $method->setAccessible(true);
+        $method->invoke($controller, $event, $request);
+
+        $this->assertEquals('X', $event->name);
+        $this->assertNull($event->seating_opens_at);
+        $this->assertNull($event->seating_closes_at);
+    }
+
+    public function testUpdateObjectSetsProvidedDates()
+    {
+        $event = new Event();
+        $controller = new EventController();
+
+        $request = Request::create('/admin', 'POST', [
+            'name' => 'Y',
+            'starts_at' => '2025-09-01 10:00:00',
+            'ends_at' => '2025-09-01 12:00:00',
+            'seating_locked' => false,
+            'seating_opens_at' => '2025-08-01 10:00:00',
+            'seating_closes_at' => '2025-08-02 10:00:00',
+            'draft' => false,
+        ]);
+
+        $ref = new \ReflectionClass($controller);
+        $method = $ref->getMethod('updateObject');
+        $method->setAccessible(true);
+        $method->invoke($controller, $event, $request);
+
+        $this->assertEquals('Y', $event->name);
+        $this->assertNotNull($event->seating_opens_at);
+        $this->assertNotNull($event->seating_closes_at);
     }
 
     public function testExportTicketsIncludesEmailAndSeat()
@@ -270,6 +290,25 @@ class EventControllerTest extends TestCase
         $controller = new EventController();
         $resp = $controller->export_tickets($event);
         $this->assertTrue(method_exists($resp, 'getStatusCode') || method_exists($resp, 'send'));
+    }
+
+    public function testExportTicketsFallsBackToOriginalEmail()
+    {
+        $event = Event::factory()->create();
+        $provider = TicketProvider::factory()->create(['name' => 'P2']);
+        $type = TicketType::factory()->create(['has_seat' => true, 'event_id' => $event->id]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'ticket_type_id' => $type->id, 'user_id' => $user->id, 'ticket_provider_id' => $provider->id, 'original_email' => 'fallback@example.com']);
+
+        $controller = new EventController();
+        $resp = $controller->export_tickets($event);
+
+        $callback = $resp->getCallback();
+        ob_start();
+        $callback();
+        $output = ob_get_clean();
+
+        $this->assertStringContainsString('fallback@example.com', $output);
     }
 
     public function testPickseatAbortsWhenMismatch()

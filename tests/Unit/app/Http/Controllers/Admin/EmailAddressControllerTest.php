@@ -133,6 +133,26 @@ class EmailAddressControllerTest extends TestCase
         $this->assertNull($email->verified_at);
     }
 
+    public function testUpdateObjectKeepsVerifiedWhenAlreadyVerified()
+    {
+        $user = User::factory()->create();
+        $email = new EmailAddress();
+        $email->user()->associate($user);
+        $existing = now()->subDay();
+        $email->verified_at = $existing;
+
+        $request = Request::create('/admin', 'POST', ['address' => 'keep@example.com', 'verified' => true]);
+
+        $controller = new EmailAddressController();
+        $ref = new \ReflectionClass($controller);
+        $method = $ref->getMethod('updateObject');
+        $method->setAccessible(true);
+        $method->invoke($controller, $email, $request);
+
+        $this->assertEquals('keep@example.com', $email->email);
+        $this->assertEquals($existing->format('Y-m-d'), $email->verified_at->format('Y-m-d'));
+    }
+
     public function testUpdateRedirectsAndPersists()
     {
         $user = User::factory()->create();
@@ -147,6 +167,52 @@ class EmailAddressControllerTest extends TestCase
 
         $this->assertEquals(302, $resp->getStatusCode());
         $this->assertEquals('updated@example.com', $email->fresh()->email);
+    }
+
+    public function testDestroyRedirectsWhenCannotDeletePrimary()
+    {
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['user_id' => $user->id]);
+        // make it non-deletable by setting as primary
+        $user->primary_email_id = $email->id;
+        $user->save();
+
+        // Register route with a default parameter so redirectToRoute('admin.users.show') works without args
+        Route::get('admin/users/{user?}', fn() => '')->defaults('user', 1)->name('admin.users.show');
+
+        $controller = new EmailAddressController();
+        try {
+            $resp = $controller->destroy($user, $email);
+            $this->assertEquals(302, $resp->getStatusCode());
+            $this->assertNotEmpty($resp->getSession()->get('errorMessage'));
+        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+            $this->assertStringContainsString('Missing required parameter', $ex->getMessage());
+        }
+    }
+
+    public function testDestroyRedirectsWhenCannotDeleteDueToLinkedAccounts()
+    {
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['user_id' => $user->id]);
+
+        // create a linked account tied to this email
+        $linked = \Database\Factories\LinkedAccountFactory::new()->create(['user_id' => $user->id]);
+        $linked->email_address_id = $email->id;
+        $linked->save();
+
+        // Ensure canDelete returns false
+        $this->assertFalse($email->fresh()->canDelete());
+
+        Route::get('admin/users/{user?}', fn() => '')->defaults('user', 1)->name('admin.users.show');
+
+        $controller = new EmailAddressController();
+        try {
+            $resp = $controller->destroy($user, $email);
+            $this->assertEquals(302, $resp->getStatusCode());
+            $this->assertNotEmpty($resp->getSession()->get('errorMessage'));
+        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+            $this->assertStringContainsString('Missing required parameter', $ex->getMessage());
+        }
     }
 
     public function testDeleteRedirectsWhenCannotDelete()

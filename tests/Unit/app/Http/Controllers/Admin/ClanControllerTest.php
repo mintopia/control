@@ -55,6 +55,42 @@ class ClanControllerTest extends TestCase
         $this->assertEquals($c2->id, $items[0]->id);
     }
 
+    // CHECK Clan Controller (Tests\Unit\app\Http\Controllers\Admin\ClanController) > Index filters by id name and code - Failed asserting that 0 is equal to 1 or is greater than 1.
+    public function testIndexFiltersByIdNameAndCode()
+    {
+        $c1 = Clan::factory()->create(['name' => 'FindMe', 'code' => 'C100']);
+        $c2 = Clan::factory()->create(['name' => 'Other', 'code' => 'O200']);
+
+        $controller = new ClanController();
+        // ensure record persisted
+        $this->assertDatabaseHas('clans', ['id' => $c1->id]);
+
+        // filter by id
+        // sanity-check: direct query should find the clan
+        $this->assertEquals(1, Clan::whereId($c1->id)->count(), 'Direct Eloquent query should find the clan');
+
+        $req = Request::create('/admin/clans', 'GET', ['id' => $c1->id]);
+        $req->setUserResolver(fn() => User::factory()->create());
+        $resp = $controller->index($req);
+        $items = $resp->getData()['clans']->items();
+        $this->assertCount(1, $items);
+        $this->assertEquals($c1->id, $items[0]->id);
+
+        // filter by name partial
+        $req = Request::create('/admin/clans', 'GET', ['name' => 'Find']);
+        $req->setUserResolver(fn() => User::factory()->create());
+        $resp = $controller->index($req);
+        $items = $resp->getData()['clans']->items();
+        $this->assertGreaterThanOrEqual(1, count($items));
+
+        // filter by code partial
+        $req = Request::create('/admin/clans', 'GET', ['code' => 'C10']);
+        $req->setUserResolver(fn() => User::factory()->create());
+        $resp = $controller->index($req);
+        $items = $resp->getData()['clans']->items();
+        $this->assertGreaterThanOrEqual(1, count($items));
+    }
+
     public function testStoreValidatesAndSavesData()
     {
         $user = User::factory()->create();
@@ -103,6 +139,38 @@ class ClanControllerTest extends TestCase
         $this->assertGreaterThanOrEqual(2, $members->count());
         // first member should be userB with nickname 'zzz'
         $this->assertEquals('zzz', $members->first()->user->nickname);
+    }
+
+    public function testShowOrdersByRoleAndCreated()
+    {
+        $clan = Clan::factory()->create();
+        $role1 = \App\Models\ClanRole::factory()->create(['code' => 'member']);
+        $role2 = \App\Models\ClanRole::factory()->create(['code' => 'leader']);
+
+        $user1 = User::factory()->create(['nickname' => 'a']);
+        $user2 = User::factory()->create(['nickname' => 'b']);
+
+        // create memberships with different roles and created_at
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $user1->id, 'clan_role_id' => $role2->id, 'created_at' => now()->subDay()]);
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $user2->id, 'clan_role_id' => $role1->id, 'created_at' => now()]);
+
+        $request = Request::create('/admin/clans/' . $clan->id, 'GET', ['order' => 'role', 'order_direction' => 'asc']);
+        $controller = new ClanController();
+        $view = $controller->show($request, $clan);
+
+        $this->assertInstanceOf(View::class, $view);
+        $data = $view->getData();
+        $members = $data['members']->all();
+        // order by clan_role_id asc: role1 (member) should come before role2 (leader)
+        $this->assertLessThanOrEqual($role2->id, $members[1]->clan_role_id);
+
+        // now order by created desc
+        $request = Request::create('/admin/clans/' . $clan->id, 'GET', ['order' => 'created', 'order_direction' => 'desc']);
+        $view = $controller->show($request, $clan);
+        $data = $view->getData();
+        $members = $data['members']->all();
+        // most recent created should be first (user2)
+        $this->assertEquals($user2->id, $members[0]->user->id);
     }
 
     public function testEditReturnsView()

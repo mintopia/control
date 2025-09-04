@@ -147,4 +147,110 @@ class SeatingPlanControllerTest extends TestCase
 
         $this->assertNull($seat->fresh()->ticket_id);
     }
+
+    public function testSelectAbortsWhenSeatPlanMismatch()
+    {
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $user = User::factory()->create();
+        $event = Event::factory()->create(['ends_at' => now()->addDay()]);
+        $otherEvent = Event::factory()->create(['ends_at' => now()->addDay()]);
+        $plan = SeatingPlan::factory()->create(['event_id' => $otherEvent->id]);
+        $seat = Seat::factory()->create(['seating_plan_id' => $plan->id]);
+        $type = TicketType::factory()->create(['has_seat' => true]);
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id, 'ticket_type_id' => $type->id]);
+
+        $request = Request::create('/select', 'POST');
+        $request->setUserResolver(fn() => $user);
+
+        $controller = new SeatingPlanController();
+        $controller->select($request, $event, $ticket, $seat);
+    }
+
+    public function testSelectAbortsWhenTicketEventMismatch()
+    {
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $user = User::factory()->create();
+        $event = Event::factory()->create(['ends_at' => now()->addDay()]);
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $seat = Seat::factory()->create(['seating_plan_id' => $plan->id]);
+        $type = TicketType::factory()->create(['has_seat' => true]);
+        $ticket = Ticket::factory()->create(['event_id' => Event::factory()->create()->id, 'user_id' => $user->id, 'ticket_type_id' => $type->id]);
+
+        $request = Request::create('/select', 'POST');
+        $request->setUserResolver(fn() => $user);
+
+        $controller = new SeatingPlanController();
+        $controller->select($request, $event, $ticket, $seat);
+    }
+
+    public function testSelectRedirectsWhenSeatNotPickable()
+    {
+        $user = User::factory()->create();
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => true]);
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $seat = Seat::factory()->create(['seating_plan_id' => $plan->id]);
+        $type = TicketType::factory()->create(['has_seat' => true]);
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id, 'ticket_type_id' => $type->id]);
+
+        // Register route used by controller for redirectToRoute
+        $this->app['router']->get('/seating/{code}/{id?}', fn() => 'ok')->name('seatingplans.show');
+
+        $request = Request::create('/select', 'POST');
+        $request->setUserResolver(fn() => $user);
+        $request->setLaravelSession(app('session.store'));
+
+        $controller = new SeatingPlanController();
+        $response = $controller->select($request, $event, $ticket, $seat);
+
+        $this->assertStringContainsString('/seating/' . $event->code, $response->getTargetUrl());
+        $this->assertNotEmpty($response->getSession()->get('errorMessage'));
+    }
+
+    public function testSelectMovesFromOldSeatDifferentPlan()
+    {
+        $user = User::factory()->create();
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
+        $plan1 = SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $plan2 = SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $oldSeat = Seat::factory()->create(['seating_plan_id' => $plan1->id]);
+        $newSeat = Seat::factory()->create(['seating_plan_id' => $plan2->id]);
+        $type = TicketType::factory()->create(['has_seat' => true]);
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id, 'ticket_type_id' => $type->id]);
+
+        // Associate old seat
+        $oldSeat->ticket()->associate($ticket);
+        $oldSeat->save();
+
+        $request = Request::create('/select', 'POST');
+        $request->setUserResolver(fn() => $user);
+
+        $controller = new SeatingPlanController();
+        $controller->select($request, $event, $ticket, $newSeat);
+
+        $this->assertNull($oldSeat->fresh()->ticket_id);
+        $this->assertEquals($ticket->id, $newSeat->fresh()->ticket_id);
+    }
+
+    public function testSelectMovesFromOldSeatSamePlan()
+    {
+        $user = User::factory()->create();
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $oldSeat = Seat::factory()->create(['seating_plan_id' => $plan->id]);
+        $newSeat = Seat::factory()->create(['seating_plan_id' => $plan->id]);
+        $type = TicketType::factory()->create(['has_seat' => true]);
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id, 'ticket_type_id' => $type->id]);
+
+        $oldSeat->ticket()->associate($ticket);
+        $oldSeat->save();
+
+        $request = Request::create('/select', 'POST');
+        $request->setUserResolver(fn() => $user);
+
+        $controller = new SeatingPlanController();
+        $controller->select($request, $event, $ticket, $newSeat);
+
+        $this->assertNull($oldSeat->fresh()->ticket_id);
+        $this->assertEquals($ticket->id, $newSeat->fresh()->ticket_id);
+    }
 }
