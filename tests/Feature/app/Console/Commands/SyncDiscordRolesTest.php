@@ -74,4 +74,96 @@ class SyncDiscordRolesTest extends TestCase
         // Run the command through Artisan so Eloquent and container resolution behave as in production
         $this->artisan('control:sync-discord-roles')->assertExitCode(0);
     }
+
+    public function testHandleWithUserArgumentFiltersAccounts()
+    {
+        $provider = SocialProvider::factory()->create(['code' => 'discord']);
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+
+        // linked accounts for both users
+        $linkedA = LinkedAccount::factory()->create([
+            'user_id' => $userA->id,
+            'social_provider_id' => $provider->id,
+            'external_id' => '111',
+        ]);
+        $linkedB = LinkedAccount::factory()->create([
+            'user_id' => $userB->id,
+            'social_provider_id' => $provider->id,
+            'external_id' => '222',
+        ]);
+
+        // Only userA has a ticket that requires a role
+        $tt = TicketType::factory()->create(['discord_role_id' => '10']);
+        Ticket::factory()->create(['user_id' => $userA->id, 'ticket_type_id' => $tt->id]);
+
+        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getMemberRoles', 'addRoleToMember', 'removeRoleFromMember'])
+            ->getMock();
+
+        // Return both members, but command should only process userA when arg provided
+        $mockApi->expects($this->once())->method('getMemberRoles')->willReturn([
+            '111' => (object)['id' => '111', 'nickname' => 'a', 'roles' => []],
+            '222' => (object)['id' => '222', 'nickname' => 'b', 'roles' => []],
+        ]);
+        $mockApi->expects($this->once())->method('addRoleToMember');
+        $mockApi->expects($this->never())->method('removeRoleFromMember');
+
+        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+
+        // Call the command for userA specifically
+        $this->artisan('control:sync-discord-roles', ['user' => $userA->id])->assertExitCode(0);
+    }
+
+    public function testGetManagedRolesReturnsUniqueIds()
+    {
+        // create multiple ticket types, with duplicates
+        TicketType::factory()->create(['discord_role_id' => '100']);
+        TicketType::factory()->create(['discord_role_id' => '100']);
+        TicketType::factory()->create(['discord_role_id' => '200']);
+
+        $cmd = new SyncDiscordRoles();
+        $rm = new \ReflectionMethod(SyncDiscordRoles::class, 'getManagedRoles');
+        $rm->setAccessible(true);
+        $roles = $rm->invoke($cmd);
+
+        // should contain unique values 100 and 200
+        sort($roles);
+        $this->assertEquals(['100', '200'], $roles);
+    }
+
+    public function testSyncAccountAddsAndRemovesRoles()
+    {
+        $provider = SocialProvider::factory()->create(['code' => 'discord']);
+        $user = User::factory()->create();
+        $linked = LinkedAccount::factory()->create([
+            'user_id' => $user->id,
+            'social_provider_id' => $provider->id,
+            'external_id' => '999',
+        ]);
+
+        // Managed roles are 300 and 400; user only should have 300
+        $ttKeep = TicketType::factory()->create(['discord_role_id' => '300']);
+        $ttRemove = TicketType::factory()->create(['discord_role_id' => '400']);
+
+        // User only has ticket for 300 (so shouldHave = [300])
+        Ticket::factory()->create(['user_id' => $user->id, 'ticket_type_id' => $ttKeep->id]);
+
+        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getMemberRoles', 'addRoleToMember', 'removeRoleFromMember'])
+            ->getMock();
+
+        // discord member currently has role 400 (managed but not desired) so should be removed
+        $mockApi->expects($this->once())->method('getMemberRoles')->willReturn([
+            '999' => (object)['id' => '999', 'nickname' => 'x', 'roles' => ['400']],
+        ]);
+        $mockApi->expects($this->once())->method('addRoleToMember')->with('300', '999');
+        $mockApi->expects($this->once())->method('removeRoleFromMember')->with('400', '999');
+
+        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+
+        $this->artisan('control:sync-discord-roles')->assertExitCode(0);
+    }
 }

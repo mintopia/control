@@ -67,4 +67,36 @@ class SetupDiscordTest extends TestCase
             'value' => 'new-client-secret',
         ]);
     }
+
+    public function testHandleRunsWhenProviderExistsAndSaves()
+    {
+        // Create provider and settings so prompts return defaults
+        $provider = SocialProvider::factory()->create(['code' => 'discord', 'enabled' => false, 'auth_enabled' => false]);
+        ProviderSetting::factory()->create([
+            'provider_id' => $provider->id,
+            'provider_type' => SocialProvider::class,
+            'code' => 'client_id',
+            'value' => 'cid',
+        ]);
+        ProviderSetting::factory()->create([
+            'provider_id' => $provider->id,
+            'provider_type' => SocialProvider::class,
+            'code' => 'client_secret',
+            'value' => 'csecret',
+        ]);
+
+        // Register minimal named routes used by the command to avoid UrlGenerationException
+        $this->app['router']->get('/login/return/{provider}', fn() => 'ok')->name('login.return');
+        $this->app['router']->get('/linkedaccounts/store/{provider}', fn() => 'ok')->name('linkedaccounts.store');
+
+        // Use the artisan runner and provide expected answers for each prompt
+        $this->artisan('control:setup-discord')
+            ->expectsQuestion('Discord Client ID', 'cid')
+            ->expectsQuestion('Do you want to change the Client Secret?', false)
+            ->expectsQuestion('Do you want to enable the Discord provider?', false)
+            ->expectsQuestion('Do you want to enable login with Discord?', false)
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('social_providers', ['id' => $provider->id, 'code' => 'discord']);
+    }
 }
