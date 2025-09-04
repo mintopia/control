@@ -169,4 +169,102 @@ class EmailAddressControllerTest extends TestCase
 
         $this->assertNotNull($email->fresh()->verified_at);
     }
+
+    public function testVerifyShowsViewWhenNotVerified()
+    {
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['user_id' => $user->id, 'verified_at' => null]);
+
+        $request = Request::create('/emails/' . $email->id . '/verify', 'GET');
+        $controller = new EmailAddressController();
+        $view = $controller->verify($request, $email);
+        $this->assertTrue(is_object($view));
+        $this->assertArrayHasKey('email', $view->getData());
+    }
+
+    public function testVerifyRedirectsWhenAlreadyVerified()
+    {
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['user_id' => $user->id, 'verified_at' => now()]);
+
+        $controller = new EmailAddressController();
+        $response = $controller->verify(Request::create('/emails/' . $email->id . '/verify', 'GET'), $email);
+        $this->assertTrue(method_exists($response, 'getTargetUrl'));
+        $this->assertStringContainsString('/profile', $response->getTargetUrl());
+    }
+
+    public function testVerifyCodeMethodVerifiesEmail()
+    {
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create([
+            'user_id' => $user->id,
+            'verification_code' => 'CODE123',
+            'verification_sent_at' => now(),
+        ]);
+
+        $request = \App\Http\Requests\EmailVerifyRequest::create('/emails/' . $email->id . '/verify_code', 'POST', ['code' => 'CODE123']);
+        $request->setUserResolver(fn() => $user);
+
+        $controller = new EmailAddressController();
+        $response = $controller->verify_code($request, $email);
+
+        $this->assertTrue(method_exists($response, 'getTargetUrl'));
+        $this->assertNotNull($email->fresh()->verified_at);
+    }
+
+    public function testVerifyResendSendsCodeWhenNotVerified()
+    {
+        Mail::fake();
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['user_id' => $user->id, 'verified_at' => null]);
+
+        $controller = new EmailAddressController();
+        $response = $controller->verify_resend($email);
+
+        $this->assertTrue(method_exists($response, 'getTargetUrl'));
+        $this->assertStringContainsString('/verify', $response->getTargetUrl());
+        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\VerifyEmail::class);
+        $this->assertNotNull($email->fresh()->verification_code);
+    }
+
+    public function testVerifyResendRedirectsWhenAlreadyVerified()
+    {
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['user_id' => $user->id, 'verified_at' => now()]);
+
+        $controller = new EmailAddressController();
+        $response = $controller->verify_resend($email);
+
+        $this->assertTrue(method_exists($response, 'getTargetUrl'));
+        $this->assertStringContainsString('/profile', $response->getTargetUrl());
+    }
+
+    public function testDeleteRedirectsWhenCannotDelete()
+    {
+        $user = User::factory()->create();
+        $email = $user->emails()->create(['email' => 'cannot-delete@example.com']);
+        // make it non-deletable by setting as primary
+        $user->primary_email_id = $email->id;
+        $user->save();
+
+        $controller = new EmailAddressController();
+        $response = $controller->delete($email);
+
+        $this->assertTrue(method_exists($response, 'getTargetUrl'));
+        $this->assertStringContainsString('/profile', $response->getTargetUrl());
+    }
+
+    public function testDestroyDoesNotDeleteWhenCannotDelete()
+    {
+        $user = User::factory()->create();
+        $email = $user->emails()->create(['email' => 'cannot-delete@example.com']);
+        $user->primary_email_id = $email->id;
+        $user->save();
+
+        $controller = new EmailAddressController();
+        $response = $controller->destroy($email);
+
+        $this->assertTrue(method_exists($response, 'getTargetUrl'));
+        $this->assertDatabaseHas('email_addresses', ['id' => $email->id]);
+    }
 }
