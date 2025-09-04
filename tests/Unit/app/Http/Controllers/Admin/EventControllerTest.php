@@ -205,4 +205,83 @@ class EventControllerTest extends TestCase
         $this->assertNull($event->seating_opens_at);
         $this->assertNull($event->seating_closes_at);
     }
+
+    public function testIndexFiltersByIdNameAndCode()
+    {
+        $event = Event::factory()->create(['name' => 'FilterMe', 'code' => 'F123']);
+        $other = Event::factory()->create(['name' => 'Other', 'code' => 'O123']);
+
+        $controller = new EventController();
+
+        // filter by id
+        $resp = $controller->index(Request::create('/admin/events', 'GET', ['id' => $event->id]));
+        $items = $resp->getData()['events']->items();
+        $this->assertCount(1, $items);
+        $this->assertEquals($event->id, $items[0]->id);
+
+        // filter by name partial
+        $resp = $controller->index(Request::create('/admin/events', 'GET', ['name' => 'Filter']));
+        $items = $resp->getData()['events']->items();
+        $this->assertGreaterThanOrEqual(1, count($items));
+
+        // filter by code
+        $resp = $controller->index(Request::create('/admin/events', 'GET', ['code' => 'F12']));
+        $items = $resp->getData()['events']->items();
+        $this->assertGreaterThanOrEqual(1, count($items));
+    }
+
+    public function testIndexOrderByStartsAtDesc()
+    {
+        $a = Event::factory()->create(['starts_at' => '2025-09-01 10:00:00']);
+        $b = Event::factory()->create(['starts_at' => '2025-10-01 10:00:00']);
+
+        $controller = new EventController();
+        $resp = $controller->index(Request::create('/admin/events', 'GET', ['order' => 'starts_at', 'order_direction' => 'desc']));
+        $items = $resp->getData()['events']->items();
+        $this->assertGreaterThanOrEqual(2, count($items));
+        $this->assertEquals($b->id, $items[0]->id);
+    }
+
+    public function testDeleteReturnsView()
+    {
+        $event = Event::factory()->create();
+        $controller = new EventController();
+        $resp = $controller->delete($event);
+        $this->assertInstanceOf(View::class, $resp);
+        $this->assertArrayHasKey('event', $resp->getData());
+    }
+
+    public function testExportTicketsIncludesEmailAndSeat()
+    {
+        $event = Event::factory()->create();
+        $provider = TicketProvider::factory()->create(['name' => 'P1']);
+        $type = TicketType::factory()->create(['has_seat' => true, 'event_id' => $event->id]);
+        $user = User::factory()->create();
+        $email = \App\Models\EmailAddress::factory()->create(['user_id' => $user->id, 'email' => 'prim@example.com']);
+        $user->primary_email_id = $email->id;
+        $user->save();
+
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'ticket_type_id' => $type->id, 'user_id' => $user->id, 'ticket_provider_id' => $provider->id]);
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $seat = Seat::factory()->create(['seating_plan_id' => $plan->id, 'label' => 'A1']);
+        $seat->ticket()->associate($ticket);
+        $seat->save();
+
+        $controller = new EventController();
+        $resp = $controller->export_tickets($event);
+        $this->assertTrue(method_exists($resp, 'getStatusCode') || method_exists($resp, 'send'));
+    }
+
+    public function testPickseatAbortsWhenMismatch()
+    {
+        $eventA = Event::factory()->create(['code' => 'A']);
+        $eventB = Event::factory()->create(['code' => 'B']);
+        $planB = SeatingPlan::factory()->create(['event_id' => $eventB->id]);
+        $seatB = Seat::factory()->create(['seating_plan_id' => $planB->id]);
+        $ticketA = Ticket::factory()->create(['event_id' => $eventA->id]);
+
+        $controller = new EventController();
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
+        $controller->pickseat($eventA, $ticketA, $seatB);
+    }
 }

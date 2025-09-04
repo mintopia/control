@@ -74,6 +74,17 @@ class EmailAddressControllerTest extends TestCase
         $this->assertArrayHasKey('email', $resp->getData());
     }
 
+    public function testCreateAssociatesUser()
+    {
+        $user = User::factory()->create();
+        $controller = new EmailAddressController();
+        $resp = $controller->create($user);
+        $data = $resp->getData();
+        $this->assertArrayHasKey('email', $data);
+        $this->assertNotNull($data['email']->user);
+        $this->assertEquals($user->id, $data['email']->user->id);
+    }
+
     public function testEditReturnsView()
     {
         $user = User::factory()->create();

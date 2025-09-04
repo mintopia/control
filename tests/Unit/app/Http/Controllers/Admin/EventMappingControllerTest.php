@@ -68,6 +68,26 @@ class EventMappingControllerTest extends TestCase
         $this->assertInstanceOf(EventMappingController::class, $controller);
     }
 
+    public function testCreateReturnsViewWithAvailableMappings()
+    {
+        $event = Event::factory()->create();
+        $provider = TicketProvider::factory()->create();
+        // use test provider so getEvents() returns items
+        $provider->provider_class = TestProviderWithEvents::class;
+        $provider->save();
+
+        $controller = new EventMappingController();
+        $resp = $controller->create($event);
+
+        $this->assertInstanceOf(View::class, $resp);
+        $data = $resp->getData();
+        $this->assertArrayHasKey('availableMappings', $data);
+        $this->assertArrayHasKey('event', $data);
+        $this->assertEquals($event->id, $data['event']->id);
+        $this->assertArrayHasKey('mapping', $data);
+        $this->assertInstanceOf(EventMapping::class, $data['mapping']);
+    }
+
     public function testStoreCreatesMappingAndRedirects()
     {
         $event = Event::factory()->create();
