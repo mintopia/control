@@ -161,6 +161,7 @@ Code Coverage: We currently have 50% coverage across the board.
     - [ ] `Middleware`
       - [ ] `RedirectIfAuthenticated` (new)
   - [ ] `Models`
+    - [ ] `ClanRole`
     - [ ] `Event`
     - [ ] `Role`
     - [ ] `Seat`
