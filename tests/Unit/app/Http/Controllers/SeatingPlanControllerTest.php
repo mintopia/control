@@ -253,4 +253,64 @@ class SeatingPlanControllerTest extends TestCase
         $this->assertNull($oldSeat->fresh()->ticket_id);
         $this->assertEquals($ticket->id, $newSeat->fresh()->ticket_id);
     }
+
+    public function testShowRedirectsWhenTicketNotPickableOrNotManaged()
+    {
+        $viewer = User::factory()->create();
+        $owner = User::factory()->create();
+
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
+        $type = TicketType::factory()->create(['has_seat' => true]);
+
+        // Ticket owned by someone else and viewer cannot manage it
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $owner->id, 'ticket_type_id' => $type->id]);
+
+        // Register route so redirectToRoute can build URL in test
+        $this->app['router']->get('/seating/{code}/{id?}', fn() => 'ok')->name('seatingplans.show');
+
+        $request = Request::create('/seating', 'GET');
+        $request->setUserResolver(fn() => $viewer);
+        $request->setLaravelSession(app('session.store'));
+
+        $controller = new SeatingPlanController();
+        $resp = $controller->show($request, $event, $ticket);
+
+        $this->assertEquals(302, $resp->getStatusCode());
+        $this->assertNotEmpty($resp->getSession()->get('errorMessage'));
+    }
+
+    public function testShowCollectsAllowedSeatGroupsForCurrentTicket()
+    {
+        $user = User::factory()->create();
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
+
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+
+        $type = TicketType::factory()->create(['has_seat' => true]);
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id, 'ticket_type_id' => $type->id]);
+
+        // Create a seat group and assignment that allows this user
+        $group = new \App\Models\SeatGroup();
+        $group->event()->associate($event);
+        $group->name = 'Group A';
+        $group->class = 'default';
+        $group->save();
+
+        $assignment = new \App\Models\SeatGroupAssignment();
+        $assignment->group()->associate($group);
+        $assignment->assignment_type = 'user';
+        $assignment->assignment_type_id = $user->id;
+        $assignment->save();
+
+        $request = Request::create('/seating', 'GET');
+        $request->setUserResolver(fn() => $user);
+        $request->setLaravelSession(app('session.store'));
+
+        $controller = new SeatingPlanController();
+        $view = $controller->show($request, $event, $ticket);
+
+        $data = $view->getData();
+        $this->assertArrayHasKey('seatGroups', $data);
+        $this->assertContains($group->id, $data['seatGroups']);
+    }
 }
