@@ -124,8 +124,8 @@ class UserControllerTest extends TestCase
     {
         $user = User::factory()->create();
         // create settings used by the view
-    Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => 'terms text']);
-    Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => 'privacy text']);
+        Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => 'terms text']);
+        Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => 'privacy text']);
 
         $controller = new UserController();
         $request = \Illuminate\Http\Request::create('/signup', 'GET');
