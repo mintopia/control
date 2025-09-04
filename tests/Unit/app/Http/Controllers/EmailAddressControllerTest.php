@@ -64,6 +64,34 @@ class EmailAddressControllerTest extends TestCase
         $this->assertTrue(is_object($response));
     }
 
+    public function testDeleteReturnsViewWhenCanDelete()
+    {
+        $user = User::factory()->create();
+        $email = $user->emails()->create(['email' => 'delete-ok@example.com']);
+
+        // Ensure deletable: no primary email and no linked accounts
+        Sanctum::actingAs($user);
+        $user->primary_email_id = null;
+        $user->save();
+
+        // Reload email relations and ensure canDelete() is true
+        $email->load('user');
+        $email->user->primary_email_id = null;
+        $email->user->save();
+        if ($email->linkedAccounts()->count() > 0) {
+            $email->linkedAccounts()->delete();
+            $email->refresh();
+        }
+
+        $this->assertTrue($email->canDelete(), 'Precondition: email should be deletable');
+
+        $controller = new EmailAddressController();
+        $response = $controller->delete($email);
+
+        $this->assertInstanceOf(\Illuminate\View\View::class, $response);
+        $this->assertArrayHasKey('email', $response->getData());
+    }
+
     public function testDestroyDeletesEmail()
     {
         $user = User::factory()->create();

@@ -199,4 +199,74 @@ class UserControllerTest extends TestCase
         $this->assertTrue(\Illuminate\Support\Facades\Auth::check());
         $this->assertNotNull($user->fresh()->last_login);
     }
+
+    public function testLoginReturnWithDisabledProviderRedirectsToLogin()
+    {
+        $controller = new UserController();
+        $disabledProvider = new class extends \App\Models\SocialProvider {};
+        $disabledProvider->enabled = false;
+        $disabledProvider->auth_enabled = false;
+
+        $resp = $controller->login_return($disabledProvider);
+        $this->assertStringContainsString(route('login'), $resp->getTargetUrl());
+    }
+
+    public function testLoginReturnWithSuspendedUserRedirectsWithMessage()
+    {
+        $suspended = User::factory()->create(['suspended' => 1]);
+
+        $provider = new class extends \App\Models\SocialProvider {
+            public function user(?string $redirectUrl = null)
+            {
+                return \App\Models\User::first();
+            }
+        };
+        $provider->enabled = true;
+        $provider->auth_enabled = true;
+
+        // ensure user exists for the provider to return
+        $suspended->save();
+
+        $controller = new UserController();
+        $resp = $controller->login_return($provider);
+
+        $this->assertStringContainsString(route('login'), $resp->getTargetUrl());
+        $this->assertEquals('Your account has been suspended', $resp->getSession()->get('errorMessage'));
+    }
+
+    public function testLoginReturnHandlesSocialProviderException()
+    {
+        $provider = new class extends \App\Models\SocialProvider {
+            public function user(?string $redirectUrl = null)
+            {
+                throw new \App\Exceptions\SocialProviderException('provider fail');
+            }
+        };
+        $provider->enabled = true;
+        $provider->auth_enabled = true;
+
+        $controller = new UserController();
+        $resp = $controller->login_return($provider);
+
+        $this->assertStringContainsString(route('login'), $resp->getTargetUrl());
+        $this->assertEquals('provider fail', $resp->getSession()->get('errorMessage'));
+    }
+
+    public function testLoginReturnHandlesGenericExceptionAndFallsBack()
+    {
+        $provider = new class extends \App\Models\SocialProvider {
+            public function user(?string $redirectUrl = null)
+            {
+                throw new \Exception('boom');
+            }
+        };
+        $provider->enabled = true;
+        $provider->auth_enabled = true;
+
+        $controller = new UserController();
+        $resp = $controller->login_return($provider);
+
+        $this->assertStringContainsString(route('login'), $resp->getTargetUrl());
+        $this->assertEquals('Unable to login', $resp->getSession()->get('errorMessage'));
+    }
 }

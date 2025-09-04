@@ -116,6 +116,52 @@ class ClanControllerTest extends TestCase
         $this->assertEquals('zzz', $members[0]->user->nickname);
     }
 
+    public function testShowOrdersByNameAsc()
+    {
+        $clan = Clan::factory()->create();
+        // create two users with nicknames to check ordering
+        $userA = User::factory()->create(['nickname' => 'aaa']);
+        $userB = User::factory()->create(['nickname' => 'zzz']);
+
+        // create memberships so show() has something to paginate
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
+
+        $request = Request::create('/clans/' . $clan->code, 'GET', ['order' => 'name']);
+        $request->setUserResolver(fn() => $userA);
+
+        $controller = new ClanController();
+        $view = $controller->show($request, $clan);
+
+        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $members = $view->getData()['members']->items();
+        $this->assertGreaterThanOrEqual(2, count($members));
+        // first member should have nickname 'aaa' due to asc ordering
+        $this->assertEquals('aaa', $members[0]->user->nickname);
+    }
+
+    public function testShowInvalidOrderDirectionDefaultsToAsc()
+    {
+        $clan = Clan::factory()->create();
+        $userA = User::factory()->create(['nickname' => 'aaa']);
+        $userB = User::factory()->create(['nickname' => 'zzz']);
+
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
+
+        // provide an invalid order_direction to trigger the if branch that normalises it
+        $request = Request::create('/clans/' . $clan->code, 'GET', ['order' => 'name', 'order_direction' => 'invalid']);
+        $request->setUserResolver(fn() => $userA);
+
+        $controller = new ClanController();
+        $view = $controller->show($request, $clan);
+        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+
+        $data = $view->getData();
+        $this->assertArrayHasKey('params', $data);
+        $this->assertEquals('asc', $data['params']['order_direction']);
+    }
+
     public function testEditReturnsView()
     {
         $clan = Clan::factory()->create();
