@@ -160,16 +160,16 @@ Code Coverage: We currently have 50% coverage across the board.
       - [ ] `TicketTransferRequest`
     - [ ] `Middleware`
       - [ ] `RedirectIfAuthenticated` (new)
-  - [ ] `Models`
-    - [ ] `ClanRole`
-    - [ ] `Event`
-    - [ ] `Role`
-    - [ ] `Seat`
-    - [ ] `SeatGroup`
-    - [ ] `SeatingPlan`
-    - [ ] `Ticket`
-    - [ ] `TicketProvider`
-    - [ ] `User`
+  - [x] `Models`
+    - [x] `ClanRole`
+    - [x] `Event`
+    - [x] `Role`
+    - [x] `Seat`
+    - [x] `SeatGroup`
+    - [x] `SeatingPlan`
+    - [x] `Ticket`
+    - [x] `TicketProvider`
+    - [x] `User`
   - [ ] `Observers`
     - [ ] `SeatObserver`
     - [ ] `SettingObserver`
