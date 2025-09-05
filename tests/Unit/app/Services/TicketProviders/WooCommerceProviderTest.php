@@ -337,6 +337,44 @@ class WooCommerceProviderTest extends TestCase
         $this->assertArrayHasKey('1-10-1', $tickets);
     }
 
+    public function test_get_tickets_filters_by_address()
+    {
+        $provider = $this->getProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
+
+        $order1 = (object)[
+            'id' => 1,
+            'status' => 'completed',
+            'billing' => (object)['email' => 'match@example.test'],
+            'line_items' => [(object)['id' => 10, 'product_id' => 100, 'name' => 'T', 'quantity' => 1]],
+        ];
+        $order2 = (object)[
+            'id' => 2,
+            'status' => 'completed',
+            'billing' => (object)['email' => 'other@example.test'],
+            'line_items' => [(object)['id' => 11, 'product_id' => 101, 'name' => 'T2', 'quantity' => 1]],
+        ];
+
+        $resp1 = new \GuzzleHttp\Psr7\Response(200, [], json_encode([$order1, $order2]));
+        $resp2 = new \GuzzleHttp\Psr7\Response(200, [], json_encode([]));
+
+        $mock = new \GuzzleHttp\Handler\MockHandler([$resp1, $resp2]);
+        $handler = \GuzzleHttp\HandlerStack::create($mock);
+        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+
+        $ref = new \ReflectionClass($provider);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, $client);
+
+        $getTickets = \Closure::bind(function ($address = null) {
+            return $this->getTickets($address);
+        }, $provider, get_class($provider));
+
+        $tickets = $getTickets('match@example.test');
+        $this->assertArrayHasKey('1-10-1', $tickets);
+        $this->assertArrayNotHasKey('2-11-1', $tickets);
+    }
+
     public function test_sync_tickets_deletes_voided_ticket()
     {
         $prov = $this->getProvider()->getProvider();

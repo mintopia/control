@@ -237,6 +237,39 @@ class SyncDiscordRolesTest extends TestCase
         $this->artisan('control:sync-discord-roles')->assertExitCode(0);
     }
 
+    public function testSyncAccountUnsetsDesiredRoleWhenAlreadyPresent()
+    {
+        $provider = SocialProvider::factory()->create(['code' => 'discord']);
+        $user = User::factory()->create();
+        $linked = LinkedAccount::factory()->create([
+            'user_id' => $user->id,
+            'social_provider_id' => $provider->id,
+            'external_id' => 'abc',
+        ]);
+
+        // User should have roles 300 and 400, but discord member already has 300.
+        $tt1 = TicketType::factory()->create(['discord_role_id' => '300']);
+        $tt2 = TicketType::factory()->create(['discord_role_id' => '400']);
+        Ticket::factory()->create(['user_id' => $user->id, 'ticket_type_id' => $tt1->id]);
+        Ticket::factory()->create(['user_id' => $user->id, 'ticket_type_id' => $tt2->id]);
+
+        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getMemberRoles', 'addRoleToMember', 'removeRoleFromMember'])
+            ->getMock();
+
+        // Member already has '300', so unset will remove it from toAdd; only '400' should be added
+        $mockApi->expects($this->once())->method('getMemberRoles')->willReturn([
+            'abc' => (object)['id' => 'abc', 'nickname' => 'x', 'roles' => ['300']],
+        ]);
+        $mockApi->expects($this->once())->method('addRoleToMember')->with('400', 'abc');
+        $mockApi->expects($this->never())->method('removeRoleFromMember');
+
+        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+
+        $this->artisan('control:sync-discord-roles')->assertExitCode(0);
+    }
+
     public function testHandleWithNonExistentUserArgumentDoesNotCrash()
     {
         $provider = SocialProvider::factory()->create(['code' => 'discord']);

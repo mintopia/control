@@ -90,6 +90,39 @@ class ClanControllerTest extends TestCase
         $this->assertEquals('C100', $c1->fresh()->code);
     }
 
+    public function testIndexFiltersById()
+    {
+        $c1 = Clan::factory()->create(['name' => 'FindMe']);
+        $c2 = Clan::factory()->create(['name' => 'Other']);
+
+        $controller = new ClanController();
+        $req = Request::create('/admin/clans', 'GET', ['id' => $c1->id]);
+        $resp = $controller->index($req);
+        $this->assertInstanceOf(View::class, $resp);
+        $items = $resp->getData()['clans']->items();
+        // Should only contain the requested clan
+        $this->assertCount(1, $items);
+        $this->assertEquals($c1->id, $items[0]->id);
+    }
+
+    public function testIndexFiltersByName()
+    {
+        $c1 = Clan::factory()->create(['name' => 'FindMe']);
+        $c2 = Clan::factory()->create(['name' => 'Finder']);
+        $c3 = Clan::factory()->create(['name' => 'Other']);
+
+        $controller = new ClanController();
+        $req = Request::create('/admin/clans', 'GET', ['name' => 'Find']);
+        $resp = $controller->index($req);
+        $this->assertInstanceOf(View::class, $resp);
+        $items = $resp->getData()['clans']->items();
+        // Both c1 and c2 should be matched by partial 'Find'
+        $this->assertGreaterThanOrEqual(2, count($items));
+        $names = array_map(fn($i) => $i->name, $items);
+        $this->assertContains('FindMe', $names);
+        $this->assertContains('Finder', $names);
+    }
+
     public function testStoreValidatesAndSavesData()
     {
         $user = User::factory()->create();

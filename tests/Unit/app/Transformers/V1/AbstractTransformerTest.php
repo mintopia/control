@@ -10,6 +10,12 @@ use Illuminate\Support\Carbon;
 
 class DummyTransformer extends AbstractTransformer
 {
+    protected function getAdminPropertiesPublic(object $object): array
+    {
+        return $this->getAdminProperties($object);
+    }
+
+    // Provide admin properties for testing
     protected function getAdminProperties(object $object): array
     {
         return ['admin' => true];
@@ -55,6 +61,18 @@ class AbstractTransformerTest extends TestCase
         $this->assertArrayHasKey('updated_at', $result);
         $this->assertEquals('2022-01-01T00:00:00+00:00', $result['created_at']);
         $this->assertEquals('2022-01-02T00:00:00+00:00', $result['updated_at']);
+    }
+
+    public function testGetAdminPropertiesDirectly()
+    {
+        $transformer = new DummyTransformer($this->createMock(User::class));
+        $object = new DummyObject();
+        $m = new \ReflectionMethod(DummyTransformer::class, 'getAdminPropertiesPublic');
+        $m->setAccessible(true);
+        $result = $m->invoke($transformer, $object);
+        $this->assertIsArray($result);
+        $this->assertArrayHasKey('admin', $result);
+        $this->assertTrue($result['admin']);
     }
 
     protected function invokeMethod($object, $method, array $parameters = [])

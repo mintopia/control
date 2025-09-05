@@ -91,6 +91,16 @@ class TelescopeServiceProviderTest extends TestCase
         $entry->content = ['uri' => '/api/v1/something'];
         $this->assertFalse($callback($entry));
 
+        // Additional explicit test: ensure URIs starting with '/api/v1/' are filtered out
+        \Laravel\Telescope\Telescope::$filterUsing = [];
+        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider->register();
+        $callback2 = \Laravel\Telescope\Telescope::$filterUsing[0];
+        $entryApi = new \Laravel\Telescope\IncomingEntry(['uri' => '/api/v1/other']);
+        $entryApi->type = \Laravel\Telescope\EntryType::REQUEST;
+        $entryApi->content = ['uri' => '/api/v1/other'];
+        $this->assertFalse($callback2($entryApi), 'API v1 URIs should be filtered out by the telescope filter');
+
         // Case 2: config nofilter true should allow all
         config(['telescope.nofilter' => true]);
         \Laravel\Telescope\Telescope::$filterUsing = [];
@@ -187,6 +197,27 @@ class TelescopeServiceProviderTest extends TestCase
         $fakeEntry->shouldReceive('hasMonitoredTag')->andReturn(false);
 
         $this->assertTrue($callback($fakeEntry));
+    }
+
+    public function testRegisterFilterLocalEnvironmentSkipsApiFilter()
+    {
+        // Force app environment to local
+        $this->app['env'] = 'local';
+
+        // Reset filter registry
+        \Laravel\Telescope\Telescope::$filterUsing = [];
+
+        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider->register();
+        $this->assertNotEmpty(\Laravel\Telescope\Telescope::$filterUsing);
+        $callback = \Laravel\Telescope\Telescope::$filterUsing[0];
+
+        $entry = new \Laravel\Telescope\IncomingEntry(['uri' => '/api/v1/test']);
+        $entry->type = \Laravel\Telescope\EntryType::REQUEST;
+        $entry->content = ['uri' => '/api/v1/test'];
+
+        // In local environment the callback should always allow entries
+        $this->assertTrue($callback($entry));
     }
 
     public function testGateClosureReturnsBasedOnUserRole()

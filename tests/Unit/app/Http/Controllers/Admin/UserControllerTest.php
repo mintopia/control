@@ -308,4 +308,38 @@ class UserControllerTest extends TestCase
         $fresh = $user->fresh();
         $this->assertEquals($past->timestamp, $fresh->terms_agreed_at->timestamp);
     }
+
+    public function testUpdateHandlesRoleDetachAndAttach()
+    {
+        $user = User::factory()->create(['nickname' => 'oldnick', 'name' => 'Old']);
+
+        $r1 = Role::create(['code' => 'r1', 'name' => 'R1']);
+        $r2 = Role::create(['code' => 'r2', 'name' => 'R2']);
+        $r3 = Role::create(['code' => 'r3', 'name' => 'R3']);
+        // user initially has r1 and r2
+        $user->roles()->attach([$r1->id, $r2->id]);
+
+        $controller = new UserController();
+
+        // request wants only r3 (should detach r1 and r2, then attach r3)
+        $payload = [
+            'nickname' => 'nn',
+            'name' => 'NN',
+            'terms' => 0,
+            'first_login' => 0,
+            'suspended' => 0,
+            'roles' => ['r3'],
+        ];
+        $req = \App\Http\Requests\Admin\UserUpdateRequest::create('/', 'POST', $payload);
+        try {
+            $controller->update($req, $user);
+        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+            // ignore
+        }
+
+        $fresh = $user->fresh();
+        $this->assertFalse($fresh->roles()->whereCode('r1')->exists());
+        $this->assertFalse($fresh->roles()->whereCode('r2')->exists());
+        $this->assertTrue($fresh->roles()->whereCode('r3')->exists());
+    }
 }

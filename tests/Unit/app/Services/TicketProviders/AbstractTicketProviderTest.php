@@ -18,7 +18,6 @@ class DummyTicketProvider extends AbstractTicketProvider
     {
         parent::__construct($provider);
     }
-
 }
 
 class AbstractTicketProviderTest extends TestCase
@@ -110,5 +109,65 @@ class AbstractTicketProviderTest extends TestCase
     {
         $provider = new DummyTicketProvider();
         $this->assertNull($provider->syncAllTickets(null));
+    }
+
+    public function test_install_settings_sets_initial_value()
+    {
+        // Create an anonymous subclass that provides a default value in the config mapping
+        $provider = new class extends DummyTicketProvider {
+            public function configMapping(): array
+            {
+                return [
+                    'apikey' => (object)[
+                        'name' => 'API Key',
+                        'validation' => 'required|string',
+                        'value' => 'INIT_KEY',
+                    ],
+                    'webhook_secret' => (object)[
+                        'name' => 'Webhook Secret',
+                        'validation' => 'string',
+                    ],
+                ];
+            }
+        };
+
+        $ticketProvider = $provider->install();
+        $this->assertInstanceOf(\App\Models\TicketProvider::class, $ticketProvider);
+        $setting = $ticketProvider->settings()->whereCode('apikey')->first();
+        $this->assertEquals('INIT_KEY', $setting->value);
+    }
+
+    public function test_install_settings_does_not_save_when_no_changes()
+    {
+        // Create provider model and a setting that already matches the config mapping
+        $ticketProvider = \App\Models\TicketProvider::factory()->create([
+            'name' => 'Dummy Provider',
+            'code' => 'dummy',
+            'provider_class' => DummyTicketProvider::class,
+        ]);
+        $providerSetting = \App\Models\ProviderSetting::factory()->create([
+            'provider_type' => \App\Models\TicketProvider::class,
+            'provider_id' => $ticketProvider->id,
+            'code' => 'apikey',
+            'name' => 'API Key',
+            'validation' => 'required|string',
+            'encrypted' => false,
+            'description' => null,
+            'type' => \App\Enums\SettingType::stString,
+        ]);
+
+        // Set created_at and updated_at to a fixed past time
+        $past = \Carbon\Carbon::now()->subDay();
+        $providerSetting->created_at = $past;
+        $providerSetting->updated_at = $past;
+        $providerSetting->save();
+
+        $provider = new DummyTicketProvider($ticketProvider);
+        $provider->installSettings();
+
+        $providerSetting->refresh();
+        // Ensure no duplicate setting was created
+        $this->assertCount(1, \App\Models\ProviderSetting::where('provider_id', $ticketProvider->id)->where('code', 'apikey')->get());
+        $this->assertEquals('API Key', $providerSetting->name);
     }
 }

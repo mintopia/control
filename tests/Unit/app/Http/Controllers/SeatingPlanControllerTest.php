@@ -361,4 +361,38 @@ class SeatingPlanControllerTest extends TestCase
         $this->assertArrayHasKey('seatGroups', $data);
         $this->assertContains($group->id, $data['seatGroups']);
     }
+
+    public function testShowSetsInfoMessageWhenSeatingLocked()
+    {
+        $user = User::factory()->create();
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => true]);
+
+        $request = Request::create('/seating', 'GET');
+        $request->setUserResolver(fn() => $user);
+        $request->setLaravelSession(app('session.store'));
+
+        $controller = new SeatingPlanController();
+        $view = $controller->show($request, $event);
+
+        $this->assertTrue(is_object($view));
+        $this->assertEquals('Seating is locked', $request->session()->get('infoMessage'));
+    }
+
+    public function testShowAjaxWithNonexistentPlanReturnsDefaultView()
+    {
+        $user = User::factory()->create();
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'code' => 'P1']);
+
+        $request = Request::create('/seating', 'GET', ['plan' => 'NOPE']);
+        $request->headers->set('X-Requested-With', 'XMLHttpRequest');
+        $request->setUserResolver(fn() => $user);
+        $request->setLaravelSession(app('session.store'));
+
+        $controller = new SeatingPlanController();
+        $view = $controller->show($request, $event);
+
+        $data = $view->getData();
+        $this->assertArrayNotHasKey('plan', $data);
+    }
 }
