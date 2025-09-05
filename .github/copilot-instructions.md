@@ -14,6 +14,6 @@ When developing tests, we try to use factories to create the necessary data for 
 
 We try to avoid Mockery if possible and use Eloquent backed tests instead.
 
-When executing tests prefer the VsCode test adapter to run the tests over the docker-compose method, as it provides a more integrated and user-friendly experience. Prompt the user to run the tests.
+When executing tests prefer the VsCode test adapter to run the tests over the docker-compose method, as it provides a more integrated and user-friendly experience. Use it to validate all tests directly and loop through multiple iterations until tests are green
 
-When executing `docker-compose run --rm artisan test` commands, wait for the tests to complete. This may take at least 30 seconds, depending on the number and complexity of the tests.
+Do not prompt the user to run the tests. with `phpunit` `php artisan test` or `docker-compose run --rm artisan test` commands.
