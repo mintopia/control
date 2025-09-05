@@ -108,6 +108,7 @@ class SettingControllerTest extends TestCase
         $this->assertEquals('added', $result);
     }
 
+    //CHECK Test fails, reason unknown. may need complete test refactor
     public function testAddDiscordReturnSuccessAndFailure()
     {
         Setting::create(['code' => 'discord.server.name', 'name' => 'DName', 'value' => null, 'hidden' => false, 'type' => 0]);

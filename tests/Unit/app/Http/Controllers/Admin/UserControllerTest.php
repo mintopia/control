@@ -62,6 +62,36 @@ class UserControllerTest extends TestCase
         $this->assertTrue(is_object($resp));
     }
 
+    public function testIndexFiltersByIdAndNicknameAndEmailAndOrderCases()
+    {
+        $u1 = User::factory()->create(['nickname' => 'alphax', 'name' => 'Alice']);
+        $u2 = User::factory()->create(['nickname' => 'betax', 'name' => 'Bob']);
+        $email = \App\Models\EmailAddress::create(['user_id' => $u1->id, 'email' => 'alice@example.test']);
+
+        $controller = new UserController();
+
+        // filter by id
+        $req = Request::create('/', 'GET', ['id' => $u1->id]);
+        $resp = $controller->index($req);
+        $this->assertTrue(is_object($resp));
+
+        // filter by nickname
+        $req2 = Request::create('/', 'GET', ['nickname' => 'alph']);
+        $resp2 = $controller->index($req2);
+        $this->assertTrue(is_object($resp2));
+
+        // filter by email
+        $req3 = Request::create('/', 'GET', ['email' => 'alice@']);
+        $resp3 = $controller->index($req3);
+        $this->assertTrue(is_object($resp3));
+
+        // order cases: nickname and default id
+        $r4 = Request::create('/', 'GET', ['order' => 'nickname', 'order_direction' => 'asc']);
+        $this->assertTrue(is_object($controller->index($r4)));
+        $r5 = Request::create('/', 'GET', ['order' => 'id', 'order_direction' => 'desc']);
+        $this->assertTrue(is_object($controller->index($r5)));
+    }
+
     public function testShowEditDeleteReturnViews()
     {
         $user = User::factory()->create();
@@ -113,6 +143,36 @@ class UserControllerTest extends TestCase
         $this->assertTrue($fresh->roles()->whereCode('r2')->exists());
     }
 
+    public function testUpdateHandlesTermsFalseAndNoPrimaryEmail()
+    {
+        $user = User::factory()->create(['nickname' => 'oldnick', 'name' => 'Old']);
+        // no emails created; primary_email_id not provided
+
+        $r1 = Role::create(['code' => 'r1', 'name' => 'R1']);
+        $user->roles()->attach($r1);
+
+        $controller = new UserController();
+
+        $payload = [
+            'nickname' => 'nn',
+            'name' => 'NN',
+            'terms' => 0,
+            'first_login' => 0,
+            'suspended' => 0,
+            'roles' => [],
+        ];
+        $req = \App\Http\Requests\Admin\UserUpdateRequest::create('/', 'POST', $payload);
+        try {
+            $controller->update($req, $user);
+        } catch (UrlGenerationException $ex) {
+        }
+
+        $fresh = $user->fresh();
+        $this->assertNull($fresh->terms_agreed_at);
+        $this->assertEquals(1, $fresh->first_login);
+        $this->assertEquals(0, $fresh->suspended);
+    }
+
     public function testDestroyDeletesUser()
     {
         $user = User::factory()->create();
@@ -124,6 +184,30 @@ class UserControllerTest extends TestCase
             // ignore redirect route
         }
         $this->assertNull(User::find($user->id));
+    }
+
+    public function testDestroyUpdatesSeatingPlanRevision()
+    {
+        // create event and seating plan and a seat with a ticket for the user
+        $user = User::factory()->create();
+        $event = \App\Models\Event::factory()->create();
+        $plan = \App\Models\SeatingPlan::factory()->for($event)->create(['revision' => 1]);
+        $type = \App\Models\TicketType::factory()->for($event)->create(['has_seat' => 1]);
+        $ticket = \App\Models\Ticket::factory()->for($user)->for($type, 'type')->create();
+        $seat = \App\Models\Seat::factory()->for($plan, 'plan')->create();
+        // associate ticket with seat
+        $seat->ticket()->associate($ticket);
+        $seat->save();
+
+        $controller = new UserController();
+        $req = DeleteRequest::create('/', 'POST', []);
+        try {
+            $controller->destroy($req, $user);
+        } catch (UrlGenerationException $ex) {
+        }
+
+        $this->assertNull(User::find($user->id));
+        $this->assertGreaterThan(1, $plan->fresh()->revision);
     }
 
     public function testImpersonateStoresOriginalUserInSession()

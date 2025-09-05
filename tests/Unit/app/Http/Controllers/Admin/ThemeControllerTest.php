@@ -101,4 +101,23 @@ class ThemeControllerTest extends TestCase
         $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
         $controller->delete($theme);
     }
+
+    public function testCreateElseUsesNewThemeWhenNoDefault()
+    {
+        // ensure no default theme exists
+        Theme::whereCode('default')->delete();
+        $controller = new ThemeController();
+        $resp = $controller->create();
+        $this->assertTrue(is_object($resp));
+        $this->assertArrayHasKey('theme', $resp->getData());
+        $this->assertNull($resp->getData()['theme']->name);
+    }
+
+    public function testDestroyAbortsWhenReadonly()
+    {
+        $theme = Theme::factory()->create(['readonly' => true]);
+        $controller = new ThemeController();
+        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $controller->destroy($theme);
+    }
 }
