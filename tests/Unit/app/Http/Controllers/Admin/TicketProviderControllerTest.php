@@ -15,17 +15,40 @@ class TicketProviderControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    //TODO Separate tests into individual methods
-    public function testEditClearcacheSync()
+    // Separate tests for each controller action
+    public function testEditReturnsView()
     {
         $prov = TicketProvider::factory()->create();
         $c = new TicketProviderController();
         $this->assertTrue(is_object($c->edit($prov)));
-        $this->assertTrue(method_exists($c->clearcache($prov), 'getTargetUrl'));
-        $this->assertTrue(method_exists($c->sync($prov), 'getTargetUrl'));
     }
 
-    public function testUpdateSavesSettingsAndEnabled()
+    public function testClearcacheReturnsRedirect()
+    {
+        $prov = TicketProvider::factory()->create();
+        $c = new TicketProviderController();
+        $resp = $c->clearcache($prov);
+        $this->assertInstanceOf(RedirectResponse::class, $resp);
+    }
+
+    public function testSyncReturnsRedirect()
+    {
+        $prov = TicketProvider::factory()->create();
+        $c = new TicketProviderController();
+        $resp = $c->sync($prov);
+        $this->assertInstanceOf(RedirectResponse::class, $resp);
+    }
+
+    public function testUpdateReturnsRedirect()
+    {
+        $prov = TicketProvider::factory()->create(['name' => 'P1']);
+        $controller = new TicketProviderController();
+        $req = \App\Http\Requests\Admin\TicketProviderUpdateRequest::create('/', 'POST', ['enabled' => 0]);
+        $resp = $controller->update($req, $prov);
+        $this->assertInstanceOf(RedirectResponse::class, $resp);
+    }
+
+    public function testUpdateSavesProviderSetting()
     {
         $prov = TicketProvider::factory()->create(['name' => 'P1']);
         // create provider settings
@@ -38,10 +61,17 @@ class TicketProviderControllerTest extends TestCase
         $s1->save();
 
         $controller = new TicketProviderController();
-        $req = \App\Http\Requests\Admin\TicketProviderUpdateRequest::create('/', 'POST', ['enabled' => 0, 'opt1' => 0]);
-        $resp = $controller->update($req, $prov);
-        $this->assertInstanceOf(RedirectResponse::class, $resp);
+        $req = \App\Http\Requests\Admin\TicketProviderUpdateRequest::create('/', 'POST', ['opt1' => 0]);
+        $controller->update($req, $prov);
         $this->assertDatabaseHas('provider_settings', ['code' => 'opt1', 'value' => false]);
+    }
+
+    public function testUpdateSavesEnabledFlag()
+    {
+        $prov = TicketProvider::factory()->create(['name' => 'P1', 'enabled' => 1]);
+        $controller = new TicketProviderController();
+        $req = \App\Http\Requests\Admin\TicketProviderUpdateRequest::create('/', 'POST', ['enabled' => 0]);
+        $controller->update($req, $prov);
         $this->assertDatabaseHas('ticket_providers', ['id' => $prov->id, 'enabled' => 0]);
     }
 }
