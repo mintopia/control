@@ -27,8 +27,25 @@ class ThemeObserverTest extends TestCase
         $this->assertEquals(1, $default->fresh()->active);
     }
 
-    public function testOtherHandlersSkipped()
+    public function testSavedDeactivatesOtherActiveThemes()
     {
-        $this->markTestSkipped('ThemeObserver other handlers not implemented yet');
+        // Create one theme that is active and another that is inactive to avoid the
+        // observer deactivating the first during creation of the second.
+        $other = Theme::factory()->create(['name' => 'Theme Other', 'active' => true]);
+        $theme = Theme::factory()->create(['name' => 'Theme Current', 'active' => false]);
+
+        // Sanity: other is active, theme is not (we'll simulate activating it)
+        $this->assertEquals(1, $other->fresh()->active);
+        $this->assertEquals(0, $theme->fresh()->active);
+
+        // Simulate the theme having been saved as active (call saved observer)
+        $theme->active = 1;
+        $observer = new ThemeObserver();
+        $observer->saved($theme);
+
+        // After saved(), other active themes should be deactivated
+        $this->assertEquals(0, $other->fresh()->active);
+        // In-memory model remains active, but it wasn't persisted in this test
+        $this->assertEquals(1, $theme->active);
     }
 }
