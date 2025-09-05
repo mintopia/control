@@ -23,6 +23,50 @@ class PrometheusServiceProviderTest extends TestCase
         $this->assertTrue(true);
     }
 
+    public function testRegisterHandlesNullRedisValues()
+    {
+        $gaugeMock = \Mockery::mock(\Spatie\Prometheus\MetricTypes\Gauge::class);
+        $gaugeMock->shouldReceive('helpText')->atLeast()->once()->andReturnSelf();
+        $gaugeMock->shouldReceive('value')->atLeast()->once()->andReturnSelf();
+        $gaugeMock->shouldReceive('label')->atLeast()->zeroOrMoreTimes()->andReturnSelf();
+
+        Prometheus::shouldReceive('addGauge')->atLeast()->once()->andReturn($gaugeMock);
+        Redis::shouldReceive('get')->andReturn(null);
+        $provider = new \app\Providers\PrometheusServiceProvider(app());
+        $provider->register();
+        $this->assertTrue(true);
+    }
+
+    public function testRegisterHandlesEmptyMethodAndStatusMetrics()
+    {
+        $gaugeMock = \Mockery::mock(\Spatie\Prometheus\MetricTypes\Gauge::class);
+        $gaugeMock->shouldReceive('helpText')->atLeast()->once()->andReturnSelf();
+        $gaugeMock->shouldReceive('value')->atLeast()->once()->andReturnSelf();
+        $gaugeMock->shouldReceive('label')->atLeast()->once()->andReturnSelf();
+
+        Prometheus::shouldReceive('addGauge')->atLeast()->once()->andReturn($gaugeMock);
+        Redis::shouldReceive('keys')->andReturn([]);
+        Redis::shouldReceive('mget')->andReturn([]);
+        $provider = new \app\Providers\PrometheusServiceProvider(app());
+        $provider->register();
+        $this->assertTrue(true);
+    }
+
+    public function testRegisterHandlesMultipleMethodAndStatusMetrics()
+    {
+        $gaugeMock = \Mockery::mock(\Spatie\Prometheus\MetricTypes\Gauge::class);
+        $gaugeMock->shouldReceive('helpText')->atLeast()->once()->andReturnSelf();
+        $gaugeMock->shouldReceive('value')->atLeast()->once()->andReturnSelf();
+        $gaugeMock->shouldReceive('label')->atLeast()->once()->andReturnSelf();
+
+        Prometheus::shouldReceive('addGauge')->atLeast()->once()->andReturn($gaugeMock);
+        Redis::shouldReceive('keys')->andReturn(['metrics.http.method.GET', 'metrics.http.method.POST']);
+        Redis::shouldReceive('mget')->andReturn([5, 10]);
+        $provider = new \app\Providers\PrometheusServiceProvider(app());
+        $provider->register();
+        $this->assertTrue(true);
+    }
+
     public function testGetMultipleFromRedisReturnsArray()
     {
         Redis::shouldReceive('keys')->andReturnUsing(function () {

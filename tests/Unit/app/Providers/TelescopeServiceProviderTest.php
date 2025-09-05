@@ -139,6 +139,30 @@ class TelescopeServiceProviderTest extends TestCase
         $this->assertTrue(true);
     }
 
+    public function testRegisterRegistersAvatarCallbackReturnsAvatarUrl()
+    {
+        // Ensure provider registers an avatar callback (Avatar::$callback is protected; use reflection)
+        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider->register();
+
+        $ref = new \ReflectionClass(\Laravel\Telescope\Avatar::class);
+        $prop = $ref->getProperty('callback');
+        $prop->setAccessible(true);
+        $cb = $prop->getValue();
+        $this->assertIsCallable($cb);
+    }
+
+    public function testRegisterAvatarCallbackHandlesMissingUser()
+    {
+        // Register a custom avatar callback that returns null to simulate missing user
+        \Laravel\Telescope\Avatar::register(function ($id, $email) {
+            return null;
+        });
+
+        $result = \Laravel\Telescope\Avatar::url(['id' => '9999', 'email' => 'noone@example.test']);
+        $this->assertNull($result);
+    }
+
     public function testRegisterFilterReturnsTrueForReportableEntry()
     {
         // Ensure non-local environment

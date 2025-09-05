@@ -306,4 +306,85 @@ class AbstractSocialProviderTest extends TestCase
         $this->assertDatabaseHas('linked_accounts', ['external_id' => 'rid-6', 'user_id' => $result->id]);
         $this->assertDatabaseHas('email_addresses', ['email' => 'newuser@example.com', 'user_id' => $result->id]);
     }
+
+    public function test_redirect_calls_socialite_and_returns_redirect_response()
+    {
+        $driverStub = new class {
+            public function redirect()
+            {
+                return new RedirectResponse('https://example.test/redirect');
+            }
+        };
+        $factoryStub = new class($driverStub) {
+            private $d;
+            public function __construct($d)
+            {
+                $this->d = $d;
+            }
+            public function driver($n)
+            {
+                return $this->d;
+            }
+        };
+        $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
+
+        $prov = SocialProvider::factory()->create();
+        $provider = new DummySocialProvider($prov);
+        $resp = $provider->redirect();
+        $this->assertInstanceOf(RedirectResponse::class, $resp);
+    }
+
+    public function test_user_returns_local_user_when_account_belongs_to_local_user()
+    {
+        $prov = SocialProvider::factory()->create();
+        $user = User::factory()->create();
+
+        $linked = new LinkedAccount();
+        $linked->provider()->associate($prov);
+        $linked->user()->associate($user);
+        $linked->external_id = 'rid-local';
+        $linked->save();
+
+        $remoteUser = new class {
+            public function getId()
+            {
+                return 'rid-local';
+            }
+            public function getEmail()
+            {
+                return null;
+            }
+            public function getNickname()
+            {
+                return null;
+            }
+        };
+        $driverStub = new class($remoteUser) {
+            public $remote;
+            public function __construct($r)
+            {
+                $this->remote = $r;
+            }
+            public function user()
+            {
+                return $this->remote;
+            }
+        };
+        $factoryStub = new class($driverStub) {
+            private $d;
+            public function __construct($d)
+            {
+                $this->d = $d;
+            }
+            public function driver($n)
+            {
+                return $this->d;
+            }
+        };
+        $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
+
+        $provider = new DummySocialProvider($prov);
+        $result = $provider->user($user);
+        $this->assertEquals($user->id, $result->id);
+    }
 }
