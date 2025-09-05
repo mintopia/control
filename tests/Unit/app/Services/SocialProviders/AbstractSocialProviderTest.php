@@ -388,6 +388,67 @@ class AbstractSocialProviderTest extends TestCase
         $this->assertEquals($user->id, $result->id);
     }
 
+    public function test_user_throws_if_account_exists_and_localUser_id_mismatch_explicit()
+    {
+        $otherUser = User::factory()->create();
+        $localUser = User::factory()->create();
+
+        // Create a provider and a linked account that belongs to otherUser
+        $prov = SocialProvider::factory()->create(['code' => 'sp_' . uniqid()]);
+        $account = LinkedAccount::factory()->create(['user_id' => $otherUser->id, 'external_id' => 'rid-mismatch-' . uniqid()]);
+        $account->provider()->associate($prov);
+        $account->save();
+
+        // Stub Socialite to return a remote user with the same external id
+        $remoteUser = new class($account) {
+            private $acc;
+            public function __construct($acc)
+            {
+                $this->acc = $acc;
+            }
+            public function getId()
+            {
+                return $this->acc->external_id;
+            }
+            public function getEmail()
+            {
+                return null;
+            }
+            public function getNickname()
+            {
+                return null;
+            }
+        }($account);
+
+        $driverStub = new class($remoteUser) {
+            public $remote;
+            public function __construct($r)
+            {
+                $this->remote = $r;
+            }
+            public function user()
+            {
+                return $this->remote;
+            }
+        };
+        $factoryStub = new class($driverStub) {
+            private $d;
+            public function __construct($d)
+            {
+                $this->d = $d;
+            }
+            public function driver($n)
+            {
+                return $this->d;
+            }
+        };
+        $this->app->instance(\Laravel\Socialite\Contracts\Factory::class, $factoryStub);
+
+        $provider = new DummySocialProvider($prov);
+        $this->expectException(\App\Exceptions\SocialProviderException::class);
+        $provider->user($localUser);
+    }
+
     public function test_user_throws_if_account_exists_and_localUser_id_mismatch()
     {
         $provider = new DummySocialProvider();

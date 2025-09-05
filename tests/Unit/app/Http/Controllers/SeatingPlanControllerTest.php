@@ -455,4 +455,76 @@ class SeatingPlanControllerTest extends TestCase
         $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $resp);
         $this->assertStringContainsString($event->code, $resp->getTargetUrl());
     }
+
+    // Single-purpose: when !$seat->canPick($ticket->user) is true
+    public function testSelect_ShortCircuitsWhenSeatNotPickable()
+    {
+        $user = User::factory()->create();
+        // Event in future but seat disabled -> canPick should be false
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $seat = Seat::factory()->create(['seating_plan_id' => $plan->id, 'disabled' => 1]);
+        $type = TicketType::factory()->create(['has_seat' => true]);
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id, 'ticket_type_id' => $type->id]);
+
+        // Register route used by controller for redirectToRoute
+        $this->app['router']->get('/seating/{code}/{id?}', fn() => 'ok')->name('seatingplans.show');
+
+        $request = Request::create('/select', 'POST');
+        $request->setUserResolver(fn() => $user);
+        $request->setLaravelSession(app('session.store'));
+
+        $controller = new SeatingPlanController();
+        $resp = $controller->select($request, $event, $ticket, $seat);
+
+        $this->assertEquals(302, $resp->getStatusCode());
+        $this->assertNotEmpty($resp->getSession()->get('errorMessage'));
+    }
+
+    // Single-purpose: when $ticket->seat is true (old seat should be disassociated)
+    public function testSelect_ReassignsOldSeatWhenTicketHasSeat()
+    {
+        $user = User::factory()->create();
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+
+        $oldSeat = Seat::factory()->create(['seating_plan_id' => $plan->id, 'disabled' => 0]);
+        $newSeat = Seat::factory()->create(['seating_plan_id' => $plan->id, 'disabled' => 0]);
+
+        $type = TicketType::factory()->create(['has_seat' => true]);
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id, 'ticket_type_id' => $type->id]);
+
+        // associate old seat
+        $oldSeat->ticket()->associate($ticket);
+        $oldSeat->save();
+
+        $request = Request::create('/select', 'POST');
+        $request->setUserResolver(fn() => $user);
+
+        $controller = new SeatingPlanController();
+        $controller->select($request, $event, $ticket, $newSeat);
+
+        $this->assertNull($oldSeat->fresh()->ticket_id);
+        $this->assertEquals($ticket->id, $newSeat->fresh()->ticket_id);
+    }
+
+    // Single-purpose: when $ticket->seat is false (assign new seat)
+    public function testSelect_AssignsSeatWhenTicketHasNoSeat()
+    {
+        $user = User::factory()->create();
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+
+        $seat = Seat::factory()->create(['seating_plan_id' => $plan->id, 'disabled' => 0]);
+        $type = TicketType::factory()->create(['has_seat' => true]);
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id, 'ticket_type_id' => $type->id]);
+
+        $request = Request::create('/select', 'POST');
+        $request->setUserResolver(fn() => $user);
+
+        $controller = new SeatingPlanController();
+        $controller->select($request, $event, $ticket, $seat);
+
+        $this->assertEquals($ticket->id, $seat->fresh()->ticket_id);
+    }
 }
