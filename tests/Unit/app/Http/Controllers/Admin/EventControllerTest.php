@@ -14,6 +14,7 @@ use App\Models\Seat;
 use App\Models\Ticket;
 use App\Models\TicketType;
 use App\Models\TicketProvider;
+use App\Models\EventMapping;
 use App\Models\User;
 use Carbon\Carbon;
 
@@ -322,5 +323,63 @@ class EventControllerTest extends TestCase
         $controller = new EventController();
         $this->expectException(\Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
         $controller->pickseat($eventA, $ticketA, $seatB);
+    }
+
+    //VALIDATE EventController.php Function Index: whereHas(provider) changed to mappings
+    public function testIndexFiltersByExternalIdAndProviderId()
+    {
+        $event = Event::factory()->create(['name' => 'FilterExt']);
+        $provider = TicketProvider::factory()->create();
+        // create mapping linking provider to this event
+        EventMapping::factory()->create(['event_id' => $event->id, 'ticket_provider_id' => $provider->id, 'external_id' => 'EXT123']);
+
+        $controller = new EventController();
+
+        // filter by external_id
+        $resp = $controller->index(Request::create('/admin/events', 'GET', ['external_id' => 'EXT123']));
+        $items = $resp->getData()['events']->items();
+        $this->assertGreaterThanOrEqual(1, count($items));
+
+        // filter by provider_id
+        $resp = $controller->index(Request::create('/admin/events', 'GET', ['provider_id' => $provider->id]));
+        $items = $resp->getData()['events']->items();
+        $this->assertGreaterThanOrEqual(1, count($items));
+    }
+
+    public function testDeleteReturnsView()
+    {
+        $event = Event::factory()->create();
+        $controller = new EventController();
+        $resp = $controller->delete($event);
+        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $this->assertArrayHasKey('event', $resp->getData());
+    }
+
+    public function testSeatsCurrentTicketAndExcludesNonSeatedTypes()
+    {
+        $event = Event::factory()->create();
+        // seating plan exists so seats array is populated
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+
+        // one ticket type that requires a seat, one that does not
+        $seatable = TicketType::factory()->create(['has_seat' => true, 'event_id' => $event->id]);
+        $nonseatable = TicketType::factory()->create(['has_seat' => false, 'event_id' => $event->id]);
+
+        $user = User::factory()->create();
+        $ticketA = Ticket::factory()->create(['event_id' => $event->id, 'ticket_type_id' => $seatable->id, 'user_id' => $user->id]);
+        $ticketB = Ticket::factory()->create(['event_id' => $event->id, 'ticket_type_id' => $nonseatable->id, 'user_id' => $user->id]);
+
+        $controller = new EventController();
+        // pass ticket_id to set currentTicket
+        $resp = $controller->seats(Request::create('/admin/events/seats', 'GET', ['ticket_id' => $ticketA->id]), $event);
+        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $data = $resp->getData();
+        $this->assertArrayHasKey('currentTicket', $data);
+        $this->assertNotNull($data['currentTicket']);
+        // tickets returned should only include those with has_seat = true
+        $tickets = $data['tickets'];
+        foreach ($tickets as $t) {
+            $this->assertTrue((bool)$t->type->has_seat);
+        }
     }
 }
