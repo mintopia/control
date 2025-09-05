@@ -12,7 +12,7 @@ class SeatingPlanController extends Controller
     public function index(Request $request)
     {
         $query = Event::query();
-        if (!$request->user()->hasAnyRole(['admin','manager'])) {
+        if (!$request->user()->hasAnyRole(['admin', 'manager'])) {
             $query = $query->whereDraft(false);
         }
         $events = $query->orderBy('starts_at', 'DESC')->with('seatingPlans')->paginate();
@@ -21,10 +21,12 @@ class SeatingPlanController extends Controller
         ]);
     }
 
+    //VALIDATE This fixes session call and made unseat() robust when ticket has no seat
     public function show(Request $request, Event $event, ?Ticket $ticket = null)
     {
         if ($event->seating_locked) {
-            $request->session()->now('infoMessage', 'Seating is locked');
+            // $request->session()->now('infoMessage', 'Seating is locked');
+            $request->session()->put('infoMessage', 'Seating is locked');
         }
 
         if ($ticket && (!$ticket->canPickSeat() || !$ticket->canBeManagedBy($request->user()))) {
@@ -171,16 +173,26 @@ class SeatingPlanController extends Controller
 
     public function unseat(Request $request, Event $event, Ticket $ticket)
     {
+        // Determine the plan code to use in the redirect fragment. Use the ticket's current seat plan
+        // if available, otherwise fall back to the event code.
+        $planCode = $event->code;
+        if ($ticket->seat) {
+            $planCode = $ticket->seat->plan->code;
+        }
+
         if (!$ticket->canPickSeat() || !$ticket->canBeManagedBy($request->user())) {
-            return response()->redirectToRoute('seatingplans.show', $event->code)->with('errorMessage', 'You cannot unseat this ticket')->withFragment("tab-plan-{$seat->plan->code}");
+            return response()->redirectToRoute('seatingplans.show', $event->code)
+                ->with('errorMessage', 'You cannot unseat this ticket')
+                ->withFragment("tab-plan-{$planCode}");
         }
 
         if ($ticket->seat) {
             $seat = $ticket->seat;
             $seat->ticket()->disassociate();
             $seat->save();
+            $planCode = $seat->plan->code;
         }
 
-        return response()->redirectToRoute('seatingplans.show', $event->code)->withFragment("tab-plan-{$seat->plan->code}");
+        return response()->redirectToRoute('seatingplans.show', $event->code)->withFragment("tab-plan-{$planCode}");
     }
 }

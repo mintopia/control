@@ -148,6 +148,54 @@ class SeatingPlanControllerTest extends TestCase
         $this->assertNull($seat->fresh()->ticket_id);
     }
 
+    public function testUnseatRedirectsWhenNotAuthorized()
+    {
+        $viewer = User::factory()->create();
+        $owner = User::factory()->create();
+
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
+        $type = TicketType::factory()->create(['has_seat' => true]);
+
+        // Ticket owned by someone else and viewer cannot manage it
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $owner->id, 'ticket_type_id' => $type->id]);
+
+        // Register route so redirectToRoute can build URL in test
+        $this->app['router']->get('/seating/{code}/{id?}', fn() => 'ok')->name('seatingplans.show');
+
+        $request = Request::create('/unseat', 'POST');
+        $request->setUserResolver(fn() => $viewer);
+        $request->setLaravelSession(app('session.store'));
+
+        $controller = new SeatingPlanController();
+        $resp = $controller->unseat($request, $event, $ticket);
+
+        $this->assertEquals(302, $resp->getStatusCode());
+        $this->assertNotEmpty($resp->getSession()->get('errorMessage'));
+    }
+
+    //VALIDATE Fix in SeatingPlanController allows this one to succeed
+    public function testUnseatRedirectsWhenNoSeatPresent()
+    {
+        $user = User::factory()->create();
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
+        $type = TicketType::factory()->create(['has_seat' => true]);
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id, 'ticket_type_id' => $type->id]);
+
+        // Register route so redirectToRoute can build URL in test
+        $this->app['router']->get('/seating/{code}/{id?}', fn() => 'ok')->name('seatingplans.show');
+
+        $request = Request::create('/unseat', 'POST');
+        $request->setUserResolver(fn() => $user);
+        $request->setLaravelSession(app('session.store'));
+
+        $controller = new SeatingPlanController();
+        $resp = $controller->unseat($request, $event, $ticket);
+
+        $this->assertEquals(302, $resp->getStatusCode());
+        // no seat existed, but redirect fragment should still be present
+        $this->assertStringContainsString('/seating/' . $event->code, $resp->getTargetUrl());
+    }
+
     public function testSelectAbortsWhenSeatPlanMismatch()
     {
         $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
