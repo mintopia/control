@@ -306,6 +306,45 @@ class DiscordApiTest extends TestCase
         $this->assertArrayHasKey('1001', $members);
     }
 
+    public function testGetMemberRolesUsesCache()
+    {
+        $provider = SocialProvider::factory()->create();
+        ProviderSetting::factory()->create([
+            'provider_type' => SocialProvider::class,
+            'provider_id' => $provider->id,
+            'code' => 'token',
+            'value' => 'fake-token',
+        ]);
+
+        $discordApi = new DiscordApi($provider, 'guild123');
+
+        $fake = new class extends Client {
+            public $calls = [];
+            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+            {
+                $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
+                $data = [
+                    (object)[
+                        'user' => (object)['id' => '1', 'username' => 'alice'],
+                        'roles' => ['r1']
+                    ]
+                ];
+                return new \GuzzleHttp\Psr7\Response(200, [], json_encode($data));
+            }
+        };
+
+        $ref = new \ReflectionClass($discordApi);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($discordApi, $fake);
+
+        $first = $discordApi->getMemberRoles();
+        $second = $discordApi->getMemberRoles();
+
+        $this->assertEquals($first, $second);
+        $this->assertCount(1, $fake->calls, 'Client should only be called once due to caching');
+    }
+
     public function testAddAndRemoveDoNothingWhenMissingParams()
     {
         $provider = SocialProvider::factory()->create();

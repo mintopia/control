@@ -47,6 +47,21 @@ class SettingTest extends TestCase
         $this->assertEquals($decrypted, Setting::fetch($code));
     }
 
+    public function testFetchReturnsCachedUnencryptedValue()
+    {
+        $code = 'cached_unencrypted';
+        $cached = new Setting(['code' => $code]);
+        $cached->value = 'plain_value';
+        $cached->encrypted = 0;
+
+        \Illuminate\Support\Facades\Cache::shouldReceive('get')->with("settings.{$code}")->andReturn($cached);
+        \Illuminate\Support\Facades\Log::shouldReceive('debug')->atLeast()->once();
+        // ensure no decrypt is attempted
+        \Illuminate\Support\Facades\Crypt::shouldReceive('decrypt')->never();
+
+        $this->assertEquals('plain_value', Setting::fetch($code, 'default'));
+    }
+
     public function testToStringNameReturnsCode()
     {
         $s = new Setting(['code' => 'my_code']);

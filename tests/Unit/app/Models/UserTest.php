@@ -398,6 +398,37 @@ class UserTest extends TestCase
         $this->assertTrue($user->allowedSeatGroup($group3));
     }
 
+    public function testAllowedSeatGroupReturnsFalseWhenClanAssignmentButNoMemberships()
+    {
+        $user = new User();
+        $user->id = 77;
+
+        // Clan assignment but user has no clanMemberships relation
+        $group = new \App\Models\SeatGroup();
+        $assignment = (object)['assignment_type' => 'clan', 'assignment_type_id' => 5];
+        $group->setRelation('assignments', collect([$assignment]));
+
+        // Ensure user has empty clanMemberships
+        $user->setRelation('clanMemberships', collect([]));
+
+        $this->assertFalse($user->allowedSeatGroup($group));
+    }
+
+    public function testAllowedSeatGroupReturnsFalseWhenTicketTypeAssignmentButNoTickets()
+    {
+        $user = new User();
+        $user->id = 88;
+
+        // Ticket type assignment but user has no tickets
+        $group = new \App\Models\SeatGroup();
+        $assignment = (object)['assignment_type' => 'ticket_type', 'assignment_type_id' => 9];
+        $group->setRelation('assignments', collect([$assignment]));
+
+        $user->setRelation('tickets', collect([]));
+
+        $this->assertFalse($user->allowedSeatGroup($group));
+    }
+
     public function testAllowSeatGroup()
     {
         $user = new User();

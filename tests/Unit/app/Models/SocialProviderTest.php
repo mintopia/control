@@ -39,6 +39,46 @@ class SocialProviderTest extends TestCase
         $this->assertInstanceOf(SocialProviderContract::class, $result);
     }
 
+    public function testGetProviderUsesBoundContainerInstanceWhenAvailable()
+    {
+        // Create a provider and bind a custom stub into the container under its class name
+        $provider = new SocialProvider();
+        $provider->provider_class = TestSocialProviderStub::class;
+
+        // Create a distinct stub instance and bind it so app()->bound(...) returns true
+        $boundStub = new class implements SocialProviderContract {
+            public function __construct(?\App\Models\SocialProvider $provider = null, ?string $redirectUrl = null) {}
+            public function configMapping(): array
+            {
+                return [];
+            }
+            public function install(): \App\Models\SocialProvider
+            {
+                throw new \Exception('not used');
+            }
+            public function redirect(): \Illuminate\Http\RedirectResponse
+            {
+                return new \Illuminate\Http\RedirectResponse('/bound');
+            }
+            public function user(?\App\Models\User $localUser = null)
+            {
+                return 'bound-user';
+            }
+        };
+
+        // bind a factory so app()->make(...) returns our stub instance
+        app()->bind(TestSocialProviderStub::class, function () use ($boundStub) {
+            return $boundStub;
+        });
+
+        $result = $provider->getProvider();
+        // ensure the container binding exists and the returned object implements the contract
+        $this->assertTrue(app()->bound(TestSocialProviderStub::class));
+        $this->assertInstanceOf(SocialProviderContract::class, $result);
+        // verify behavior delegated to the bound instance (user returns our sentinel)
+        $this->assertEquals('bound-user', $result->user());
+    }
+
     public function testRedirectDelegatesToProvider()
     {
         $stub = new class implements SocialProviderContract {

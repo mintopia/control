@@ -262,6 +262,26 @@ class ClanControllerTest extends TestCase
         $this->assertNotEquals('AAAA-BBBB', $clan->fresh()->invite_code);
     }
 
+    public function testIndexFiltersByCode()
+    {
+        $c1 = Clan::factory()->create(['name' => 'WithCode']);
+        $c2 = Clan::factory()->create(['name' => 'Other']);
+
+        // Persist code values (factory may not populate 'code')
+        \Illuminate\Support\Facades\DB::table('clans')->where('id', $c1->id)->update(['code' => 'C100']);
+        \Illuminate\Support\Facades\DB::table('clans')->where('id', $c2->id)->update(['code' => 'O200']);
+        $c1->refresh();
+        $c2->refresh();
+
+        $controller = new ClanController();
+        $req = Request::create('/admin/clans', 'GET', ['code' => 'C100']);
+        $resp = $controller->index($req);
+        $this->assertInstanceOf(View::class, $resp);
+        $items = $resp->getData()['clans']->items();
+        $this->assertCount(1, $items);
+        $this->assertEquals($c1->id, $items[0]->id);
+    }
+
     protected function tearDown(): void
     {
         parent::tearDown();

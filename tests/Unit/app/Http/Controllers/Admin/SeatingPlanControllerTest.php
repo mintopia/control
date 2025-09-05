@@ -117,6 +117,35 @@ class SeatingPlanControllerTest extends TestCase
         $this->assertStringContainsString("seating-{$plan->id}-seats-", $cd);
     }
 
+    public function testExportStreamContainsCsvContent()
+    {
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+        // add a seat so export includes a row
+        $seat = new Seat();
+        $seat->plan()->associate($plan);
+        $seat->x = 10;
+        $seat->y = 20;
+        $seat->row = 'A';
+        $seat->number = 1;
+        $seat->label = 'S1';
+        $seat->save();
+
+        $controller = new SeatingPlanController();
+        $resp = $controller->export($event, $plan);
+        $this->assertInstanceOf(StreamedResponse::class, $resp);
+
+        // Get the underlying callback and capture its output
+        $callback = $resp->getCallback();
+        ob_start();
+        $callback();
+        $output = ob_get_clean();
+
+        // header row and seat label should be present in the CSV output
+        $this->assertStringContainsString('ID,X,Y,Row,Number,Label', $output);
+        $this->assertStringContainsString('S1', $output);
+    }
+
     public function testImportProcessCreatesSeatsAndImportView()
     {
         $event = Event::factory()->create();
@@ -145,5 +174,43 @@ class SeatingPlanControllerTest extends TestCase
 
         $view = $controller->import($event, $plan);
         $this->assertTrue(is_object($view));
+    }
+
+    public function testUpdateObjectSkipsImageSizingWhenNoImageUrl()
+    {
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+
+        $controller = new SeatingPlanController();
+
+        // Create a request without image_url so the sizing branch is skipped
+        $req = SeatingPlanUpdateRequest::create('/admin', 'POST', ['name' => 'NoImage']);
+
+        $ref = new \ReflectionClass($controller);
+        $method = $ref->getMethod('updateObject');
+        $method->setAccessible(true);
+        $method->invoke($controller, $plan, $req);
+
+        $fresh = $plan->fresh();
+        $this->assertNull($fresh->image_width);
+        $this->assertNull($fresh->image_height);
+    }
+
+    public function testUpdateObjectSetsDefaultScaleWhenMissing()
+    {
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+
+        $controller = new SeatingPlanController();
+
+        // No scale provided -> should default to 100
+        $req = SeatingPlanUpdateRequest::create('/admin', 'POST', ['name' => 'DefaultScale']);
+
+        $ref = new \ReflectionClass($controller);
+        $method = $ref->getMethod('updateObject');
+        $method->setAccessible(true);
+        $method->invoke($controller, $plan, $req);
+
+        $this->assertEquals(100, $plan->fresh()->scale);
     }
 }

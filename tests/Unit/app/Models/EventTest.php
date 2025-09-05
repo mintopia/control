@@ -328,4 +328,57 @@ class EventTest extends TestCase
         $this->assertIsArray($result);
         $this->assertEmpty($result);
     }
+
+    public function testGetAvailableEventMappingsReturnsEmptyWhenAllProviderEventsAreUsed()
+    {
+        $provider = TicketProvider::factory()->create(['enabled' => 1]);
+        // Use the TestProviderUsed which returns an event with id '2'
+        $provider->provider_class = TestProviderUsed::class;
+        $provider->save();
+
+        $event = Event::factory()->create();
+
+        // Create an EventMapping so the provider marks external id '2' as used
+        \Database\Factories\EventMappingFactory::new()->create([
+            'ticket_provider_id' => $provider->id,
+            'event_id' => $event->id,
+            'external_id' => '2',
+        ]);
+
+        $result = $event->getAvailableEventMappings(null);
+        $this->assertIsArray($result);
+        // All provider events are 'used' and no existing mapping provided, so nothing should be returned
+        $this->assertEmpty($result);
+    }
+
+    public function testGetAvailableTicketMappingsReturnsEmptyWhenAllProviderTypesAreUsed()
+    {
+        $provider = TicketProvider::factory()->create(['enabled' => 1]);
+        // Bind a provider implementation that returns a used ticket type id 'tX'
+        app()->instance(TestProviderTypesUsed::class, new TestProviderTypesUsed());
+        $provider->provider_class = TestProviderTypesUsed::class;
+        $provider->save();
+
+        $event = Event::factory()->create();
+
+        // Create an event mapping so the provider has a providerEvent for this event
+        \Database\Factories\EventMappingFactory::new()->create([
+            'ticket_provider_id' => $provider->id,
+            'event_id' => $event->id,
+            'external_id' => 'evt1',
+        ]);
+
+        // Create a ticket type for this event and map it to the provider with external id 'tX' to mark it used
+        $ticketType = \Database\Factories\TicketTypeFactory::new()->create(['event_id' => $event->id]);
+        \App\Models\TicketTypeMapping::create([
+            'ticket_type_id' => $ticketType->id,
+            'ticket_provider_id' => $provider->id,
+            'external_id' => 'tX',
+        ]);
+
+        $result = $event->getAvailableTicketMappings(null);
+        $this->assertIsArray($result);
+        // All provider types are considered 'used' and no existing mapping provided, so nothing should be returned
+        $this->assertEmpty($result);
+    }
 }

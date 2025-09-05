@@ -342,4 +342,62 @@ class UserControllerTest extends TestCase
         $this->assertFalse($fresh->roles()->whereCode('r2')->exists());
         $this->assertTrue($fresh->roles()->whereCode('r3')->exists());
     }
+
+    public function testUpdateSetsTermsAgreedAtWhenPreviouslyNull()
+    {
+        $user = User::factory()->create(['terms_agreed_at' => null]);
+
+        $controller = new UserController();
+
+        $payload = [
+            'nickname' => $user->nickname,
+            'name' => $user->name,
+            'terms' => 1,
+            'first_login' => 0,
+            'suspended' => 0,
+            'roles' => [],
+        ];
+        $req = \App\Http\Requests\Admin\UserUpdateRequest::create('/', 'POST', $payload);
+        try {
+            $controller->update($req, $user);
+        } catch (UrlGenerationException $ex) {
+            // ignore
+        }
+
+        $fresh = $user->fresh();
+        $this->assertNotNull($fresh->terms_agreed_at);
+        $this->assertInstanceOf(\Carbon\Carbon::class, $fresh->terms_agreed_at);
+        // timestamp should be very recent
+        $this->assertLessThanOrEqual(5, now()->diffInSeconds($fresh->terms_agreed_at));
+    }
+
+    public function testUpdateKeepsExistingRoleAndDoesNotDuplicate()
+    {
+        $user = User::factory()->create();
+        $r1 = Role::create(['code' => 'keep', 'name' => 'Keep']);
+        // attach existing role
+        $user->roles()->attach($r1->id);
+
+        $controller = new UserController();
+
+        $payload = [
+            'nickname' => $user->nickname,
+            'name' => $user->name,
+            'terms' => 0,
+            'first_login' => 0,
+            'suspended' => 0,
+            'roles' => ['keep'],
+        ];
+        $req = \App\Http\Requests\Admin\UserUpdateRequest::create('/', 'POST', $payload);
+        try {
+            $controller->update($req, $user);
+        } catch (UrlGenerationException $ex) {
+            // ignore
+        }
+
+        $fresh = $user->fresh();
+        // role should still be attached and not duplicated
+        $this->assertTrue($fresh->roles()->whereCode('keep')->exists());
+        $this->assertCount(1, $fresh->roles);
+    }
 }
