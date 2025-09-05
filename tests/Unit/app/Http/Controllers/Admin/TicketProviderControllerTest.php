@@ -74,4 +74,24 @@ class TicketProviderControllerTest extends TestCase
         $controller->update($req, $prov);
         $this->assertDatabaseHas('ticket_providers', ['id' => $prov->id, 'enabled' => 0]);
     }
+
+    public function testBooleanSettingIsClearedWhenMissingFromRequest()
+    {
+        $prov = TicketProvider::factory()->create(['name' => 'P2']);
+
+        // create boolean provider setting that is true
+        $s1 = new ProviderSetting();
+        $s1->provider()->associate($prov);
+        $s1->name = 'AutoSync';
+        $s1->code = 'auto_sync';
+        $s1->type = SettingType::stBoolean;
+        $s1->value = true;
+        $s1->save();
+
+        $controller = new TicketProviderController();
+        // request does not include 'auto_sync' so elseif branch should set it false
+        $req = \App\Http\Requests\Admin\TicketProviderUpdateRequest::create('/', 'POST', ['enabled' => 1]);
+        $controller->update($req, $prov);
+        $this->assertDatabaseHas('provider_settings', ['code' => 'auto_sync', 'value' => false]);
+    }
 }

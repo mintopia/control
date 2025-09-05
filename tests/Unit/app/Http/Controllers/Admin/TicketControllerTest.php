@@ -11,13 +11,12 @@ use App\Models\TicketType;
 use App\Models\TicketProvider;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 
 class TicketControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    //FIX Illuminate\Database\QueryException: SQLSTATE[HY000]: General error: 1 ambiguous column name: id (Connection: sqlite, SQL: select count(*) as aggregate from "tickets" left join "seats" on "seats"."ticket_id" = "tickets"."id" where "id" = 1 and exists (select * from "events" where "tickets"."event_id" = "events"."id" and "code" = EVT-5290))
-    // This may need adaptation to a migration file?
     public function testIndexAndViews()
     {
         $event = Event::factory()->create();
@@ -147,5 +146,185 @@ class TicketControllerTest extends TestCase
         }
 
         $this->assertDatabaseCount('tickets', 1);
+    }
+
+    public function testIndexFiltersById()
+    {
+        $event = Event::factory()->create();
+        $type = TicketType::factory()->for($event)->create();
+        $provider = TicketProvider::factory()->create();
+        $ticket = Ticket::factory()->for($event)->for($type, 'type')->for($provider, 'provider')->create();
+
+        $controller = new TicketController();
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['id' => $ticket->id]));
+        $items = $resp->getData()['tickets']->items();
+        $this->assertCount(1, $items);
+        $this->assertEquals($ticket->id, $items[0]->id);
+    }
+
+    public function testIndexFiltersByUserEventTypeExternalProviderSeatOriginalEmail()
+    {
+        $event = Event::factory()->create(['code' => 'EVX']);
+        $type = TicketType::factory()->for($event)->create();
+        $provider = TicketProvider::factory()->create();
+        $user = \App\Models\User::factory()->create(['nickname' => 'Zed']);
+
+        $ticket = Ticket::factory()->for($event)->for($type, 'type')->for($provider, 'provider')->create(['user_id' => $user->id, 'external_id' => 'EXT-1', 'original_email' => 'orig@example.com']);
+
+        // seat
+        $seat = \App\Models\Seat::factory()->create(['ticket_id' => $ticket->id, 'label' => 'S1']);
+
+        $controller = new TicketController();
+
+        // user_id
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['user_id' => $user->id]));
+        $this->assertGreaterThanOrEqual(1, count($resp->getData()['tickets']->items()));
+
+        // event by code
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['event' => $event->code]));
+        $this->assertGreaterThanOrEqual(1, count($resp->getData()['tickets']->items()));
+
+        // ticket_type_id
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['ticket_type_id' => $type->id]));
+        $this->assertGreaterThanOrEqual(1, count($resp->getData()['tickets']->items()));
+
+        // external_id
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['external_id' => 'EXT-1']));
+        $this->assertGreaterThanOrEqual(1, count($resp->getData()['tickets']->items()));
+
+        // provider_id
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['provider_id' => $provider->id]));
+        $this->assertGreaterThanOrEqual(1, count($resp->getData()['tickets']->items()));
+
+        // seat
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['seat' => 'S1']));
+        $this->assertGreaterThanOrEqual(1, count($resp->getData()['tickets']->items()));
+
+        // original_email
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['original_email' => 'orig@example.com']));
+        $this->assertGreaterThanOrEqual(1, count($resp->getData()['tickets']->items()));
+    }
+
+    public function testIndexOrderCreatedAtAndExternalReference()
+    {
+        $event = Event::factory()->create();
+        $type = TicketType::factory()->for($event)->create();
+        $provider = TicketProvider::factory()->create();
+        $a = Ticket::factory()->for($event)->for($type, 'type')->for($provider, 'provider')->create(['created_at' => now()->subDay(), 'external_id' => 'A', 'reference' => 'R1']);
+        $b = Ticket::factory()->for($event)->for($type, 'type')->for($provider, 'provider')->create(['created_at' => now(), 'external_id' => 'B', 'reference' => 'R2']);
+
+        $controller = new TicketController();
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['order' => 'created_at', 'order_direction' => 'desc']));
+        $items = $resp->getData()['tickets']->items();
+        $this->assertEquals($b->id, $items[0]->id);
+
+        // external_id order asc
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['order' => 'external_id', 'order_direction' => 'asc']));
+        $items = $resp->getData()['tickets']->items();
+        $this->assertEquals($a->id, $items[0]->id);
+    }
+
+    public function testIndexOrderByEvent()
+    {
+        $controller = new TicketController();
+
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['order' => 'event', 'order_direction' => 'asc']));
+        $items = $resp->getData()['tickets']->items();
+        $eventNames = array_map(fn($i) => $i->event->name, $items);
+        $sortedEventNames = $eventNames;
+        sort($sortedEventNames, SORT_STRING);
+        $this->assertEquals($sortedEventNames, $eventNames);
+    }
+
+    public function testIndexOrderByType()
+    {
+        $controller = new TicketController();
+
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['order' => 'type', 'order_direction' => 'asc']));
+        $items = $resp->getData()['tickets']->items();
+        $typeNames = array_map(fn($i) => $i->type->name, $items);
+        $sortedTypeNames = $typeNames;
+        sort($sortedTypeNames, SORT_STRING);
+        $this->assertEquals($sortedTypeNames, $typeNames);
+    }
+
+    public function testIndexOrderByUser()
+    {
+        $e1 = Event::factory()->create(['name' => 'Alpha']);
+        $e2 = Event::factory()->create(['name' => 'Beta']);
+        $type = TicketType::factory()->for($e1)->create(['name' => 'TypeA']);
+        $provider = TicketProvider::factory()->create();
+        $controller = new TicketController();
+        $typeA = TicketType::factory()->for($e1)->create(['name' => 'AAA']);
+        $typeB = TicketType::factory()->for($e1)->create(['name' => 'ZZZ']);
+
+        // order by user
+        $uA = \App\Models\User::factory()->create(['nickname' => 'AA']);
+        $uB = \App\Models\User::factory()->create(['nickname' => 'ZZ']);
+        $tua = Ticket::factory()->for($e1)->for($typeA, 'type')->for($provider, 'provider')->create(['user_id' => $uA->id]);
+        $tub = Ticket::factory()->for($e1)->for($typeA, 'type')->for($provider, 'provider')->create(['user_id' => $uB->id]);
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['order' => 'user', 'order_direction' => 'asc']));
+        $items = $resp->getData()['tickets']->items();
+        $nicknames = array_map(fn($i) => $i->user->nickname ?? '', $items);
+        $sortedNicks = $nicknames;
+        sort($sortedNicks, SORT_STRING);
+        $this->assertEquals($sortedNicks, $nicknames);
+    }
+
+    public function testIndexOrderBySeat()
+    {
+        $e1 = Event::factory()->create(['name' => 'Alpha']);
+        $provider = TicketProvider::factory()->create();
+        $controller = new TicketController();
+        $typeA = TicketType::factory()->for($e1)->create(['name' => 'AAA']);
+        $typeB = TicketType::factory()->for($e1)->create(['name' => 'ZZZ']);
+        $ta = Ticket::factory()->for($e1)->for($typeA, 'type')->for($provider, 'provider')->create();
+        $tb = Ticket::factory()->for($e1)->for($typeB, 'type')->for($provider, 'provider')->create();
+
+        // order by seat
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $e1->id]);
+        $seat1 = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'row' => 'A', 'number' => 1]);
+        $seat2 = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'row' => 'B', 'number' => 1]);
+        // assign seats to tickets
+        $seat1->ticket()->associate($ta);
+        $seat1->save();
+        $seat2->ticket()->associate($tb);
+        $seat2->save();
+
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['order' => 'seat', 'order_direction' => 'asc']));
+        $items = $resp->getData()['tickets']->items();
+        $seatKeys = array_map(fn($i) => ($i->seat->row ?? '') . str_pad($i->seat->number ?? 0, 4, '0', STR_PAD_LEFT), $items);
+        $sortedSeatKeys = $seatKeys;
+        sort($sortedSeatKeys, SORT_STRING);
+        $this->assertEquals($sortedSeatKeys, $seatKeys);
+    }
+
+    public function testIndexOrderByDefault()
+    {
+        $e1 = Event::factory()->create(['name' => 'Alpha']);
+        $controller = new TicketController();
+
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', []));
+        $items = $resp->getData()['tickets']->items();
+        $ids = array_map(fn($i) => $i->id, $items);
+        $sorted = $ids;
+        sort($sorted, SORT_NUMERIC);
+        $this->assertEquals($sorted, $ids);
+    }
+
+    public function testCreateAssociatesEvent()
+    {
+        $controller = new TicketController();
+        $event = Event::factory()->create(['code' => 'EVX2']);
+        $resp = $controller->create(Request::create('/admin/tickets/create', 'GET', ['event' => $event->code]));
+        $this->assertTrue(is_object($resp));
+        $this->assertEquals($event->id, $resp->getData()['ticket']->event->id);
+    }
+
+    public function testImportReturnsView()
+    {
+        $controller = new TicketController();
+        $resp = $controller->import();
+        $this->assertTrue(is_object($resp));
     }
 }

@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\TicketTypeController;
 use App\Models\Event;
 use App\Models\TicketType;
 
+// ...existing code...
+
 class TicketTypeControllerTest extends TestCase
 {
     use RefreshDatabase;
@@ -33,6 +35,27 @@ class TicketTypeControllerTest extends TestCase
         $type = TicketType::factory()->for($event)->create();
         $c = new TicketTypeController();
         $this->assertTrue(is_object($c->edit(null, $event, $type)));
+    }
+
+    public function testCreateAndEditWithDiscordRoles()
+    {
+        $event = Event::factory()->create();
+        $type = TicketType::factory()->for($event)->create();
+
+        // create a PHPUnit mock of the DiscordApi so no network calls are made
+        $discord = $this->createMock(\App\Services\DiscordApi::class);
+        $discord->method('getRoles')->willReturn(['r1' => 'Role One', 'r2' => 'Role Two']);
+
+        $c = new TicketTypeController();
+        $createResp = $c->create($discord, $event);
+        $this->assertTrue(is_object($createResp));
+        $this->assertArrayHasKey('roles', $createResp->getData());
+        $this->assertArrayHasKey('r1', $createResp->getData()['roles']);
+
+        $editResp = $c->edit($discord, $event, $type);
+        $this->assertTrue(is_object($editResp));
+        $this->assertArrayHasKey('roles', $editResp->getData());
+        $this->assertArrayHasKey('r2', $editResp->getData()['roles']);
     }
 
     public function testDeleteReturnsView()

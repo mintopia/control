@@ -91,6 +91,33 @@ class TicketProviderStub99 implements \App\Services\Contracts\TicketProviderCont
     public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
 }
 
+class TicketProviderStubObj implements \App\Services\Contracts\TicketProviderContract
+{
+    public function __construct(?\App\Models\TicketProvider $provider = null) {}
+    public function configMapping(): array
+    {
+        return [];
+    }
+    public function install(): \App\Models\TicketProvider
+    {
+        return new \App\Models\TicketProvider();
+    }
+    public function processWebhook(\Illuminate\Http\Request $request): bool
+    {
+        return true;
+    }
+    public function syncTickets(string|\App\Models\EmailAddress $email): void {}
+    public function getEvents(): array
+    {
+        return ['EV1' => 'E1'];
+    }
+    public function getTicketTypes(string $eventExternalId): array
+    {
+        return [(object)['id' => '11', 'name' => 'First'], (object)['id' => '22', 'name' => 'Second'], (object)['id' => '42', 'name' => 'Matched']];
+    }
+    public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
+}
+
 class TicketTypeMappingControllerTest extends TestCase
 {
     use RefreshDatabase;
@@ -209,6 +236,41 @@ class TicketTypeMappingControllerTest extends TestCase
         }
 
         $this->assertEquals('New Name', $mapping->fresh()->name);
+    }
+
+    //VALIDATE Normalisation for Types in TicketProvider
+    public function testUpdateObjectSelectsMatchingObjectTypeFromProvider()
+    {
+        $event = Event::factory()->create();
+        $type = TicketType::factory()->for($event)->create();
+        $provider = \App\Models\TicketProvider::factory()->create();
+        $mapping = new \App\Models\TicketTypeMapping();
+        $mapping->type()->associate($type);
+        $mapping->provider()->associate($provider);
+        $mapping->external_id = 'x1';
+        $mapping->save();
+
+        // use the concrete stub class that returns objects
+        $provider->provider_class = TicketProviderStubObj::class;
+        $provider->save();
+        $this->app->bind(TicketProviderStubObj::class, function () {
+            return new TicketProviderStubObj();
+        });
+
+        $controller = new TicketTypeMappingController();
+        // ensure there's an EventMapping linking provider to event so getTicketTypes will be invoked
+        $em = new \App\Models\EventMapping();
+        $em->provider()->associate($provider);
+        $em->event()->associate($event);
+        $em->external_id = 'EV1';
+        $em->save();
+        $req2 = \App\Http\Requests\Admin\TicketTypeMappingUpdateRequest::create('/', 'POST', ['external_id' => $provider->id . ':42']);
+        $ref = new \ReflectionClass($controller);
+        $method = $ref->getMethod('updateObject');
+        $method->setAccessible(true);
+        $method->invoke($controller, $mapping, $req2);
+
+        $this->assertEquals('Matched', $mapping->fresh()->name);
     }
 
     public function testDestroyDeletesMapping()
