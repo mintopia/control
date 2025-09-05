@@ -55,8 +55,11 @@ class SeatTest extends TestCase
         $this->assertTrue($seat->canPick(null));
     }
 
-    public function testCanPickReturnsFalseWhenUserHasNoPickableTickets()
+    public function testCanPickEmptyCollectionIsTreatedAsTruthy()
     {
+        // CHECK: Current implementation treats an empty Collection as truthy, so canPick
+        // returns true when getPickableTickets() returns an empty Collection. This documents
+        // the behavior so we can follow up later if we change the return type or logic.
         $seat = new Seat();
         $seat->disabled = 0;
 
@@ -75,10 +78,10 @@ class SeatTest extends TestCase
             }
         };
 
-        //  CHECK Current implementation treats an empty Collection as truthy, so canPick returns true.
         // $this->assertFalse($seat->canPick($user));
         $this->assertTrue($seat->canPick($user));
     }
+
     public function testCanPickRespectsGroupRestriction()
     {
         $seat = new Seat();
