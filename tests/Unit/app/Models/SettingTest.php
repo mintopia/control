@@ -70,5 +70,45 @@ class SettingTest extends TestCase
         // Second fetch should hit the in-memory cache (static::$cached) and return same
         $this->assertEquals('dbval', Setting::fetch($code, $default));
     }
-    // Additional DB-backed or duplicated tests removed to avoid conflicts with cache/db in unit tests.
+
+    public function testFetchReturnsDefaultWhenDbSettingMissing()
+    {
+        $code = 'missing_setting';
+        $default = 'fallback';
+        // Ensure no Setting exists for this code
+        $this->assertNull(Setting::whereCode($code)->first());
+        $result = Setting::fetch($code, $default);
+        $this->assertEquals($default, $result);
+        // static::$cached should be set to null for this code
+        $ref = new \ReflectionClass(Setting::class);
+        $prop = $ref->getProperty('cached');
+        $prop->setAccessible(true);
+        $cached = $prop->getValue();
+        $this->assertArrayHasKey($code, $cached);
+        $this->assertNull($cached[$code]);
+    }
+
+    public function testFetchCachesNullAndCallsCachePutWhenDbMissingAndCacheEmpty()
+    {
+        $code = 'missing2';
+        $default = 'fallback2';
+        $key = "settings.{$code}";
+
+        // Make Cache.get return null so code checks DB
+        \Illuminate\Support\Facades\Cache::shouldReceive('get')->with($key)->andReturn(null);
+        // Expect Cache::put called with null value when DB record missing
+        \Illuminate\Support\Facades\Cache::shouldReceive('put')->with($key, null)->once();
+
+        $this->assertNull(Setting::whereCode($code)->first());
+        $result = Setting::fetch($code, $default);
+        $this->assertEquals($default, $result);
+
+        // static::$cached should have the code set to null
+        $ref = new \ReflectionClass(Setting::class);
+        $prop = $ref->getProperty('cached');
+        $prop->setAccessible(true);
+        $cached = $prop->getValue();
+        $this->assertArrayHasKey($code, $cached);
+        $this->assertNull($cached[$code]);
+    }
 }

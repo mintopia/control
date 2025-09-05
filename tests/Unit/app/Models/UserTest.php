@@ -321,6 +321,55 @@ class UserTest extends TestCase
         $this->assertTrue($user->removeDiscordRole('role-2'));
     }
 
+    public function testAddDiscordRoleReturnsFalseWhenNoAccount()
+    {
+        $user = new User();
+        $this->assertFalse($user->addDiscordRole('role-x'));
+    }
+
+    public function testRemoveDiscordRoleReturnsFalseWhenNoAccount()
+    {
+        $user = new User();
+        $this->assertFalse($user->removeDiscordRole('role-x'));
+    }
+
+    public function testAddDiscordRoleHandlesApiException()
+    {
+        // Create a user with a discord linked account
+        $user = User::factory()->create();
+        $provider = \App\Models\SocialProvider::factory()->create(['code' => 'discord', 'auth_enabled' => 1]);
+        \App\Models\LinkedAccount::factory()->create(['user_id' => $user->id, 'social_provider_id' => $provider->id, 'external_id' => 'ext-999']);
+
+        $mockApi = \Mockery::mock(\App\Services\DiscordApi::class);
+        $mockApi->shouldReceive('addRoleToMember')->andThrow(new \Exception('api error'));
+        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+
+        $this->assertFalse($user->addDiscordRole('role-err'));
+    }
+
+    public function testSyncTicketsForcedCallsEmailSync()
+    {
+        $user = User::factory()->create();
+        // create an email address related to the user that will be persisted
+        $email = \App\Models\EmailAddress::factory()->create(['user_id' => $user->id, 'verified_at' => now()]);
+
+        // Call syncTickets with force=true to ensure it runs even if recently synced
+        $user->syncTickets(true, true);
+
+        // tickets_synced_at should be updated
+        $this->assertNotNull($user->fresh()->tickets_synced_at);
+    }
+
+    public function testAllowedSeatGroupReturnsFalseWhenNoAssignmentsMatch()
+    {
+        $user = new User();
+        $user->id = 123;
+        $group = new \App\Models\SeatGroup();
+        $assignment = (object)['assignment_type' => 'user', 'assignment_type_id' => 999];
+        $group->setRelation('assignments', collect([$assignment]));
+        $this->assertFalse($user->allowedSeatGroup($group));
+    }
+
     public function testAllowedSeatGroupByUserClanAndTicketType()
     {
         $user = new User();
@@ -361,5 +410,78 @@ class UserTest extends TestCase
         $user = new User();
         $user->allow_seat_group = false;
         $this->assertFalse($user->allow_seat_group);
+    }
+
+    public function testAllowedSeatGroupRespectsBreakAndChecksSubsequentAssignments()
+    {
+        $user = new User();
+        $user->id = 42;
+
+        // First assignment is a user assignment that does not match -> hits `break`
+        $assignment1 = (object)['assignment_type' => 'user', 'assignment_type_id' => 99];
+
+        // Second assignment is a ticket_type that should match the user's tickets
+        $ticketType = (object)['id' => 7];
+        $ticket = (object)['type' => $ticketType];
+        $user->setRelation('tickets', collect([$ticket]));
+        $assignment2 = (object)['assignment_type' => 'ticket_type', 'assignment_type_id' => 7];
+
+        $group = new \App\Models\SeatGroup();
+        $group->setRelation('assignments', collect([$assignment1, $assignment2]));
+
+        // Should return true because second assignment matches; ensures the break didn't exit outer loop
+        $this->assertTrue($user->allowedSeatGroup($group));
+    }
+
+    public function testAddDiscordRoleReturnsFalseWhenApiMissing()
+    {
+        $user = User::factory()->create();
+        $provider = \App\Models\SocialProvider::factory()->create(['code' => 'discord', 'auth_enabled' => 1]);
+        \App\Models\LinkedAccount::factory()->create(['user_id' => $user->id, 'social_provider_id' => $provider->id, 'external_id' => 'ext-api-missing']);
+
+        // Bind null so resolve() returns falsy
+        $this->app->instance(\App\Services\DiscordApi::class, null);
+
+        $this->assertFalse($user->addDiscordRole('role-zzz'));
+    }
+
+    public function testRemoveDiscordRoleReturnsFalseWhenApiMissing()
+    {
+        $user = User::factory()->create();
+        $provider = \App\Models\SocialProvider::factory()->create(['code' => 'discord', 'auth_enabled' => 1]);
+        \App\Models\LinkedAccount::factory()->create(['user_id' => $user->id, 'social_provider_id' => $provider->id, 'external_id' => 'ext-api-missing']);
+
+        $this->app->instance(\App\Services\DiscordApi::class, null);
+
+        $this->assertFalse($user->removeDiscordRole('role-yyy'));
+    }
+
+    public function testRemoveDiscordRoleHandlesApiException()
+    {
+        $user = User::factory()->create();
+        $provider = \App\Models\SocialProvider::factory()->create(['code' => 'discord', 'auth_enabled' => 1]);
+        \App\Models\LinkedAccount::factory()->create(['user_id' => $user->id, 'social_provider_id' => $provider->id, 'external_id' => 'ext-exc']);
+
+        $mockApi = \Mockery::mock(\App\Services\DiscordApi::class);
+        $mockApi->shouldReceive('removeRoleFromMember')->andThrow(new \Exception('boom'));
+        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+
+        $this->assertFalse($user->removeDiscordRole('role-exc'));
+    }
+
+    public function testGetPickableTicketsReturnsCachedWhenSet()
+    {
+        $user = User::factory()->make();
+        // create a dummy cached collection
+        $cached = collect([(object)['id' => 1]]);
+
+        $ref = new \ReflectionClass($user);
+        $prop = $ref->getProperty('pickableTickets');
+        $prop->setAccessible(true);
+        $prop->setValue($user, $cached);
+
+        $event = \App\Models\Event::factory()->create();
+        $result = $user->getPickableTickets($event);
+        $this->assertSame($cached, $result);
     }
 }
