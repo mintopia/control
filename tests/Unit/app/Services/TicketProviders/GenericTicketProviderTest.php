@@ -364,6 +364,91 @@ class GenericTicketProviderTest extends TestCase
         $this->assertDatabaseHas('tickets', ['external_id' => 't1']);
     }
 
+    public function test_process_ticket_deletes_existing_when_voided()
+    {
+        $provider = $this->createProvider();
+
+        // create an existing ticket that should be deleted when status is voided
+        $existing = Ticket::factory()->create([
+            'ticket_provider_id' => $provider->provider->id,
+            'external_id' => 'del-me',
+        ]);
+
+        $data = (object)[
+            'id' => 'del-me',
+            'status' => 'voided',
+            'event_id' => 'unused',
+            'ticket_type_id' => 'unused',
+            'email' => 'nobody@example.com',
+        ];
+
+        $result = $provider->processTicketPublic($data);
+
+        // The DB row should have been deleted
+        $this->assertDatabaseMissing('tickets', ['external_id' => 'del-me']);
+    }
+
+    public function test_process_ticket_returns_existing_when_not_voided()
+    {
+        $provider = $this->createProvider();
+
+        $existing = Ticket::factory()->create([
+            'ticket_provider_id' => $provider->provider->id,
+            'external_id' => 'keep-me',
+        ]);
+
+        $data = (object)[
+            'id' => 'keep-me',
+            'status' => 'valid',
+            'event_id' => 'unused',
+            'ticket_type_id' => 'unused',
+            'email' => 'nobody@example.com',
+        ];
+
+        $result = $provider->processTicketPublic($data);
+        $this->assertInstanceOf(Ticket::class, $result);
+        $this->assertDatabaseHas('tickets', ['external_id' => 'keep-me']);
+    }
+
+    public function test_sync_tickets_assigns_user_when_emailaddress_provided()
+    {
+        $provider = $this->createProvider(['endpoint' => 'https://api.example.test', 'apikey' => 'key']);
+
+        // Create a user and verified email
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['email' => 'u@example.com', 'verified_at' => now(), 'user_id' => $user->id]);
+
+        // existing ticket in DB without a user
+        $existing = Ticket::factory()->create([
+            'ticket_provider_id' => $provider->provider->id,
+            'external_id' => 'valid1',
+            'user_id' => null,
+        ]);
+
+        // remote tickets: one valid ticket matching existing
+        $resp = new Response(200, [], json_encode((object)[
+            'tickets' => [
+                (object)['id' => 'valid1', 'status' => 'valid', 'event_id' => 'evtA', 'ticket_type_id' => 'typeA', 'email' => 'u@example.com', 'description' => 'd', 'reference' => 'r'],
+            ],
+            'hasMore' => false,
+        ]));
+
+        $mock = new MockHandler([$resp]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+        $ref = new \ReflectionClass($provider);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, $client);
+
+        // Call syncTickets with the EmailAddress instance so provider->syncTickets will attempt to assign the user
+        $provider->syncTickets($email);
+
+        $existing->refresh();
+        $this->assertNotNull($existing->user_id, 'Ticket should have been assigned to the user');
+        $this->assertEquals($user->id, $existing->user_id);
+    }
+
     public function test_get_client()
     {
         $provider = $this->createProvider();

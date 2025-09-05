@@ -364,7 +364,6 @@ class TicketTailorProviderTest extends TestCase
         $this->assertInstanceOf(Client::class, $dummy->getClientPublic());
     }
 
-    //FIX Tests
     public function test_get_type()
     {
         $provider = $this->createProvider();

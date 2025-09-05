@@ -247,7 +247,6 @@ class WooCommerceProviderTest extends TestCase
         $this->assertIsArray($dummy->getEventsPublic());
     }
 
-    //FIX Tests
     public function test_get_type()
     {
         $provider = $this->createProvider();

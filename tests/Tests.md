@@ -150,26 +150,27 @@ Code Coverage: We currently have 50% coverage across the board.
     - [ ] `Controllers`
       - [ ] Admin
         - [ ] `ClanController`
-        - [ ] `EmailAddressController`
-        - [ ] `EventMappingController`
-        - [ ] `EventTicketProviderController` (new)
-        - [ ] Add missing Controller files
+        - [x] `EmailAddressController`
+        - [x] `EventMappingController`
+        - [ ] `EventTicketProviderController` (not defined yet?)
+        - [x] Add missing Controller files
+        - [ ] `SettingController` (update, detail)
       - [ ] `ClanController`
       - [ ] `UserController`
     - [ ] `Requests`
       - [ ] `TicketTransferRequest`
     - [ ] `Middleware`
       - [ ] `RedirectIfAuthenticated` (new)
-  - [x] `Models`
-    - [x] `ClanRole`
-    - [x] `Event`
-    - [x] `Role`
-    - [x] `Seat`
-    - [x] `SeatGroup`
-    - [x] `SeatingPlan`
-    - [x] `Ticket`
-    - [x] `TicketProvider`
-    - [x] `User`
+  - [ ] `Models`
+    - [ ] `ClanRole`
+    - [ ] `Event`
+    - [ ] `Role`
+    - [ ] `Seat`
+    - [ ] `SeatGroup`
+    - [ ] `SeatingPlan`
+    - [ ] `Ticket`
+    - [ ] `TicketProvider`
+    - [ ] `User`
   - [ ] `Observers`
     - [ ] `SeatObserver`
     - [ ] `SettingObserver`
