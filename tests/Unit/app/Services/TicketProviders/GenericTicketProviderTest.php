@@ -388,6 +388,50 @@ class GenericTicketProviderTest extends TestCase
         $this->assertDatabaseMissing('tickets', ['external_id' => 'del-me']);
     }
 
+    public function test_process_ticket_returns_null_when_event_missing()
+    {
+        $provider = $this->createProvider();
+
+        // No EventMapping exists for this event id
+        $data = (object)[
+            'id' => 'no-event-pt',
+            'status' => 'valid',
+            'event_id' => 'no-such-event-pt',
+            'ticket_type_id' => 'type-x',
+            'email' => 'foo@example.com',
+        ];
+
+        $result = $provider->processTicketPublic($data);
+        $this->assertNull($result, 'processTicket should return null when the event mapping is missing');
+    }
+
+    public function test_sync_tickets_deletes_voided_ticket()
+    {
+        $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
+
+        // prepare existing ticket in DB that should be removed when remote reports it as voided
+        $existing = Ticket::factory()->create(['ticket_provider_id' => $provider->provider->id, 'external_id' => 'voided1']);
+
+        $resp = new Response(200, [], json_encode((object)[
+            'tickets' => [
+                (object)['id' => 'voided1', 'status' => 'voided', 'event_id' => 'evtX', 'ticket_type_id' => 'typeX', 'email' => 'y@example.com', 'description' => 'd', 'reference' => 'r'],
+            ],
+            'hasMore' => false,
+        ]));
+
+        $mock = new MockHandler([$resp]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+        $ref = new \ReflectionClass($provider);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, $client);
+
+        $provider->syncTickets('y@example.com');
+
+        $this->assertDatabaseMissing('tickets', ['external_id' => 'voided1']);
+    }
+
     public function test_process_ticket_returns_existing_when_not_voided()
     {
         $provider = $this->createProvider();

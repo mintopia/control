@@ -306,4 +306,135 @@ class WooCommerceProviderTest extends TestCase
         $this->assertInstanceOf(Ticket::class, $ticket);
         $this->assertEquals('t1', $ticket->external_id);
     }
+
+    public function test_get_tickets_fetches_from_api_and_pages()
+    {
+        $provider = $this->getProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
+
+        $order1 = (object)[
+            'id' => 1,
+            'status' => 'completed',
+            'billing' => (object)['email' => 'a@x.com'],
+            'line_items' => [(object)['id' => 10, 'product_id' => 100, 'name' => 'T', 'quantity' => 1]],
+        ];
+        $resp1 = new \GuzzleHttp\Psr7\Response(200, [], json_encode([$order1]));
+        $resp2 = new \GuzzleHttp\Psr7\Response(200, [], json_encode([]));
+
+        $mock = new \GuzzleHttp\Handler\MockHandler([$resp1, $resp2]);
+        $handler = \GuzzleHttp\HandlerStack::create($mock);
+        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+
+        $ref = new \ReflectionClass($provider);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, $client);
+
+        $getTickets = \Closure::bind(function ($address = null) {
+            return $this->getTickets($address);
+        }, $provider, get_class($provider));
+
+        $tickets = $getTickets(null);
+        $this->assertArrayHasKey('1-10-1', $tickets);
+    }
+
+    public function test_sync_tickets_deletes_voided_ticket()
+    {
+        $prov = $this->getProvider()->getProvider();
+
+        $existing = Ticket::factory()->create(['ticket_provider_id' => $prov->id, 'external_id' => '1-10-1']);
+
+        $mock = new class($prov) extends WooCommerceProvider {
+            public function __construct(?\App\Models\TicketProvider $provider = null)
+            {
+                parent::__construct($provider);
+            }
+            protected function getTickets(?string $address = null): array
+            {
+                // order->status not in ['processing','completed'] => treated as voided
+                return [(object)['id' => '1-10-1', 'order' => (object)['billing' => (object)['email' => $address ?? 'a@b.test'], 'id' => 1, 'status' => 'cancelled'], 'item' => (object)['id' => 10, 'product_id' => 100, 'name' => 'T', 'quantity' => 1], 'status' => 'voided', 'email' => $address ?? 'a@b.test']];
+            }
+        };
+        $mock->syncTickets('a@b.test');
+        $this->assertDatabaseMissing('tickets', ['external_id' => '1-10-1']);
+    }
+
+    public function test_process_tickets_invoked_by_dummy()
+    {
+        $provider = $this->createProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyWooCommerceProvider($prov);
+        $tickets = [(object)['id' => 'w1', 'ticket_type_id' => 'type1', 'event_id' => 'evt1', 'email' => 'a@b.test', 'description' => 'd']];
+        $dummy->processTicketsPublic($tickets, 'a@b.test');
+        $this->assertTrue($dummy->processCalled);
+    }
+
+    public function test_get_ticket_types_fetches_from_api_and_caches()
+    {
+        $provider = $this->getProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
+        $prov = $provider->getProvider();
+        $eventId = 'evt-1';
+        $key = "ticketproviders.{$prov->id}.{$prov->cache_prefix}.events.{$eventId}.tickettypes";
+        Cache::forget($key);
+
+        $resp1 = new \GuzzleHttp\Psr7\Response(200, [], json_encode([(object)['id' => 100, 'name' => 'VIP']]));
+        $resp2 = new \GuzzleHttp\Psr7\Response(200, [], json_encode([]));
+        $mock = new \GuzzleHttp\Handler\MockHandler([$resp1, $resp2]);
+        $handler = \GuzzleHttp\HandlerStack::create($mock);
+        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+
+        $ref = new \ReflectionClass($provider);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, $client);
+
+        $types = $provider->getTicketTypes($eventId);
+        $this->assertArrayHasKey(100, $types);
+        $this->assertEquals($types, Cache::get($key));
+    }
+
+    public function test_make_ticket_returns_null_when_type_missing()
+    {
+        $provider = $this->getProvider();
+        $prov = $provider->getProvider();
+
+        $order = (object)['id' => 1, 'billing' => (object)['email' => 'a@b.com'], 'status' => 'completed'];
+        $item = (object)['id' => 10, 'product_id' => 9999, 'name' => 'X'];
+        $data = (object)['id' => '1-10-1', 'order' => $order, 'item' => $item, 'ticket_type_id' => 'no-type', 'event_id' => 'evtX', 'email' => 'a@b.com', 'description' => 'd'];
+
+        $makeTicket = \Closure::bind(function ($user, $data) {
+            return $this->makeTicket($user, $data);
+        }, $provider, get_class($provider));
+        $this->assertNull($makeTicket(null, $data));
+    }
+
+    public function test_make_ticket_uses_email_to_find_user()
+    {
+        $provider = $this->getProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyWooCommerceProvider($prov);
+
+        $user = User::factory()->create();
+        EmailAddress::factory()->create(['email' => 'email-user@example.com', 'verified_at' => now(), 'user_id' => $user->id]);
+
+        $data = (object)['id' => '2-20-1', 'ticket_type_id' => 'typeY', 'event_id' => 'evtY', 'email' => 'email-user@example.com', 'description' => 'd'];
+        $ticket = $dummy->makeTicketPublic(null, $data);
+        $this->assertInstanceOf(Ticket::class, $ticket);
+        $this->assertEquals($user->id, $ticket->user_id);
+    }
+
+    public function test_make_ticket_respects_supplied_user()
+    {
+        $provider = $this->getProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyWooCommerceProvider($prov);
+
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+        EmailAddress::factory()->create(['email' => 'userb@example.com', 'verified_at' => now(), 'user_id' => $userB->id]);
+
+        $data = (object)['id' => '3-30-1', 'ticket_type_id' => 'typeZ', 'event_id' => 'evtZ', 'email' => 'userb@example.com', 'description' => 'd'];
+        $ticket = $dummy->makeTicketPublic($userA, $data);
+        $this->assertInstanceOf(Ticket::class, $ticket);
+        $this->assertEquals($userA->id, $ticket->user_id);
+    }
 }

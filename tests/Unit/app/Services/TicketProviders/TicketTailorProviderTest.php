@@ -431,4 +431,229 @@ class TicketTailorProviderTest extends TestCase
         $this->assertInstanceOf(Ticket::class, $ticket);
         $this->assertEquals('t1', $ticket->external_id);
     }
+
+    // --- Additional branch tests added below ---
+
+    public function test_get_tickets_fetches_from_api_and_pages()
+    {
+        $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
+        // prepare two paged responses
+        $resp1 = new \GuzzleHttp\Psr7\Response(200, [], json_encode((object)[
+            'data' => [(object)['id' => '1', 'status' => 'valid', 'email' => 'a@x.com', 'event_id' => 'e1', 'ticket_type_id' => 't1', 'barcode' => 'b1', 'description' => 'd1']],
+            'links' => (object)['next' => true],
+        ]));
+        $resp2 = new \GuzzleHttp\Psr7\Response(200, [], json_encode((object)[
+            'data' => [(object)['id' => '2', 'status' => 'valid', 'email' => 'b@x.com', 'event_id' => 'e2', 'ticket_type_id' => 't2', 'barcode' => 'b2', 'description' => 'd2']],
+            'links' => (object)['next' => null],
+        ]));
+
+        $mock = new \GuzzleHttp\Handler\MockHandler([$resp1, $resp2]);
+        $handler = \GuzzleHttp\HandlerStack::create($mock);
+        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+
+        // set client onto provider instance
+        $ref = new \ReflectionClass($provider);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, $client);
+
+        // call the protected getTickets via bound closure
+        $getTickets = \Closure::bind(function ($address = null) {
+            return $this->getTickets($address);
+        }, $provider, get_class($provider));
+
+        $tickets = $getTickets(null);
+        $this->assertArrayHasKey('2', $tickets);
+    }
+
+    public function test_get_events_fetches_from_api_and_caches()
+    {
+        $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
+        $key = "ticketproviders.{$provider->getProvider()->id}.{$provider->getProvider()->cache_prefix}.events";
+        Cache::forget($key);
+
+        $resp = new \GuzzleHttp\Psr7\Response(200, [], json_encode((object)[
+            'data' => [
+                (object)['id' => 'evt1', 'name' => 'Event 1'],
+                (object)['id' => 'evt2', 'name' => 'Event 2'],
+            ],
+            'links' => (object)['next' => null],
+        ]));
+        $mock = new \GuzzleHttp\Handler\MockHandler([$resp]);
+        $handler = \GuzzleHttp\HandlerStack::create($mock);
+        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+
+        $ref = new \ReflectionClass($provider);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, $client);
+
+        $events = $provider->getEvents();
+        $this->assertEquals(['evt1' => 'Event 1', 'evt2' => 'Event 2'], $events);
+        $this->assertEquals($events, Cache::get($key));
+    }
+
+    public function test_get_ticket_types_fetches_from_api_and_caches()
+    {
+        $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
+        $prov = $provider->getProvider();
+        $eventId = 'evt-1';
+        $key = "ticketproviders.{$prov->id}.{$prov->cache_prefix}.events.{$eventId}.tickettypes";
+        Cache::forget($key);
+
+        $resp = new \GuzzleHttp\Psr7\Response(200, [], json_encode((object)[
+            'ticket_types' => [
+                (object)['id' => 'type1', 'name' => 'VIP'],
+                (object)['id' => 'type2', 'name' => 'Standard'],
+            ],
+        ]));
+        $mock = new \GuzzleHttp\Handler\MockHandler([$resp]);
+        $handler = \GuzzleHttp\HandlerStack::create($mock);
+        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+
+        $ref = new \ReflectionClass($provider);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, $client);
+
+        $types = $provider->getTicketTypes($eventId);
+        $this->assertEquals(['type1' => 'VIP', 'type2' => 'Standard'], $types);
+        $this->assertEquals($types, Cache::get($key));
+    }
+
+    public function test_process_ticket_deletes_existing_when_voided()
+    {
+        $provider = $this->getProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+
+        $existing = Ticket::factory()->create([
+            'ticket_provider_id' => $prov->id,
+            'external_id' => 'del-tt',
+        ]);
+
+        $data = (object)[
+            'id' => 'del-tt',
+            'status' => 'voided',
+            'event_id' => 'evtX',
+            'ticket_type_id' => 'typeX',
+            'email' => 'noone@example.com',
+            'barcode' => 'b',
+            'description' => 'd',
+        ];
+
+        $dummy->processTicketPublic($data);
+        $this->assertDatabaseMissing('tickets', ['external_id' => 'del-tt']);
+    }
+
+    public function test_process_ticket_links_user_when_email_exists()
+    {
+        $provider = $this->getProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+
+        $user = User::factory()->create();
+        EmailAddress::factory()->create(['email' => 'u@example.com', 'verified_at' => now(), 'user_id' => $user->id]);
+
+        $event = Event::factory()->create();
+        \App\Models\EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evt1']);
+        $type = TicketType::factory()->create();
+        \App\Models\TicketTypeMapping::create(['ticket_type_id' => $type->id, 'ticket_provider_id' => $prov->id, 'external_id' => 'type1']);
+
+        $data = (object)[
+            'id' => 'tlink',
+            'status' => 'valid',
+            'event_id' => 'evt1',
+            'ticket_type_id' => 'type1',
+            'email' => 'u@example.com',
+            'barcode' => 'b',
+            'description' => 'd',
+        ];
+
+        $ticket = $dummy->processTicketPublic($data);
+        $this->assertInstanceOf(Ticket::class, $ticket);
+        $this->assertEquals($user->id, $ticket->user_id);
+    }
+
+    public function test_make_ticket_returns_null_when_type_missing()
+    {
+        $provider = $this->getProvider();
+        $prov = $provider->getProvider();
+
+        $event = Event::factory()->create();
+        \App\Models\EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evtX']);
+
+        $data = (object)[
+            'id' => 'm1',
+            'event_id' => 'evtX',
+            'ticket_type_id' => 'no-such-type',
+            'email' => 'a@b.com',
+            'barcode' => 'b',
+            'description' => 'd',
+        ];
+
+        // call protected makeTicket on real provider so Dummy's auto-creation isn't used
+        $makeTicket = \Closure::bind(function ($user, $data) {
+            return $this->makeTicket($user, $data);
+        }, $provider, get_class($provider));
+
+        $this->assertNull($makeTicket(null, $data));
+    }
+
+    public function test_make_ticket_uses_email_to_find_user()
+    {
+        $provider = $this->getProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+
+        $user = User::factory()->create();
+        EmailAddress::factory()->create(['email' => 'email-user@example.com', 'verified_at' => now(), 'user_id' => $user->id]);
+
+        $event = Event::factory()->create();
+        \App\Models\EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evtY']);
+        $type = TicketType::factory()->create();
+        \App\Models\TicketTypeMapping::create(['ticket_type_id' => $type->id, 'ticket_provider_id' => $prov->id, 'external_id' => 'typeY']);
+
+        $data = (object)[
+            'id' => 'm2',
+            'event_id' => 'evtY',
+            'ticket_type_id' => 'typeY',
+            'email' => 'email-user@example.com',
+            'barcode' => 'b',
+            'description' => 'd',
+        ];
+
+        $ticket = $dummy->makeTicketPublic(null, $data);
+        $this->assertInstanceOf(Ticket::class, $ticket);
+        $this->assertEquals($user->id, $ticket->user_id);
+    }
+
+    public function test_make_ticket_respects_supplied_user()
+    {
+        $provider = $this->getProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+
+        $userA = User::factory()->create();
+        $userB = User::factory()->create();
+        EmailAddress::factory()->create(['email' => 'userb@example.com', 'verified_at' => now(), 'user_id' => $userB->id]);
+
+        $event = Event::factory()->create();
+        \App\Models\EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evtZ']);
+        $type = TicketType::factory()->create();
+        \App\Models\TicketTypeMapping::create(['ticket_type_id' => $type->id, 'ticket_provider_id' => $prov->id, 'external_id' => 'typeZ']);
+
+        $data = (object)[
+            'id' => 'm3',
+            'event_id' => 'evtZ',
+            'ticket_type_id' => 'typeZ',
+            'email' => 'userb@example.com',
+            'barcode' => 'b',
+            'description' => 'd',
+        ];
+
+        $ticket = $dummy->makeTicketPublic($userA, $data);
+        $this->assertInstanceOf(Ticket::class, $ticket);
+        $this->assertEquals($userA->id, $ticket->user_id);
+    }
 }
