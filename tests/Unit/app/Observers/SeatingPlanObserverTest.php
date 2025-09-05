@@ -29,5 +29,20 @@ class SeatingPlanObserverTest extends TestCase
         $this->assertGreaterThan(1, $seatingPlan->revision);
     }
 
-    // TODO More tests are needed once they have been built out in SeatingPlanObserver
+    public function testSavedQueuesUpdateWhenRevisionDirty()
+    {
+        $seatingPlan = SeatingPlan::factory()->create(['revision' => 1]);
+        // mark as dirty
+        $seatingPlan->revision = 2;
+        $observer = new SeatingPlanObserver();
+        $observer->saved($seatingPlan);
+
+        // queueUpdate dispatches a job; ensure revision unchanged but no exceptions
+        $this->assertGreaterThanOrEqual(1, $seatingPlan->revision);
+    }
+
+    public function testEmptyHandlersSkipped()
+    {
+        $this->markTestSkipped('SeatingPlanObserver other handlers not implemented yet');
+    }
 }

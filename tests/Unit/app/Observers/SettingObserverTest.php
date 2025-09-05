@@ -15,4 +15,9 @@ class SettingObserverTest extends TestCase
         $observer = new SettingObserver();
         $observer->saved($setting);
     }
+
+    public function testOtherHandlersAreSkipped()
+    {
+        $this->markTestSkipped('SettingObserver other handlers not implemented yet');
+    }
 }

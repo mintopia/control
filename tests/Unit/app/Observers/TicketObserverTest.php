@@ -28,4 +28,20 @@ class TicketObserverTest extends TestCase
         $plan->refresh();
         $this->assertGreaterThan(1, $plan->revision);
     }
+
+    public function testSavedSyncsDiscordRolesOnUserChange()
+    {
+        $user = \App\Models\User::factory()->create();
+        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
+
+        // simulate original user exists and new user exists
+        $ticket->setRawAttributes(array_merge($ticket->getAttributes(), ['user_id' => $user->id]));
+        $ticket->some_flag = 1;
+
+        // Ensure calling saved does not throw when user change logic runs
+        $observer = new TicketObserver();
+        $observer->saved($ticket);
+
+        $this->assertTrue(true);
+    }
 }

@@ -139,6 +139,59 @@ class TelescopeServiceProviderTest extends TestCase
         $this->assertTrue(true);
     }
 
+    public function testRegisterFilterReturnsTrueForReportableEntry()
+    {
+        // Ensure non-local environment
+        $this->app['env'] = 'production';
+
+        // Reset filter registry
+        \Laravel\Telescope\Telescope::$filterUsing = [];
+
+        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider->register();
+
+        $this->assertNotEmpty(\Laravel\Telescope\Telescope::$filterUsing);
+        $callback = \Laravel\Telescope\Telescope::$filterUsing[0];
+
+        // Create a fake entry that is reportable
+        $fakeEntry = \Mockery::mock(\Laravel\Telescope\IncomingEntry::class);
+        $fakeEntry->shouldReceive('isRequest')->andReturn(false);
+        $fakeEntry->shouldReceive('isReportableException')->andReturn(true);
+        $fakeEntry->shouldReceive('isFailedRequest')->andReturn(false);
+        $fakeEntry->shouldReceive('isFailedJob')->andReturn(false);
+        $fakeEntry->shouldReceive('isScheduledTask')->andReturn(false);
+        $fakeEntry->shouldReceive('hasMonitoredTag')->andReturn(false);
+
+        $this->assertTrue($callback($fakeEntry));
+    }
+
+    public function testGateClosureReturnsBasedOnUserRole()
+    {
+        // Ensure Gate is using the real registry for this assertion
+        // Call the provider->gate to register the gate
+        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $this->invokeProtected($provider, 'gate');
+
+        // Create a user stub that returns true for hasRole('admin')
+        $adminUser = new class {
+            public function hasRole($role)
+            {
+                return $role === 'admin';
+            }
+        };
+
+        $nonAdminUser = new class {
+            public function hasRole($role)
+            {
+                return false;
+            }
+        };
+
+        // Use Gate facade to evaluate the registered gate for each user
+        $this->assertTrue(Gate::forUser($adminUser)->allows('viewTelescope'));
+        $this->assertFalse(Gate::forUser($nonAdminUser)->allows('viewTelescope'));
+    }
+
     private function invokeProtected($object, $method, $args = [])
     {
         $reflection = new \ReflectionClass($object);

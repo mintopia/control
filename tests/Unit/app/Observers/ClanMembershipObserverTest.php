@@ -51,6 +51,29 @@ class ClanMembershipObserverTest extends TestCase
         $this->assertGreaterThan(1, $plan->revision);
     }
 
+    public function testSavedUpdatesRevisionWhenUserIdDirtyUsingMock()
+    {
+        $clan = \App\Models\Clan::factory()->create();
+        $event = \App\Models\Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
+
+        $user = \App\Models\User::factory()->create();
+        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
+        $membership = \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+
+        // Create a partial mock that returns true for isDirty('user_id') but retains the real id
+        $membershipMock = \Mockery::mock(\App\Models\ClanMembership::class)->makePartial();
+        $membershipMock->id = $membership->id;
+        $membershipMock->shouldReceive('isDirty')->with('user_id')->andReturn(true);
+
+        $observer = new ClanMembershipObserver();
+        $observer->saved($membershipMock);
+
+        $plan->refresh();
+        $this->assertGreaterThan(1, $plan->revision);
+    }
+
     public function testSavedDoesNothingIfUserIdNotDirty()
     {
         $clan = \App\Models\Clan::factory()->create();
