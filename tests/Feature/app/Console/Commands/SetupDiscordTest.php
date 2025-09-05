@@ -100,6 +100,23 @@ class SetupDiscordTest extends TestCase
         $this->assertDatabaseHas('social_providers', ['id' => $provider->id, 'code' => 'discord']);
     }
 
+    public function testHandleCreatesProviderWhenMissing()
+    {
+        // Ensure no provider exists
+        \App\Models\SocialProvider::whereCode('discord')->delete();
+        $this->assertDatabaseMissing('social_providers', ['code' => 'discord']);
+
+        // Run the command non-interactively by providing default answers
+        $this->artisan('control:setup-discord')
+            ->expectsQuestion('Discord Client ID', '')
+            ->expectsQuestion('Discord Client Secret', '')
+            ->expectsQuestion('Do you want to enable the Discord provider?', false)
+            ->expectsQuestion('Do you want to enable login with Discord?', false)
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('social_providers', ['code' => 'discord']);
+    }
+
     public function testHandlePromptsForSecretWhenMissingAndEnablesProvider()
     {
         // Create provider with client_id but empty client_secret

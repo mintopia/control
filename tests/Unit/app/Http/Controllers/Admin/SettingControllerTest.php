@@ -108,7 +108,6 @@ class SettingControllerTest extends TestCase
         $this->assertEquals('added', $result);
     }
 
-    //CHECK Test fails, reason unknown. may need complete test refactor
     public function testAddDiscordReturnSuccessAndFailure()
     {
         Setting::create(['code' => 'discord.server.name', 'name' => 'DName', 'value' => null, 'hidden' => false, 'type' => 0]);
@@ -117,13 +116,25 @@ class SettingControllerTest extends TestCase
         // create the discord provider record and point it at our dummy provider
         SocialProvider::create(['code' => 'discord', 'name' => 'Discord', 'provider_class' => DummyDiscordProvider::class, 'supports_auth' => 0, 'enabled' => 1, 'auth_enabled' => 0, 'can_be_renamed' => 0]);
 
+        // register the named routes used by the controller to avoid UrlGenerationException
+        $this->app['router']->get('/discord-return', fn() => '')->name('admin.settings.discord_return');
+        $this->app['router']->get('/settings', fn() => '')->name('admin.settings.index');
+
         $c = new SettingController();
         $resp = $c->add_discord_return();
-        $this->assertTrue(method_exists($resp, 'getTargetUrl'));
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $resp);
+
+        // settings should be populated
+        $this->assertNotNull(Setting::whereCode('discord.server.name')->first()->value);
+        $this->assertNotNull(Setting::whereCode('discord.server.id')->first()->value);
 
         // Now simulate failure by updating provider_class to a throwing stub
         SocialProvider::whereCode('discord')->update(['provider_class' => ThrowingDiscordProvider::class]);
         $resp2 = $c->add_discord_return();
-        $this->assertTrue(method_exists($resp2, 'getTargetUrl'));
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $resp2);
+
+        // settings should be cleared on failure
+        $this->assertNull(Setting::whereCode('discord.server.name')->first()->value);
+        $this->assertNull(Setting::whereCode('discord.server.id')->first()->value);
     }
 }

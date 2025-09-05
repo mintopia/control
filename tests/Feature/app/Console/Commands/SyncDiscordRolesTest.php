@@ -251,4 +251,40 @@ class SyncDiscordRolesTest extends TestCase
         // Use a user id that does not exist
         $this->artisan('control:sync-discord-roles', ['user' => 99999])->assertExitCode(0);
     }
+
+    public function testGetDiscordMembersReturnsEmptyWhenNoApi()
+    {
+        $cmd = new SyncDiscordRoles();
+        // Ensure the typed property is initialized to null to avoid PHP uninitialized property error
+        $prop = new \ReflectionProperty(SyncDiscordRoles::class, 'discord');
+        $prop->setAccessible(true);
+        $prop->setValue($cmd, null);
+
+        $rm = new \ReflectionMethod(SyncDiscordRoles::class, 'getDiscordMembers');
+        $rm->setAccessible(true);
+        $members = $rm->invoke($cmd);
+        $this->assertIsArray($members);
+        $this->assertEmpty($members);
+    }
+
+    public function testGetDiscordMembersReturnsApiResultWhenApiPresent()
+    {
+        $cmd = new SyncDiscordRoles();
+
+        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['getMemberRoles'])
+            ->getMock();
+        $expected = ['x' => (object)['id' => 'x']];
+        $mockApi->expects($this->once())->method('getMemberRoles')->willReturn($expected);
+
+        $prop = new \ReflectionProperty(SyncDiscordRoles::class, 'discord');
+        $prop->setAccessible(true);
+        $prop->setValue($cmd, $mockApi);
+
+        $rm = new \ReflectionMethod(SyncDiscordRoles::class, 'getDiscordMembers');
+        $rm->setAccessible(true);
+        $members = $rm->invoke($cmd);
+        $this->assertEquals($expected, $members);
+    }
 }
