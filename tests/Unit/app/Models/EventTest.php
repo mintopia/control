@@ -264,7 +264,6 @@ class EventTest extends TestCase
         $this->assertEquals('2', $result[0]->events[0]->id);
     }
 
-    // CHECK Refactor of Event.php to allow this test to succeed.
     public function testGetAvailableTicketMappingsIncludesUsedWhenExistingProvided()
     {
         $provider = TicketProvider::factory()->create(['enabled' => 1]);
@@ -284,16 +283,49 @@ class EventTest extends TestCase
         ]);
 
         // Create a ticket type mapping that matches the provider and external id 'tX'
-        \App\Models\TicketTypeMapping::create([
+        $created = \App\Models\TicketTypeMapping::create([
             'ticket_type_id' => \Database\Factories\TicketTypeFactory::new()->create(['event_id' => $event->id])->id,
             'ticket_provider_id' => $provider->id,
             'external_id' => 'tX',
         ]);
 
-        $result = $event->getAvailableTicketMappings(null);
+        // Pass the existing mapping so used types are allowed
+        $result = $event->getAvailableTicketMappings($created);
         $this->assertIsArray($result);
         $this->assertNotEmpty($result);
         $this->assertEquals($provider->id, $result[0]->provider->id);
         $this->assertEquals('tX', $result[0]->types[0]->id);
+    }
+
+    public function testGetAvailableEventMappingsSkipsProvidersWithNoEvents()
+    {
+        $provider = TicketProvider::factory()->create(['enabled' => 1]);
+
+        // Bind a provider implementation that returns no events
+        app()->instance(TestProviderTT::class, new TestProviderTT());
+        $provider->provider_class = TestProviderTT::class;
+        $provider->save();
+
+        $event = Event::factory()->create();
+
+        $result = $event->getAvailableEventMappings(null);
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    public function testGetAvailableTicketMappingsSkipsProvidersWhenAllTypesFilteredOut()
+    {
+        $provider = TicketProvider::factory()->create(['enabled' => 1]);
+
+        // Bind a provider implementation that returns only "used" types
+        app()->instance(TestProviderTypesUsed::class, new TestProviderTypesUsed());
+        $provider->provider_class = TestProviderTypesUsed::class;
+        $provider->save();
+
+        $event = Event::factory()->create();
+
+        $result = $event->getAvailableTicketMappings(null);
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
     }
 }
