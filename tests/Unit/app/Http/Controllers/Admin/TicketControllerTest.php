@@ -327,4 +327,34 @@ class TicketControllerTest extends TestCase
         $resp = $controller->import();
         $this->assertTrue(is_object($resp));
     }
+
+    public function testIndexFiltersByReferenceStringReturnsNoResults()
+    {
+        $event = Event::factory()->create();
+        $type = TicketType::factory()->for($event)->create();
+        $provider = TicketProvider::factory()->create();
+        // create a ticket with a string reference
+        $ticket = Ticket::factory()->for($event)->for($type, 'type')->for($provider, 'provider')->create(['reference' => 'REF-ABC']);
+
+        $controller = new TicketController();
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['reference' => 'REF-ABC']));
+        $items = $resp->getData()['tickets']->items();
+        // Because the controller uses whereId(...) for the reference filter, a string reference should not match and return no items
+        $this->assertCount(0, $items);
+    }
+
+    public function testIndexFiltersByReferenceAsIdReturnsTicket()
+    {
+        $event = Event::factory()->create();
+        $type = TicketType::factory()->for($event)->create();
+        $provider = TicketProvider::factory()->create();
+        $ticket = Ticket::factory()->for($event)->for($type, 'type')->for($provider, 'provider')->create();
+
+        $controller = new TicketController();
+        // passing the numeric id as 'reference' will match due to whereId(...) being used
+        $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['reference' => $ticket->id]));
+        $items = $resp->getData()['tickets']->items();
+        $this->assertCount(1, $items);
+        $this->assertEquals($ticket->id, $items[0]->id);
+    }
 }

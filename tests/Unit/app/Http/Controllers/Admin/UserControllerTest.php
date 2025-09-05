@@ -250,4 +250,62 @@ class UserControllerTest extends TestCase
         }
         $this->assertNotNull($user->fresh()->tickets_synced_at);
     }
+
+    public function testUpdateWithNonexistentPrimaryEmailIdDoesNotAssociate()
+    {
+        $user = User::factory()->create(['nickname' => 'oldnick', 'name' => 'Old']);
+
+        $r1 = Role::create(['code' => 'r1', 'name' => 'R1']);
+        $user->roles()->attach($r1);
+
+        $controller = new UserController();
+
+        // Provide a primary_email_id that does not exist
+        $payload = [
+            'nickname' => 'nn',
+            'name' => 'NN',
+            'primary_email_id' => 999999,
+            'terms' => 0,
+            'first_login' => 0,
+            'suspended' => 0,
+            'roles' => [],
+        ];
+        $req = \App\Http\Requests\Admin\UserUpdateRequest::create('/', 'POST', $payload);
+        try {
+            $controller->update($req, $user);
+        } catch (UrlGenerationException $ex) {
+        }
+
+        $fresh = $user->fresh();
+        // primary_email_id should remain null because the provided id didn't match any email
+        $this->assertNull($fresh->primary_email_id);
+    }
+
+    public function testUpdateDoesNotOverwriteExistingTermsAgreedAtWhenTermsTrue()
+    {
+        $user = User::factory()->create(['nickname' => 'oldnick', 'name' => 'Old']);
+        // seed an existing terms_agreed_at timestamp
+        $past = \Carbon\Carbon::now()->subDays(5);
+        $user->terms_agreed_at = $past;
+        $user->save();
+
+        $controller = new UserController();
+
+        $payload = [
+            'nickname' => 'nn',
+            'name' => 'NN',
+            'terms' => 1,
+            'first_login' => 0,
+            'suspended' => 0,
+            'roles' => [],
+        ];
+        $req = \App\Http\Requests\Admin\UserUpdateRequest::create('/', 'POST', $payload);
+        try {
+            $controller->update($req, $user);
+        } catch (UrlGenerationException $ex) {
+        }
+
+        $fresh = $user->fresh();
+        $this->assertEquals($past->timestamp, $fresh->terms_agreed_at->timestamp);
+    }
 }
