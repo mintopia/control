@@ -7,9 +7,11 @@ use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class SettingTest extends TestCase
 {
+    use RefreshDatabase;
     public function testCanInstantiateSetting()
     {
         $setting = new Setting();
@@ -52,6 +54,21 @@ class SettingTest extends TestCase
         $m = $ref->getMethod('toStringName');
         $m->setAccessible(true);
         $this->assertEquals('my_code', $m->invoke($s));
+    }
+
+    public function testFetchReadsFromDatabaseAndCachesValue()
+    {
+        $code = 'db_setting';
+        $default = 'def';
+
+        // Create a DB-backed setting (not encrypted) so fetch() will read from DB
+        Setting::factory()->create(['code' => $code, 'value' => 'dbval', 'encrypted' => 0]);
+
+        // First fetch should read from DB and return the stored value
+        $this->assertEquals('dbval', Setting::fetch($code, $default));
+
+        // Second fetch should hit the in-memory cache (static::$cached) and return same
+        $this->assertEquals('dbval', Setting::fetch($code, $default));
     }
     // Additional DB-backed or duplicated tests removed to avoid conflicts with cache/db in unit tests.
 }
