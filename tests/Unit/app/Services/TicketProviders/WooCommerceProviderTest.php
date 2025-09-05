@@ -358,6 +358,37 @@ class WooCommerceProviderTest extends TestCase
         $this->assertDatabaseMissing('tickets', ['external_id' => '1-10-1']);
     }
 
+    public function test_sync_tickets_associates_user_when_emailaddress_passed()
+    {
+        $provider = $this->getProvider();
+        $prov = $provider->getProvider();
+
+        // Create a user and email address
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['email' => 'user+wc@example.com', 'user_id' => $user->id, 'verified_at' => now()]);
+
+        // Existing ticket without a user
+        $ticket = Ticket::factory()->create(['ticket_provider_id' => $prov->id, 'external_id' => '1-10-1', 'user_id' => null]);
+
+        // Create a provider subclass that returns the parsed ticket for the email
+        $mock = new class($prov) extends WooCommerceProvider {
+            public function __construct(?\App\Models\TicketProvider $provider = null)
+            {
+                parent::__construct($provider);
+            }
+            protected function getTickets(?string $address = null): array
+            {
+                return [(object)['id' => '1-10-1', 'order' => (object)['billing' => (object)['email' => $address], 'id' => 1, 'status' => 'completed'], 'item' => (object)['id' => 10, 'product_id' => 100, 'name' => 'T', 'quantity' => 1], 'status' => 'valid', 'email' => $address]];
+            }
+        };
+
+        // Call syncTickets with EmailAddress model
+        $mock->syncTickets($email);
+
+        $ticket->refresh();
+        $this->assertEquals($user->id, $ticket->user_id);
+    }
+
     public function test_process_tickets_invoked_by_dummy()
     {
         $provider = $this->createProvider();
@@ -366,6 +397,37 @@ class WooCommerceProviderTest extends TestCase
         $tickets = [(object)['id' => 'w1', 'ticket_type_id' => 'type1', 'event_id' => 'evt1', 'email' => 'a@b.test', 'description' => 'd']];
         $dummy->processTicketsPublic($tickets, 'a@b.test');
         $this->assertTrue($dummy->processCalled);
+    }
+
+    public function test_process_tickets_adds_missing_when_order_completed()
+    {
+        $provider = $this->getProvider();
+        $prov = $provider->getProvider();
+
+        // Ensure Event and TicketType mapping exist for provider
+        $event = \App\Models\Event::factory()->create();
+        \App\Models\EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evt1']);
+        $type = \App\Models\TicketType::factory()->for($event)->create();
+        \App\Models\TicketTypeMapping::create(['ticket_type_id' => $type->id, 'ticket_provider_id' => $prov->id, 'external_id' => 100]);
+
+        // Prepare a parsed ticket (order status completed -> valid)
+        $parsed = (object)[
+            'id' => '5-50-1',
+            'ticket_type_id' => 100,
+            'order' => (object)['billing' => (object)['email' => 'a@b.test'], 'id' => 5, 'status' => 'completed'],
+            'item' => (object)['id' => 50, 'product_id' => 100, 'name' => 'T', 'quantity' => 1],
+            'status' => 'valid',
+            'email' => 'a@b.test',
+        ];
+
+        // Call protected processTickets on real provider via bound closure so we exercise parent logic
+        $processTickets = \Closure::bind(function ($ticketData, $address, $user = null) {
+            return $this->processTickets($ticketData, $address, $user);
+        }, $provider, get_class($provider));
+
+        $processTickets(['5-50-1' => $parsed], 'a@b.test', null);
+
+        $this->assertDatabaseHas('tickets', ['external_id' => '5-50-1']);
     }
 
     public function test_get_ticket_types_fetches_from_api_and_caches()

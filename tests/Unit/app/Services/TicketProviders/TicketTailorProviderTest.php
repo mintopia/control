@@ -466,6 +466,38 @@ class TicketTailorProviderTest extends TestCase
         $this->assertArrayHasKey('2', $tickets);
     }
 
+    public function test_get_tickets_with_address_fetches_from_api_and_pages()
+    {
+        $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
+        // prepare two paged responses
+        $resp1 = new \GuzzleHttp\Psr7\Response(200, [], json_encode((object)[
+            'data' => [(object)['id' => '1', 'status' => 'valid', 'email' => 'a@x.com', 'event_id' => 'e1', 'ticket_type_id' => 't1', 'barcode' => 'b1', 'description' => 'd1']],
+            'links' => (object)['next' => true],
+        ]));
+        $resp2 = new \GuzzleHttp\Psr7\Response(200, [], json_encode((object)[
+            'data' => [(object)['id' => '2', 'status' => 'valid', 'email' => 'b@x.com', 'event_id' => 'e2', 'ticket_type_id' => 't2', 'barcode' => 'b2', 'description' => 'd2']],
+            'links' => (object)['next' => null],
+        ]));
+
+        $mock = new \GuzzleHttp\Handler\MockHandler([$resp1, $resp2]);
+        $handler = \GuzzleHttp\HandlerStack::create($mock);
+        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+
+        // set client onto provider instance
+        $ref = new \ReflectionClass($provider);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, $client);
+
+        // call the protected getTickets via bound closure with an address
+        $getTickets = \Closure::bind(function ($address = null) {
+            return $this->getTickets($address);
+        }, $provider, get_class($provider));
+
+        $tickets = $getTickets('filter@example.com');
+        $this->assertArrayHasKey('2', $tickets);
+    }
+
     public function test_get_events_fetches_from_api_and_caches()
     {
         $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
@@ -544,6 +576,25 @@ class TicketTailorProviderTest extends TestCase
 
         $dummy->processTicketPublic($data);
         $this->assertDatabaseMissing('tickets', ['external_id' => 'del-tt']);
+    }
+
+    public function test_process_ticket_returns_null_when_event_missing()
+    {
+        $provider = $this->getProvider();
+        $prov = $provider->getProvider();
+        $dummy = new DummyTicketTailorProvider($prov);
+
+        $data = (object)[
+            'id' => 'px1',
+            'status' => 'valid',
+            'event_id' => 'non-existent-event',
+            'ticket_type_id' => 'no-type',
+            'email' => 'noone@example.com',
+            'barcode' => 'b',
+            'description' => 'desc',
+        ];
+
+        $this->assertNull($dummy->processTicketPublic($data));
     }
 
     public function test_process_ticket_links_user_when_email_exists()
