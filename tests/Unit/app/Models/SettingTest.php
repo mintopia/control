@@ -16,56 +16,42 @@ class SettingTest extends TestCase
         $this->assertInstanceOf(Setting::class, $setting);
     }
 
-    // Tests assume Setting model has a 'code' and 'value' attribute, which they currently do not have?
-    // public function testFetchReturnsDefaultIfNotFound()
-    // {
-    //     Log::shouldReceive('debug')->atLeast()->once();
-    //     $this->assertEquals('default', Setting::fetch('not_found_code', 'default'));
-    // }
+    public function testFetchReturnsDefaultWhenCachedSettingHasNullValue()
+    {
+        $code = 'foo_null';
+        $default = 'def';
+        $cached = new Setting(['code' => $code]);
+        $cached->value = null;
+        // Have Cache return our in-memory Setting object
+        \Illuminate\Support\Facades\Cache::shouldReceive('get')->with("settings.{$code}")->andReturn($cached);
+        \Illuminate\Support\Facades\Log::shouldReceive('debug')->atLeast()->once();
 
-    // public function testFetchReturnsValueFromCache()
-    // {
-    //     $setting = new Setting(['code' => 'foo', 'value' => 'bar', 'encrypted' => false]);
-    //     Cache::shouldReceive('get')->with('settings.foo')->andReturn($setting);
-    //     Log::shouldReceive('debug')->atLeast()->once();
-    //     $this->assertEquals('bar', Setting::fetch('foo'));
-    // }
+        $this->assertEquals($default, Setting::fetch($code, $default));
+    }
 
-    // public function testFetchReturnsDecryptedValueIfEncrypted()
-    // {
-    //     $encrypted = Crypt::encrypt('secret');
-    //     $setting = new Setting(['code' => 'enc', 'value' => $encrypted, 'encrypted' => true]);
-    //     Cache::shouldReceive('get')->with('settings.enc')->andReturn($setting);
-    //     Log::shouldReceive('debug')->atLeast()->once();
-    //     Crypt::shouldReceive('decrypt')->with($encrypted)->andReturn('secret');
-    //     $this->assertEquals('secret', Setting::fetch('enc'));
-    // }
+    public function testFetchDecryptsCachedEncryptedValue()
+    {
+        $code = 'enc_setting';
+        $encrypted = 'encblob';
+        $decrypted = 'secret';
+        $cached = new Setting(['code' => $code]);
+        $cached->value = $encrypted;
+        $cached->encrypted = 1;
 
-    // public function testClearCacheRemovesFromCache()
-    // {
-    //     $setting = new Setting(['code' => 'clearme']);
-    //     Cache::shouldReceive('forget')->with('settings.clearme')->once();
-    //     Log::shouldReceive('debug')->atLeast()->once();
-    //     $setting->clearCache();
-    //     $this->assertTrue(true); // If no exception, test passes
-    // }
+        \Illuminate\Support\Facades\Cache::shouldReceive('get')->with("settings.{$code}")->andReturn($cached);
+        \Illuminate\Support\Facades\Log::shouldReceive('debug')->atLeast()->once();
+        \Illuminate\Support\Facades\Crypt::shouldReceive('decrypt')->andReturn($decrypted);
 
-    // public function testGetValueReturnsEncryptedIfNeeded()
-    // {
-    //     $setting = new Setting(['code' => 'enc', 'value' => 'secret', 'encrypted' => true]);
-    //     Crypt::shouldReceive('encrypt')->with('secret')->andReturn('encrypted-value');
-    //     $val = $setting->getValue();
-    //     $this->assertEquals('encrypted-value', $val->value);
-    //     $this->assertEquals('enc', $val->code);
-    //     $this->assertTrue($val->encrypted);
-    // }
+        $this->assertEquals($decrypted, Setting::fetch($code));
+    }
 
-    // public function testGetValueReturnsPlainIfNotEncrypted()
-    // {
-    //     $setting = new Setting(['code' => 'plain', 'value' => 'plain-value', 'encrypted' => false]);
-    //     $val = $setting->getValue();
-    //     $this->assertEquals('plain-value', $val->value);
-    //     $this->assertEquals('plain', $val->code);
-    //     $this->assertFalse($val->encrypted);
-    // }
+    public function testToStringNameReturnsCode()
+    {
+        $s = new Setting(['code' => 'my_code']);
+        $ref = new \ReflectionClass($s);
+        $m = $ref->getMethod('toStringName');
+        $m->setAccessible(true);
+        $this->assertEquals('my_code', $m->invoke($s));
+    }
+    // Additional DB-backed or duplicated tests removed to avoid conflicts with cache/db in unit tests.
 }

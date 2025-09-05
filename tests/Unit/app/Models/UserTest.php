@@ -231,6 +231,124 @@ class UserTest extends TestCase
         $this->assertNull($user->discord_role);
     }
 
+    public function testHasRoleAcceptsRoleObject()
+    {
+        $user = $this->getMockBuilder(User::class)
+            ->onlyMethods(['roles'])
+            ->getMock();
+
+        $mockRoles = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class);
+        $mockRoles->shouldReceive('whereCode')->with('admin')->andReturnSelf();
+        $mockRoles->shouldReceive('count')->andReturn(1);
+
+        $user->method('roles')->willReturn($mockRoles);
+
+        $roleObj = new \App\Models\Role();
+        $roleObj->code = 'admin';
+        $this->assertTrue($user->hasRole($roleObj));
+    }
+
+    public function testHasAnyRoleAcceptsRoleObjects()
+    {
+        $user = $this->getMockBuilder(User::class)
+            ->onlyMethods(['roles'])
+            ->getMock();
+
+        $mockRoles = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class);
+        $mockRoles->shouldReceive('whereCode')->with('admin')->andReturnSelf();
+        $mockRoles->shouldReceive('count')->andReturn(1);
+
+        $user->method('roles')->willReturn($mockRoles);
+
+        $roleObj = new \App\Models\Role();
+        $roleObj->code = 'admin';
+
+        $this->assertTrue($user->hasAnyRole([$roleObj]));
+    }
+
+    public function testAvatarUrlUsesPrimaryEmailIfPresent()
+    {
+        $user = new User();
+        $email = new \App\Models\EmailAddress();
+        $email->email = 'me@example.com';
+        $user->setRelation('accounts', collect([]));
+        $user->setRelation('primaryEmail', $email);
+        $hash = hash('sha256', 'me@example.com');
+        $this->assertEquals("https://gravatar.com/avatar/{$hash}?d=retro", $user->avatarUrl());
+    }
+
+    public function testSyncTicketsReturnsEarlyWhenRecentlySynced()
+    {
+        $user = User::factory()->create();
+        $user->tickets_synced_at = now();
+        $user->save();
+
+        $before = $user->tickets_synced_at;
+        $user->syncTickets();
+        $this->assertEquals($before->toDateTimeString(), $user->fresh()->tickets_synced_at->toDateTimeString());
+    }
+
+    public function testAddDiscordRoleSuccessWhenApiAvailable()
+    {
+        // Create a user subclass that returns a discord account
+        $user = new class extends User {
+            public function getDiscordAccount()
+            {
+                return (object)['external_id' => 'ext-123'];
+            }
+        };
+
+        $mockApi = \Mockery::mock(\App\Services\DiscordApi::class);
+        $mockApi->shouldReceive('addRoleToMember')->with('role-1', 'ext-123')->andReturnTrue();
+        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+
+        $this->assertTrue($user->addDiscordRole('role-1'));
+    }
+
+    public function testRemoveDiscordRoleSuccessWhenApiAvailable()
+    {
+        $user = new class extends User {
+            public function getDiscordAccount()
+            {
+                return (object)['external_id' => 'ext-456'];
+            }
+        };
+
+        $mockApi = \Mockery::mock(\App\Services\DiscordApi::class);
+        $mockApi->shouldReceive('removeRoleFromMember')->with('role-2', 'ext-456')->andReturnTrue();
+        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+
+        $this->assertTrue($user->removeDiscordRole('role-2'));
+    }
+
+    public function testAllowedSeatGroupByUserClanAndTicketType()
+    {
+        $user = new User();
+        $user->id = 99;
+
+        // User assignment
+        $group = new \App\Models\SeatGroup();
+        $assignment = (object)['assignment_type' => 'user', 'assignment_type_id' => 99];
+        $group->setRelation('assignments', collect([$assignment]));
+        $this->assertTrue($user->allowedSeatGroup($group));
+
+        // Clan assignment
+        $clan = (object)['id' => 5];
+        $user->setRelation('clanMemberships', collect([(object)['clan' => $clan]]));
+        $group2 = new \App\Models\SeatGroup();
+        $assignment2 = (object)['assignment_type' => 'clan', 'assignment_type_id' => 5];
+        $group2->setRelation('assignments', collect([$assignment2]));
+        $this->assertTrue($user->allowedSeatGroup($group2));
+
+        // Ticket type assignment
+        $ticketType = (object)['id' => 7];
+        $user->setRelation('tickets', collect([(object)['type' => $ticketType]]));
+        $group3 = new \App\Models\SeatGroup();
+        $assignment3 = (object)['assignment_type' => 'ticket_type', 'assignment_type_id' => 7];
+        $group3->setRelation('assignments', collect([$assignment3]));
+        $this->assertTrue($user->allowedSeatGroup($group3));
+    }
+
     public function testAllowSeatGroup()
     {
         $user = new User();

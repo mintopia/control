@@ -213,6 +213,44 @@ class TicketTest extends TestCase
         $this->assertEquals('A1', $import->seat->label);
     }
 
+    public function testImportSkipsRowWhenTypeMissing()
+    {
+        $event = Event::factory()->create();
+        $user = User::factory()->create();
+
+        // Create seating plan and seat to exercise seat lookup
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $seat = Seat::factory()->create(['seating_plan_id' => $plan->id, 'label' => 'A1']);
+
+        // CSV with non-existing ticket type id
+        $csv = "ticket_type_id,user_id,seat_label\n";
+        $csv .= "999999,{$user->id},A1\n";
+
+        $imports = Ticket::import($csv);
+
+        $this->assertIsArray($imports);
+        $this->assertCount(0, $imports);
+    }
+
+    public function testImportSkipsRowWhenUserMissing()
+    {
+        $event = Event::factory()->create();
+        $type = TicketType::factory()->create(['event_id' => $event->id, 'has_seat' => 1]);
+
+        // Create seating plan and seat to exercise seat lookup
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $seat = Seat::factory()->create(['seating_plan_id' => $plan->id, 'label' => 'A1']);
+
+        // CSV with non-existing user id
+        $csv = "ticket_type_id,user_id,seat_label\n";
+        $csv .= "{$type->id},999999,A1\n";
+
+        $imports = Ticket::import($csv);
+
+        $this->assertIsArray($imports);
+        $this->assertCount(0, $imports);
+    }
+
     public function testCreateFromImport()
     {
         // Arrange: ensure there is an 'internal' ticket provider referenced by createFromImport
