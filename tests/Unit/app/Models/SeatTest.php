@@ -55,11 +55,9 @@ class SeatTest extends TestCase
         $this->assertTrue($seat->canPick(null));
     }
 
-    public function testCanPickEmptyCollectionIsTreatedAsTruthy()
+    // VALIDATE Empty Collection was truthy, so false never was returned.
+    public function testCanPickReturnsFalseWhenGetPickableTicketsIsFalse()
     {
-        // CHECK: Current implementation treats an empty Collection as truthy, so canPick
-        // returns true when getPickableTickets() returns an empty Collection. This documents
-        // the behavior so we can follow up later if we change the return type or logic.
         $seat = new Seat();
         $seat->disabled = 0;
 
@@ -78,8 +76,7 @@ class SeatTest extends TestCase
             }
         };
 
-        // $this->assertFalse($seat->canPick($user));
-        $this->assertTrue($seat->canPick($user));
+        $this->assertFalse($seat->canPick($user));
     }
 
     public function testCanPickRespectsGroupRestriction()
@@ -181,29 +178,6 @@ class SeatTest extends TestCase
         };
 
         $this->assertFalse($seat->canPick($user));
-    }
-
-    public function testCanPickReturnsFalseWhenGetPickableTicketsIsFalsy()
-    {
-        $seat = new Seat();
-        $seat->disabled = 0;
-
-        $event = new \App\Models\Event();
-        $event->seating_locked = false;
-
-        $plan = new \App\Models\SeatingPlan();
-        $plan->setRelation('event', $event);
-
-        $seat->setRelation('plan', $plan);
-
-        $user = new class extends User {
-            public function getPickableTickets(\App\Models\Event $event): \Illuminate\Support\Collection
-            {
-                return new \Illuminate\Support\Collection(); // match base signature; empty Collection is truthy
-            }
-        };
-
-        $this->assertTrue($seat->canPick($user));
     }
 
     public function testCanPickAllowsWhenGroupAllowedAndNoAssignedTicket()

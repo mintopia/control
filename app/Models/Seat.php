@@ -94,7 +94,7 @@ class Seat extends Model
             return true;
         }
         $tickets = $user->getPickableTickets($this->plan->event);
-        if (!$tickets) {
+        if ($tickets->count() === 0) {
             return false;
         }
         if ($this->group) {
