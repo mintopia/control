@@ -59,6 +59,70 @@ class ClanRequestTest extends TestCase
         $this->assertTrue($called, 'Fail closure was not called for empty permalink');
     }
 
+    public function testNameRuleClosureFailsWhenPermalinkExists()
+    {
+        // Use a simple, predictable name that slugifies directly
+        $name = 'my-clan';
+        $permalink = \App\makePermalink($name);
+        // Create a clan with the intended name so the observer will set the code
+        $clan = \App\Models\Clan::factory()->create(['name' => $name]);
+        // Some factories may not persist custom attributes as expected; ensure code is set
+        $clan->code = $permalink;
+        $clan->save();
+
+        // Ensure the clan exists in the database with the expected code
+        $this->assertEquals(1, \App\Models\Clan::count(), 'Expected exactly one clan in DB after factory create');
+        $actual = \App\Models\Clan::first()->code;
+        $this->assertEquals($permalink, $actual, "Created clan code did not match expected permalink (got: {$actual})");
+
+        $request = new ClanRequest();
+        $rules = $request->rules();
+        $closure = null;
+        foreach ($rules['name'] as $rule) {
+            if ($rule instanceof \Closure) {
+                $closure = $rule;
+                break;
+            }
+        }
+        $called = false;
+        $fail = function ($message) use (&$called) {
+            $called = true;
+            $this->assertEquals('That clan name is not available', $message);
+        };
+        $bound = \Closure::bind($closure, $request, get_class($request));
+        $bound('name', $name, $fail);
+        $this->assertTrue($called, 'Fail closure was not called for existing permalink');
+    }
+
+    public function testNameRuleClosurePassesWhenEditingOwnClan()
+    {
+        $name = 'own-clan';
+        $permalink = \App\makePermalink($name);
+        $clan = \App\Models\Clan::factory()->create(['name' => $name]);
+        // Observer will set the code based on the name on save
+        $clan->refresh();
+
+        $request = new ClanRequest();
+        // Simulate editing the same clan by attaching it to the request
+        $request->clan = $clan;
+
+        $rules = $request->rules();
+        $closure = null;
+        foreach ($rules['name'] as $rule) {
+            if ($rule instanceof \Closure) {
+                $closure = $rule;
+                break;
+            }
+        }
+        $called = false;
+        $fail = function ($message) use (&$called) {
+            $called = true;
+        };
+        $bound = \Closure::bind($closure, $request, get_class($request));
+        $bound('name', $name, $fail);
+        $this->assertFalse($called, 'Fail closure was called when editing own clan');
+    }
+
     public function testRulesContainCodeRuleClosure()
     {
         $request = new ClanMembershipRequest();

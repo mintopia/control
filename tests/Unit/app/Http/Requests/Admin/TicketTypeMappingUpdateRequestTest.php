@@ -180,4 +180,86 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $closure('external_id', $provider->id . ':abc', $fail);
         $this->assertTrue(true); // If no exception, test passes
     }
+
+    public function testExternalIdRuleClosureFailsWhenProviderIdEmpty()
+    {
+        $request = new class extends TicketTypeMappingUpdateRequest {
+            public $event;
+        };
+        $rules = $request->rules();
+        $closure = null;
+        foreach ($rules['external_id'] as $rule) {
+            if ($rule instanceof \Closure) {
+                $closure = $rule;
+                break;
+            }
+        }
+        $called = false;
+        $fail = function ($message) use (&$called) {
+            $called = true;
+            \PHPUnit\Framework\Assert::assertEquals('Invalid ticket type specified', $message);
+        };
+        $closure('external_id', ':abc', $fail);
+        $this->assertTrue($called, 'Fail closure was not called when provider id is empty');
+    }
+
+    public function testExternalIdRuleClosureFailsWhenExternalIdEmpty()
+    {
+        $request = new class extends TicketTypeMappingUpdateRequest {
+            public $event;
+        };
+        $rules = $request->rules();
+        $closure = null;
+        foreach ($rules['external_id'] as $rule) {
+            if ($rule instanceof \Closure) {
+                $closure = $rule;
+                break;
+            }
+        }
+        $called = false;
+        $fail = function ($message) use (&$called) {
+            $called = true;
+            \PHPUnit\Framework\Assert::assertEquals('Invalid ticket type specified', $message);
+        };
+        $closure('external_id', '123:', $fail);
+        $this->assertTrue($called, 'Fail closure was not called when external id is empty');
+    }
+
+    public function testExternalIdRuleLoopContinuesForNonMatchingProviderThenFails()
+    {
+        $request = new class extends TicketTypeMappingUpdateRequest {
+            public $event;
+        };
+        $provider = TicketProvider::factory()->create();
+        $other = TicketProvider::factory()->create();
+        $mockType = (object)['id' => 'abc'];
+        $mockMapping = (object)['provider' => $other, 'types' => [$mockType]];
+        $request->event = new class($mockMapping) {
+            private $m;
+            public function __construct($m)
+            {
+                $this->m = $m;
+            }
+            public function getAvailableTicketMappings($mapping = null)
+            {
+                return [$this->m];
+            }
+        };
+
+        $rules = $request->rules();
+        $closure = null;
+        foreach ($rules['external_id'] as $rule) {
+            if ($rule instanceof \Closure) {
+                $closure = $rule;
+                break;
+            }
+        }
+        $called = false;
+        $fail = function ($message) use (&$called) {
+            $called = true;
+            \PHPUnit\Framework\Assert::assertEquals('That provider ticket type is already mapped', $message);
+        };
+        $closure('external_id', $provider->id . ':xyz', $fail);
+        $this->assertTrue($called, 'Fail closure was not called after non-matching provider in available mappings');
+    }
 }

@@ -67,7 +67,7 @@ class UserControllerTest extends TestCase
     {
         $provider = SocialProvider::factory()->create(['enabled' => false, 'auth_enabled' => false]);
         $controller = new UserController();
-        $response = $controller->login_redirect($provider);
+        $response = $controller->loginRedirect($provider);
         $this->assertStringContainsString(route('login'), $response->getTargetUrl());
 
         // For the enabled case, avoid calling the model code path that relies on getProvider()
@@ -82,7 +82,7 @@ class UserControllerTest extends TestCase
         $enabledProvider->enabled = true;
         $enabledProvider->auth_enabled = true;
 
-        $resp = $controller->login_redirect($enabledProvider);
+        $resp = $controller->loginRedirect($enabledProvider);
         $this->assertEquals('ok', $resp->getContent());
     }
 
@@ -102,7 +102,7 @@ class UserControllerTest extends TestCase
         });
         $signupRequest->setLaravelSession(app('session.store'));
 
-        $response = $controller->signup_process($signupRequest);
+        $response = $controller->signupProcess($signupRequest);
         $this->assertStringContainsString(route('home'), $response->getTargetUrl());
         $this->assertEquals('nick', $user->fresh()->nickname);
 
@@ -118,5 +118,155 @@ class UserControllerTest extends TestCase
         $response = $controller->update($updateRequest);
         $this->assertStringContainsString(route('user.profile'), $response->getTargetUrl());
         $this->assertEquals('newnick', $user->fresh()->nickname);
+    }
+
+    public function testSignupShowsView()
+    {
+        $user = User::factory()->create();
+        // create settings used by the view
+        Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => 'terms text']);
+        Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => 'privacy text']);
+
+        $controller = new UserController();
+        $request = \Illuminate\Http\Request::create('/signup', 'GET');
+        $request->setUserResolver(fn() => $user);
+
+        $resp = $controller->signup($request);
+        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $data = $resp->getData();
+        $this->assertArrayHasKey('terms', $data);
+        $this->assertArrayHasKey('privacy', $data);
+    }
+
+    public function testEditShowsView()
+    {
+        $user = User::factory()->create();
+        $controller = new UserController();
+        $request = \Illuminate\Http\Request::create('/edit', 'GET');
+        $request->setUserResolver(fn() => $user);
+
+        $resp = $controller->edit($request);
+        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $this->assertArrayHasKey('user', $resp->getData());
+    }
+
+    public function testLoginShowsProviders()
+    {
+        SocialProvider::factory()->create(['code' => 'one', 'enabled' => true, 'auth_enabled' => true]);
+        SocialProvider::factory()->create(['code' => 'two', 'enabled' => false, 'auth_enabled' => false]);
+
+        $controller = new UserController();
+        $resp = $controller->login();
+        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $data = $resp->getData();
+        $this->assertArrayHasKey('providers', $data);
+        $codes = $data['providers']->pluck('code')->all();
+        $this->assertContains('one', $codes);
+        $this->assertNotContains('two', $codes);
+    }
+
+    public function testLoginReturnRedirectsWhenAlreadyAuthenticated()
+    {
+        $user = User::factory()->create();
+        $this->actingAs($user);
+
+        $provider = SocialProvider::factory()->create(['enabled' => true, 'auth_enabled' => true]);
+        $controller = new UserController();
+
+        $resp = $controller->loginReturn($provider);
+        $this->assertStringContainsString(route('home'), $resp->getTargetUrl());
+    }
+
+    public function testLoginReturnLogsInProviderUser()
+    {
+        $user = User::factory()->create(['suspended' => 0]);
+        $provider = new class extends \App\Models\SocialProvider {
+            public function user(?string $redirectUrl = null)
+            {
+                return \App\Models\User::first();
+            }
+        };
+        $provider->enabled = true;
+        $provider->auth_enabled = true;
+
+        // ensure there is a user in DB for the anonymous provider to return
+        $user->save();
+
+        $controller = new UserController();
+        $resp = $controller->loginReturn($provider);
+
+        $this->assertStringContainsString(route('home'), $resp->getTargetUrl());
+        $this->assertTrue(\Illuminate\Support\Facades\Auth::check());
+        $this->assertNotNull($user->fresh()->last_login);
+    }
+
+    public function testLoginReturnWithDisabledProviderRedirectsToLogin()
+    {
+        $controller = new UserController();
+        $disabledProvider = new class extends \App\Models\SocialProvider {};
+        $disabledProvider->enabled = false;
+        $disabledProvider->auth_enabled = false;
+
+        $resp = $controller->loginReturn($disabledProvider);
+        $this->assertStringContainsString(route('login'), $resp->getTargetUrl());
+    }
+
+    public function testLoginReturnWithSuspendedUserRedirectsWithMessage()
+    {
+        $suspended = User::factory()->create(['suspended' => 1]);
+
+        $provider = new class extends \App\Models\SocialProvider {
+            public function user(?string $redirectUrl = null)
+            {
+                return \App\Models\User::first();
+            }
+        };
+        $provider->enabled = true;
+        $provider->auth_enabled = true;
+
+        // ensure user exists for the provider to return
+        $suspended->save();
+
+        $controller = new UserController();
+        $resp = $controller->loginReturn($provider);
+
+        $this->assertStringContainsString(route('login'), $resp->getTargetUrl());
+        $this->assertEquals('Your account has been suspended', $resp->getSession()->get('errorMessage'));
+    }
+
+    public function testLoginReturnHandlesSocialProviderException()
+    {
+        $provider = new class extends \App\Models\SocialProvider {
+            public function user(?string $redirectUrl = null)
+            {
+                throw new \App\Exceptions\SocialProviderException('provider fail');
+            }
+        };
+        $provider->enabled = true;
+        $provider->auth_enabled = true;
+
+        $controller = new UserController();
+        $resp = $controller->loginReturn($provider);
+
+        $this->assertStringContainsString(route('login'), $resp->getTargetUrl());
+        $this->assertEquals('provider fail', $resp->getSession()->get('errorMessage'));
+    }
+
+    public function testLoginReturnHandlesGenericExceptionAndFallsBack()
+    {
+        $provider = new class extends \App\Models\SocialProvider {
+            public function user(?string $redirectUrl = null)
+            {
+                throw new \Exception('boom');
+            }
+        };
+        $provider->enabled = true;
+        $provider->auth_enabled = true;
+
+        $controller = new UserController();
+        $resp = $controller->loginReturn($provider);
+
+        $this->assertStringContainsString(route('login'), $resp->getTargetUrl());
+        $this->assertEquals('Unable to login', $resp->getSession()->get('errorMessage'));
     }
 }

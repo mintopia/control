@@ -26,4 +26,16 @@ class EmailAddressObserverTest extends TestCase
         $user->refresh();
         $this->assertEquals($email->id, $user->primary_email_id);
     }
+
+    public function testCreatedDoesNothingWhenUserIsNull()
+    {
+        // Build an email address model instance without persisting (DB enforces non-null user_id)
+        $email = EmailAddress::factory()->make(['user_id' => null]);
+
+        $observer = new EmailAddressObserver();
+        // Should return early and not throw
+        $observer->created($email);
+
+        $this->assertNull($email->user);
+    }
 }

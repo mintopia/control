@@ -2,6 +2,8 @@
 
 namespace Tests\Unit\app\Providers;
 
+use Illuminate\View\Factory;
+use Mockery\MockInterface;
 use Tests\TestCase;
 
 use App\Models\Theme;
@@ -74,23 +76,23 @@ class AppServiceProviderTest extends TestCase
         ]);
 
         // Fake view factory that captures composer closures
-        $fakeView = new class {
-            public $registered = null;
-            public function composer($views, $closure)
-            {
-                // store the closure for later invocation
-                $this->registered = $closure;
-            }
-        };
+        $viewClosure = null;
+        $mockView = $this->partialMock(Factory::class, function (MockInterface $mock) use (&$viewClosure) {
+            $mock->shouldReceive('composer')->andReturnUsing(
+                function ($views, $closure) use (&$viewClosure) {
+                    $viewClosure = $closure;
+                }
+            );
+        });
 
         // Bind our fake view factory into the container so the provider will call ->composer()
-        app()->instance('view', $fakeView);
+        app()->instance('view', $mockView);
 
         $provider = new \App\Providers\AppServiceProvider(app());
         $provider->boot();
 
         // Ensure a closure was registered
-        $this->assertIsCallable($fakeView->registered);
+        $this->assertIsCallable($viewClosure);
 
         // Simulate a view instance that has ->with()
         $view = new class {
@@ -103,7 +105,7 @@ class AppServiceProviderTest extends TestCase
         };
 
         // Invoke captured composer closure
-        ($fakeView->registered)($view);
+        ($viewClosure)($view);
 
         $this->assertArrayHasKey('currentTheme', $view->data);
         $this->assertArrayHasKey('darkMode', $view->data);

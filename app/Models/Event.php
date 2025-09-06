@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\EventMapping;
 use App\Models\Traits\ToString;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * App\Models\Event

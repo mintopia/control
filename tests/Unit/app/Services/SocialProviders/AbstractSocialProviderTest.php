@@ -25,6 +25,12 @@ class DummySocialProvider extends AbstractSocialProvider
     {
         parent::__construct($provider, $redirectUrl);
     }
+
+    // Provide a no-op updateAccount so tests exercising user() don't fail
+    protected function updateAccount(\App\Models\LinkedAccount $account, $remoteUser): void
+    {
+        // intentionally empty for tests
+    }
 }
 
 class AbstractSocialProviderTest extends TestCase
@@ -43,79 +49,502 @@ class AbstractSocialProviderTest extends TestCase
         $this->assertTrue($mapping['client_secret']->encrypted);
     }
 
-    public function test_install_creates_social_provider_and_settings()
+
+    public function test_user_deletes_unverified_email_and_links_account()
     {
-        $provider = new DummySocialProvider();
-        $socialProvider = $provider->install();
+        $prov = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'sp_' . uniqid()]);
+        $other = User::factory()->create();
+        EmailAddress::factory()->create(['email' => 'u@x.com', 'user_id' => $other->id, 'verified_at' => null]);
 
-        $this->assertInstanceOf(SocialProvider::class, $socialProvider);
-        $this->assertEquals('Dummy Social', $socialProvider->name);
-        $this->assertEquals('dummy', $socialProvider->code);
+        $localUser = User::factory()->create();
 
-        $settings = $socialProvider->settings()->pluck('code')->toArray();
-        $this->assertContains('client_id', $settings);
-        $this->assertContains('client_secret', $settings);
+        $remoteUser = new class {
+            public function getId()
+            {
+                return 'rid-3';
+            }
+            public function getEmail()
+            {
+                return 'u@x.com';
+            }
+            public function getNickname()
+            {
+                return 'nick3';
+            }
+        };
+
+        $driverStub = new class($remoteUser) {
+            public $remote;
+            public function __construct($r)
+            {
+                $this->remote = $r;
+            }
+            public function user()
+            {
+                return $this->remote;
+            }
+        };
+        $factoryStub = new class($driverStub) {
+            private $d;
+            public function __construct($d)
+            {
+                $this->d = $d;
+            }
+            public function driver($n)
+            {
+                return $this->d;
+            }
+        };
+        $this->app->instance(\Laravel\Socialite\Contracts\Factory::class, $factoryStub);
+
+        $provider = new DummySocialProvider($prov);
+        $result = $provider->user($localUser);
+        $this->assertInstanceOf(User::class, $result);
+        $this->assertEquals($localUser->id, $result->id);
+        // The unverified email should have been removed from the other user and re-created for the local user
+        $this->assertDatabaseHas('email_addresses', ['email' => 'u@x.com', 'user_id' => $localUser->id]);
+        $this->assertDatabaseMissing('email_addresses', ['email' => 'u@x.com', 'user_id' => $other->id]);
+        $this->assertDatabaseHas('linked_accounts', ['external_id' => 'rid-3', 'user_id' => $localUser->id]);
     }
 
-    public function test_install_does_not_duplicate_provider()
+    public function test_user_returns_account_user_when_account_exists_and_no_local_user()
     {
-        $provider = new DummySocialProvider();
-        $first = $provider->install();
-        $second = $provider->install();
+        $prov = SocialProvider::factory()->create(['code' => 'sp_' . uniqid()]);
+        $user = User::factory()->create();
+        $linked = new LinkedAccount();
+        $linked->provider()->associate($prov);
+        $linked->user()->associate($user);
+        $linked->external_id = 'rid-4';
+        $linked->save();
 
-        $this->assertEquals($first->id, $second->id);
-        $this->assertCount(1, SocialProvider::whereCode('dummy')->get());
+        $remoteUser = new class {
+            public function getId()
+            {
+                return 'rid-4';
+            }
+            public function getEmail()
+            {
+                return null;
+            }
+            public function getNickname()
+            {
+                return null;
+            }
+        };
+        $driverStub = new class($remoteUser) {
+            public $remote;
+            public function __construct($r)
+            {
+                $this->remote = $r;
+            }
+            public function user()
+            {
+                return $this->remote;
+            }
+        };
+        $factoryStub = new class($driverStub) {
+            private $d;
+            public function __construct($d)
+            {
+                $this->d = $d;
+            }
+            public function driver($n)
+            {
+                return $this->d;
+            }
+        };
+        $this->app->instance(\Laravel\Socialite\Contracts\Factory::class, $factoryStub);
+
+        $provider = new DummySocialProvider($prov);
+        $result = $provider->user(null);
+        $this->assertEquals($user->id, $result->id);
     }
 
-    public function test_install_settings_updates_existing_settings()
+    public function test_user_creates_new_user_and_email_and_account_when_auth_enabled()
     {
-        $provider = new DummySocialProvider();
-        $socialProvider = SocialProvider::factory()->create([
-            'name' => 'Dummy Social',
-            'code' => 'dummy',
-            'provider_class' => DummySocialProvider::class,
-        ]);
-        $providerSetting = ProviderSetting::factory()->create([
-            'provider_id' => $socialProvider->id,
-            'code' => 'client_id',
-            'name' => 'Old Name',
-        ]);
-        $provider = new DummySocialProvider($socialProvider);
-        $provider->installSettings();
+        $prov = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'sp_' . uniqid()]);
 
-        $providerSetting->refresh();
-        $this->assertEquals('Client ID', $providerSetting->name);
+        $remoteUser = new class {
+            public function getId()
+            {
+                return 'rid-6';
+            }
+            public function getEmail()
+            {
+                return 'newuser@example.com';
+            }
+            public function getNickname()
+            {
+                return 'newnick';
+            }
+        };
+        $driverStub = new class($remoteUser) {
+            public $remote;
+            public function __construct($r)
+            {
+                $this->remote = $r;
+            }
+            public function user()
+            {
+                return $this->remote;
+            }
+        };
+        $factoryStub = new class($driverStub) {
+            private $d;
+            public function __construct($d)
+            {
+                $this->d = $d;
+            }
+            public function driver($n)
+            {
+                return $this->d;
+            }
+        };
+        $this->app->instance(\Laravel\Socialite\Contracts\Factory::class, $factoryStub);
+
+        $provider = new DummySocialProvider($prov);
+        $result = $provider->user(null);
+        $this->assertInstanceOf(User::class, $result);
+        $this->assertDatabaseHas('linked_accounts', ['external_id' => 'rid-6', 'user_id' => $result->id]);
+        $this->assertDatabaseHas('email_addresses', ['email' => 'newuser@example.com', 'user_id' => $result->id]);
     }
 
-    public function test_redirect_returns_redirect_response()
+    public function test_redirect_calls_socialite_and_returns_redirect_response()
     {
-        $provider = new DummySocialProvider();
-        // Create a tiny Socialite factory stub and bind it into the container so
-        // the provider uses it without relying on Mockery.
         $driverStub = new class {
             public function redirect()
             {
-                return new RedirectResponse('/dummy-redirect');
+                return new RedirectResponse('https://example.test/redirect');
             }
         };
-
         $factoryStub = new class($driverStub) {
-            private $driver;
-            public function __construct($driver)
+            private $d;
+            public function __construct($d)
             {
-                $this->driver = $driver;
+                $this->d = $d;
             }
-            public function driver($name)
+            public function driver($n)
             {
-                return $this->driver;
+                return $this->d;
             }
         };
-
-        // Bind the stub to the Socialite contract so the facade resolves it.
         $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
-        $response = $provider->redirect();
-        $this->assertInstanceOf(RedirectResponse::class, $response);
-        $this->assertEquals('/dummy-redirect', $response->getTargetUrl());
+        $prov = SocialProvider::factory()->create(['code' => 'sp_' . uniqid()]);
+        $provider = new DummySocialProvider($prov);
+        $resp = $provider->redirect();
+        $this->assertInstanceOf(RedirectResponse::class, $resp);
+    }
+
+    public function test_user_returns_local_user_when_account_belongs_to_local_user()
+    {
+        $prov = SocialProvider::factory()->create(['code' => 'sp_' . uniqid()]);
+        $user = User::factory()->create();
+
+        $linked = new LinkedAccount();
+        $linked->provider()->associate($prov);
+        $linked->user()->associate($user);
+        $linked->external_id = 'rid-local';
+        $linked->save();
+
+        $remoteUser = new class {
+            public function getId()
+            {
+                return 'rid-local';
+            }
+            public function getEmail()
+            {
+                return null;
+            }
+            public function getNickname()
+            {
+                return null;
+            }
+        };
+        $driverStub = new class($remoteUser) {
+            public $remote;
+            public function __construct($r)
+            {
+                $this->remote = $r;
+            }
+            public function user()
+            {
+                return $this->remote;
+            }
+        };
+        $factoryStub = new class($driverStub) {
+            private $d;
+            public function __construct($d)
+            {
+                $this->d = $d;
+            }
+            public function driver($n)
+            {
+                return $this->d;
+            }
+        };
+        $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
+
+        $provider = new DummySocialProvider($prov);
+        $result = $provider->user($user);
+        $this->assertEquals($user->id, $result->id);
+    }
+
+    public function test_user_handles_email_present()
+    {
+        $provider = new DummySocialProvider();
+        $email = EmailAddress::factory()->create(['email' => 'test@example.com']);
+        $user = User::factory()->create();
+        $email->user()->associate($user);
+        $email->save();
+        $prov = SocialProvider::factory()->create(['code' => 'sp_' . uniqid()]);
+        $provider = new DummySocialProvider($prov);
+        $driverStub = new class {
+            public function user()
+            {
+                return new class {
+                    public function getId()
+                    {
+                        return 'remote-id';
+                    }
+                    public function getEmail()
+                    {
+                        return 'test@example.com';
+                    }
+                    public function getNickname()
+                    {
+                        return 'nick';
+                    }
+                };
+            }
+        };
+        $factoryStub = new class($driverStub) {
+            private $d;
+            public function __construct($d)
+            {
+                $this->d = $d;
+            }
+            public function driver($n)
+            {
+                return $this->d;
+            }
+        };
+        $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
+        $result = $provider->user($user);
+        $this->assertInstanceOf(User::class, $result);
+        $this->assertEquals($user->id, $result->id);
+    }
+
+    public function test_user_handles_missing_primary_email()
+    {
+        $provider = new DummySocialProvider();
+        $user = User::factory()->create();
+        // Remove primaryEmail association
+        $user->primary_email_id = null;
+        $user->save();
+        $this->assertNull($user->primaryEmail);
+        $prov = SocialProvider::factory()->create();
+        $provider = new DummySocialProvider($prov);
+        // Remove primaryEmail association
+        $user->primary_email_id = null;
+        $user->save();
+        $this->assertNull($user->primaryEmail);
+        // Patch Socialite driver to avoid unsupported driver error
+        $driverStub = new class {
+            public function user()
+            {
+                return new class {
+                    public function getId()
+                    {
+                        return 'remote-id';
+                    }
+                    public function getEmail()
+                    {
+                        return null;
+                    }
+                    public function getNickname()
+                    {
+                        return 'nick';
+                    }
+                };
+            }
+        };
+        $factoryStub = new class($driverStub) {
+            private $d;
+            public function __construct($d)
+            {
+                $this->d = $d;
+            }
+            public function driver($n)
+            {
+                return $this->d;
+            }
+        };
+        $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
+        $result = $provider->user($user);
+        $this->assertInstanceOf(User::class, $result);
+        $this->assertEquals($user->id, $result->id);
+    }
+
+    // Testing Exceptions
+    public function test_user_throws_if_account_exists_and_localUser_id_mismatch()
+    {
+        $provider = new DummySocialProvider();
+        $localUser = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $account = LinkedAccount::factory()->create(['user_id' => $otherUser->id, 'external_id' => 'dummy_' . uniqid(),]);
+        // Set up provider and account directly
+        $prov = SocialProvider::factory()->create(['code' => 'sp_' . uniqid()]);
+        $provider = new DummySocialProvider($prov);
+        $account->provider()->associate($prov);
+        $account->save();
+        // Patch Socialite driver so the provider->user() call doesn't fail due to unsupported driver
+        $remoteUser = new class($account->external_id) {
+            private $id;
+            public function __construct($id)
+            {
+                $this->id = $id;
+            }
+            public function getId()
+            {
+                return $this->id;
+            }
+            public function getEmail()
+            {
+                return null;
+            }
+            public function getNickname()
+            {
+                return null;
+            }
+        };
+        $driverStub = new class($remoteUser) {
+            public $remote;
+            public function __construct($r)
+            {
+                $this->remote = $r;
+            }
+            public function user()
+            {
+                return $this->remote;
+            }
+        };
+        $factoryStub = new class($driverStub) {
+            private $d;
+            public function __construct($d)
+            {
+                $this->d = $d;
+            }
+            public function driver($n)
+            {
+                return $this->d;
+            }
+        };
+        $this->app->instance(\Laravel\Socialite\Contracts\Factory::class, $factoryStub);
+
+        $this->expectException(\App\Exceptions\SocialProviderException::class);
+        $this->expectExceptionMessage('Account is already associated with another user');
+        $provider->user($localUser);
+    }
+
+    public function test_user_throws_if_email_verified_and_associated_with_other_user()
+    {
+        $prov = SocialProvider::factory()->create(['code' => 'sp_' . uniqid()]);
+        $emailOwner = User::factory()->create();
+        EmailAddress::factory()->create(['email' => 'a@x.com', 'user_id' => $emailOwner->id, 'verified_at' => now()]);
+
+        $localUser = User::factory()->create();
+
+        $remoteUser = new class {
+            public function getId()
+            {
+                return 'rid-2';
+            }
+            public function getEmail()
+            {
+                return 'a@x.com';
+            }
+            public function getNickname()
+            {
+                return 'nick2';
+            }
+        };
+
+        $driverStub = new class($remoteUser) {
+            public $remote;
+            public function __construct($r)
+            {
+                $this->remote = $r;
+            }
+            public function user()
+            {
+                return $this->remote;
+            }
+        };
+        $factoryStub = new class($driverStub) {
+            private $d;
+            public function __construct($d)
+            {
+                $this->d = $d;
+            }
+            public function driver($n)
+            {
+                return $this->d;
+            }
+        };
+        $this->app->instance(\Laravel\Socialite\Contracts\Factory::class, $factoryStub);
+
+        $provider = new DummySocialProvider($prov);
+        $this->expectException(\App\Exceptions\SocialProviderException::class);
+        $this->expectExceptionMessage('Email is already associated with another user');
+        $provider->user($localUser);
+    }
+
+    public function test_user_throws_when_no_account_and_auth_disabled()
+    {
+        $prov = SocialProvider::factory()->create(['auth_enabled' => false, 'code' => 'sp_' . uniqid()]);
+
+        $remoteUser = new class {
+            public function getId()
+            {
+                return 'rid-5';
+            }
+            public function getEmail()
+            {
+                return null;
+            }
+            public function getNickname()
+            {
+                return null;
+            }
+        };
+        $driverStub = new class($remoteUser) {
+            public $remote;
+            public function __construct($r)
+            {
+                $this->remote = $r;
+            }
+            public function user()
+            {
+                return $this->remote;
+            }
+        };
+        $factoryStub = new class($driverStub) {
+            private $d;
+            public function __construct($d)
+            {
+                $this->d = $d;
+            }
+            public function driver($n)
+            {
+                return $this->d;
+            }
+        };
+        $this->app->instance(\Laravel\Socialite\Contracts\Factory::class, $factoryStub);
+
+        $provider = new DummySocialProvider($prov);
+        $this->expectException(\App\Exceptions\SocialProviderException::class);
+        $this->expectExceptionMessage('Unable to login with this account');
+        $provider->user(null);
     }
 }

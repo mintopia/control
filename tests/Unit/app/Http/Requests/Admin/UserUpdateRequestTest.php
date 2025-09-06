@@ -4,6 +4,7 @@ namespace Tests\Unit\app\Http\Requests\Admin;
 
 use Tests\TestCase;
 use App\Http\Requests\Admin\UserUpdateRequest;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class UserUpdateRequestStub extends UserUpdateRequest
 {
@@ -12,6 +13,7 @@ class UserUpdateRequestStub extends UserUpdateRequest
 
 class UserUpdateRequestTest extends TestCase
 {
+    use RefreshDatabase;
     public function testAuthorizeReturnsTrue()
     {
         $request = new UserUpdateRequestStub();
@@ -92,5 +94,25 @@ class UserUpdateRequestTest extends TestCase
         $messages = $request->messages();
         $this->assertArrayHasKey('primary_email_id.exists', $messages);
         $this->assertEquals('The email address is not valid', $messages['primary_email_id.exists']);
+    }
+
+    public function testPrimaryEmailExistsRuleRestrictsToCurrentUser()
+    {
+        // Create two users and an email for user A
+        $userA = \App\Models\User::factory()->create();
+        $userB = \App\Models\User::factory()->create();
+        $email = \App\Models\EmailAddress::factory()->create(['user_id' => $userA->id]);
+
+        $request = new UserUpdateRequestStub();
+        // Simulate that the request is for user B
+        $request->user = (object)['id' => $userB->id];
+
+        $rules = $request->rules();
+        $validator = \Illuminate\Support\Facades\Validator::make([
+            'primary_email_id' => $email->id,
+        ], $rules);
+
+        $this->assertTrue($validator->fails(), 'Validator should fail when primary_email_id belongs to another user');
+        $this->assertArrayHasKey('primary_email_id', $validator->errors()->toArray());
     }
 }

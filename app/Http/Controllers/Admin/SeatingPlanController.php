@@ -135,7 +135,7 @@ class SeatingPlanController extends Controller
         }, $filename);
     }
 
-    public function import_process(SeatingPlanImportRequest $request, Event $event, SeatingPlan $seatingplan)
+    public function importProcess(SeatingPlanImportRequest $request, Event $event, SeatingPlan $seatingplan)
     {
         $csv = $request->file('csv')->get();
         $wipe = (bool)$request->input('wipe', false);

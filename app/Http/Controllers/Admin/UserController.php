@@ -169,7 +169,7 @@ class UserController extends Controller
         return response()->redirectToRoute('home');
     }
 
-    public function sync_tickets(User $user)
+    public function syncTickets(User $user)
     {
         $user->syncTickets(force: true);
         return response()->redirectToRoute('admin.users.show', $user->id)->with('successMessage', "Tickets will be synchronised for {$user->nickname}");

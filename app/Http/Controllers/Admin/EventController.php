@@ -37,14 +37,15 @@ class EventController extends Controller
 
         if ($request->input('external_id')) {
             $filters->external_id = $request->input('external_id');
-            $query = $query->whereHas('provider', function ($query) use ($filters) {
+            $query = $query->whereHas('mappings', function ($query) use ($filters) {
                 $query->whereExternalId($filters->external_id);
             });
         }
 
         if ($request->input('provider_id')) {
             $filters->provider_id = $request->input('provider_id');
-            $query = $query->whereHas('provider', function ($query) use ($filters) {
+            // $query = $query->whereHas('provider', function ($query) use ($filters) {
+            $query = $query->whereHas('mappings', function ($query) use ($filters) {
                 $query->whereTicketProviderId($filters->provider_id);
             });
         }
@@ -166,10 +167,18 @@ class EventController extends Controller
         ]);
     }
 
-    public function export_tickets(Event $event)
+    public function exportTickets(Event $event)
     {
         $csv = [[
-            'ID', 'Ticket Provider', 'External ID', 'Reference', 'Type', 'Nickname', 'Name', 'Email', 'Seat',
+            'ID',
+            'Ticket Provider',
+            'External ID',
+            'Reference',
+            'Type',
+            'Nickname',
+            'Name',
+            'Email',
+            'Seat',
         ]];
         $event->tickets()->with(['user', 'type', 'provider', 'seat', 'user.primaryEmail'])->chunk(100, function ($chunk) use (&$csv) {
             foreach ($chunk as $ticket) {

@@ -35,6 +35,19 @@ class ClanControllerTest extends TestCase
         $this->assertArrayHasKey('members', $view->getData());
     }
 
+    public function testIndexWithDescOrder()
+    {
+        $user = User::factory()->create();
+        $request = Request::create('/clans', 'GET', ['order_direction' => 'desc']);
+        $request->setUserResolver(fn() => $user);
+
+        $controller = new ClanController();
+        $view = $controller->index($request);
+
+        $this->assertInstanceOf(View::class, $view);
+        $this->assertArrayHasKey('members', $view->getData());
+    }
+
     public function testStoreValidatesAndSavesData()
     {
         $user = User::factory()->create();
@@ -56,5 +69,131 @@ class ClanControllerTest extends TestCase
         $response = $controller->destroy($clan);
 
         $this->assertDatabaseMissing('clans', ['id' => $clan->id]);
+    }
+
+    public function testCreateReturnsView()
+    {
+        $controller = new ClanController();
+        $view = $controller->create();
+        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+    }
+
+    public function testShowReturnsViewWithMembers()
+    {
+        $clan = Clan::factory()->create();
+        $user = User::factory()->create();
+        // create membership so show() has something to paginate
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+
+        $request = Request::create('/clans/' . $clan->code, 'GET');
+        $controller = new ClanController();
+        $view = $controller->show($request, $clan);
+        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $this->assertArrayHasKey('members', $view->getData());
+    }
+
+    public function testShowOrdersByNameDesc()
+    {
+        $clan = Clan::factory()->create();
+        // create two users with nicknames to check ordering
+        $userA = User::factory()->create(['nickname' => 'aaa']);
+        $userB = User::factory()->create(['nickname' => 'zzz']);
+
+        // create memberships so show() has something to paginate
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
+
+        $request = Request::create('/clans/' . $clan->code, 'GET', ['order' => 'name', 'order_direction' => 'desc']);
+        $request->setUserResolver(fn() => $userB);
+
+        $controller = new ClanController();
+        $view = $controller->show($request, $clan);
+
+        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $members = $view->getData()['members']->items();
+        $this->assertGreaterThanOrEqual(2, count($members));
+        // first member should have nickname 'zzz' due to desc ordering
+        $this->assertEquals('zzz', $members[0]->user->nickname);
+    }
+
+    public function testShowOrdersByNameAsc()
+    {
+        $clan = Clan::factory()->create();
+        // create two users with nicknames to check ordering
+        $userA = User::factory()->create(['nickname' => 'aaa']);
+        $userB = User::factory()->create(['nickname' => 'zzz']);
+
+        // create memberships so show() has something to paginate
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
+
+        $request = Request::create('/clans/' . $clan->code, 'GET', ['order' => 'name']);
+        $request->setUserResolver(fn() => $userA);
+
+        $controller = new ClanController();
+        $view = $controller->show($request, $clan);
+
+        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $members = $view->getData()['members']->items();
+        $this->assertGreaterThanOrEqual(2, count($members));
+        // first member should have nickname 'aaa' due to asc ordering
+        $this->assertEquals('aaa', $members[0]->user->nickname);
+    }
+
+    public function testShowInvalidOrderDirectionDefaultsToAsc()
+    {
+        $clan = Clan::factory()->create();
+        $userA = User::factory()->create(['nickname' => 'aaa']);
+        $userB = User::factory()->create(['nickname' => 'zzz']);
+
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
+        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
+
+        // provide an invalid order_direction to trigger the if branch that normalises it
+        $request = Request::create('/clans/' . $clan->code, 'GET', ['order' => 'name', 'order_direction' => 'invalid']);
+        $request->setUserResolver(fn() => $userA);
+
+        $controller = new ClanController();
+        $view = $controller->show($request, $clan);
+        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+
+        $data = $view->getData();
+        $this->assertArrayHasKey('params', $data);
+        $this->assertEquals('asc', $data['params']['order_direction']);
+    }
+
+    public function testEditReturnsView()
+    {
+        $clan = Clan::factory()->create();
+        $controller = new ClanController();
+        $view = $controller->edit($clan);
+        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $this->assertArrayHasKey('clan', $view->getData());
+    }
+
+    public function testUpdatePersistsChanges()
+    {
+        $clan = Clan::factory()->create(['name' => 'Old']);
+        $request = ClanRequest::create('/clans/' . $clan->id, 'PUT', ['name' => 'New Name']);
+        $controller = new ClanController();
+        $response = $controller->update($request, $clan);
+        $this->assertDatabaseHas('clans', ['id' => $clan->id, 'name' => 'New Name']);
+    }
+
+    public function testRegenerateChangesInviteCode()
+    {
+        $clan = Clan::factory()->create(['invite_code' => 'AAAA-BBBB']);
+        $controller = new ClanController();
+        $response = $controller->regenerate($clan);
+        $this->assertNotEquals('AAAA-BBBB', $clan->fresh()->invite_code);
+    }
+
+    public function testDeleteReturnsView()
+    {
+        $clan = Clan::factory()->create();
+        $controller = new ClanController();
+        $view = $controller->delete($clan);
+        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $this->assertArrayHasKey('clan', $view->getData());
     }
 }

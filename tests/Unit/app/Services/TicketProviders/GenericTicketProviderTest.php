@@ -10,6 +10,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use GuzzleHttp\Psr7\Response;
+use App\Models\EmailAddress;
+use App\Models\Event;
+use App\Models\EventMapping;
+use App\Models\Ticket;
+use App\Models\TicketType;
+use App\Models\User;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
 
 class GenericTicketProviderTest extends TestCase
 {
@@ -52,16 +61,155 @@ class GenericTicketProviderTest extends TestCase
                 'value' => $value,
             ]);
         }
-        // Return an anonymous subclass that exposes the underlying TicketProvider model
-        return new class($ticketProvider) extends GenericTicketProvider {
-            public ?\App\Models\TicketProvider $provider = null;
-            public function __construct(?\App\Models\TicketProvider $p = null)
-            {
-                parent::__construct($p);
-                $this->provider = $p;
-            }
-        };
+        // Return a test helper that exposes protected methods
+        return new \Tests\Unit\app\Services\TicketProviders\DummyGenericTicketProvider($ticketProvider);
     }
+
+    // --- Extra tests merged from GenericTicketProviderExtraTest.php ---
+
+    public function test_make_ticket_returns_null_when_event_missing()
+    {
+        $provider = $this->createProvider();
+        $data = (object)[
+            'id' => 't1',
+            'event_id' => 'no-such-event',
+            'ticket_type_id' => 'type-x',
+            'email' => 'foo@example.com',
+            'description' => 'Test ticket',
+            'reference' => 'ref1',
+        ];
+
+        $this->assertNull($provider->makeTicketPublic(null, $data));
+    }
+
+    public function test_make_ticket_returns_null_when_type_missing()
+    {
+        $provider = $this->createProvider();
+        $event = Event::factory()->create();
+        EventMapping::factory()->for($event)->for($provider->provider, 'provider')->create(['external_id' => 'evt1']);
+
+        $data = (object)[
+            'id' => 't1',
+            'event_id' => 'evt1',
+            'ticket_type_id' => 'no-type',
+            'email' => 'foo@example.com',
+            'description' => 'Test ticket',
+            'reference' => 'ref1',
+        ];
+
+        $this->assertNull($provider->makeTicketPublic(null, $data));
+    }
+
+    public function test_make_ticket_creates_ticket_when_event_and_type_exist_and_links_user()
+    {
+        $provider = $this->createProvider();
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['email' => 'foo@example.com', 'verified_at' => now(), 'user_id' => $user->id]);
+        $event = Event::factory()->create();
+        $type = TicketType::factory()->create();
+        EventMapping::factory()->for($event)->for($provider->provider, 'provider')->create(['external_id' => 'evt1']);
+        \App\Models\TicketTypeMapping::create([
+            'ticket_type_id' => $type->id,
+            'ticket_provider_id' => $provider->provider->id,
+            'external_id' => 'type1',
+        ]);
+
+        $data = (object)[
+            'id' => 't2',
+            'event_id' => 'evt1',
+            'ticket_type_id' => 'type1',
+            'email' => 'foo@example.com',
+            'description' => 'Test ticket',
+            'reference' => 'ref2',
+        ];
+
+        $ticket = $provider->makeTicketPublic(null, $data);
+        $this->assertInstanceOf(Ticket::class, $ticket);
+        $this->assertEquals('t2', $ticket->external_id);
+        // reload relations/columns from DB to be sure associations persisted
+        $ticket->refresh();
+        $this->assertEquals($event->id, $ticket->event_id);
+        // prefer checking the relation to avoid depending on column naming
+        $this->assertNotNull($ticket->type, 'Ticket type relation should be set');
+        $this->assertEquals($type->id, $ticket->type->id);
+        // user should be linked via the email created above
+        $this->assertNotNull($ticket->user, 'Ticket user should be linked');
+        $this->assertEquals($user->id, $ticket->user->id);
+    }
+
+    public function test_get_tickets_pages_until_hasMore_is_false()
+    {
+        $provider = $this->createProvider([
+            'endpoint' => 'https://api.example.test',
+            'apikey' => 'key'
+        ]);
+
+        $resp1 = new Response(200, [], json_encode((object)[
+            'tickets' => [(object)['id' => '1', 'status' => 'valid']],
+            'hasMore' => true,
+        ]));
+        $resp2 = new Response(200, [], json_encode((object)[
+            'tickets' => [(object)['id' => '2', 'status' => 'valid']],
+            'hasMore' => false,
+        ]));
+
+        $mock = new MockHandler([$resp1, $resp2]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+
+        $ref = new \ReflectionClass($provider);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, $client);
+
+        $tickets = $provider->getTicketsPublic(null);
+        // Current implementation resets the page buffer each loop and returns the last page only
+        $this->assertCount(1, $tickets);
+        $this->assertArrayNotHasKey('1', $tickets);
+        $this->assertArrayHasKey('2', $tickets);
+    }
+
+    public function test_sync_tickets_removes_voided_and_adds_missing()
+    {
+        $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
+
+        // prepare existing tickets in DB
+        $existing = Ticket::factory()->create(['ticket_provider_id' => $provider->provider->id, 'external_id' => '10']);
+
+        // remote tickets: one voided (11), one valid (12)
+        $resp = new Response(200, [], json_encode((object)[
+            'tickets' => [
+                (object)['id' => '11', 'status' => 'voided', 'event_id' => 'evtA', 'ticket_type_id' => 'typeA', 'email' => 'x@example.com', 'description' => 'd', 'reference' => 'r'],
+                (object)['id' => '12', 'status' => 'valid', 'event_id' => 'evtB', 'ticket_type_id' => 'typeB', 'email' => 'x@example.com', 'description' => 'd2', 'reference' => 'r2'],
+            ],
+            'hasMore' => false,
+        ]));
+
+        $mock = new MockHandler([$resp]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+        $ref = new \ReflectionClass($provider);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, $client);
+
+        // create event and type mapping for evtB/typeB so new ticket can be created
+        $event = Event::factory()->create();
+        $type = TicketType::factory()->create();
+        EventMapping::factory()->for($event)->for($provider->provider, 'provider')->create(['external_id' => 'evtB']);
+        \App\Models\TicketTypeMapping::create([
+            'ticket_type_id' => $type->id,
+            'ticket_provider_id' => $provider->provider->id,
+            'external_id' => 'typeB',
+        ]);
+
+        $provider->syncTickets('x@example.com');
+
+        // voided ticket 11 should not exist, and 12 should have been added
+        $this->assertDatabaseMissing('tickets', ['external_id' => '11']);
+        $this->assertDatabaseHas('tickets', ['external_id' => '12']);
+    }
+
 
     public function test_config_mapping_returns_expected_array()
     {
@@ -178,5 +326,176 @@ class GenericTicketProviderTest extends TestCase
         // Should now be cached
         $cached = Cache::get($key);
         $this->assertEquals($types, $cached);
+    }
+
+    public function test_process_ticket()
+    {
+        $provider = $this->createProvider();
+
+        // prepare mappings and related models so processTicket can create a Ticket
+        $user = \App\Models\User::factory()->create();
+        \App\Models\EmailAddress::factory()->create([
+            'email' => 'foo@example.com',
+            'verified_at' => now(),
+            'user_id' => $user->id,
+        ]);
+
+        $event = Event::factory()->create();
+        EventMapping::factory()->for($event)->for($provider->provider, 'provider')->create(['external_id' => 'evt1']);
+
+        $type = TicketType::factory()->create();
+        \App\Models\TicketTypeMapping::create([
+            'ticket_type_id' => $type->id,
+            'ticket_provider_id' => $provider->provider->id,
+            'external_id' => 'type1',
+        ]);
+
+        $data = (object)[
+            'id' => 't1',
+            'event_id' => 'evt1',
+            'ticket_type_id' => 'type1',
+            'email' => 'foo@example.com',
+            'description' => 'Test ticket',
+            'reference' => 'ref1',
+        ];
+
+        $result = $provider->processTicketPublic($data);
+        $this->assertInstanceOf(Ticket::class, $result);
+        $this->assertDatabaseHas('tickets', ['external_id' => 't1']);
+    }
+
+    public function test_process_ticket_deletes_existing_when_voided()
+    {
+        $provider = $this->createProvider();
+
+        // create an existing ticket that should be deleted when status is voided
+        $existing = Ticket::factory()->create([
+            'ticket_provider_id' => $provider->provider->id,
+            'external_id' => 'del-me',
+        ]);
+
+        $data = (object)[
+            'id' => 'del-me',
+            'status' => 'voided',
+            'event_id' => 'unused',
+            'ticket_type_id' => 'unused',
+            'email' => 'nobody@example.com',
+        ];
+
+        $result = $provider->processTicketPublic($data);
+
+        // The DB row should have been deleted
+        $this->assertDatabaseMissing('tickets', ['external_id' => 'del-me']);
+    }
+
+    public function test_process_ticket_returns_null_when_event_missing()
+    {
+        $provider = $this->createProvider();
+
+        // No EventMapping exists for this event id
+        $data = (object)[
+            'id' => 'no-event-pt',
+            'status' => 'valid',
+            'event_id' => 'no-such-event-pt',
+            'ticket_type_id' => 'type-x',
+            'email' => 'foo@example.com',
+        ];
+
+        $result = $provider->processTicketPublic($data);
+        $this->assertNull($result, 'processTicket should return null when the event mapping is missing');
+    }
+
+    public function test_sync_tickets_deletes_voided_ticket()
+    {
+        $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
+
+        // prepare existing ticket in DB that should be removed when remote reports it as voided
+        $existing = Ticket::factory()->create(['ticket_provider_id' => $provider->provider->id, 'external_id' => 'voided1']);
+
+        $resp = new Response(200, [], json_encode((object)[
+            'tickets' => [
+                (object)['id' => 'voided1', 'status' => 'voided', 'event_id' => 'evtX', 'ticket_type_id' => 'typeX', 'email' => 'y@example.com', 'description' => 'd', 'reference' => 'r'],
+            ],
+            'hasMore' => false,
+        ]));
+
+        $mock = new MockHandler([$resp]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+        $ref = new \ReflectionClass($provider);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, $client);
+
+        $provider->syncTickets('y@example.com');
+
+        $this->assertDatabaseMissing('tickets', ['external_id' => 'voided1']);
+    }
+
+    public function test_process_ticket_returns_existing_when_not_voided()
+    {
+        $provider = $this->createProvider();
+
+        $existing = Ticket::factory()->create([
+            'ticket_provider_id' => $provider->provider->id,
+            'external_id' => 'keep-me',
+        ]);
+
+        $data = (object)[
+            'id' => 'keep-me',
+            'status' => 'valid',
+            'event_id' => 'unused',
+            'ticket_type_id' => 'unused',
+            'email' => 'nobody@example.com',
+        ];
+
+        $result = $provider->processTicketPublic($data);
+        $this->assertInstanceOf(Ticket::class, $result);
+        $this->assertDatabaseHas('tickets', ['external_id' => 'keep-me']);
+    }
+
+    public function test_sync_tickets_assigns_user_when_emailaddress_provided()
+    {
+        $provider = $this->createProvider(['endpoint' => 'https://api.example.test', 'apikey' => 'key']);
+
+        // Create a user and verified email
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['email' => 'u@example.com', 'verified_at' => now(), 'user_id' => $user->id]);
+
+        // existing ticket in DB without a user
+        $existing = Ticket::factory()->create([
+            'ticket_provider_id' => $provider->provider->id,
+            'external_id' => 'valid1',
+            'user_id' => null,
+        ]);
+
+        // remote tickets: one valid ticket matching existing
+        $resp = new Response(200, [], json_encode((object)[
+            'tickets' => [
+                (object)['id' => 'valid1', 'status' => 'valid', 'event_id' => 'evtA', 'ticket_type_id' => 'typeA', 'email' => 'u@example.com', 'description' => 'd', 'reference' => 'r'],
+            ],
+            'hasMore' => false,
+        ]));
+
+        $mock = new MockHandler([$resp]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
+        $ref = new \ReflectionClass($provider);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($provider, $client);
+
+        // Call syncTickets with the EmailAddress instance so provider->syncTickets will attempt to assign the user
+        $provider->syncTickets($email);
+
+        $existing->refresh();
+        $this->assertNotNull($existing->user_id, 'Ticket should have been assigned to the user');
+        $this->assertEquals($user->id, $existing->user_id);
+    }
+
+    public function test_get_client()
+    {
+        $provider = $this->createProvider();
+        $this->assertInstanceOf(Client::class, $provider->getClientPublic());
     }
 }

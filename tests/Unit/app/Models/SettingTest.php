@@ -7,65 +7,123 @@ use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class SettingTest extends TestCase
 {
+    use RefreshDatabase;
     public function testCanInstantiateSetting()
     {
         $setting = new Setting();
         $this->assertInstanceOf(Setting::class, $setting);
     }
 
-    // Tests assume Setting model has a 'code' and 'value' attribute, which they currently do not have?
-    // public function testFetchReturnsDefaultIfNotFound()
-    // {
-    //     Log::shouldReceive('debug')->atLeast()->once();
-    //     $this->assertEquals('default', Setting::fetch('not_found_code', 'default'));
-    // }
+    public function testFetchReturnsDefaultWhenCachedSettingHasNullValue()
+    {
+        $code = 'foo_null';
+        $default = 'def';
+        $cached = new Setting(['code' => $code]);
+        $cached->value = null;
+        // Have Cache return our in-memory Setting object
+        \Illuminate\Support\Facades\Cache::shouldReceive('get')->with("settings.{$code}")->andReturn($cached);
+        \Illuminate\Support\Facades\Log::shouldReceive('debug')->atLeast()->once();
 
-    // public function testFetchReturnsValueFromCache()
-    // {
-    //     $setting = new Setting(['code' => 'foo', 'value' => 'bar', 'encrypted' => false]);
-    //     Cache::shouldReceive('get')->with('settings.foo')->andReturn($setting);
-    //     Log::shouldReceive('debug')->atLeast()->once();
-    //     $this->assertEquals('bar', Setting::fetch('foo'));
-    // }
+        $this->assertEquals($default, Setting::fetch($code, $default));
+    }
 
-    // public function testFetchReturnsDecryptedValueIfEncrypted()
-    // {
-    //     $encrypted = Crypt::encrypt('secret');
-    //     $setting = new Setting(['code' => 'enc', 'value' => $encrypted, 'encrypted' => true]);
-    //     Cache::shouldReceive('get')->with('settings.enc')->andReturn($setting);
-    //     Log::shouldReceive('debug')->atLeast()->once();
-    //     Crypt::shouldReceive('decrypt')->with($encrypted)->andReturn('secret');
-    //     $this->assertEquals('secret', Setting::fetch('enc'));
-    // }
+    public function testFetchDecryptsCachedEncryptedValue()
+    {
+        $code = 'enc_setting';
+        $encrypted = 'encblob';
+        $decrypted = 'secret';
+        $cached = new Setting(['code' => $code]);
+        $cached->value = $encrypted;
+        $cached->encrypted = 1;
 
-    // public function testClearCacheRemovesFromCache()
-    // {
-    //     $setting = new Setting(['code' => 'clearme']);
-    //     Cache::shouldReceive('forget')->with('settings.clearme')->once();
-    //     Log::shouldReceive('debug')->atLeast()->once();
-    //     $setting->clearCache();
-    //     $this->assertTrue(true); // If no exception, test passes
-    // }
+        \Illuminate\Support\Facades\Cache::shouldReceive('get')->with("settings.{$code}")->andReturn($cached);
+        \Illuminate\Support\Facades\Log::shouldReceive('debug')->atLeast()->once();
+        \Illuminate\Support\Facades\Crypt::shouldReceive('decrypt')->andReturn($decrypted);
 
-    // public function testGetValueReturnsEncryptedIfNeeded()
-    // {
-    //     $setting = new Setting(['code' => 'enc', 'value' => 'secret', 'encrypted' => true]);
-    //     Crypt::shouldReceive('encrypt')->with('secret')->andReturn('encrypted-value');
-    //     $val = $setting->getValue();
-    //     $this->assertEquals('encrypted-value', $val->value);
-    //     $this->assertEquals('enc', $val->code);
-    //     $this->assertTrue($val->encrypted);
-    // }
+        $this->assertEquals($decrypted, Setting::fetch($code));
+    }
 
-    // public function testGetValueReturnsPlainIfNotEncrypted()
-    // {
-    //     $setting = new Setting(['code' => 'plain', 'value' => 'plain-value', 'encrypted' => false]);
-    //     $val = $setting->getValue();
-    //     $this->assertEquals('plain-value', $val->value);
-    //     $this->assertEquals('plain', $val->code);
-    //     $this->assertFalse($val->encrypted);
-    // }
+    public function testFetchReturnsCachedUnencryptedValue()
+    {
+        $code = 'cached_unencrypted';
+        $cached = new Setting(['code' => $code]);
+        $cached->value = 'plain_value';
+        $cached->encrypted = 0;
+
+        \Illuminate\Support\Facades\Cache::shouldReceive('get')->with("settings.{$code}")->andReturn($cached);
+        \Illuminate\Support\Facades\Log::shouldReceive('debug')->atLeast()->once();
+        // ensure no decrypt is attempted
+        \Illuminate\Support\Facades\Crypt::shouldReceive('decrypt')->never();
+
+        $this->assertEquals('plain_value', Setting::fetch($code, 'default'));
+    }
+
+    public function testToStringNameReturnsCode()
+    {
+        $s = new Setting(['code' => 'my_code']);
+        $ref = new \ReflectionClass($s);
+        $m = $ref->getMethod('toStringName');
+        $m->setAccessible(true);
+        $this->assertEquals('my_code', $m->invoke($s));
+    }
+
+    public function testFetchReadsFromDatabaseAndCachesValue()
+    {
+        $code = 'db_setting';
+        $default = 'def';
+
+        // Create a DB-backed setting (not encrypted) so fetch() will read from DB
+        Setting::factory()->create(['code' => $code, 'value' => 'dbval', 'encrypted' => 0]);
+
+        // First fetch should read from DB and return the stored value
+        $this->assertEquals('dbval', Setting::fetch($code, $default));
+
+        // Second fetch should hit the in-memory cache (static::$cached) and return same
+        $this->assertEquals('dbval', Setting::fetch($code, $default));
+    }
+
+    public function testFetchReturnsDefaultWhenDbSettingMissing()
+    {
+        $code = 'missing_setting';
+        $default = 'fallback';
+        // Ensure no Setting exists for this code
+        $this->assertNull(Setting::whereCode($code)->first());
+        $result = Setting::fetch($code, $default);
+        $this->assertEquals($default, $result);
+        // static::$cached should be set to null for this code
+        $ref = new \ReflectionClass(Setting::class);
+        $prop = $ref->getProperty('cached');
+        $prop->setAccessible(true);
+        $cached = $prop->getValue();
+        $this->assertArrayHasKey($code, $cached);
+        $this->assertNull($cached[$code]);
+    }
+
+    public function testFetchCachesNullAndCallsCachePutWhenDbMissingAndCacheEmpty()
+    {
+        $code = 'missing2';
+        $default = 'fallback2';
+        $key = "settings.{$code}";
+
+        // Make Cache.get return null so code checks DB
+        \Illuminate\Support\Facades\Cache::shouldReceive('get')->with($key)->andReturn(null);
+        // Expect Cache::put called with null value when DB record missing
+        \Illuminate\Support\Facades\Cache::shouldReceive('put')->with($key, null)->once();
+
+        $this->assertNull(Setting::whereCode($code)->first());
+        $result = Setting::fetch($code, $default);
+        $this->assertEquals($default, $result);
+
+        // static::$cached should have the code set to null
+        $ref = new \ReflectionClass(Setting::class);
+        $prop = $ref->getProperty('cached');
+        $prop->setAccessible(true);
+        $cached = $prop->getValue();
+        $this->assertArrayHasKey($code, $cached);
+        $this->assertNull($cached[$code]);
+    }
 }

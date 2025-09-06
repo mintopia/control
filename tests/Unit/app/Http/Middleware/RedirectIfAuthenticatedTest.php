@@ -27,34 +27,40 @@ class RedirectIfAuthenticatedTest extends TestCase
         $this->assertInstanceOf(RedirectIfAuthenticated::class, $middleware);
     }
 
-    // public function testRedirectsAuthenticatedUser()
-    // {
-    //     $request = Mockery::mock(Request::class);
-    //     $guard = Mockery::mock(Guard::class);
+    public function testRedirectsAuthenticatedUser()
+    {
+        // Mock the Auth facade guard to return a guard whose check() returns true
+        $guard = Mockery::mock();
+        $guard->shouldReceive('check')->once()->andReturnTrue();
 
-    //     $guard->shouldReceive('check')->once()->andReturn(true);
+        // Bind a stub Auth facade replacement via container so Auth::guard() resolves
+        \Illuminate\Support\Facades\Auth::shouldReceive('guard')->andReturn($guard);
 
-    //     $middleware = new RedirectIfAuthenticatedStub($guard);
+        $middleware = new RedirectIfAuthenticatedStub();
+        $request = Request::create('/');
 
-    //     $response = $middleware->handle($request, function () {}, 'web');
+        $response = $middleware->handle($request, function () {
+            return 'next-called';
+        });
 
-    //     $this->assertInstanceOf(RedirectResponse::class, $response);
-    //     $this->assertEquals('/home', $response->headers->get('Location'));
-    // }
+        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
+    }
 
-    // public function testAllowsUnauthenticatedUser()
-    // {
-    //     $request = Mockery::mock(Request::class);
-    //     $guard = Mockery::mock(Guard::class);
+    public function testAllowsUnauthenticatedUser()
+    {
+        $guard = Mockery::mock();
+        $guard->shouldReceive('check')->once()->andReturnFalse();
 
-    //     $guard->shouldReceive('check')->once()->andReturn(false);
+        \Illuminate\Support\Facades\Auth::shouldReceive('guard')->andReturn($guard);
 
-    //     $middleware = new RedirectIfAuthenticatedStub($guard);
+        $middleware = new RedirectIfAuthenticatedStub();
+        $request = Request::create('/');
 
-    //     $response = $middleware->handle($request, function () {
-    //         return 'next';
-    //     }, 'web');
+        $response = $middleware->handle($request, function ($req) {
+            return new \Symfony\Component\HttpFoundation\Response('ok', 200);
+        });
 
-    //     $this->assertEquals('next', $response);
-    // }
+        $this->assertInstanceOf(\Symfony\Component\HttpFoundation\Response::class, $response);
+        $this->assertEquals(200, $response->getStatusCode());
+    }
 }

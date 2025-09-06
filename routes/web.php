@@ -41,7 +41,7 @@ Route::any('webhooks/tickets/{ticketprovider:code}', [WebhookController::class, 
 Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('login/signup', [UserController::class, 'signup'])->name('login.signup');
-    Route::match(['PUT', 'PATCH'], 'login/signup', [UserController::class, 'signup_process'])->name('login.signup.process');
+    Route::match(['PUT', 'PATCH'], 'login/signup', [UserController::class, 'signupProcess'])->name('login.signup.process');
 
     Route::middleware(RedirectOnFirstLoginMiddleware::class)->group(function () {
 
@@ -55,9 +55,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/profile/emails', [EmailAddressController::class, 'store'])->name('emails.store');
         Route::middleware('can:update,emailaddress')->group(function () {
             Route::get('/profile/emails/{emailaddress}/verify', [EmailAddressController::class, 'verify'])->name('emails.verify');
-            Route::get('/profile/emails/{emailaddress}/verify/resend', [EmailAddressController::class, 'verify_resend'])->name('emails.verify.resend');
-            Route::get('/profile/emails/{emailaddress}/verify/code', [EmailAddressController::class, 'verify_code'])->name('emails.verify.code');
-            Route::post('/profile/emails/{emailaddress}/verify', [EmailAddressController::class, 'verify_process'])->name('emails.verify.process');
+            Route::get('/profile/emails/{emailaddress}/verify/resend', [EmailAddressController::class, 'verifyResend'])->name('emails.verify.resend');
+            Route::get('/profile/emails/{emailaddress}/verify/code', [EmailAddressController::class, 'verifyCode'])->name('emails.verify.code');
+            Route::post('/profile/emails/{emailaddress}/verify', [EmailAddressController::class, 'verifyProcess'])->name('emails.verify.process');
             Route::get('/profile/emails/{emailaddress}/delete', [EmailAddressController::class, 'delete'])->name('emails.delete');
             Route::delete('/profile/emails/{emailaddress}', [EmailAddressController::class, 'destroy'])->name('emails.destroy');
         });
@@ -121,7 +121,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
                 Route::resource('events', AdminEventController::class);
                 Route::get('events/{event}/delete', [AdminEventController::class, 'delete'])->name('events.delete');
-                Route::get('events/{event}/export', [AdminEventController::class, 'export_tickets'])->name('events.export');
+                Route::get('events/{event}/export', [AdminEventController::class, 'exportTickets'])->name('events.export');
 
                 Route::resource('events.mappings', EventMappingController::class)->except(['index', 'show'])->scoped();
                 Route::get('events/{event}/mappings/{mapping}/delete', [EventMappingController::class, 'delete'])->name('events.mappings.delete')->scopeBindings();
@@ -133,7 +133,7 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::get('events/{event}/seatingplans/{seatingplan}/delete', [AdminSeatingPlanController::class, 'delete'])->name('events.seatingplans.delete')->scopeBindings();
                 Route::get('events/{event}/seatingplans/{seatingplan}/export', [AdminSeatingPlanController::class, 'export'])->name('events.seatingplans.export')->scopeBindings();
                 Route::get('events/{event}/seatingplans/{seatingplan}/import', [AdminSeatingPlanController::class, 'import'])->name('events.seatingplans.import')->scopeBindings();
-                Route::post('events/{event}/seatingplans/{seatingplan}/import', [AdminSeatingPlanController::class, 'import_process'])->name('events.seatingplans.import_process')->scopeBindings();
+                Route::post('events/{event}/seatingplans/{seatingplan}/import', [AdminSeatingPlanController::class, 'importProcess'])->name('events.seatingplans.import_process')->scopeBindings();
                 Route::resource('events.seatingplans.seats', AdminSeatController::class)->except(['index'])->scoped();
                 Route::get('events/{event}/seatingplans/{seatingplan}/seats/{seat}/delete', [AdminSeatController::class, 'delete'])->name('events.seatingplans.seats.delete')->scopeBindings();
                 Route::get('events/{event}/seatingplans/{seatingplan}/seats/{seat}/unseat', [AdminSeatController::class, 'unseat'])->name('events.seatingplans.seats.unseat')->scopeBindings();
@@ -157,15 +157,15 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::get('settings/socialproviders/{provider}/edit', [SocialProviderController::class, 'edit'])->name('settings.socialproviders.edit');
                 Route::match(['PUT', 'PATCH'], 'settings/socialproviders/{provider}', [SocialProviderController::class, 'update'])->name('settings.socialproviders.update');
                 Route::prefix('settings')->name('settings.')->group(function() {
-                    Route::get('discord', [AdminSettingController::class, 'add_discord'])->name('discord');
-                    Route::get('discord/return', [AdminSettingController::class, 'add_discord_return'])->name('discord_return');
+                    Route::get('discord', [AdminSettingController::class, 'addDiscord'])->name('discord');
+                    Route::get('discord/return', [AdminSettingController::class, 'addDiscordReturn'])->name('discord_return');
                     Route::resource('themes', ThemeController::class)->except(['index', 'show']);
                     Route::get('themes/{theme}/delete', [ThemeController::class, 'delete'])->name('themes.delete');
                 });
 
                 Route::get('tickets/import', [AdminTicketController::class, 'import'])->name('tickets.import');
-                Route::post('tickets/import', [AdminTicketController::class, 'import_show'])->name('tickets.import.show');
-                Route::post('tickets/import/process', [AdminTicketController::class, 'import_process'])->name('tickets.import.process');
+                Route::post('tickets/import', [AdminTicketController::class, 'importShow'])->name('tickets.import.show');
+                Route::post('tickets/import/process', [AdminTicketController::class, 'importProcess'])->name('tickets.import.process');
 
                 Route::resource('tickets', AdminTicketController::class);
                 Route::get('tickets/{ticket}/delete', [AdminTicketController::class, 'delete'])->name('tickets.delete');
@@ -174,7 +174,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
                 Route::get('users/{user}/delete', [AdminUserController::class, 'delete'])->name('users.delete');
                 Route::get('users/{user}/impersonate', [AdminUserController::class, 'impersonate'])->name('users.impersonate');
-                Route::get('users/{user}/sync', [AdminUserController::class, 'sync_tickets'])->name('users.sync');
+                Route::get('users/{user}/sync', [AdminUserController::class, 'syncTickets'])->name('users.sync');
 
                 Route::get('users/{user}/accounts/{account}', [AdminLinkedAccountController::class, 'delete'])->name('users.accounts.delete')->scopeBindings();
                 Route::delete('users/{user}/accounts/{account}', [AdminLinkedAccountController::class, 'destroy'])->name('users.accounts.destroy')->scopeBindings();
@@ -205,6 +205,6 @@ Route::middleware('auth:sanctum')->group(function () {
 // Guest-only routes
 Route::middleware('guest')->group(function () {
     Route::get('login', [UserController::class, 'login'])->name('login');
-    Route::get('login/{socialprovider:code}', [UserController::class, 'login_redirect'])->name('login.redirect');
-    Route::get('login/{socialprovider:code}/return', [UserController::class, 'login_return'])->name('login.return');
+    Route::get('login/{socialprovider:code}', [UserController::class, 'loginRedirect'])->name('login.redirect');
+    Route::get('login/{socialprovider:code}/return', [UserController::class, 'loginReturn'])->name('login.return');
 });

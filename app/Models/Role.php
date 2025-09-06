@@ -33,6 +33,11 @@ class Role extends Model
     use HasFactory;
     use ToString;
 
+    protected $fillable = [
+        'code',
+        'name'
+    ];
+
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)->withTimestamps();

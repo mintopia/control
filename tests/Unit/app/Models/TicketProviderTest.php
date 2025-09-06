@@ -4,9 +4,11 @@ namespace Tests\Unit\app\Models;
 
 use Tests\TestCase;
 use App\Models\TicketProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class TicketProviderTest extends TestCase
 {
+    use RefreshDatabase;
     public function testCanInstantiateTicketProvider()
     {
         $provider = new TicketProvider();
@@ -37,85 +39,11 @@ class TicketProviderTest extends TestCase
         $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphMany::class, $provider->settings());
     }
 
-    /*
-        * Test the getProvider method returns an instance of TicketProviderContract.
-        * This test is commented out as it requires a valid contract implementation.
-        * Uncomment and implement the contract to use this test.
-    */
-    /*
-        * Class MockObject_TicketProviderContract_9c7b2a5f contains 7 abstract methods and must therefore be declared
-        * abstract or implement the remaining methods (App\Services\Contracts\TicketProviderContract::__construct,
-        * App\Services\Contracts\TicketProviderContract::configMapping, App\Services\Contracts\TicketProviderContract::install, ...)
-
-    public function testGetProviderReturnsContract()
-    {
-        $mockContract = $this->getMockBuilder(\App\Services\Contracts\TicketProviderContract::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-        $provider = new TicketProvider();
-        $provider->provider_class = get_class($mockContract);
-        $result = $provider->getProvider();
-        $this->assertInstanceOf(\App\Services\Contracts\TicketProviderContract::class, $result);
-    }
-
-    public function testSyncTicketsDelegatesToProvider()
-    {
-        $mockProvider = $this->getMockBuilder(\App\Services\Contracts\TicketProviderContract::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['syncTickets'])
-            ->getMock();
-        $mockProvider->expects($this->once())->method('syncTickets')->with('test@example.com');
-        $provider = $this->getMockBuilder(TicketProvider::class)
-            ->onlyMethods(['getProvider'])
-            ->getMock();
-        $provider->method('getProvider')->willReturn($mockProvider);
-        $provider->syncTickets('test@example.com');
-    }
-
-    public function testProcessWebhookDelegatesToProvider()
-    {
-        $mockProvider = $this->getMockBuilder(\App\Services\Contracts\TicketProviderContract::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['processWebhook'])
-            ->getMock();
-        $mockProvider->expects($this->once())->method('processWebhook')->willReturn(true);
-        $provider = $this->getMockBuilder(TicketProvider::class)
-            ->onlyMethods(['getProvider'])
-            ->getMock();
-        $provider->method('getProvider')->willReturn($mockProvider);
-        $mockRequest = $this->createMock(\Illuminate\Http\Request::class);
-        $this->assertTrue($provider->processWebhook($mockRequest));
-    }
-
     public function testGetEventsReturnsEmptyIfNotEnabled()
     {
         $provider = new TicketProvider();
         $provider->enabled = false;
         $this->assertEquals([], $provider->getEvents());
-    }
-
-    public function testGetEventsReturnsDataIfEnabled()
-    {
-        $mockProvider = $this->getMockBuilder(\App\Services\Contracts\TicketProviderContract::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['getEvents'])
-            ->getMock();
-        $mockProvider->method('getEvents')->willReturn(['1' => 'Event 1']);
-        $mockEvent = new class {
-            public $external_id = '1';
-        };
-        $mockCollection = collect([$mockEvent]);
-        $provider = $this->getMockBuilder(TicketProvider::class)
-            ->onlyMethods(['getProvider', 'getAttribute'])
-            ->getMock();
-        $provider->enabled = true;
-        $provider->method('getProvider')->willReturn($mockProvider);
-        $provider->method('getAttribute')->with('events')->willReturn($mockCollection);
-        $provider->setRelation('events', $mockCollection);
-        $result = $provider->getEvents();
-        $this->assertCount(1, $result);
-        $this->assertEquals('1', $result[0]->id);
-        $this->assertEquals('Event 1', $result[0]->name);
     }
 
     public function testGetTicketTypesReturnsEmptyIfNotEnabled()
@@ -131,41 +59,11 @@ class TicketProviderTest extends TestCase
         $provider = $this->getMockBuilder(TicketProvider::class)
             ->onlyMethods(['settings'])
             ->getMock();
-        $provider->_settings = ['foo' => 'bar'];
+        // set the protected property properly via reflection so the class sees it
+        $rp = new \ReflectionProperty(TicketProvider::class, '_settings');
+        $rp->setAccessible(true);
+        $rp->setValue($provider, ['foo' => 'bar']);
         $this->assertEquals('bar', $provider->getSetting('foo'));
-    }
-
-    public function testGetSettingReturnsNullIfNotFound()
-    {
-        $mockRelation = $this->getMockBuilder(\Illuminate\Database\Eloquent\Relations\MorphMany::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['whereCode', 'first'])
-            ->getMock();
-        $mockRelation->method('whereCode')->willReturnSelf();
-        $mockRelation->method('first')->willReturn(null);
-        $provider = $this->getMockBuilder(TicketProvider::class)
-            ->onlyMethods(['settings'])
-            ->getMock();
-        $provider->method('settings')->willReturn($mockRelation);
-        $this->assertNull($provider->getSetting('notfound'));
-    }
-
-    public function testGetSettingReturnsValueFromRelation()
-    {
-        $mockSetting = new class {
-            public $value = 'baz';
-        };
-        $mockRelation = $this->getMockBuilder(\Illuminate\Database\Eloquent\Relations\MorphMany::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['whereCode', 'first'])
-            ->getMock();
-        $mockRelation->method('whereCode')->willReturnSelf();
-        $mockRelation->method('first')->willReturn($mockSetting);
-        $provider = $this->getMockBuilder(TicketProvider::class)
-            ->onlyMethods(['settings'])
-            ->getMock();
-        $provider->method('settings')->willReturn($mockRelation);
-        $this->assertEquals('baz', $provider->getSetting('foo'));
     }
 
     public function testClearCacheSetsCachePrefixAndSaves()
@@ -180,10 +78,7 @@ class TicketProviderTest extends TestCase
 
     public function testConfigMappingDelegatesToProvider()
     {
-        $mockProvider = $this->getMockBuilder(\App\Services\Contracts\TicketProviderContract::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['configMapping'])
-            ->getMock();
+        $mockProvider = $this->createMock(\App\Services\Contracts\TicketProviderContract::class);
         $mockProvider->expects($this->once())->method('configMapping')->willReturn(['foo' => 'bar']);
         $provider = $this->getMockBuilder(TicketProvider::class)
             ->onlyMethods(['getProvider'])
@@ -201,5 +96,169 @@ class TicketProviderTest extends TestCase
         $method->setAccessible(true);
         $this->assertEquals('test_code', $method->invoke($provider));
     }
-    */
+
+    // Stub provider class for tests that return array entries instead of objects
+    public function testGetTicketTypesHandlesArrayEntries()
+    {
+        $provider = TicketProvider::factory()->create(['enabled' => 1]);
+
+        // Create an event and a provider event mapping so getTicketTypes will be invoked
+        $event = \App\Models\Event::factory()->create();
+        \Database\Factories\EventMappingFactory::new()->create([
+            'ticket_provider_id' => $provider->id,
+            'event_id' => $event->id,
+            'external_id' => 'e1',
+        ]);
+
+        // Bind a provider implementation that returns an indexed array of arrays (not objects)
+        $impl = new class implements \App\Services\Contracts\TicketProviderContract {
+            public function __construct(?\App\Models\TicketProvider $provider = null) {}
+            public function configMapping(): array
+            {
+                return [];
+            }
+            public function install(): \App\Models\TicketProvider
+            {
+                return new \App\Models\TicketProvider();
+            }
+            public function processWebhook(\Illuminate\Http\Request $request): bool
+            {
+                return false;
+            }
+            public function syncTickets(string|\App\Models\EmailAddress $email): void {}
+            public function getEvents(): array
+            {
+                return [];
+            }
+            public function getTicketTypes(string $eventExternalId): array
+            {
+                return ['t1' => 'T1'];
+            }
+            public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
+        };
+
+        app()->instance(get_class($impl), $impl);
+        $provider->provider_class = get_class($impl);
+        $provider->save();
+
+        $result = $provider->getTicketTypes($event);
+        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
+        $this->assertEquals('t1', $result[0]->id);
+        $this->assertEquals('T1', $result[0]->name);
+    }
+
+    public function testProcessWebhookDelegatesToProvider()
+    {
+        $mockProvider = $this->createMock(\App\Services\Contracts\TicketProviderContract::class);
+        $mockProvider->expects($this->once())->method('processWebhook')->willReturn(true);
+
+        $provider = $this->getMockBuilder(TicketProvider::class)
+            ->onlyMethods(['getProvider'])
+            ->getMock();
+        $provider->method('getProvider')->willReturn($mockProvider);
+
+        $req = \Illuminate\Http\Request::create('/webhook', 'POST');
+        $this->assertTrue($provider->processWebhook($req));
+    }
+
+    public function testGetEventsDelegatesAndMarksUsed()
+    {
+        $provider = TicketProvider::factory()->create(['enabled' => 1]);
+
+        // Create an event mapping so the provider reports it as used
+        $event = \App\Models\Event::factory()->create();
+        \Database\Factories\EventMappingFactory::new()->create([
+            'ticket_provider_id' => $provider->id,
+            'event_id' => $event->id,
+            'external_id' => 'external_e1',
+        ]);
+
+        // Bind an implementation that returns an associative mapping of events
+        $impl = new class implements \App\Services\Contracts\TicketProviderContract {
+            public function __construct(?\App\Models\TicketProvider $provider = null) {}
+            public function configMapping(): array
+            {
+                return [];
+            }
+            public function install(): \App\Models\TicketProvider
+            {
+                return new \App\Models\TicketProvider();
+            }
+            public function processWebhook(\Illuminate\Http\Request $request): bool
+            {
+                return false;
+            }
+            public function syncTickets(string|\App\Models\EmailAddress $email): void {}
+            public function getEvents(): array
+            {
+                return ['external_e1' => 'Event One', 'external_e2' => 'Event Two'];
+            }
+            public function getTicketTypes(string $eventExternalId): array
+            {
+                return [];
+            }
+            public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
+        };
+
+        app()->instance(get_class($impl), $impl);
+        $provider->provider_class = get_class($impl);
+        $provider->save();
+
+        $result = $provider->getEvents();
+        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
+        // find the entry for external_e1
+        $found = array_filter($result, fn($r) => $r->id === 'external_e1');
+        $this->assertNotEmpty($found);
+        $entry = array_values($found)[0];
+        $this->assertTrue($entry->used);
+        $this->assertNotEmpty($entry->used_by);
+    }
+
+    public function testGetTicketTypesReturnsEmptyWhenProviderReturnsFalsy()
+    {
+        $provider = TicketProvider::factory()->create(['enabled' => 1]);
+
+        $event = \App\Models\Event::factory()->create();
+        \Database\Factories\EventMappingFactory::new()->create([
+            'ticket_provider_id' => $provider->id,
+            'event_id' => $event->id,
+            'external_id' => 'ext_empty',
+        ]);
+
+        $impl = new class implements \App\Services\Contracts\TicketProviderContract {
+            public function __construct(?\App\Models\TicketProvider $provider = null) {}
+            public function configMapping(): array
+            {
+                return [];
+            }
+            public function install(): \App\Models\TicketProvider
+            {
+                return new \App\Models\TicketProvider();
+            }
+            public function processWebhook(\Illuminate\Http\Request $request): bool
+            {
+                return false;
+            }
+            public function syncTickets(string|\App\Models\EmailAddress $email): void {}
+            public function getEvents(): array
+            {
+                return [];
+            }
+            public function getTicketTypes(string $eventExternalId): array
+            {
+                return [];
+            }
+            public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
+        };
+
+        app()->instance(get_class($impl), $impl);
+        $provider->provider_class = get_class($impl);
+        $provider->save();
+
+        $result = $provider->getTicketTypes($event);
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
 }

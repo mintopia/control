@@ -49,6 +49,32 @@ class EmailAddressControllerTest extends TestCase
         $this->assertTrue(method_exists($response, 'getTargetUrl'));
     }
 
+    public function testStoreRemovesUnverifiedEmailOwnedByAnotherUser()
+    {
+        Mail::fake();
+
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+
+        // Create an unverified email for $other
+        EmailAddress::factory()->create([
+            'email' => 'dup@example.com',
+            'user_id' => $other->id,
+            'verified_at' => null,
+        ]);
+
+        // Use web route to ensure $request->user() is populated via Sanctum
+        Sanctum::actingAs($owner);
+        $this->withoutMiddleware();
+
+        $response = $this->post(route('emails.store'), ['email' => 'dup@example.com']);
+        $response->assertStatus(302);
+
+        // After storing, there should be a single email record for that address
+        $this->assertDatabaseCount('email_addresses', 1);
+        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\VerifyEmail::class);
+    }
+
     public function testDeleteReturnsViewOrRedirects()
     {
         $user = User::factory()->create();
@@ -62,6 +88,34 @@ class EmailAddressControllerTest extends TestCase
         $response = $controller->delete($email);
 
         $this->assertTrue(is_object($response));
+    }
+
+    public function testDeleteReturnsViewWhenCanDelete()
+    {
+        $user = User::factory()->create();
+        $email = $user->emails()->create(['email' => 'delete-ok@example.com']);
+
+        // Ensure deletable: no primary email and no linked accounts
+        Sanctum::actingAs($user);
+        $user->primary_email_id = null;
+        $user->save();
+
+        // Reload email relations and ensure canDelete() is true
+        $email->load('user');
+        $email->user->primary_email_id = null;
+        $email->user->save();
+        if ($email->linkedAccounts()->count() > 0) {
+            $email->linkedAccounts()->delete();
+            $email->refresh();
+        }
+
+        $this->assertTrue($email->canDelete(), 'Precondition: email should be deletable');
+
+        $controller = new EmailAddressController();
+        $response = $controller->delete($email);
+
+        $this->assertInstanceOf(\Illuminate\View\View::class, $response);
+        $this->assertArrayHasKey('email', $response->getData());
     }
 
     public function testDestroyDeletesEmail()
@@ -133,7 +187,7 @@ class EmailAddressControllerTest extends TestCase
         $request->setUserResolver(fn() => $user);
 
         $controller = new \App\Http\Controllers\EmailAddressController();
-        $response = $controller->verify_process($request, $email);
+        $response = $controller->verifyProcess($request, $email);
 
         $this->assertTrue(method_exists($response, 'getTargetUrl'));
         $this->assertNotNull($email->fresh()->verified_at);
@@ -168,5 +222,103 @@ class EmailAddressControllerTest extends TestCase
         $response->assertSessionHasNoErrors();
 
         $this->assertNotNull($email->fresh()->verified_at);
+    }
+
+    public function testVerifyShowsViewWhenNotVerified()
+    {
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['user_id' => $user->id, 'verified_at' => null]);
+
+        $request = Request::create('/emails/' . $email->id . '/verify', 'GET');
+        $controller = new EmailAddressController();
+        $view = $controller->verify($request, $email);
+        $this->assertTrue(is_object($view));
+        $this->assertArrayHasKey('email', $view->getData());
+    }
+
+    public function testVerifyRedirectsWhenAlreadyVerified()
+    {
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['user_id' => $user->id, 'verified_at' => now()]);
+
+        $controller = new EmailAddressController();
+        $response = $controller->verify(Request::create('/emails/' . $email->id . '/verify', 'GET'), $email);
+        $this->assertTrue(method_exists($response, 'getTargetUrl'));
+        $this->assertStringContainsString('/profile', $response->getTargetUrl());
+    }
+
+    public function testVerifyCodeMethodVerifiesEmail()
+    {
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create([
+            'user_id' => $user->id,
+            'verification_code' => 'CODE123',
+            'verification_sent_at' => now(),
+        ]);
+
+        $request = \App\Http\Requests\EmailVerifyRequest::create('/emails/' . $email->id . '/verify_code', 'POST', ['code' => 'CODE123']);
+        $request->setUserResolver(fn() => $user);
+
+        $controller = new EmailAddressController();
+        $response = $controller->verifyCode($request, $email);
+
+        $this->assertTrue(method_exists($response, 'getTargetUrl'));
+        $this->assertNotNull($email->fresh()->verified_at);
+    }
+
+    public function testVerifyResendSendsCodeWhenNotVerified()
+    {
+        Mail::fake();
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['user_id' => $user->id, 'verified_at' => null]);
+
+        $controller = new EmailAddressController();
+        $response = $controller->verifyResend($email);
+
+        $this->assertTrue(method_exists($response, 'getTargetUrl'));
+        $this->assertStringContainsString('/verify', $response->getTargetUrl());
+        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\VerifyEmail::class);
+        $this->assertNotNull($email->fresh()->verification_code);
+    }
+
+    public function testVerifyResendRedirectsWhenAlreadyVerified()
+    {
+        $user = User::factory()->create();
+        $email = EmailAddress::factory()->create(['user_id' => $user->id, 'verified_at' => now()]);
+
+        $controller = new EmailAddressController();
+        $response = $controller->verifyResend($email);
+
+        $this->assertTrue(method_exists($response, 'getTargetUrl'));
+        $this->assertStringContainsString('/profile', $response->getTargetUrl());
+    }
+
+    public function testDeleteRedirectsWhenCannotDelete()
+    {
+        $user = User::factory()->create();
+        $email = $user->emails()->create(['email' => 'cannot-delete@example.com']);
+        // make it non-deletable by setting as primary
+        $user->primary_email_id = $email->id;
+        $user->save();
+
+        $controller = new EmailAddressController();
+        $response = $controller->delete($email);
+
+        $this->assertTrue(method_exists($response, 'getTargetUrl'));
+        $this->assertStringContainsString('/profile', $response->getTargetUrl());
+    }
+
+    public function testDestroyDoesNotDeleteWhenCannotDelete()
+    {
+        $user = User::factory()->create();
+        $email = $user->emails()->create(['email' => 'cannot-delete@example.com']);
+        $user->primary_email_id = $email->id;
+        $user->save();
+
+        $controller = new EmailAddressController();
+        $response = $controller->destroy($email);
+
+        $this->assertTrue(method_exists($response, 'getTargetUrl'));
+        $this->assertDatabaseHas('email_addresses', ['id' => $email->id]);
     }
 }

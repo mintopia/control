@@ -23,7 +23,7 @@ class DiscordApiTest extends TestCase
 
     public function testGetClientReturnsClientInstance()
     {
-        $provider = \Database\Factories\SocialProviderFactory::new()->create();
+        $provider = SocialProvider::factory()->create();
         ProviderSetting::factory()->create([
             'provider_type' => SocialProvider::class,
             'provider_id' => $provider->id,
@@ -38,7 +38,7 @@ class DiscordApiTest extends TestCase
 
     public function testConstructorSetsProperties()
     {
-        $provider = \Database\Factories\SocialProviderFactory::new()->create();
+        $provider = SocialProvider::factory()->create();
         ProviderSetting::factory()->create([
             'provider_type' => SocialProvider::class,
             'provider_id' => $provider->id,
@@ -59,7 +59,7 @@ class DiscordApiTest extends TestCase
 
     public function testGetMemberRolesCallsClientWithCorrectEndpoint()
     {
-        $provider = \Database\Factories\SocialProviderFactory::new()->create();
+        $provider = SocialProvider::factory()->create();
         ProviderSetting::factory()->create([
             'provider_type' => SocialProvider::class,
             'provider_id' => $provider->id,
@@ -102,7 +102,7 @@ class DiscordApiTest extends TestCase
 
     public function testAddRoleToMemberCallsClientWithCorrectEndpoint()
     {
-        $provider = \Database\Factories\SocialProviderFactory::new()->create();
+        $provider = SocialProvider::factory()->create();
         ProviderSetting::factory()->create([
             'provider_type' => SocialProvider::class,
             'provider_id' => $provider->id,
@@ -134,7 +134,7 @@ class DiscordApiTest extends TestCase
 
     public function testRemoveRoleFromMemberCallsClientWithCorrectEndpoint()
     {
-        $provider = \Database\Factories\SocialProviderFactory::new()->create();
+        $provider = SocialProvider::factory()->create();
         ProviderSetting::factory()->create([
             'provider_type' => SocialProvider::class,
             'provider_id' => $provider->id,
@@ -162,5 +162,220 @@ class DiscordApiTest extends TestCase
         $discordApi->removeRoleFromMember('role123', 'user123');
         $this->assertCount(1, $fake->calls);
         $this->assertStringContainsString('guilds/guild123/members/user123/roles/role123', $fake->calls[0]['uri']);
+    }
+
+    public function testGetRolesCallsClientWithCorrectEndpoint()
+    {
+        $provider = SocialProvider::factory()->create();
+        ProviderSetting::factory()->create([
+            'provider_type' => SocialProvider::class,
+            'provider_id' => $provider->id,
+            'code' => 'token',
+            'value' => 'fake-token',
+        ]);
+
+        $discordApi = new DiscordApi($provider, 'guild123');
+
+        $fake = new class extends Client {
+            public $calls = [];
+            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+            {
+                $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
+
+                // Return an array of role objects as the real API does.
+                $data = [
+                    (object)['id' => 'r1', 'name' => 'role1', 'managed' => false],
+                    (object)['id' => 'r2', 'name' => 'role2', 'managed' => false],
+                    // include some roles that should be filtered out by getRoles()
+                    (object)['id' => 'r3', 'name' => '@everyone', 'managed' => false],
+                    (object)['id' => 'r4', 'name' => 'bot-role', 'managed' => true],
+                ];
+
+                return new \GuzzleHttp\Psr7\Response(200, [], json_encode($data));
+            }
+        };
+
+        $ref = new \ReflectionClass($discordApi);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($discordApi, $fake);
+
+        // Call the real method getRoles()
+        $roles = $discordApi->getRoles();
+        $this->assertCount(1, $fake->calls);
+        $this->assertStringContainsString('guilds/guild123/roles', $fake->calls[0]['uri']);
+        $this->assertEquals(['r1' => 'role1', 'r2' => 'role2'], $roles);
+    }
+
+    public function testGetClientReturnsSameInstanceOnSecondCall()
+    {
+        $provider = SocialProvider::factory()->create();
+        ProviderSetting::factory()->create([
+            'provider_type' => SocialProvider::class,
+            'provider_id' => $provider->id,
+            'code' => 'token',
+            'value' => 'fake-token',
+        ]);
+
+        $discordApi = new DiscordApi($provider, 'guild123');
+        $first = $this->invokeMethod($discordApi, 'getClient');
+        $second = $this->invokeMethod($discordApi, 'getClient');
+        $this->assertSame($first, $second);
+    }
+
+    public function testGetRolesUsesCache()
+    {
+        $provider = SocialProvider::factory()->create();
+        ProviderSetting::factory()->create([
+            'provider_type' => SocialProvider::class,
+            'provider_id' => $provider->id,
+            'code' => 'token',
+            'value' => 'fake-token',
+        ]);
+
+        $discordApi = new DiscordApi($provider, 'guild123');
+
+        $fake = new class extends Client {
+            public $calls = [];
+            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+            {
+                $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
+                $data = [(object)['id' => 'r1', 'name' => 'role1', 'managed' => false]];
+                return new \GuzzleHttp\Psr7\Response(200, [], json_encode($data));
+            }
+        };
+
+        $ref = new \ReflectionClass($discordApi);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($discordApi, $fake);
+
+        $first = $discordApi->getRoles();
+        $second = $discordApi->getRoles();
+
+        $this->assertEquals($first, $second);
+        $this->assertCount(1, $fake->calls, 'Client should only be called once due to caching');
+    }
+
+    public function testGetMemberRolesHandlesPagination()
+    {
+        $provider = SocialProvider::factory()->create();
+        ProviderSetting::factory()->create([
+            'provider_type' => SocialProvider::class,
+            'provider_id' => $provider->id,
+            'code' => 'token',
+            'value' => 'fake-token',
+        ]);
+
+        $discordApi = new DiscordApi($provider, 'guild123');
+
+        $fake = new class extends Client {
+            public $calls = [];
+            public $callCount = 0;
+            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+            {
+                $this->callCount++;
+                $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
+                if (strtoupper($method) === 'GET' && str_contains($uri, '/members')) {
+                    if ($this->callCount === 1) {
+                        $data = [];
+                        for ($i = 1; $i <= 1000; $i++) {
+                            $data[] = (object)[
+                                'user' => (object)['id' => (string)$i, 'username' => "user{$i}"],
+                                'roles' => ['r1']
+                            ];
+                        }
+                        return new \GuzzleHttp\Psr7\Response(200, [], json_encode($data));
+                    }
+                    $data = [(object)['user' => (object)['id' => '1001', 'username' => 'user1001'], 'roles' => ['r1']]];
+                    return new \GuzzleHttp\Psr7\Response(200, [], json_encode($data));
+                }
+                return new \GuzzleHttp\Psr7\Response(204);
+            }
+        };
+
+        $ref = new \ReflectionClass($discordApi);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($discordApi, $fake);
+
+        $members = $discordApi->getMemberRoles();
+        $this->assertCount(1001, $members);
+        $this->assertCount(2, array_filter($fake->calls, fn($c) => str_contains($c['uri'], '/members')));
+        $this->assertArrayHasKey('1', $members);
+        $this->assertArrayHasKey('1001', $members);
+    }
+
+    public function testGetMemberRolesUsesCache()
+    {
+        $provider = SocialProvider::factory()->create();
+        ProviderSetting::factory()->create([
+            'provider_type' => SocialProvider::class,
+            'provider_id' => $provider->id,
+            'code' => 'token',
+            'value' => 'fake-token',
+        ]);
+
+        $discordApi = new DiscordApi($provider, 'guild123');
+
+        $fake = new class extends Client {
+            public $calls = [];
+            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+            {
+                $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
+                $data = [
+                    (object)[
+                        'user' => (object)['id' => '1', 'username' => 'alice'],
+                        'roles' => ['r1']
+                    ]
+                ];
+                return new \GuzzleHttp\Psr7\Response(200, [], json_encode($data));
+            }
+        };
+
+        $ref = new \ReflectionClass($discordApi);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($discordApi, $fake);
+
+        $first = $discordApi->getMemberRoles();
+        $second = $discordApi->getMemberRoles();
+
+        $this->assertEquals($first, $second);
+        $this->assertCount(1, $fake->calls, 'Client should only be called once due to caching');
+    }
+
+    public function testAddAndRemoveDoNothingWhenMissingParams()
+    {
+        $provider = SocialProvider::factory()->create();
+        ProviderSetting::factory()->create([
+            'provider_type' => SocialProvider::class,
+            'provider_id' => $provider->id,
+            'code' => 'token',
+            'value' => 'fake-token',
+        ]);
+
+        $discordApi = new DiscordApi($provider, 'guild123');
+
+        $fake = new class extends Client {
+            public $calls = [];
+            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+            {
+                $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
+                return new \GuzzleHttp\Psr7\Response(204);
+            }
+        };
+
+        $ref = new \ReflectionClass($discordApi);
+        $prop = $ref->getProperty('client');
+        $prop->setAccessible(true);
+        $prop->setValue($discordApi, $fake);
+
+        $discordApi->addRoleToMember('', 'user123');
+        $discordApi->addRoleToMember('role123', '');
+        $discordApi->removeRoleFromMember('', 'user123');
+        $discordApi->removeRoleFromMember('role123', '');
+
+        $this->assertCount(0, $fake->calls, 'No client calls should be made when parameters are missing');
     }
 }
