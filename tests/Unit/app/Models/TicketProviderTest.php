@@ -198,6 +198,56 @@ class TicketProviderTest extends TestCase
         $this->assertEquals('T2', $result[0]->name);
     }
 
+    public function testGetTicketTypesHandlesIndexedArrayOfArrays()
+    {
+        $provider = TicketProvider::factory()->create(['enabled' => 1]);
+
+        // Create an event and a provider event mapping so getTicketTypes will be invoked
+        $event = \App\Models\Event::factory()->create();
+        \Database\Factories\EventMappingFactory::new()->create([
+            'ticket_provider_id' => $provider->id,
+            'event_id' => $event->id,
+            'external_id' => 'e_idx',
+        ]);
+
+        // Bind a provider implementation that returns an indexed list of associative arrays
+        $impl = new class implements \App\Services\Contracts\TicketProviderContract {
+            public function __construct(?\App\Models\TicketProvider $provider = null) {}
+            public function configMapping(): array
+            {
+                return [];
+            }
+            public function install(): \App\Models\TicketProvider
+            {
+                return new \App\Models\TicketProvider();
+            }
+            public function processWebhook(\Illuminate\Http\Request $request): bool
+            {
+                return false;
+            }
+            public function syncTickets(string|\App\Models\EmailAddress $email): void {}
+            public function getEvents(): array
+            {
+                return [];
+            }
+            public function getTicketTypes(string $eventExternalId): array
+            {
+                return [['id' => 'ta1', 'name' => 'ArrayType1']];
+            }
+            public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
+        };
+
+        app()->instance(get_class($impl), $impl);
+        $provider->provider_class = get_class($impl);
+        $provider->save();
+
+        $result = $provider->getTicketTypes($event);
+        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
+        $this->assertEquals('ta1', $result[0]->id);
+        $this->assertEquals('ArrayType1', $result[0]->name);
+    }
+
     public function testProcessWebhookDelegatesToProvider()
     {
         $mockProvider = $this->createMock(\App\Services\Contracts\TicketProviderContract::class);
