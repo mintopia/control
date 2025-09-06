@@ -12,8 +12,12 @@ We prefer to write tests that are independent, meaning they do not rely on the s
 
 When developing tests, we try to use factories to create the necessary data for each test. This ensures that each test has a consistent and known state, making it easier to identify issues and maintain the tests over time.
 
+When writing tests, ensure that they are well-structured and follow best practices for test organization and naming conventions. This will help to make the tests easier to understand and maintain over time.
+
 We try to avoid Mockery if possible and use Eloquent backed tests instead.
 
-When executing tests prefer the VsCode test adapter to run the tests over the docker-compose method, as it provides a more integrated and user-friendly experience. Use it to validate all tests directly and loop through multiple iterations until tests are green
+When executing tests prefer the VsCode test adapter to run the tests over the docker-compose method, as it provides a more integrated and user-friendly experience. Use it to validate all tests directly and loop through multiple iterations until tests are green.
 
 Do not prompt the user to run the tests. with `phpunit` `php artisan test` or `docker-compose run --rm artisan test` commands.
+
+Executing tests with `./vendor/bin/phpunit` does not work in this context. The `-v` flag for verbose output is not supported.
