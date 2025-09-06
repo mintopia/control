@@ -67,7 +67,7 @@ class UserControllerTest extends TestCase
     {
         $provider = SocialProvider::factory()->create(['enabled' => false, 'auth_enabled' => false]);
         $controller = new UserController();
-        $response = $controller->login_redirect($provider);
+        $response = $controller->loginRedirect($provider);
         $this->assertStringContainsString(route('login'), $response->getTargetUrl());
 
         // For the enabled case, avoid calling the model code path that relies on getProvider()
@@ -82,7 +82,7 @@ class UserControllerTest extends TestCase
         $enabledProvider->enabled = true;
         $enabledProvider->auth_enabled = true;
 
-        $resp = $controller->login_redirect($enabledProvider);
+        $resp = $controller->loginRedirect($enabledProvider);
         $this->assertEquals('ok', $resp->getContent());
     }
 
@@ -102,7 +102,7 @@ class UserControllerTest extends TestCase
         });
         $signupRequest->setLaravelSession(app('session.store'));
 
-        $response = $controller->signup_process($signupRequest);
+        $response = $controller->signupProcess($signupRequest);
         $this->assertStringContainsString(route('home'), $response->getTargetUrl());
         $this->assertEquals('nick', $user->fresh()->nickname);
 
@@ -173,7 +173,7 @@ class UserControllerTest extends TestCase
         $provider = SocialProvider::factory()->create(['enabled' => true, 'auth_enabled' => true]);
         $controller = new UserController();
 
-        $resp = $controller->login_return($provider);
+        $resp = $controller->loginReturn($provider);
         $this->assertStringContainsString(route('home'), $resp->getTargetUrl());
     }
 
@@ -193,7 +193,7 @@ class UserControllerTest extends TestCase
         $user->save();
 
         $controller = new UserController();
-        $resp = $controller->login_return($provider);
+        $resp = $controller->loginReturn($provider);
 
         $this->assertStringContainsString(route('home'), $resp->getTargetUrl());
         $this->assertTrue(\Illuminate\Support\Facades\Auth::check());
@@ -207,7 +207,7 @@ class UserControllerTest extends TestCase
         $disabledProvider->enabled = false;
         $disabledProvider->auth_enabled = false;
 
-        $resp = $controller->login_return($disabledProvider);
+        $resp = $controller->loginReturn($disabledProvider);
         $this->assertStringContainsString(route('login'), $resp->getTargetUrl());
     }
 
@@ -228,7 +228,7 @@ class UserControllerTest extends TestCase
         $suspended->save();
 
         $controller = new UserController();
-        $resp = $controller->login_return($provider);
+        $resp = $controller->loginReturn($provider);
 
         $this->assertStringContainsString(route('login'), $resp->getTargetUrl());
         $this->assertEquals('Your account has been suspended', $resp->getSession()->get('errorMessage'));
@@ -246,7 +246,7 @@ class UserControllerTest extends TestCase
         $provider->auth_enabled = true;
 
         $controller = new UserController();
-        $resp = $controller->login_return($provider);
+        $resp = $controller->loginReturn($provider);
 
         $this->assertStringContainsString(route('login'), $resp->getTargetUrl());
         $this->assertEquals('provider fail', $resp->getSession()->get('errorMessage'));
@@ -264,7 +264,7 @@ class UserControllerTest extends TestCase
         $provider->auth_enabled = true;
 
         $controller = new UserController();
-        $resp = $controller->login_return($provider);
+        $resp = $controller->loginReturn($provider);
 
         $this->assertStringContainsString(route('login'), $resp->getTargetUrl());
         $this->assertEquals('Unable to login', $resp->getSession()->get('errorMessage'));

@@ -132,7 +132,7 @@ class TicketControllerTest extends TestCase
         $req->setLaravelSession($this->app['session.store']);
 
         $controller = new TicketController();
-        $resp = $controller->import_show($req);
+        $resp = $controller->importShow($req);
         $this->assertTrue(is_object($resp));
 
         // session should now contain imports - get them and process
@@ -140,7 +140,7 @@ class TicketControllerTest extends TestCase
         $req2 = request();
         $req2->setLaravelSession($this->app['session.store']);
         try {
-            $controller->import_process($req2);
+            $controller->importProcess($req2);
         } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
             // ignore
         }

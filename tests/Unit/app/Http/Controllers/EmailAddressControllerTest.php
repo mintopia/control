@@ -187,7 +187,7 @@ class EmailAddressControllerTest extends TestCase
         $request->setUserResolver(fn() => $user);
 
         $controller = new \App\Http\Controllers\EmailAddressController();
-        $response = $controller->verify_process($request, $email);
+        $response = $controller->verifyProcess($request, $email);
 
         $this->assertTrue(method_exists($response, 'getTargetUrl'));
         $this->assertNotNull($email->fresh()->verified_at);
@@ -260,7 +260,7 @@ class EmailAddressControllerTest extends TestCase
         $request->setUserResolver(fn() => $user);
 
         $controller = new EmailAddressController();
-        $response = $controller->verify_code($request, $email);
+        $response = $controller->verifyCode($request, $email);
 
         $this->assertTrue(method_exists($response, 'getTargetUrl'));
         $this->assertNotNull($email->fresh()->verified_at);
@@ -273,7 +273,7 @@ class EmailAddressControllerTest extends TestCase
         $email = EmailAddress::factory()->create(['user_id' => $user->id, 'verified_at' => null]);
 
         $controller = new EmailAddressController();
-        $response = $controller->verify_resend($email);
+        $response = $controller->verifyResend($email);
 
         $this->assertTrue(method_exists($response, 'getTargetUrl'));
         $this->assertStringContainsString('/verify', $response->getTargetUrl());
@@ -287,7 +287,7 @@ class EmailAddressControllerTest extends TestCase
         $email = EmailAddress::factory()->create(['user_id' => $user->id, 'verified_at' => now()]);
 
         $controller = new EmailAddressController();
-        $response = $controller->verify_resend($email);
+        $response = $controller->verifyResend($email);
 
         $this->assertTrue(method_exists($response, 'getTargetUrl'));
         $this->assertStringContainsString('/profile', $response->getTargetUrl());

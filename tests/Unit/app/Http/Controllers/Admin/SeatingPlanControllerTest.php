@@ -165,7 +165,7 @@ class SeatingPlanControllerTest extends TestCase
 
         $controller = new SeatingPlanController();
         try {
-            $controller->import_process($req, $event, $plan);
+            $controller->importProcess($req, $event, $plan);
         } catch (UrlGenerationException $ex) {
             // ignore
         }

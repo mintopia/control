@@ -45,13 +45,13 @@ class SettingController extends Controller
         return response()->redirectToRoute('admin.settings.index')->with('successMessage', 'Settings have been updated');
     }
 
-    public function add_discord()
+    public function addDiscord()
     {
         $provider = $this->getDiscordProvider();
         return $provider->addBotToServer();
     }
 
-    public function add_discord_return()
+    public function addDiscordReturn()
     {
         $serverName = Setting::whereCode('discord.server.name')->first();
         $serverId = Setting::whereCode('discord.server.id')->first();

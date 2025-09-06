@@ -131,7 +131,7 @@ class EventControllerTest extends TestCase
         $ticket = Ticket::factory()->create(['event_id' => $event->id, 'ticket_type_id' => $type->id, 'user_id' => $user->id, 'ticket_provider_id' => $provider->id]);
 
         $controller = new EventController();
-        $resp = $controller->export_tickets($event);
+        $resp = $controller->exportTickets($event);
         $this->assertTrue(method_exists($resp, 'getStatusCode') || method_exists($resp, 'send'));
     }
 
@@ -289,7 +289,7 @@ class EventControllerTest extends TestCase
         $seat->save();
 
         $controller = new EventController();
-        $resp = $controller->export_tickets($event);
+        $resp = $controller->exportTickets($event);
         $this->assertTrue(method_exists($resp, 'getStatusCode') || method_exists($resp, 'send'));
     }
 
@@ -302,7 +302,7 @@ class EventControllerTest extends TestCase
         $ticket = Ticket::factory()->create(['event_id' => $event->id, 'ticket_type_id' => $type->id, 'user_id' => $user->id, 'ticket_provider_id' => $provider->id, 'original_email' => 'fallback@example.com']);
 
         $controller = new EventController();
-        $resp = $controller->export_tickets($event);
+        $resp = $controller->exportTickets($event);
 
         $callback = $resp->getCallback();
         ob_start();

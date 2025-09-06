@@ -36,7 +36,7 @@ class UserController extends Controller
         return response()->redirectToRoute('home')->with('successMessage', 'You have been logged out');
     }
 
-    public function login_redirect(SocialProvider $socialprovider)
+    public function loginRedirect(SocialProvider $socialprovider)
     {
         if (!$socialprovider->enabled || !$socialprovider->auth_enabled) {
             return response()->redirectToRoute('login')->with('errorMessage', 'Unable to login');
@@ -44,7 +44,7 @@ class UserController extends Controller
         return $socialprovider->redirect();
     }
 
-    public function login_return(SocialProvider $socialprovider)
+    public function loginReturn(SocialProvider $socialprovider)
     {
         // If we get 2 redirects back from the auth provider, handle it here.
         if (Auth::hasUser()) {
@@ -90,7 +90,7 @@ class UserController extends Controller
         ]);
     }
 
-    public function signup_process(UserSignupRequest $request)
+    public function signupProcess(UserSignupRequest $request)
     {
         $user = $request->user();
         $user->nickname = $request->input('nickname');

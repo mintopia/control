@@ -35,5 +35,4 @@ class SettingValue implements CastsAttributes
         }
         return $value;
     }
-
 }

@@ -42,7 +42,7 @@ class EmailAddressController extends Controller
         ]);
     }
 
-    public function verify_resend(EmailAddress $emailaddress)
+    public function verifyResend(EmailAddress $emailaddress)
     {
         if ($emailaddress->verified_at) {
             return response()->redirectToRoute('user.profile')->with('successMessage', 'The email address is verified');
@@ -51,7 +51,7 @@ class EmailAddressController extends Controller
         return response()->redirectToRoute('emails.verify', $emailaddress->id)->with('successMessage', "A verification code has been sent to {$emailaddress->email}");
     }
 
-    public function verify_code(EmailVerifyRequest $request, EmailAddress $emailaddress)
+    public function verifyCode(EmailVerifyRequest $request, EmailAddress $emailaddress)
     {
         return $this->verifyEmail($emailaddress, $request->input('code'));
     }
@@ -72,7 +72,7 @@ class EmailAddressController extends Controller
         ]);
     }
 
-    public function verify_process(EmailVerifyRequest $request, EmailAddress $emailaddress)
+    public function verifyProcess(EmailVerifyRequest $request, EmailAddress $emailaddress)
     {
         return $this->verifyEmail($emailaddress, $request->input('code'));
     }

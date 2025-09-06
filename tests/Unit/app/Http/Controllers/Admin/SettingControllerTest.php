@@ -113,7 +113,7 @@ class SettingControllerTest extends TestCase
         $prov = SocialProvider::create(['code' => 'discord', 'name' => 'Discord', 'provider_class' => DummyDiscordProvider::class, 'supports_auth' => 0, 'enabled' => 1, 'auth_enabled' => 0, 'can_be_renamed' => 0]);
 
         $c = new SettingController();
-        $result = $c->add_discord();
+        $result = $c->addDiscord();
         $this->assertEquals('added', $result);
     }
 
@@ -153,7 +153,7 @@ class SettingControllerTest extends TestCase
 
         // Call the full controller action to ensure settings are written using the stub provider
         try {
-            $fullResp = $controllerMock->add_discord_return();
+            $fullResp = $controllerMock->addDiscordReturn();
         } catch (\Throwable $e) {
             $this->fail('Unexpected exception when calling add_discord_return with dummy provider: ' . $e->getMessage());
         }
@@ -169,7 +169,7 @@ class SettingControllerTest extends TestCase
         $controllerMockFail->method('getDiscordProvider')->willReturn($throwing);
 
         try {
-            $fullResp2 = $controllerMockFail->add_discord_return();
+            $fullResp2 = $controllerMockFail->addDiscordReturn();
         } catch (\Throwable $e) {
             $this->fail('Unexpected exception when calling add_discord_return with throwing provider: ' . $e->getMessage());
         }

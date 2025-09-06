@@ -167,7 +167,7 @@ class EventController extends Controller
         ]);
     }
 
-    public function export_tickets(Event $event)
+    public function exportTickets(Event $event)
     {
         $csv = [[
             'ID',

@@ -224,7 +224,7 @@ class TicketController extends Controller
         return view('admin.tickets.import');
     }
 
-    public function import_show(TicketImportRequest $request)
+    public function importShow(TicketImportRequest $request)
     {
         $csv = $request->file('csv')->get();
         $imports = Ticket::import($csv);
@@ -234,9 +234,8 @@ class TicketController extends Controller
         ]);
     }
 
-    public function import_process(Request $request)
+    public function importProcess(Request $request)
     {
-        // TODO: Process Import
         $imports = $request->session()->get('imports');
         foreach ($imports as $import) {
             Ticket::createFromImport($import);

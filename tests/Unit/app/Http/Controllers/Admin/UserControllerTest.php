@@ -243,7 +243,7 @@ class UserControllerTest extends TestCase
         $user = User::factory()->create(['tickets_synced_at' => null]);
         $controller = new UserController();
         try {
-            $controller->sync_tickets($user);
+            $controller->syncTickets($user);
         } catch (UrlGenerationException $ex) {
             // ignore redirect
         }
