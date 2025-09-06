@@ -37,6 +37,28 @@ class SeatObserverTest extends TestCase
         $this->assertNull($seat2->fresh()->ticket_id);
     }
 
+    public function testSavedDisassociatesOtherSeatInDifferentPlanAndUpdatesOtherPlanRevision()
+    {
+        $event = \App\Models\Event::factory()->create();
+        $planA = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
+        $planB = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
+
+        $ticket = \App\Models\Ticket::factory()->create(['event_id' => $event->id]);
+
+        // Seat in plan A (the one being saved)
+        $seatA = \App\Models\Seat::factory()->create(['seating_plan_id' => $planA->id, 'ticket_id' => $ticket->id]);
+        // Another seat in a different plan with same ticket
+        $seatB = \App\Models\Seat::factory()->create(['seating_plan_id' => $planB->id, 'ticket_id' => $ticket->id]);
+
+        $observer = new SeatObserver();
+        $observer->saved($seatA);
+
+        // other seat should have been disassociated
+        $this->assertNull($seatB->fresh()->ticket_id);
+        // and the other plan's revision should have been incremented
+        $this->assertGreaterThan(1, $planB->fresh()->revision);
+    }
+
     public function testDeletedUpdatesPlanRevision()
     {
         $plan = \App\Models\SeatingPlan::factory()->create(['revision' => 1]);

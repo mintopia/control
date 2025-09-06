@@ -12,6 +12,7 @@ use App\Models\TicketType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+// Event facade previously used here was unnecessary; use the model saved callback instead
 use Illuminate\Http\Request;
 
 class SeatingPlanControllerTest extends TestCase
@@ -296,15 +297,31 @@ class SeatingPlanControllerTest extends TestCase
         // Associate old seat
         $oldSeat->ticket()->associate($ticket);
         $oldSeat->save();
+        // ensure ticket relation is present so controller can see the old seat
+        $ticket->setRelation('seat', $oldSeat);
 
         $request = Request::create('/select', 'POST');
         $request->setUserResolver(fn() => $user);
+
+        // capture which Seat IDs had saved events fired
+        $savedSeatIds = [];
+        \App\Models\Seat::saved(function ($seat) use (&$savedSeatIds) {
+            $savedSeatIds[] = $seat->id;
+        });
+        \App\Models\Seat::updated(function ($seat) use (&$savedSeatIds) {
+            $savedSeatIds[] = $seat->id;
+        });
 
         $controller = new SeatingPlanController();
         $controller->select($request, $event, $ticket, $newSeat);
 
         $this->assertNull($oldSeat->fresh()->ticket_id);
         $this->assertEquals($ticket->id, $newSeat->fresh()->ticket_id);
+
+        // The new seat should always fire a saved event
+        $this->assertContains($newSeat->id, $savedSeatIds, 'Expected new seat to trigger saved event');
+        // When moving between different plans the controller should use save(), so oldSeat should have fired saved event
+        $this->assertContains($oldSeat->id, $savedSeatIds, 'Expected old seat to trigger saved event when moved between plans');
     }
 
     public function testSelectMovesFromOldSeatSamePlan()
@@ -319,15 +336,31 @@ class SeatingPlanControllerTest extends TestCase
 
         $oldSeat->ticket()->associate($ticket);
         $oldSeat->save();
+        // ensure ticket relation is present so controller can see the old seat
+        $ticket->setRelation('seat', $oldSeat);
 
         $request = Request::create('/select', 'POST');
         $request->setUserResolver(fn() => $user);
+
+        // capture which Seat IDs had saved events fired
+        $savedSeatIds = [];
+        \App\Models\Seat::saved(function ($seat) use (&$savedSeatIds) {
+            $savedSeatIds[] = $seat->id;
+        });
+        \App\Models\Seat::updated(function ($seat) use (&$savedSeatIds) {
+            $savedSeatIds[] = $seat->id;
+        });
 
         $controller = new SeatingPlanController();
         $controller->select($request, $event, $ticket, $newSeat);
 
         $this->assertNull($oldSeat->fresh()->ticket_id);
         $this->assertEquals($ticket->id, $newSeat->fresh()->ticket_id);
+
+        // The new seat should have fired a saved event
+        $this->assertContains($newSeat->id, $savedSeatIds, 'Expected new seat to trigger saved event');
+        // When moving within the same plan the controller should use saveQuietly() for the old seat, so no saved event for oldSeat
+        $this->assertNotContains($oldSeat->id, $savedSeatIds, 'Expected old seat save to be quiet when moved within the same plan');
     }
 
     public function testShowRedirectsWhenTicketNotPickableOrNotManaged()
