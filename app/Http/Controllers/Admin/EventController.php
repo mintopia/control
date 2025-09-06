@@ -35,10 +35,8 @@ class EventController extends Controller
             $query = $query->where('code', 'LIKE', "%{$filters->code}%");
         }
 
-        //VALIDATE whereHas(provider) changed to mappings to allow testIndexFiltersByExternalIdAndProviderId to succeed
         if ($request->input('external_id')) {
             $filters->external_id = $request->input('external_id');
-            // $query = $query->whereHas('provider', function ($query) use ($filters) {
             $query = $query->whereHas('mappings', function ($query) use ($filters) {
                 $query->whereExternalId($filters->external_id);
             });

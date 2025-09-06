@@ -25,8 +25,7 @@ class SeatingPlanController extends Controller
     public function show(Request $request, Event $event, ?Ticket $ticket = null)
     {
         if ($event->seating_locked) {
-            // $request->session()->now('infoMessage', 'Seating is locked');
-            $request->session()->put('infoMessage', 'Seating is locked');
+            $request->session()->now('infoMessage', 'Seating is locked');
         }
 
         if ($ticket && (!$ticket->canPickSeat() || !$ticket->canBeManagedBy($request->user()))) {

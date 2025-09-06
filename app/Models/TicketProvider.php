@@ -116,26 +116,6 @@ class TicketProvider extends Model
                 return [];
             }
 
-            //VALIDATE Adding this allows testUpdateObjectSelectsMatchingObjectTypeFromProvider to succeed
-            // normalize provider returned types: providers may return associative array id=>name
-            // or a numeric indexed list of objects/arrays with id/name. Convert the latter to
-            // associative mapping so downstream code works consistently.
-            $first = reset($types);
-            if (is_object($first) || is_array($first)) {
-                $normalized = [];
-                foreach ($types as $t) {
-                    if (is_object($t)) {
-                        $id = (string)$t->id;
-                        $name = $t->name;
-                    } else {
-                        $id = (string)$t['id'];
-                        $name = $t['name'];
-                    }
-                    $normalized[$id] = $name;
-                }
-                $types = $normalized;
-            }
-
             $ids = array_keys($types);
             $existing = $this->types()
                 ->whereIn('external_id', $ids)

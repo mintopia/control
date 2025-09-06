@@ -171,12 +171,11 @@ class SeatingPlan extends Model implements Sortable
                 if (!$row[5]) {
                     continue;
                 }
-                //VALIDATE ID check - Tests work with both variants, but this one should be safer
+
                 if (isset($row[0]) && is_numeric($row[0])) {
                     $id = (int) $row[0];
                     if ($id > 0) {
-                        // If $this->seats is an Eloquent Collection or Builder:
-                        $seat = $this->seats->find($id); // or: $this->seats->firstWhere('id', $id);
+                        $seat = $this->seats->firstWhere('id', $id);
                     }
                 }
                 if ($seat === null) {
