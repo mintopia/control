@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Transformers\V1\AbstractTransformer;
 use Illuminate\Support\Carbon;
 
+use function PHPUnit\Framework\assertTrue;
+
 class DummyTransformer extends AbstractTransformer
 {
     protected function getAdminPropertiesPublic(object $object): array
@@ -19,6 +21,14 @@ class DummyTransformer extends AbstractTransformer
     protected function getAdminProperties(object $object): array
     {
         return ['admin' => true];
+    }
+}
+
+class DummyTransformer2 extends AbstractTransformer
+{
+    public function getAdminPropertiesPublic(object $object): array
+    {
+        return $this->getAdminProperties($object);
     }
 }
 
@@ -36,6 +46,14 @@ class DummyObject
 
 class AbstractTransformerTest extends TestCase
 {
+    protected function invokeMethod($object, $method, array $parameters = [])
+    {
+        $reflection = new \ReflectionClass($object);
+        $method = $reflection->getMethod($method);
+        $method->setAccessible(true);
+        return $method->invokeArgs($object, $parameters);
+    }
+
     public function testModifyForUserReturnsDataForNonAdmin()
     {
         $user = $this->createMock(User::class);
@@ -75,11 +93,13 @@ class AbstractTransformerTest extends TestCase
         $this->assertTrue($result['admin']);
     }
 
-    protected function invokeMethod($object, $method, array $parameters = [])
+    // Manually added test to check getAdminPropertiesPublic
+    public function testGetAdminPropertiesReturnsEmptyList()
     {
-        $reflection = new \ReflectionClass($object);
-        $method = $reflection->getMethod($method);
-        $method->setAccessible(true);
-        return $method->invokeArgs($object, $parameters);
+        $transformer = new DummyTransformer2($this->createMock(User::class));
+        $object = new DummyObject();
+
+        $result = $transformer->getAdminPropertiesPublic($object);
+        $this->assertEquals($result, []);
     }
 }

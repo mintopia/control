@@ -87,7 +87,6 @@ Afterwards, they are discovered automatically and can be run either in the Tests
 
 ![VSCode Test Adapter - PHPunit Test Explorer](vsCode-TestAdapter.png)
 
-
 Alternatively, they can be run via the gutter icon (run all tests on `class` or individual test on `function`):
 
 ![Using Gutter icon to test](vsCode-GutterIcon.png)
@@ -155,3 +154,13 @@ Code Coverage: We currently have 50% coverage across the board.
 - [ ] Replace Mockery with Eloquent-backed methods across the board - some tests still use it
 - [ ] Add GitHub Action to run Unit Tests on PR
 - [ ] Add GitHub Action to run Code Coverage validation on Dispatch
+
+### VsCode Tasks
+
+Tasks have been created for easier access to testing:
+
+- Run Laravel Tests (current file) - Executes a direct test against the currently focused file<br />`docker compose run --rm -e XDEBUG_MODE=coverage artisan test --filter \"${fileBasenameNoExtension}\"`
+- Run Laravel Test Suite for Unit Tests<br />`docker compose run --rm artisan test --testsuite=Unit`
+- Run Laravel Test Suite for Feature Tests<br />`docker compose run --rm artisan test --testsuite=Feature`
+- Run Laravel Tests (full) - Runs all tests in the terminal - Runs for 7+ minutes!<br />`docker compose artisan test`
+- Run Laravel Tests with Coverage Report - Creates coverage report locally - Runs for 10+ minutes!<br />`docker compose run --rm -e XDEBUG_MODE=coverage test --configuration=phpunit.xml --coverage-clover=clover.xml --coverage-html=html-coverage`
