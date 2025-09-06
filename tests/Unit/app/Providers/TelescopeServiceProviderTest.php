@@ -3,7 +3,7 @@
 namespace Tests\Unit\app\Providers;
 
 use Tests\TestCase;
-
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Laravel\Telescope\IncomingEntry;
@@ -12,6 +12,7 @@ use Laravel\Telescope\Telescope;
 
 class TelescopeServiceProviderTest extends TestCase
 {
+    use RefreshDatabase;
 
     public function testRegisterConfiguresTelescope()
     {
@@ -171,6 +172,81 @@ class TelescopeServiceProviderTest extends TestCase
 
         $result = \Laravel\Telescope\Avatar::url(['id' => '9999', 'email' => 'noone@example.test']);
         $this->assertNull($result);
+    }
+
+    public function testResolveAvatarReturnsUserAvatarWhenUserExists()
+    {
+        // Use a real user created in the test database so User::find returns it
+        $user = User::factory()->create(['avatar' => null]);
+        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $ref = new \ReflectionClass($provider);
+        $method = $ref->getMethod('resolveAvatar');
+        $method->setAccessible(true);
+        $result = $method->invokeArgs($provider, [(string)$user->id, $user->email ?? $user->nickname]);
+        $this->assertIsString($result);
+        $this->assertStringContainsString('gravatar.com', $result);
+    }
+
+    public function testResolveAvatarReturnsGravatarForMissingUser()
+    {
+        // No users created for this test; find should return null and gravatar will be used
+        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $ref = new \ReflectionClass($provider);
+        $method = $ref->getMethod('resolveAvatar');
+        $method->setAccessible(true);
+        $result = $method->invokeArgs($provider, ['999999', 'noone@example.test']);
+        $this->assertIsString($result);
+        $this->assertStringContainsString('gravatar.com', $result);
+        $this->assertStringContainsString(md5(strtolower(trim('noone@example.test'))), $result);
+    }
+
+    public function testResolveAvatarReturnsCustomAvatarWhenUserHasAvatar()
+    {
+        // Create a user and attach a linked account that contains an avatar_url
+        $user = User::factory()->create(['avatar' => null]);
+        $acc = \App\Models\LinkedAccount::create([
+            'user_id' => $user->id,
+            'avatar_url' => 'https://cdn.example/test-avatar.png',
+            'external_id' => '12345',
+        ]);
+
+        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $ref = new \ReflectionClass($provider);
+        $method = $ref->getMethod('resolveAvatar');
+        $method->setAccessible(true);
+        $result = $method->invokeArgs($provider, [(string)$user->id, $user->email ?? $user->nickname]);
+
+        $this->assertIsString($result);
+        // avatarUrl() prefers linked account avatar_url; assert the resolver defers to that
+        $this->assertEquals($user->avatarUrl(), $result, 'Expected resolveAvatar to return the user avatarUrl() when a linked account provides an avatar');
+    }
+
+    public function testProviderRegisteredAvatarCallbackIsInvoked()
+    {
+        // Create a user with linked account avatar
+        $user = User::factory()->create(['avatar' => null]);
+        \App\Models\LinkedAccount::create([
+            'user_id' => $user->id,
+            'avatar_url' => 'https://cdn.example/provider-avatar.png',
+            'external_id' => 'xyz',
+        ]);
+
+        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        // Register the provider which will call Telescope::avatar with a closure
+        $provider->register();
+
+        // Invoke the avatar callback via the public API; Avatar::url should call the closure registered above
+        $result = \Laravel\Telescope\Avatar::url(['id' => (string)$user->id, 'email' => $user->email ?? $user->nickname]);
+        $this->assertEquals($user->avatarUrl(), $result);
+
+        // Also reflect into the Avatar class to get the registered callback and invoke it directly
+        $ref = new \ReflectionClass(\Laravel\Telescope\Avatar::class);
+        $prop = $ref->getProperty('callback');
+        $prop->setAccessible(true);
+        $cb = $prop->getValue();
+        $this->assertIsCallable($cb, 'Expected provider->register() to register an avatar callback');
+        $direct = $cb((string)$user->id, $user->email ?? $user->nickname);
+        $this->assertEquals($user->avatarUrl(), $direct, 'Expected direct invocation of registered callback to return the same avatar URL');
     }
 
     public function testRegisterFilterReturnsTrueForReportableEntry()
