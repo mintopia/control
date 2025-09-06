@@ -41,6 +41,7 @@ class SeatingPlanObserverTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $seatingPlan->revision);
     }
 
+    // NOTE The following tests assert empty observer handlers are currently no-ops.
     public function testCreatedIsNoop()
     {
         $seatingPlan = SeatingPlan::factory()->create(['revision' => 31]);

@@ -16,6 +16,7 @@ class SettingObserverTest extends TestCase
         $observer->saved($setting);
     }
 
+    // NOTE The following tests assert empty observer handlers are currently no-ops.
     public function testCreatedHandlerIsNoop()
     {
         $setting = new Setting();

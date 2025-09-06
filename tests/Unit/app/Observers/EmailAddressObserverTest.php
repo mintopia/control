@@ -40,7 +40,7 @@ class EmailAddressObserverTest extends TestCase
     }
 
 
-    // NOTE The following tests are recorded to fail once the observers are built out properly.
+    // NOTE The following tests assert empty observer handlers are currently no-ops.
     public function testUpdatedIsPendingImplementation()
     {
         $user = User::factory()->create();

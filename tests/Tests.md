@@ -143,54 +143,15 @@ Code Coverage: We currently have 50% coverage across the board.
 
 ### Wave 2 - SEP 2025 (planned)
 
-- [ ] Create test files for each file - no file should have 0% coverage
-- [ ] Separating Test scopes properly
-- [ ] Increase coverage distribution to at least 50%
-  - [ ] `http`
-    - [ ] `Controllers`
-      - [ ] Admin
-        - [ ] `ClanController`
-        - [x] `EmailAddressController`
-        - [x] `EventMappingController`
-        - [ ] `EventTicketProviderController` (not defined yet?)
-        - [x] Add missing Controller files
-        - [ ] `SettingController` (update, detail)
-      - [ ] `ClanController`
-      - [ ] `UserController`
-    - [ ] `Requests`
-      - [ ] `TicketTransferRequest`
-    - [ ] `Middleware`
-      - [ ] `RedirectIfAuthenticated` (new)
-  - [ ] `Models`
-    - [ ] `ClanRole`
-    - [ ] `Event`
-    - [ ] `Role`
-    - [ ] `Seat`
-    - [ ] `SeatGroup`
-    - [ ] `SeatingPlan`
-    - [ ] `Ticket`
-    - [ ] `TicketProvider`
-    - [ ] `User`
-  - [ ] `Observers`
-    - [ ] `SeatObserver`
-    - [ ] `SettingObserver`
-    - [ ] `ThemeObserver`
-    - [ ] `TicketProviderObserver`
-  - [ ] `Policies`
-    - [ ] `ClanPolicy`
-  - [ ] `Services`
-    - [ ] `TicketProviders`
-      - [ ] `FakeProvider`
-      - [ ] `GenericTicketProvider`
-      - [ ] `TicketTailorProvider`
-      - [ ] `WooCommerceProvider`
-- [ ] Increase coverage for Lines to 75%
-- [ ] Increase coverage for Functions and Methods to 75%
-- [ ] Increase coverage for Classes and Traits to 75%
+- [x] Create test files for each file - no file should have 0% coverage
+- [x] Increase coverage distribution to at least 50%
+- [x] Increase coverage for Lines to 75%
+- [x] Increase coverage for Functions and Methods to 75%
+- [x] Increase coverage for Classes and Traits to 75%
+- [ ] Separating Test scopes properly - deferred, some tests that are more involved have been put into `tests/feature/`
 - [ ] Define proper exclusions - Elements not tested:
-  - [ ] Lavarel default code (if not adapted)
-  - [ ] OpenTelemetry - Standard library
-  - [ ] ...
-- [ ] Replace Mockery with Eloquent-backed methods across the board
+  - Lavarel default code (if not adapted)
+  - OpenTelemetry - Standard library
+- [ ] Replace Mockery with Eloquent-backed methods across the board - some tests still use it
 - [ ] Add GitHub Action to run Unit Tests on PR
 - [ ] Add GitHub Action to run Code Coverage validation on Dispatch

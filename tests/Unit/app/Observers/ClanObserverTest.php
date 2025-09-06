@@ -109,6 +109,7 @@ class ClanObserverTest extends TestCase
         $this->assertEquals('another-clan', $clan->code);
     }
 
+    // NOTE The following tests assert empty observer handlers are currently no-ops.
     public function testCreatedDoesNothing()
     {
         $clan = new Clan();

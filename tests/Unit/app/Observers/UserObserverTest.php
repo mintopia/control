@@ -45,7 +45,7 @@ class UserObserverTest extends TestCase
         $this->assertGreaterThan(1, $plan->fresh()->revision);
     }
 
-    // Snapshot current state to ensure other handlers remain no-ops
+    // NOTE The following tests assert empty observer handlers are currently no-ops.
     public function testCreatedIsNoop()
     {
         $user = User::factory()->create();

@@ -95,6 +95,7 @@ class ClanMembershipObserverTest extends TestCase
         $this->assertGreaterThan(1, $plan->revision);
     }
 
+    // NOTE The following tests assert empty observer handlers are currently no-ops.
     public function testDeletedDoesNothing()
     {
         $clanMembership = new ClanMembership();

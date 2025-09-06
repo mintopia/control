@@ -49,7 +49,7 @@ class SeatObserverTest extends TestCase
     }
 
 
-    // NOTE The following tests are recorded to fail once the observers are built out properly.
+    // NOTE The following tests assert empty observer handlers are currently no-ops.
     public function testCreatedIsPendingImplementation()
     {
         $plan = \App\Models\SeatingPlan::factory()->create(['revision' => 11]);

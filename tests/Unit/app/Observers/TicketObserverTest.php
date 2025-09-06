@@ -45,6 +45,7 @@ class TicketObserverTest extends TestCase
         $this->assertTrue(true);
     }
 
+    // NOTE The following tests assert empty observer handlers are currently no-ops.
     public function testCreatedIsNoop()
     {
         $ticket = Ticket::factory()->create();
@@ -133,5 +134,33 @@ class TicketObserverTest extends TestCase
         }
 
         $this->assertEquals($before, $plan->fresh()->revision);
+    }
+
+    public function testSavedCallsUpdateRevisionWhenDirtyAndHasSeatUsingMocks()
+    {
+        $event = \App\Models\Event::factory()->create();
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
+
+        $user = \App\Models\User::factory()->create();
+        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
+        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+
+        // Partial mock the plan to expect updateRevision
+        $planMock = \Mockery::mock(\App\Models\SeatingPlan::class)->makePartial();
+        $planMock->shouldReceive('updateRevision')->once();
+
+        // Seat mock that carries the mocked plan
+        $seatMock = \Mockery::mock(\App\Models\Seat::class)->makePartial();
+        $seatMock->plan = $planMock;
+
+        // Ticket partial mock: isDirty() returns true and seat is present
+        $ticketMock = \Mockery::mock(\App\Models\Ticket::class)->makePartial();
+        $ticketMock->id = $ticket->id;
+        $ticketMock->seat = $seatMock;
+        $ticketMock->shouldReceive('isDirty')->withNoArgs()->andReturn(true);
+
+        $observer = new TicketObserver();
+        /** @var \App\Models\Ticket $ticketMock */
+        $observer->saved($ticketMock);
     }
 }
