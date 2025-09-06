@@ -48,8 +48,65 @@ class SeatObserverTest extends TestCase
         $this->assertGreaterThan(1, $plan->fresh()->revision);
     }
 
-    public function testOtherHandlersAreSkipped()
+
+    // NOTE The following tests are recorded to fail once the observers are built out properly.
+    public function testCreatedIsPendingImplementation()
     {
-        $this->markTestSkipped('SeatObserver other handlers not implemented yet');
+        $plan = \App\Models\SeatingPlan::factory()->create(['revision' => 11]);
+        $seat = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id]);
+
+        // Snapshot current revision after any save observers have run
+        $before = $plan->fresh()->revision;
+
+        $observer = new SeatObserver();
+        $observer->created($seat);
+
+        // created() is currently a no-op; revision should remain unchanged
+        $this->assertEquals($before, $plan->fresh()->revision);
+    }
+
+    public function testUpdatedIsPendingImplementation()
+    {
+        $plan = \App\Models\SeatingPlan::factory()->create(['revision' => 13]);
+        $seat = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id]);
+
+        // Snapshot current revision after any save observers have run
+        $before = $plan->fresh()->revision;
+
+        $observer = new SeatObserver();
+        $observer->updated($seat);
+
+        // updated() is currently a no-op; revision should remain unchanged
+        $this->assertEquals($before, $plan->fresh()->revision);
+    }
+
+    public function testRestoredIsPendingImplementation()
+    {
+        $plan = \App\Models\SeatingPlan::factory()->create(['revision' => 5]);
+        $seat = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id]);
+
+        // Snapshot current revision after any save observers have run
+        $before = $plan->fresh()->revision;
+
+        $observer = new SeatObserver();
+        $observer->restored($seat);
+
+        // restored() is currently a no-op; revision should remain unchanged
+        $this->assertEquals($before, $plan->fresh()->revision);
+    }
+
+    public function testForceDeletedIsPendingImplementation()
+    {
+        $plan = \App\Models\SeatingPlan::factory()->create(['revision' => 7]);
+        $seat = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id]);
+
+        // Snapshot current revision after any save observers have run
+        $before = $plan->fresh()->revision;
+
+        $observer = new SeatObserver();
+        $observer->forceDeleted($seat);
+
+        // forceDeleted() is currently a no-op; revision should remain unchanged
+        $this->assertEquals($before, $plan->fresh()->revision);
     }
 }

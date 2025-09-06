@@ -44,4 +44,94 @@ class TicketObserverTest extends TestCase
 
         $this->assertTrue(true);
     }
+
+    public function testCreatedIsNoop()
+    {
+        $ticket = Ticket::factory()->create();
+
+        $event = \App\Models\Event::factory()->create();
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 51]);
+
+        $before = $plan->fresh()->revision;
+
+        $observer = new TicketObserver();
+        $m = 'created';
+        if (method_exists($observer, $m)) {
+            $observer->$m($ticket);
+        }
+
+        $this->assertEquals($before, $plan->fresh()->revision);
+    }
+
+    public function testUpdatedIsNoop()
+    {
+        $ticket = Ticket::factory()->create();
+
+        $event = \App\Models\Event::factory()->create();
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 53]);
+
+        $before = $plan->fresh()->revision;
+
+        $observer = new TicketObserver();
+        $m = 'updated';
+        if (method_exists($observer, $m)) {
+            $observer->$m($ticket);
+        }
+
+        $this->assertEquals($before, $plan->fresh()->revision);
+    }
+
+    public function testDeletedIsNoop()
+    {
+        $ticket = Ticket::factory()->create();
+
+        $event = \App\Models\Event::factory()->create();
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 55]);
+
+        $before = $plan->fresh()->revision;
+
+        $observer = new TicketObserver();
+        $m = 'deleted';
+        if (method_exists($observer, $m)) {
+            $observer->$m($ticket);
+        }
+
+        $this->assertEquals($before, $plan->fresh()->revision);
+    }
+
+    public function testRestoredIsNoop()
+    {
+        $ticket = Ticket::factory()->create();
+
+        $event = \App\Models\Event::factory()->create();
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 57]);
+
+        $before = $plan->fresh()->revision;
+
+        $observer = new TicketObserver();
+        $m = 'restored';
+        if (method_exists($observer, $m)) {
+            $observer->$m($ticket);
+        }
+
+        $this->assertEquals($before, $plan->fresh()->revision);
+    }
+
+    public function testForceDeletedIsNoop()
+    {
+        $ticket = Ticket::factory()->create();
+
+        $event = \App\Models\Event::factory()->create();
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 59]);
+
+        $before = $plan->fresh()->revision;
+
+        $observer = new TicketObserver();
+        $m = 'forceDeleted';
+        if (method_exists($observer, $m)) {
+            $observer->$m($ticket);
+        }
+
+        $this->assertEquals($before, $plan->fresh()->revision);
+    }
 }

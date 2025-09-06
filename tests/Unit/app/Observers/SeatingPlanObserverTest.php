@@ -41,8 +41,68 @@ class SeatingPlanObserverTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $seatingPlan->revision);
     }
 
-    public function testEmptyHandlersSkipped()
+    public function testCreatedIsNoop()
     {
-        $this->markTestSkipped('SeatingPlanObserver other handlers not implemented yet');
+        $seatingPlan = SeatingPlan::factory()->create(['revision' => 31]);
+
+        // Snapshot current revision after creation observers
+        $before = $seatingPlan->fresh()->revision;
+
+        $observer = new SeatingPlanObserver();
+        $observer->created($seatingPlan);
+
+        $this->assertEquals($before, $seatingPlan->fresh()->revision);
+    }
+
+    public function testUpdatedIsNoop()
+    {
+        $seatingPlan = SeatingPlan::factory()->create(['revision' => 33]);
+
+        // Snapshot current revision after creation observers
+        $before = $seatingPlan->fresh()->revision;
+
+        $observer = new SeatingPlanObserver();
+        $observer->updated($seatingPlan);
+
+        $this->assertEquals($before, $seatingPlan->fresh()->revision);
+    }
+
+    public function testDeletedIsNoop()
+    {
+        $seatingPlan = SeatingPlan::factory()->create(['revision' => 35]);
+
+        // Snapshot current revision after creation observers
+        $before = $seatingPlan->fresh()->revision;
+
+        $observer = new SeatingPlanObserver();
+        $observer->deleted($seatingPlan);
+
+        $this->assertEquals($before, $seatingPlan->fresh()->revision);
+    }
+
+    public function testRestoredIsNoop()
+    {
+        $seatingPlan = SeatingPlan::factory()->create(['revision' => 37]);
+
+        // Snapshot current revision after creation observers
+        $before = $seatingPlan->fresh()->revision;
+
+        $observer = new SeatingPlanObserver();
+        $observer->restored($seatingPlan);
+
+        $this->assertEquals($before, $seatingPlan->fresh()->revision);
+    }
+
+    public function testForceDeletedIsNoop()
+    {
+        $seatingPlan = SeatingPlan::factory()->create(['revision' => 39]);
+
+        // Snapshot current revision after creation observers
+        $before = $seatingPlan->fresh()->revision;
+
+        $observer = new SeatingPlanObserver();
+        $observer->forceDeleted($seatingPlan);
+
+        $this->assertEquals($before, $seatingPlan->fresh()->revision);
     }
 }

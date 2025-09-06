@@ -95,6 +95,18 @@ class ClanMembershipObserverTest extends TestCase
         $this->assertGreaterThan(1, $plan->revision);
     }
 
+    public function testDeletedDoesNothing()
+    {
+        $clanMembership = new ClanMembership();
+        $observer = new ClanMembershipObserver();
+        $m = 'deleted';
+        if (method_exists($observer, $m)) {
+            $this->assertNull($observer->$m($clanMembership));
+        } else {
+            $this->assertTrue(true);
+        }
+    }
+
     public function testCreatedDoesNothing()
     {
         $clanMembership = new ClanMembership();

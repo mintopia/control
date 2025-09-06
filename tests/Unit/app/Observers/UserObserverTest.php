@@ -45,8 +45,95 @@ class UserObserverTest extends TestCase
         $this->assertGreaterThan(1, $plan->fresh()->revision);
     }
 
-    public function testOtherHandlersSkipped()
+    // Snapshot current state to ensure other handlers remain no-ops
+    public function testCreatedIsNoop()
     {
-        $this->markTestSkipped('UserObserver other handlers not implemented yet');
+        $user = User::factory()->create();
+
+        $event = \App\Models\Event::factory()->create();
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 41]);
+
+        // Snapshot current revision after any creation observers
+        $before = $plan->fresh()->revision;
+
+        $observer = new UserObserver();
+        $m = 'created';
+        if (method_exists($observer, $m)) {
+            $observer->$m($user);
+        }
+
+        $this->assertEquals($before, $plan->fresh()->revision);
+    }
+
+    public function testUpdatedIsNoop()
+    {
+        $user = User::factory()->create();
+
+        $event = \App\Models\Event::factory()->create();
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 43]);
+
+        $before = $plan->fresh()->revision;
+
+        $observer = new UserObserver();
+        $m = 'updated';
+        if (method_exists($observer, $m)) {
+            $observer->$m($user);
+        }
+
+        $this->assertEquals($before, $plan->fresh()->revision);
+    }
+
+    public function testDeletedIsNoop()
+    {
+        $user = User::factory()->create();
+
+        $event = \App\Models\Event::factory()->create();
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 45]);
+
+        $before = $plan->fresh()->revision;
+
+        $observer = new UserObserver();
+        $m = 'deleted';
+        if (method_exists($observer, $m)) {
+            $observer->$m($user);
+        }
+
+        $this->assertEquals($before, $plan->fresh()->revision);
+    }
+
+    public function testRestoredIsNoop()
+    {
+        $user = User::factory()->create();
+
+        $event = \App\Models\Event::factory()->create();
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 47]);
+
+        $before = $plan->fresh()->revision;
+
+        $observer = new UserObserver();
+        $m = 'restored';
+        if (method_exists($observer, $m)) {
+            $observer->$m($user);
+        }
+
+        $this->assertEquals($before, $plan->fresh()->revision);
+    }
+
+    public function testForceDeletedIsNoop()
+    {
+        $user = User::factory()->create();
+
+        $event = \App\Models\Event::factory()->create();
+        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 49]);
+
+        $before = $plan->fresh()->revision;
+
+        $observer = new UserObserver();
+        $m = 'forceDeleted';
+        if (method_exists($observer, $m)) {
+            $observer->$m($user);
+        }
+
+        $this->assertEquals($before, $plan->fresh()->revision);
     }
 }

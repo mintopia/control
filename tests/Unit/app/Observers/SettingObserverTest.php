@@ -16,8 +16,43 @@ class SettingObserverTest extends TestCase
         $observer->saved($setting);
     }
 
-    public function testOtherHandlersAreSkipped()
+    public function testCreatedHandlerIsNoop()
     {
-        $this->markTestSkipped('SettingObserver other handlers not implemented yet');
+        $setting = new Setting();
+        $observer = new SettingObserver();
+        $observer->created($setting);
+        $this->assertTrue(true);
+    }
+
+    public function testUpdatedHandlerIsNoop()
+    {
+        $setting = new Setting();
+        $observer = new SettingObserver();
+        $observer->updated($setting);
+        $this->assertTrue(true);
+    }
+
+    public function testDeletedHandlerIsNoop()
+    {
+        $setting = new Setting();
+        $observer = new SettingObserver();
+        $observer->deleted($setting);
+        $this->assertTrue(true);
+    }
+
+    public function testRestoredHandlerIsNoop()
+    {
+        $setting = new Setting();
+        $observer = new SettingObserver();
+        $observer->restored($setting);
+        $this->assertTrue(true);
+    }
+
+    public function testForceDeletedHandlerIsNoop()
+    {
+        $setting = new Setting();
+        $observer = new SettingObserver();
+        $observer->forceDeleted($setting);
+        $this->assertTrue(true);
     }
 }

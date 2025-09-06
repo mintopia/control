@@ -39,23 +39,90 @@ class EmailAddressObserverTest extends TestCase
         $this->assertNull($email->user);
     }
 
+
+    // NOTE The following tests are recorded to fail once the observers are built out properly.
     public function testUpdatedIsPendingImplementation()
     {
-        $this->markTestSkipped('EmailAddressObserver::updated not implemented yet');
+        $user = User::factory()->create();
+
+        // Ensure the user has a primary email already
+        $primary = EmailAddress::factory()->create(['user_id' => $user->id]);
+        $user->primary_email_id = $primary->id;
+        $user->save();
+
+        // Another email address to pass to the observer
+        $other = EmailAddress::factory()->create(['user_id' => $user->id]);
+
+        // Snapshot current primary after any creation observers
+        $before = $user->fresh()->primary_email_id;
+
+        $observer = new EmailAddressObserver();
+        $observer->updated($other);
+
+        // updated() is currently a no-op; primary_email_id should remain unchanged
+        $this->assertEquals($before, $user->fresh()->primary_email_id);
     }
 
     public function testDeletedIsPendingImplementation()
     {
-        $this->markTestSkipped('EmailAddressObserver::deleted not implemented yet');
+        $user = User::factory()->create();
+
+        // Ensure the user has a primary email already
+        $primary = EmailAddress::factory()->create(['user_id' => $user->id]);
+        $user->primary_email_id = $primary->id;
+        $user->save();
+
+        $other = EmailAddress::factory()->create(['user_id' => $user->id]);
+
+        // Snapshot current primary after any creation observers
+        $before = $user->fresh()->primary_email_id;
+
+        $observer = new EmailAddressObserver();
+        $observer->deleted($other);
+
+        // deleted() is currently a no-op; primary_email_id should remain unchanged
+        $this->assertEquals($before, $user->fresh()->primary_email_id);
     }
 
     public function testRestoredIsPendingImplementation()
     {
-        $this->markTestSkipped('EmailAddressObserver::restored not implemented yet');
+        $user = User::factory()->create();
+
+        // Ensure the user has a primary email already
+        $primary = EmailAddress::factory()->create(['user_id' => $user->id]);
+        $user->primary_email_id = $primary->id;
+        $user->save();
+
+        $other = EmailAddress::factory()->create(['user_id' => $user->id]);
+
+        // Snapshot current primary after any creation observers
+        $before = $user->fresh()->primary_email_id;
+
+        $observer = new EmailAddressObserver();
+        $observer->restored($other);
+
+        // restored() is currently a no-op; primary_email_id should remain unchanged
+        $this->assertEquals($before, $user->fresh()->primary_email_id);
     }
 
     public function testForceDeletedIsPendingImplementation()
     {
-        $this->markTestSkipped('EmailAddressObserver::forceDeleted not implemented yet');
+        $user = User::factory()->create();
+
+        // Ensure the user has a primary email already
+        $primary = EmailAddress::factory()->create(['user_id' => $user->id]);
+        $user->primary_email_id = $primary->id;
+        $user->save();
+
+        $other = EmailAddress::factory()->create(['user_id' => $user->id]);
+
+        // Snapshot current primary after any creation observers
+        $before = $user->fresh()->primary_email_id;
+
+        $observer = new EmailAddressObserver();
+        $observer->forceDeleted($other);
+
+        // forceDeleted() is currently a no-op; primary_email_id should remain unchanged
+        $this->assertEquals($before, $user->fresh()->primary_email_id);
     }
 }
