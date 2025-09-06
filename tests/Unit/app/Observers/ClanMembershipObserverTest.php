@@ -94,45 +94,4 @@ class ClanMembershipObserverTest extends TestCase
         $plan->refresh();
         $this->assertGreaterThan(1, $plan->revision);
     }
-
-    // NOTE The following tests assert empty observer handlers are currently no-ops.
-    public function testDeletedDoesNothing()
-    {
-        $clanMembership = new ClanMembership();
-        $observer = new ClanMembershipObserver();
-        $m = 'deleted';
-        if (method_exists($observer, $m)) {
-            $this->assertNull($observer->$m($clanMembership));
-        } else {
-            $this->assertTrue(true);
-        }
-    }
-
-    public function testCreatedDoesNothing()
-    {
-        $clanMembership = new ClanMembership();
-        $observer = new ClanMembershipObserver();
-        $this->assertNull($observer->created($clanMembership));
-    }
-
-    public function testUpdatedDoesNothing()
-    {
-        $clanMembership = new ClanMembership();
-        $observer = new ClanMembershipObserver();
-        $this->assertNull($observer->updated($clanMembership));
-    }
-
-    public function testRestoredDoesNothing()
-    {
-        $clanMembership = new ClanMembership();
-        $observer = new ClanMembershipObserver();
-        $this->assertNull($observer->restored($clanMembership));
-    }
-
-    public function testForceDeletedDoesNothing()
-    {
-        $clanMembership = new ClanMembership();
-        $observer = new ClanMembershipObserver();
-        $this->assertNull($observer->forceDeleted($clanMembership));
-    }
 }

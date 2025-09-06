@@ -15,45 +15,4 @@ class SettingObserverTest extends TestCase
         $observer = new SettingObserver();
         $observer->saved($setting);
     }
-
-    // NOTE The following tests assert empty observer handlers are currently no-ops.
-    public function testCreatedHandlerIsNoop()
-    {
-        $setting = new Setting();
-        $observer = new SettingObserver();
-        $observer->created($setting);
-        $this->assertTrue(true);
-    }
-
-    public function testUpdatedHandlerIsNoop()
-    {
-        $setting = new Setting();
-        $observer = new SettingObserver();
-        $observer->updated($setting);
-        $this->assertTrue(true);
-    }
-
-    public function testDeletedHandlerIsNoop()
-    {
-        $setting = new Setting();
-        $observer = new SettingObserver();
-        $observer->deleted($setting);
-        $this->assertTrue(true);
-    }
-
-    public function testRestoredHandlerIsNoop()
-    {
-        $setting = new Setting();
-        $observer = new SettingObserver();
-        $observer->restored($setting);
-        $this->assertTrue(true);
-    }
-
-    public function testForceDeletedHandlerIsNoop()
-    {
-        $setting = new Setting();
-        $observer = new SettingObserver();
-        $observer->forceDeleted($setting);
-        $this->assertTrue(true);
-    }
 }

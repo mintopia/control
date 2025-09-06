@@ -2,6 +2,8 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
+use Database\Factories\UserFactory;
+use Illuminate\Auth\SessionGuard;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Http\Controllers\Admin\UserController;
@@ -220,13 +222,10 @@ class UserControllerTest extends TestCase
             return $original;
         });
 
-        // stub the auth guard so login() doesn't depend on framework session state
-        Auth::shouldReceive('guard')->with('web')->andReturn(new class {
-            public function login($u)
-            {
-                return true;
-            }
-        });
+        // Mock our session guard to return our user
+        $mockGuard = $this->mock(SessionGuard::class);
+        $mockGuard->shouldReceive('login')->andReturn($target);
+        Auth::shouldReceive('guard')->with('web')->andReturn($mockGuard);
 
         $controller = new UserController();
         try {
