@@ -121,4 +121,82 @@ class SeatingPlanTest extends TestCase
             $this->assertDatabaseHas('seats', ['ticket_id' => $ticket->id]);
         }
     }
+
+    public function testImportSkipsRowsWithEmptyLabel()
+    {
+        // Create a plan and ensure we start with revision 1
+        $plan = \Database\Factories\SeatingPlanFactory::new()->create(['revision' => 1]);
+
+        // CSV: ID,x,y,row,number,label,description,class,group,disabled
+        $csv = "ID,x,y,row,number,label,description,class,group,disabled\n";
+        // Row with empty label (index 5) should be skipped by import()
+        $csv .= ",10,20,A,1,,desc,VIP,0,0\n";
+
+        $plan->import($csv, true);
+
+        // No seats should have been created
+        $this->assertDatabaseCount('seats', 0);
+        $this->assertEquals(0, $plan->seats()->count());
+
+        // Observer increments during save; starting from 1 expect final revision 3
+        $plan->refresh();
+        $this->assertEquals(3, $plan->revision);
+    }
+
+    public function testImportWithNonNumericIdCreatesSeat()
+    {
+        // Create a plan and ensure we start with revision 1
+        $plan = \Database\Factories\SeatingPlanFactory::new()->create(['revision' => 1]);
+
+        // CSV: ID,x,y,row,number,label,description,class,group,disabled
+        $csv = "ID,x,y,row,number,label,description,class,group,disabled\n";
+        // Non-numeric ID 'abc' should be ignored by the numeric check and treated as a new seat
+        $csv .= "abc,15,25,B,1,SeatLabel,desc,VIP,0,0\n";
+
+        $plan->import($csv, true);
+
+        $this->assertDatabaseCount('seats', 1);
+        $this->assertEquals(1, $plan->seats()->count());
+
+        $plan->refresh();
+        // Observer increments during save; starting from 1 expect final revision 3
+        $this->assertEquals(3, $plan->revision);
+    }
+
+    public function testImportUpdatesExistingSeatWhenValidIdProvided()
+    {
+        // Create a plan and an existing seat under that plan
+        $plan = \Database\Factories\SeatingPlanFactory::new()->create(['revision' => 1]);
+        $seat = \Database\Factories\SeatFactory::new()->create([
+            'seating_plan_id' => $plan->id,
+            'label' => 'OLD_LABEL',
+            'x' => 1,
+            'y' => 1,
+            'row' => 'Z',
+            'number' => 99,
+        ]);
+
+        // CSV: ID,x,y,row,number,label,description,class,group,disabled
+        $csv = "ID,x,y,row,number,label,description,class,group,disabled\n";
+        // Use the existing seat ID in the CSV so import() should find and update it
+        $csv .= "{$seat->id},10,20,A,1,Front Updated,desc,VIP,0,0\n";
+
+        // Call import without wiping so existing seats remain available for lookup
+        $plan->import($csv);
+
+        // Refresh the seat and assert it was updated
+        $seat->refresh();
+        $this->assertEquals('Front Updated', $seat->label);
+        $this->assertEquals(10, $seat->x);
+        $this->assertEquals(20, $seat->y);
+        $this->assertEquals('A', $seat->row);
+        $this->assertEquals(1, $seat->number);
+
+        // No new seats should have been created
+        $this->assertDatabaseCount('seats', 1);
+
+        // Plan revision should have been incremented by the import call
+        $plan->refresh();
+        $this->assertGreaterThan(1, $plan->revision);
+    }
 }
