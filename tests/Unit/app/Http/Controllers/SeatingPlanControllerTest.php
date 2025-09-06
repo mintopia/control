@@ -38,6 +38,34 @@ class SeatingPlanControllerTest extends TestCase
         $this->assertTrue(is_object($response));
     }
 
+    public function testIndexShowsDraftsToAdminOrManager()
+    {
+        // Create two events, one draft and one not
+        $draftEvent = Event::factory()->create(['draft' => true, 'starts_at' => now()->addDays(2)]);
+        $publishedEvent = Event::factory()->create(['draft' => false, 'starts_at' => now()->addDay()]);
+
+        // Create a user mock that reports having admin/manager roles
+        $userMock = $this->createMock(User::class);
+        $userMock->method('hasAnyRole')->willReturn(true);
+
+        $request = new \Illuminate\Http\Request();
+        $request->setUserResolver(function () use ($userMock) {
+            return $userMock;
+        });
+        $request->setLaravelSession(app('session.store'));
+
+        $controller = new SeatingPlanController();
+        $view = $controller->index($request);
+
+        $this->assertTrue(is_object($view));
+        $data = $view->getData();
+        $this->assertArrayHasKey('events', $data);
+        $eventsPaginator = $data['events'];
+        $ids = array_map(fn($e) => $e->id, $eventsPaginator->items());
+        $this->assertContains($draftEvent->id, $ids);
+        $this->assertContains($publishedEvent->id, $ids);
+    }
+
     public function testShowReturnsView()
     {
         $user = User::factory()->create();

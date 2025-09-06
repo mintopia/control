@@ -211,4 +211,104 @@ class TicketProviderTest extends TestCase
         $req = \Illuminate\Http\Request::create('/webhook', 'POST');
         $this->assertTrue($provider->processWebhook($req));
     }
+
+    public function testGetEventsDelegatesAndMarksUsed()
+    {
+        $provider = TicketProvider::factory()->create(['enabled' => 1]);
+
+        // Create an event mapping so the provider reports it as used
+        $event = \App\Models\Event::factory()->create();
+        \Database\Factories\EventMappingFactory::new()->create([
+            'ticket_provider_id' => $provider->id,
+            'event_id' => $event->id,
+            'external_id' => 'external_e1',
+        ]);
+
+        // Bind an implementation that returns an associative mapping of events
+        $impl = new class implements \App\Services\Contracts\TicketProviderContract {
+            public function __construct(?\App\Models\TicketProvider $provider = null) {}
+            public function configMapping(): array
+            {
+                return [];
+            }
+            public function install(): \App\Models\TicketProvider
+            {
+                return new \App\Models\TicketProvider();
+            }
+            public function processWebhook(\Illuminate\Http\Request $request): bool
+            {
+                return false;
+            }
+            public function syncTickets(string|\App\Models\EmailAddress $email): void {}
+            public function getEvents(): array
+            {
+                return ['external_e1' => 'Event One', 'external_e2' => 'Event Two'];
+            }
+            public function getTicketTypes(string $eventExternalId): array
+            {
+                return [];
+            }
+            public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
+        };
+
+        app()->instance(get_class($impl), $impl);
+        $provider->provider_class = get_class($impl);
+        $provider->save();
+
+        $result = $provider->getEvents();
+        $this->assertIsArray($result);
+        $this->assertNotEmpty($result);
+        // find the entry for external_e1
+        $found = array_filter($result, fn($r) => $r->id === 'external_e1');
+        $this->assertNotEmpty($found);
+        $entry = array_values($found)[0];
+        $this->assertTrue($entry->used);
+        $this->assertNotEmpty($entry->used_by);
+    }
+
+    public function testGetTicketTypesReturnsEmptyWhenProviderReturnsFalsy()
+    {
+        $provider = TicketProvider::factory()->create(['enabled' => 1]);
+
+        $event = \App\Models\Event::factory()->create();
+        \Database\Factories\EventMappingFactory::new()->create([
+            'ticket_provider_id' => $provider->id,
+            'event_id' => $event->id,
+            'external_id' => 'ext_empty',
+        ]);
+
+        $impl = new class implements \App\Services\Contracts\TicketProviderContract {
+            public function __construct(?\App\Models\TicketProvider $provider = null) {}
+            public function configMapping(): array
+            {
+                return [];
+            }
+            public function install(): \App\Models\TicketProvider
+            {
+                return new \App\Models\TicketProvider();
+            }
+            public function processWebhook(\Illuminate\Http\Request $request): bool
+            {
+                return false;
+            }
+            public function syncTickets(string|\App\Models\EmailAddress $email): void {}
+            public function getEvents(): array
+            {
+                return [];
+            }
+            public function getTicketTypes(string $eventExternalId): array
+            {
+                return [];
+            }
+            public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
+        };
+
+        app()->instance(get_class($impl), $impl);
+        $provider->provider_class = get_class($impl);
+        $provider->save();
+
+        $result = $provider->getTicketTypes($event);
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
 }

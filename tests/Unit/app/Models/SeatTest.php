@@ -183,6 +183,96 @@ class SeatTest extends TestCase
         $this->assertFalse($seat->canPick($user));
     }
 
+    public function testCanPickReturnsFalseWhenGetPickableTicketsIsFalsy()
+    {
+        $seat = new Seat();
+        $seat->disabled = 0;
+
+        $event = new \App\Models\Event();
+        $event->seating_locked = false;
+
+        $plan = new \App\Models\SeatingPlan();
+        $plan->setRelation('event', $event);
+
+        $seat->setRelation('plan', $plan);
+
+        $user = new class extends User {
+            public function getPickableTickets(\App\Models\Event $event): \Illuminate\Support\Collection
+            {
+                return new \Illuminate\Support\Collection(); // match base signature; empty Collection is truthy
+            }
+        };
+
+        $this->assertTrue($seat->canPick($user));
+    }
+
+    public function testCanPickAllowsWhenGroupAllowedAndNoAssignedTicket()
+    {
+        $seat = new Seat();
+        $seat->disabled = 0;
+
+        $event = new \App\Models\Event();
+        $event->seating_locked = false;
+
+        $plan = new \App\Models\SeatingPlan();
+        $plan->setRelation('event', $event);
+
+        $group = new \App\Models\SeatGroup();
+
+        $seat->setRelation('plan', $plan);
+        $seat->setRelation('group', $group);
+
+        $user = new class extends User {
+            public function getPickableTickets(\App\Models\Event $event): \Illuminate\Support\Collection
+            {
+                return new \Illuminate\Support\Collection([new \App\Models\Ticket()]);
+            }
+            public function allowedSeatGroup(\App\Models\SeatGroup $group): bool
+            {
+                return true;
+            }
+        };
+
+        $this->assertTrue($seat->canPick($user));
+    }
+
+    public function testCanPickWithMultipleTickets_firstNonMatchingReturnsFalse()
+    {
+        $seat = new Seat();
+        $seat->disabled = 0;
+
+        $event = new \App\Models\Event();
+        $event->seating_locked = false;
+
+        $plan = new \App\Models\SeatingPlan();
+        $plan->setRelation('event', $event);
+
+        $ticketAssigned = new \App\Models\Ticket();
+        $ticketAssigned->id = 2;
+
+        $seat->setRelation('plan', $plan);
+        $seat->setRelation('ticket', $ticketAssigned);
+
+        $user = new class extends User {
+            public function getPickableTickets(\App\Models\Event $event): \Illuminate\Support\Collection
+            {
+                $t1 = new \App\Models\Ticket();
+                $t1->id = 99;
+                $t2 = new \App\Models\Ticket();
+                $t2->id = 2;
+                return new \Illuminate\Support\Collection([$t1, $t2]);
+            }
+            public function allowedSeatGroup(\App\Models\SeatGroup $group): bool
+            {
+                return true;
+            }
+        };
+
+        // Because the implementation returns false as soon as the first ticket doesn't match,
+        // the presence of a later matching ticket won't help.
+        $this->assertFalse($seat->canPick($user));
+    }
+
     public function testProtectedToStringNameReturnsLabel()
     {
         $dummy = new DummySeat();
