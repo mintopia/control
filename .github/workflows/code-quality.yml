@@ -24,14 +24,12 @@ jobs:
       matrix:
         operating-system: ['ubuntu-latest', 'macos-latest']
         # Run on current stable and next RC if available
-        php-versions: []
+        php-versions: [8.4]
         pre-release: [false]
         stable: [false]
         include:
           - php-versions: 8.5
             pre-release: true
-          - php-versions: 8.4
-            stable: true
     steps:
       - name: Force linux line endings
         run: |
@@ -86,7 +84,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         # We only care about PHP 8.4 (latest stable) for our code coverage report
-        if: matrix.stable == true
+        if: matrix.php-versions == 8.4
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
