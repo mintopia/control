@@ -38,7 +38,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-versions }}
-          extensions: mbstring, json
+          extensions: mbstring, json, grpc
           ini-values: post_max_size=512M, max_execution_time=180
           coverage: xdebug
           tools: phpcs, phpstan, phpunit
