@@ -66,10 +66,7 @@ jobs:
         run: phpcs
 
       - name: Run tests and collect coverage
-        run: |
-          touch .env
-          php artisan key:generate
-          vendor/bin/phpunit --coverage-clover coverage.xml
+        run: vendor/bin/phpunit --coverage-clover coverage.xml
 
       - name: Upload coverage to Codecov
         # We only care about PHP 8.4 (latest stable) for our code coverage report
@@ -77,6 +74,7 @@ jobs:
         uses: codecov/codecov-action@v5
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
+
   build-and-push-docker:
     runs-on: ubuntu-latest
     needs: code-quality
