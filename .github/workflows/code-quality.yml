@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        operating-system: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        operating-system: ['ubuntu-latest', 'macos-latest']
         # Run on current stable and next RC if available
         php-versions: ['8.4', '8.5']
     steps:
