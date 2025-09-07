@@ -17,7 +17,7 @@ on:
       - '**.md'
       - 'docs/**'
 jobs:
-  run:
+  code-quality:
     runs-on: ${{ matrix.operating-system }}
     strategy:
       fail-fast: true
@@ -57,7 +57,7 @@ jobs:
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+          restore-keys: ${{ runner.os }}-composer-${{ matrix.php-versions }}
 
       - name: Install dependencies
         run: composer install --prefer-dist --dev
@@ -72,14 +72,17 @@ jobs:
         uses: codecov/codecov-action@v5
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
-
+  build-and-push-docker:
+    runs-on: ubuntu-latest
+    needs: code-quality
+    # Only build docker images on pushes to master, develop and tags
+    if:
+      (
+        startsWith(github.ref, 'refs/tags') ||
+        github.ref == format('refs/heads/{0}', 'master') ||
+        github.ref == format('refs/heads/{0}', 'develop')
+      ) &&
+      github.event_name != 'pull_request'
+    steps:
       - name: Build and Push Docker Image
-        # Only build docker images on pushes to master, develop and tags
-        if:
-          (
-            startsWith(github.ref, 'refs/tags') ||
-            github.ref == format('refs/heads/{0}', 'master') ||
-            github.ref == format('refs/heads/{0}', 'develop')
-          ) &&
-          github.event_name != 'pull_request'
         uses: ./.github/workflows/build-and-push-docker.yml
