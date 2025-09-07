@@ -24,9 +24,8 @@ jobs:
       matrix:
         operating-system: ['ubuntu-latest', 'macos-latest']
         # Run on current stable and next RC if available
-        php-versions: [8.4]
+        php-versions: ['8.4']
         pre-release: [false]
-        stable: [false]
         include:
           - php-versions: 8.5
             pre-release: true
