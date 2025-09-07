@@ -18,18 +18,7 @@ on:
       - 'docs/**'
 jobs:
   code-quality:
-    runs-on: ${{ matrix.operating-system }}
-    strategy:
-      fail-fast: true
-      matrix:
-        operating-system: ['ubuntu-latest', 'macos-latest']
-        # Run on current stable and next RC if available
-        php-versions: [8.4]
-        pre-release: [false]
-        stable: [false]
-        include:
-          - php-versions: 8.5
-            pre-release: true
+    runs-on: ubuntu-latest
     steps:
       - name: Force linux line endings
         run: |
@@ -41,7 +30,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-versions }}
+          php-version: 8.4
           extensions: mbstring, json, grpc, opentelemetry
           ini-values: post_max_size=512M, max_execution_time=180
           coverage: xdebug
@@ -65,11 +54,6 @@ jobs:
 
       - name: Install dependencies
         run: composer install --prefer-dist --dev
-        if: matrix.pre-release == false
-
-      - name: Update dependencies (PHP 8.5 RC)
-        run: composer update --dev
-        if: matrix.pre-release == true
 
       - name: Build Vite manifest
         run: |
@@ -83,8 +67,6 @@ jobs:
         run: vendor/bin/phpunit --coverage-clover coverage.xml
 
       - name: Upload coverage to Codecov
-        # We only care about PHP 8.4 (latest stable) for our code coverage report
-        if: matrix.php-versions == 8.4
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
