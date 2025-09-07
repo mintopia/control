@@ -22,10 +22,9 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        # operating-system: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        # php-versions: ['8.1', '8.2', '8.3', '8.4', '8.5']
-        operating-system: ['ubuntu-latest']
-        php-versions: ['8.4']
+        operating-system: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        # All supported versions of PHP and next stable when it's in RC
+        php-versions: ['8.1', '8.2', '8.3', '8.4', '8.5']
     steps:
       - name: Force linux line endings
         run: |
@@ -81,8 +80,9 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
 
   build-and-push-docker:
-    runs-on: ubuntu-latest
     needs: code-quality
+    uses: ./.github/workflows/build-and-push-docker.yml
+    secrets: inherit
     # Only build docker images on pushes to master, develop and tags
     if:
       (
@@ -91,6 +91,4 @@ jobs:
         github.ref == format('refs/heads/{0}', 'develop')
       ) &&
       github.event_name != 'pull_request'
-    steps:
-      - name: Build and Push Docker Image
-        uses: ./.github/workflows/build-and-push-docker.yml
+
