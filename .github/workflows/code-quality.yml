@@ -24,6 +24,7 @@ jobs:
       matrix:
         operating-system: ['ubuntu-latest', 'macos-latest']
         # Run on current stable and next RC if available
+        php-versions: []
         pre-release: [false]
         stable: [false]
         include:
