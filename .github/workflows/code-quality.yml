@@ -9,13 +9,13 @@ on:
       - '**.md'
       - 'docs/**'
   push:
-    branches:
-      - master
-      - develop
-      - feature/github-action
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
+#    branches:
+#      - master
+#      - develop
+#      - feature/github-action
+#    paths-ignore:
+#      - '**.md'
+#      - 'docs/**'
 jobs:
   run:
     runs-on: ${{ matrix.operating-system }}
