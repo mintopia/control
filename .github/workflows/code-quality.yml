@@ -41,7 +41,7 @@ jobs:
           extensions: mbstring, json, grpc, opentelemetry
           ini-values: post_max_size=512M, max_execution_time=180
           coverage: xdebug
-          tools: phpcs, phpstan, phpunit
+          tools: phpcs, phpstan, phpunit, npm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -61,6 +61,11 @@ jobs:
 
       - name: Install dependencies
         run: composer install --prefer-dist --dev
+
+      - name: Build Vite manifest
+        run: |
+          npm install
+          npm run build
 
       - name: Run PHP Codesniffer
         run: phpcs
