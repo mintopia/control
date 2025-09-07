@@ -2,13 +2,14 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Http\Controllers\Admin\ThemeController;
-use App\Models\Theme;
 use App\Http\Requests\Admin\ThemeUpdateRequest;
+use App\Models\Theme;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Exceptions\UrlGenerationException;
-
+use ReflectionClass;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Tests\TestCase;
 
 class ThemeControllerTest extends TestCase
 {
@@ -55,7 +56,7 @@ class ThemeControllerTest extends TestCase
 
         // ensure overrides (active/dark_mode) replace the base payload values
         $req2 = ThemeUpdateRequest::create('/', 'POST', array_merge($themePayload, ['name' => 'Changed', 'css' => '.b{}', 'active' => 0, 'dark_mode' => 0]));
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $theme, $req2);
@@ -98,7 +99,7 @@ class ThemeControllerTest extends TestCase
         $theme = Theme::factory()->create(['readonly' => true]);
         $controller = new ThemeController();
         // delete() should abort for readonly
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
         $controller->delete($theme);
     }
 
@@ -117,7 +118,7 @@ class ThemeControllerTest extends TestCase
     {
         $theme = Theme::factory()->create(['readonly' => true]);
         $controller = new ThemeController();
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
         $controller->destroy($theme);
     }
 }

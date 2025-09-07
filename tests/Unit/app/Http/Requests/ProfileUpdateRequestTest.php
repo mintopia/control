@@ -2,8 +2,11 @@
 
 namespace Tests\Unit\app\Http\Requests;
 
-use Tests\TestCase;
 use App\Http\Requests\ProfileUpdateRequest;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Unique;
+use ReflectionClass;
+use Tests\TestCase;
 
 class ProfileUpdateRequestTest extends TestCase
 {
@@ -44,14 +47,14 @@ class ProfileUpdateRequestTest extends TestCase
         $nicknameRules = $rules['nickname'];
         $uniqueRule = null;
         foreach ($nicknameRules as $rule) {
-            if ($rule instanceof \Illuminate\Validation\Rules\Unique || $rule instanceof \Illuminate\Validation\Rule) {
+            if ($rule instanceof Unique || $rule instanceof Rule) {
                 $uniqueRule = $rule;
                 break;
             }
         }
         $this->assertNotNull($uniqueRule, 'Unique rule not found in nickname rules');
         // The ignore value is protected, so we use reflection
-        $reflection = new \ReflectionClass($uniqueRule);
+        $reflection = new ReflectionClass($uniqueRule);
         $property = $reflection->getProperty('ignore');
         $property->setAccessible(true);
         $this->assertEquals(99, $property->getValue($uniqueRule));

@@ -3,25 +3,19 @@
 namespace Tests\Unit\app\Http\Requests\Admin;
 
 use Tests\TestCase;
-use App\Http\Requests\Admin\SocialProviderUpdateRequest;
-
-class SocialProviderUpdateRequestStub extends SocialProviderUpdateRequest
-{
-    public $provider;
-}
 
 class SocialProviderUpdateRequestTest extends TestCase
 {
     public function testAuthorizeReturnsTrue()
     {
-        $request = new SocialProviderUpdateRequestStub();
+        $request = new HelperClasses\SocialProviderUpdateRequestStub();
         $request->provider = (object)['can_be_renamed' => false, 'settings' => []];
         $this->assertTrue($request->authorize());
     }
 
     public function testRulesIsArray()
     {
-        $request = new SocialProviderUpdateRequestStub();
+        $request = new HelperClasses\SocialProviderUpdateRequestStub();
         $request->provider = (object)['can_be_renamed' => false, 'settings' => []];
         $rules = $request->rules();
         $this->assertIsArray($rules);
@@ -29,7 +23,7 @@ class SocialProviderUpdateRequestTest extends TestCase
 
     public function testRulesIncludeEnabledAndAuthEnabled()
     {
-        $request = new SocialProviderUpdateRequestStub();
+        $request = new HelperClasses\SocialProviderUpdateRequestStub();
         $request->provider = (object)['can_be_renamed' => false, 'settings' => []];
         $rules = $request->rules();
         $this->assertArrayHasKey('enabled', $rules);
@@ -40,7 +34,7 @@ class SocialProviderUpdateRequestTest extends TestCase
 
     public function testRulesIncludeNameIfCanBeRenamed()
     {
-        $request = new SocialProviderUpdateRequestStub();
+        $request = new HelperClasses\SocialProviderUpdateRequestStub();
         $request->provider = (object)['can_be_renamed' => true, 'settings' => []];
         $rules = $request->rules();
         $this->assertArrayHasKey('name', $rules);
@@ -52,7 +46,7 @@ class SocialProviderUpdateRequestTest extends TestCase
     {
         $mockSetting1 = (object)['code' => 'client_id', 'validation' => 'required|string'];
         $mockSetting2 = (object)['code' => 'client_secret', 'validation' => 'required|string|min:10'];
-        $request = new SocialProviderUpdateRequestStub();
+        $request = new HelperClasses\SocialProviderUpdateRequestStub();
         $request->provider = (object)[
             'can_be_renamed' => false,
             'settings' => [$mockSetting1, $mockSetting2]

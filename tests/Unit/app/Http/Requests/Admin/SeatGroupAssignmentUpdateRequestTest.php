@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\app\Http\Requests\Admin;
 
-use Tests\TestCase;
 use App\Http\Requests\Admin\SeatGroupAssignmentUpdateRequest;
+use Tests\TestCase;
 
 class SeatGroupAssignmentUpdateRequestTest extends TestCase
 {

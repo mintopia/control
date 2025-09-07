@@ -2,14 +2,15 @@
 
 namespace Tests\Unit\app\Observers;
 
-use Tests\TestCase;
-use App\Observers\ThemeObserver;
 use App\Models\Theme;
+use App\Observers\ThemeObserver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ThemeObserverTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testSavingSetsCodeFromName()
     {
         $theme = new Theme(['name' => 'Test Theme']);

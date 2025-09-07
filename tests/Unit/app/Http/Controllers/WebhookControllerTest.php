@@ -2,10 +2,11 @@
 
 namespace Tests\Unit\app\Http\Controllers;
 
-use Tests\TestCase;
 use App\Http\Controllers\WebhookController;
-use Illuminate\Http\Request;
 use App\Models\TicketProvider;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Tests\TestCase;
 
 class WebhookControllerTest extends TestCase
 {
@@ -21,7 +22,7 @@ class WebhookControllerTest extends TestCase
 
         // Create a lightweight provider object with a processWebhook method
         $ticketProvider = new class extends TicketProvider {
-            public function processWebhook(\Illuminate\Http\Request $request): bool
+            public function processWebhook(Request $request): bool
             {
                 return true;
             }
@@ -38,7 +39,7 @@ class WebhookControllerTest extends TestCase
         $request = Request::create('/webhook', 'POST');
 
         $ticketProvider = new class extends TicketProvider {
-            public function processWebhook(\Illuminate\Http\Request $request): bool
+            public function processWebhook(Request $request): bool
             {
                 return false;
             }
@@ -49,7 +50,7 @@ class WebhookControllerTest extends TestCase
         try {
             $controller->tickets($request, $ticketProvider);
             $this->fail('Expected HttpException to be thrown');
-        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+        } catch (HttpException $e) {
             $this->assertEquals(400, $e->getStatusCode());
         }
     }

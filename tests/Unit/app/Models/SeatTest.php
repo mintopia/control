@@ -2,18 +2,15 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
+use App\Models\Event;
 use App\Models\Seat;
+use App\Models\SeatGroup;
+use App\Models\SeatingPlan;
+use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-class DummySeat extends Seat
-{
-    public function toStringNamePublic(): string
-    {
-        return $this->toStringName();
-    }
-}
+use Illuminate\Support\Collection;
+use Tests\TestCase;
 
 class SeatTest extends TestCase
 {
@@ -61,18 +58,18 @@ class SeatTest extends TestCase
         $seat = new Seat();
         $seat->disabled = 0;
 
-        $event = new \App\Models\Event();
+        $event = new Event();
         $event->seating_locked = false;
 
-        $plan = new \App\Models\SeatingPlan();
+        $plan = new SeatingPlan();
         $plan->setRelation('event', $event);
 
         $seat->setRelation('plan', $plan);
 
         $user = new class extends User {
-            public function getPickableTickets(\App\Models\Event $event): \Illuminate\Support\Collection
+            public function getPickableTickets(Event $event): Collection
             {
-                return new \Illuminate\Support\Collection();
+                return new Collection();
             }
         };
 
@@ -84,28 +81,29 @@ class SeatTest extends TestCase
         $seat = new Seat();
         $seat->disabled = 0;
 
-        $event = new \App\Models\Event();
+        $event = new Event();
         $event->seating_locked = false;
 
-        $plan = new \App\Models\SeatingPlan();
+        $plan = new SeatingPlan();
         $plan->setRelation('event', $event);
 
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
 
         $seat->setRelation('plan', $plan);
         $seat->setRelation('group', $group);
 
-        $ticket = new \App\Models\Ticket();
+        $ticket = new Ticket();
         $ticket->id = 1;
 
         $user = new class extends User {
-            public function getPickableTickets(\App\Models\Event $event): \Illuminate\Support\Collection
+            public function getPickableTickets(Event $event): Collection
             {
-                $t = new \App\Models\Ticket();
+                $t = new Ticket();
                 $t->id = 1;
-                return new \Illuminate\Support\Collection([$t]);
+                return new Collection([$t]);
             }
-            public function allowedSeatGroup(\App\Models\SeatGroup $group): bool
+
+            public function allowedSeatGroup(SeatGroup $group): bool
             {
                 return false;
             }
@@ -119,26 +117,27 @@ class SeatTest extends TestCase
         $seat = new Seat();
         $seat->disabled = 0;
 
-        $event = new \App\Models\Event();
+        $event = new Event();
         $event->seating_locked = false;
 
-        $plan = new \App\Models\SeatingPlan();
+        $plan = new SeatingPlan();
         $plan->setRelation('event', $event);
 
-        $ticket = new \App\Models\Ticket();
+        $ticket = new Ticket();
         $ticket->id = 2;
 
         $seat->setRelation('plan', $plan);
         $seat->setRelation('ticket', $ticket);
 
         $user = new class extends User {
-            public function getPickableTickets(\App\Models\Event $event): \Illuminate\Support\Collection
+            public function getPickableTickets(Event $event): Collection
             {
-                $t = new \App\Models\Ticket();
+                $t = new Ticket();
                 $t->id = 2;
-                return new \Illuminate\Support\Collection([$t]);
+                return new Collection([$t]);
             }
-            public function allowedSeatGroup(\App\Models\SeatGroup $group): bool
+
+            public function allowedSeatGroup(SeatGroup $group): bool
             {
                 return true;
             }
@@ -152,26 +151,27 @@ class SeatTest extends TestCase
         $seat = new Seat();
         $seat->disabled = 0;
 
-        $event = new \App\Models\Event();
+        $event = new Event();
         $event->seating_locked = false;
 
-        $plan = new \App\Models\SeatingPlan();
+        $plan = new SeatingPlan();
         $plan->setRelation('event', $event);
 
-        $ticket = new \App\Models\Ticket();
+        $ticket = new Ticket();
         $ticket->id = 2;
 
         $seat->setRelation('plan', $plan);
         $seat->setRelation('ticket', $ticket);
 
         $user = new class extends User {
-            public function getPickableTickets(\App\Models\Event $event): \Illuminate\Support\Collection
+            public function getPickableTickets(Event $event): Collection
             {
-                $t = new \App\Models\Ticket();
+                $t = new Ticket();
                 $t->id = 99;
-                return new \Illuminate\Support\Collection([$t]);
+                return new Collection([$t]);
             }
-            public function allowedSeatGroup(\App\Models\SeatGroup $group): bool
+
+            public function allowedSeatGroup(SeatGroup $group): bool
             {
                 return true;
             }
@@ -185,23 +185,24 @@ class SeatTest extends TestCase
         $seat = new Seat();
         $seat->disabled = 0;
 
-        $event = new \App\Models\Event();
+        $event = new Event();
         $event->seating_locked = false;
 
-        $plan = new \App\Models\SeatingPlan();
+        $plan = new SeatingPlan();
         $plan->setRelation('event', $event);
 
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
 
         $seat->setRelation('plan', $plan);
         $seat->setRelation('group', $group);
 
         $user = new class extends User {
-            public function getPickableTickets(\App\Models\Event $event): \Illuminate\Support\Collection
+            public function getPickableTickets(Event $event): Collection
             {
-                return new \Illuminate\Support\Collection([new \App\Models\Ticket()]);
+                return new Collection([new Ticket()]);
             }
-            public function allowedSeatGroup(\App\Models\SeatGroup $group): bool
+
+            public function allowedSeatGroup(SeatGroup $group): bool
             {
                 return true;
             }
@@ -215,28 +216,29 @@ class SeatTest extends TestCase
         $seat = new Seat();
         $seat->disabled = 0;
 
-        $event = new \App\Models\Event();
+        $event = new Event();
         $event->seating_locked = false;
 
-        $plan = new \App\Models\SeatingPlan();
+        $plan = new SeatingPlan();
         $plan->setRelation('event', $event);
 
-        $ticketAssigned = new \App\Models\Ticket();
+        $ticketAssigned = new Ticket();
         $ticketAssigned->id = 2;
 
         $seat->setRelation('plan', $plan);
         $seat->setRelation('ticket', $ticketAssigned);
 
         $user = new class extends User {
-            public function getPickableTickets(\App\Models\Event $event): \Illuminate\Support\Collection
+            public function getPickableTickets(Event $event): Collection
             {
-                $t1 = new \App\Models\Ticket();
+                $t1 = new Ticket();
                 $t1->id = 99;
-                $t2 = new \App\Models\Ticket();
+                $t2 = new Ticket();
                 $t2->id = 2;
-                return new \Illuminate\Support\Collection([$t1, $t2]);
+                return new Collection([$t1, $t2]);
             }
-            public function allowedSeatGroup(\App\Models\SeatGroup $group): bool
+
+            public function allowedSeatGroup(SeatGroup $group): bool
             {
                 return true;
             }
@@ -249,7 +251,7 @@ class SeatTest extends TestCase
 
     public function testProtectedToStringNameReturnsLabel()
     {
-        $dummy = new DummySeat();
+        $dummy = new HelperClasses\DummySeat();
         $dummy->label = 'A1';
         $this->assertEquals('A1', $dummy->toStringNamePublic());
     }

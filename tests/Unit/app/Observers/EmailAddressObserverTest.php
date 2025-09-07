@@ -2,11 +2,11 @@
 
 namespace Tests\Unit\app\Observers;
 
-use Tests\TestCase;
-use App\Observers\EmailAddressObserver;
 use App\Models\EmailAddress;
 use App\Models\User;
+use App\Observers\EmailAddressObserver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class EmailAddressObserverTest extends TestCase
 {

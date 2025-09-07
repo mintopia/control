@@ -2,18 +2,23 @@
 
 namespace Tests\Unit\app\Services\TicketProviders;
 
-use App\Models\User;
+use App\Models\Event;
+use App\Models\EventMapping;
 use App\Models\Ticket;
+use App\Models\TicketProvider;
+use App\Models\TicketType;
+use App\Models\TicketTypeMapping;
+use App\Models\User;
+use App\Services\TicketProviders\TicketTailorProvider;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
-use App\Services\TicketProviders\TicketTailorProvider;
 
 /**
  * Test helper exposing protected methods of TicketTailorProvider as public wrappers.
  */
 class DummyTicketTailorProvider extends TicketTailorProvider
 {
-    public function __construct(?\App\Models\TicketProvider $provider = null)
+    public function __construct(?TicketProvider $provider = null)
     {
         parent::__construct($provider);
     }
@@ -50,8 +55,8 @@ class DummyTicketTailorProvider extends TicketTailorProvider
         if ($event) {
             return $event;
         }
-        $event = \App\Models\Event::factory()->create();
-        $em = new \App\Models\EventMapping();
+        $event = Event::factory()->create();
+        $em = new EventMapping();
         $em->provider()->associate($this->provider);
         $em->event()->associate($event);
         $em->external_id = $externalId;
@@ -65,9 +70,9 @@ class DummyTicketTailorProvider extends TicketTailorProvider
         if ($type) {
             return $type;
         }
-        $event = \App\Models\Event::factory()->create();
-        $type = \App\Models\TicketType::factory()->for($event)->create();
-        $tm = new \App\Models\TicketTypeMapping();
+        $event = Event::factory()->create();
+        $type = TicketType::factory()->for($event)->create();
+        $tm = new TicketTypeMapping();
         $tm->provider()->associate($this->provider);
         $tm->type()->associate($type);
         $tm->external_id = $externalId;
@@ -116,12 +121,12 @@ class DummyTicketTailorProvider extends TicketTailorProvider
         }
 
         // Create or find an Event
-        $event = \App\Models\Event::whereHas('mappings', function ($q) use ($data) {
+        $event = Event::whereHas('mappings', function ($q) use ($data) {
             $q->whereTicketProviderId($this->provider->id)->whereExternalId($data->event_id);
         })->first();
         if (!$event) {
-            $event = \App\Models\Event::factory()->create();
-            $em = new \App\Models\EventMapping();
+            $event = Event::factory()->create();
+            $em = new EventMapping();
             $em->provider()->associate($this->provider);
             $em->event()->associate($event);
             $em->external_id = $data->event_id;
@@ -129,12 +134,12 @@ class DummyTicketTailorProvider extends TicketTailorProvider
         }
 
         // Create or find TicketType mapping
-        $type = \App\Models\TicketType::whereHas('mappings', function ($q) use ($data) {
+        $type = TicketType::whereHas('mappings', function ($q) use ($data) {
             $q->whereTicketProviderId($this->provider->id)->whereExternalId($data->ticket_type_id);
         })->first();
         if (!$type) {
-            $type = \App\Models\TicketType::factory()->for($event)->create();
-            $tm = new \App\Models\TicketTypeMapping();
+            $type = TicketType::factory()->for($event)->create();
+            $tm = new TicketTypeMapping();
             $tm->provider()->associate($this->provider);
             $tm->type()->associate($type);
             $tm->external_id = $data->ticket_type_id;

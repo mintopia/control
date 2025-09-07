@@ -3,25 +3,26 @@
 namespace Tests\Unit\app\Providers;
 
 use App\Models\User;
+use App\Providers\AuthServiceProvider;
+use Closure;
 use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
-use Mockery;
 
 class AuthServiceProviderTest extends TestCase
 {
     public function testGatesAreDefined()
     {
-        Gate::shouldReceive('define')->with('admin', \Closure::class)->once();
-        Gate::shouldReceive('define')->with('viewPulse', \Closure::class)->once();
-        Gate::shouldReceive('define')->with('manager', \Closure::class)->once();
-        Gate::shouldReceive('define')->with('anyPrivilegedRole', \Closure::class)->once();
-        $provider = new \app\Providers\AuthServiceProvider(app());
+        Gate::shouldReceive('define')->with('admin', Closure::class)->once();
+        Gate::shouldReceive('define')->with('viewPulse', Closure::class)->once();
+        Gate::shouldReceive('define')->with('manager', Closure::class)->once();
+        Gate::shouldReceive('define')->with('anyPrivilegedRole', Closure::class)->once();
+        $provider = new AuthServiceProvider(app());
         $provider->boot();
     }
 
     public function testAdminGateLogic()
     {
-        $provider = new \App\Providers\AuthServiceProvider(app());
+        $provider = new AuthServiceProvider(app());
         $provider->boot();
 
         $user = $this->getMockBuilder(User::class)
@@ -39,7 +40,7 @@ class AuthServiceProviderTest extends TestCase
 
     public function testManagerGateLogic()
     {
-        $provider = new \App\Providers\AuthServiceProvider(app());
+        $provider = new AuthServiceProvider(app());
         $provider->boot();
 
         $user = $this->getMockBuilder(User::class)
@@ -57,7 +58,7 @@ class AuthServiceProviderTest extends TestCase
 
     public function testAnyPrivilegedRoleGateLogic()
     {
-        $provider = new \App\Providers\AuthServiceProvider(app());
+        $provider = new AuthServiceProvider(app());
         $provider->boot();
 
         // manager true, admin false
@@ -91,7 +92,7 @@ class AuthServiceProviderTest extends TestCase
 
     public function testViewPulseGateLogic()
     {
-        $provider = new \App\Providers\AuthServiceProvider(app());
+        $provider = new AuthServiceProvider(app());
         $provider->boot();
 
         $user = $this->getMockBuilder(User::class)

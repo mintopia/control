@@ -1,23 +1,12 @@
 <?php
 
-namespace Tests\Feature\app\Services\SocialProviders;
+namespace Tests\Feature\app\Services;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Services\SocialProviders\AbstractSocialProvider;
-use App\Models\SocialProvider;
 use App\Models\ProviderSetting;
-
-class InstallDummyProvider extends AbstractSocialProvider
-{
-    protected string $name = 'Install Dummy';
-    // Use a fixed, simple code to avoid namespace/escape mismatches in tests
-    protected string $code = 'install_dummy_test_fixed';
-    protected string $socialiteProviderCode = 'install_dummy_code';
-
-    // No-op
-    protected function updateAccount(\App\Models\LinkedAccount $account, $remoteUser): void {}
-}
+use App\Models\SocialProvider;
+use Tests\Feature\app\Services\HelperClasses\InstallDummyProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class AbstractSocialProviderInstallTest extends TestCase
 {

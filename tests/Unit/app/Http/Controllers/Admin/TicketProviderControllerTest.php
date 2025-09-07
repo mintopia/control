@@ -2,14 +2,14 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Http\Controllers\Admin\TicketProviderController;
-use App\Models\TicketProvider;
-use App\Models\ProviderSetting;
-use Illuminate\Http\RedirectResponse;
-
 use App\Enums\SettingType;
+use App\Http\Controllers\Admin\TicketProviderController;
+use App\Http\Requests\Admin\TicketProviderUpdateRequest;
+use App\Models\ProviderSetting;
+use App\Models\TicketProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\RedirectResponse;
+use Tests\TestCase;
 
 class TicketProviderControllerTest extends TestCase
 {
@@ -43,7 +43,7 @@ class TicketProviderControllerTest extends TestCase
     {
         $prov = TicketProvider::factory()->create(['name' => 'P1']);
         $controller = new TicketProviderController();
-        $req = \App\Http\Requests\Admin\TicketProviderUpdateRequest::create('/', 'POST', ['enabled' => 0]);
+        $req = TicketProviderUpdateRequest::create('/', 'POST', ['enabled' => 0]);
         $resp = $controller->update($req, $prov);
         $this->assertInstanceOf(RedirectResponse::class, $resp);
     }
@@ -61,7 +61,7 @@ class TicketProviderControllerTest extends TestCase
         $s1->save();
 
         $controller = new TicketProviderController();
-        $req = \App\Http\Requests\Admin\TicketProviderUpdateRequest::create('/', 'POST', ['opt1' => 0]);
+        $req = TicketProviderUpdateRequest::create('/', 'POST', ['opt1' => 0]);
         $controller->update($req, $prov);
         $this->assertDatabaseHas('provider_settings', ['code' => 'opt1', 'value' => false]);
     }
@@ -70,7 +70,7 @@ class TicketProviderControllerTest extends TestCase
     {
         $prov = TicketProvider::factory()->create(['name' => 'P1', 'enabled' => 1]);
         $controller = new TicketProviderController();
-        $req = \App\Http\Requests\Admin\TicketProviderUpdateRequest::create('/', 'POST', ['enabled' => 0]);
+        $req = TicketProviderUpdateRequest::create('/', 'POST', ['enabled' => 0]);
         $controller->update($req, $prov);
         $this->assertDatabaseHas('ticket_providers', ['id' => $prov->id, 'enabled' => 0]);
     }
@@ -90,7 +90,7 @@ class TicketProviderControllerTest extends TestCase
 
         $controller = new TicketProviderController();
         // request does not include 'auto_sync' so elseif branch should set it false
-        $req = \App\Http\Requests\Admin\TicketProviderUpdateRequest::create('/', 'POST', ['enabled' => 1]);
+        $req = TicketProviderUpdateRequest::create('/', 'POST', ['enabled' => 1]);
         $controller->update($req, $prov);
         $this->assertDatabaseHas('provider_settings', ['code' => 'auto_sync', 'value' => false]);
     }

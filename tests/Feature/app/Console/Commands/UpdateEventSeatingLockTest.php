@@ -2,12 +2,12 @@
 
 namespace Tests\Feature\app\Console\Commands;
 
-use Tests\TestCase;
 use App\Console\Commands\UpdateEventSeatingLock;
 use App\Models\Event;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Tests\TestCase;
 
 class UpdateEventSeatingLockTest extends TestCase
 {

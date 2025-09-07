@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\app\Http\Requests;
 
-use Tests\TestCase;
 use App\Http\Requests\EmailAddressRequest;
+use Tests\TestCase;
 
 class EmailAddressRequestTest extends TestCase
 {

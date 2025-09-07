@@ -2,8 +2,12 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
 use App\Models\TicketType;
+use App\Services\DiscordApi;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Artisan;
+use Tests\TestCase;
 
 class TicketTypeTest extends TestCase
 {
@@ -16,31 +20,31 @@ class TicketTypeTest extends TestCase
     public function testEventRelationship()
     {
         $type = new TicketType();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $type->event());
+        $this->assertInstanceOf(BelongsTo::class, $type->event());
     }
 
     public function testMappingsRelationship()
     {
         $type = new TicketType();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $type->mappings());
+        $this->assertInstanceOf(HasMany::class, $type->mappings());
     }
 
     public function testTicketsRelationship()
     {
         $type = new TicketType();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $type->tickets());
+        $this->assertInstanceOf(HasMany::class, $type->tickets());
     }
 
     public function testUpdateDiscordRoleNameSetsNameIfRoleExists()
     {
         $type = new TicketType();
         $type->discord_role_id = '123';
-        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+        $mockApi = $this->getMockBuilder(DiscordApi::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['getRoles'])
             ->getMock();
         $mockApi->method('getRoles')->willReturn(['123' => 'Test Role']);
-        app()->instance(\App\Services\DiscordApi::class, $mockApi);
+        app()->instance(DiscordApi::class, $mockApi);
         $type->updateDiscordRoleName();
         $this->assertEquals('Test Role', $type->discord_role_name);
     }
@@ -49,12 +53,12 @@ class TicketTypeTest extends TestCase
     {
         $type = new TicketType();
         $type->discord_role_id = '999';
-        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+        $mockApi = $this->getMockBuilder(DiscordApi::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['getRoles'])
             ->getMock();
         $mockApi->method('getRoles')->willReturn(['123' => 'Test Role']);
-        app()->instance(\App\Services\DiscordApi::class, $mockApi);
+        app()->instance(DiscordApi::class, $mockApi);
         $type->updateDiscordRoleName();
         $this->assertNull($type->discord_role_name);
         $this->assertNull($type->discord_role_id);
@@ -71,7 +75,7 @@ class TicketTypeTest extends TestCase
 
     public function testSyncDiscordRolesQueuesArtisanCommand()
     {
-        \Illuminate\Support\Facades\Artisan::shouldReceive('queue')
+        Artisan::shouldReceive('queue')
             ->once()
             ->with('control:sync-discord-roles');
         $type = new TicketType();

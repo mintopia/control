@@ -4,10 +4,12 @@ namespace App\Models;
 
 use App\Casts\SettingValue;
 use App\Enums\SettingType;
+use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
 use Spatie\EloquentSortable\Sortable;
 use Spatie\EloquentSortable\SortableTrait;
 
@@ -26,9 +28,9 @@ use Spatie\EloquentSortable\SortableTrait;
  * @property string|null $validation
  * @property mixed|null|null $value
  * @property int $order
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read Model|\Eloquent $provider
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Model|Eloquent $provider
  * @method static Builder|ProviderSetting newModelQuery()
  * @method static Builder|ProviderSetting newQuery()
  * @method static Builder|ProviderSetting ordered(string $direction = 'asc')
@@ -46,7 +48,7 @@ use Spatie\EloquentSortable\SortableTrait;
  * @method static Builder|ProviderSetting whereUpdatedAt($value)
  * @method static Builder|ProviderSetting whereValidation($value)
  * @method static Builder|ProviderSetting whereValue($value)
- * @mixin \Eloquent
+ * @mixin Eloquent
  */
 class ProviderSetting extends Model implements Sortable
 {

@@ -2,18 +2,26 @@
 
 namespace Tests\Unit\app\Http\Controllers;
 
-use Tests\TestCase;
 use App\Http\Controllers\SeatingPlanController;
+use App\Models\Clan;
+use App\Models\ClanRole;
 use App\Models\Event;
 use App\Models\Seat;
-use App\Models\Ticket;
+use App\Models\SeatGroup;
+use App\Models\SeatGroupAssignment;
 use App\Models\SeatingPlan;
+use App\Models\Ticket;
 use App\Models\TicketType;
 use App\Models\User;
+use Database\Factories\ClanMembershipFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
-// Event facade previously used here was unnecessary; use the model saved callback instead
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Tests\TestCase;
+
+// Event facade previously used here was unnecessary; use the model saved callback instead
 
 class SeatingPlanControllerTest extends TestCase
 {
@@ -29,7 +37,7 @@ class SeatingPlanControllerTest extends TestCase
     {
         $user = User::factory()->create();
         Auth::shouldReceive('user')->andReturn($user);
-        $request = new \Illuminate\Http\Request();
+        $request = new Request();
         $request->setUserResolver(function () use ($user) {
             return $user;
         });
@@ -49,7 +57,7 @@ class SeatingPlanControllerTest extends TestCase
         $userMock = $this->createMock(User::class);
         $userMock->method('hasAnyRole')->willReturn(true);
 
-        $request = new \Illuminate\Http\Request();
+        $request = new Request();
         $request->setUserResolver(function () use ($userMock) {
             return $userMock;
         });
@@ -71,7 +79,7 @@ class SeatingPlanControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
-        $request = new \Illuminate\Http\Request();
+        $request = new Request();
         $request->setUserResolver(function () use ($user) {
             return $user;
         });
@@ -87,10 +95,10 @@ class SeatingPlanControllerTest extends TestCase
         $other = User::factory()->create(['nickname' => 'beta']);
 
         // create clan role and membership so loops detect seat managers
-        \App\Models\ClanRole::factory()->create(['code' => 'leader']);
-        $clan = \App\Models\Clan::factory()->create();
-        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $user->id, 'clan_role_id' => 1]);
-        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $other->id, 'clan_role_id' => 1]);
+        ClanRole::factory()->create(['code' => 'leader']);
+        $clan = Clan::factory()->create();
+        ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $user->id, 'clan_role_id' => 1]);
+        ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $other->id, 'clan_role_id' => 1]);
 
         $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
         $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'code' => 'P1']);
@@ -227,7 +235,7 @@ class SeatingPlanControllerTest extends TestCase
 
     public function testSelectAbortsWhenSeatPlanMismatch()
     {
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
         $user = User::factory()->create();
         $event = Event::factory()->create(['ends_at' => now()->addDay()]);
         $otherEvent = Event::factory()->create(['ends_at' => now()->addDay()]);
@@ -245,7 +253,7 @@ class SeatingPlanControllerTest extends TestCase
 
     public function testSelectAbortsWhenTicketEventMismatch()
     {
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
         $user = User::factory()->create();
         $event = Event::factory()->create(['ends_at' => now()->addDay()]);
         $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
@@ -305,10 +313,10 @@ class SeatingPlanControllerTest extends TestCase
 
         // capture which Seat IDs had saved events fired
         $savedSeatIds = [];
-        \App\Models\Seat::saved(function ($seat) use (&$savedSeatIds) {
+        Seat::saved(function ($seat) use (&$savedSeatIds) {
             $savedSeatIds[] = $seat->id;
         });
-        \App\Models\Seat::updated(function ($seat) use (&$savedSeatIds) {
+        Seat::updated(function ($seat) use (&$savedSeatIds) {
             $savedSeatIds[] = $seat->id;
         });
 
@@ -344,10 +352,10 @@ class SeatingPlanControllerTest extends TestCase
 
         // capture which Seat IDs had saved events fired
         $savedSeatIds = [];
-        \App\Models\Seat::saved(function ($seat) use (&$savedSeatIds) {
+        Seat::saved(function ($seat) use (&$savedSeatIds) {
             $savedSeatIds[] = $seat->id;
         });
-        \App\Models\Seat::updated(function ($seat) use (&$savedSeatIds) {
+        Seat::updated(function ($seat) use (&$savedSeatIds) {
             $savedSeatIds[] = $seat->id;
         });
 
@@ -399,13 +407,13 @@ class SeatingPlanControllerTest extends TestCase
         $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id, 'ticket_type_id' => $type->id]);
 
         // Create a seat group and assignment that allows this user
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $group->event()->associate($event);
         $group->name = 'Group A';
         $group->class = 'default';
         $group->save();
 
-        $assignment = new \App\Models\SeatGroupAssignment();
+        $assignment = new SeatGroupAssignment();
         $assignment->group()->associate($group);
         $assignment->assignment_type = 'user';
         $assignment->assignment_type_id = $user->id;
@@ -460,15 +468,15 @@ class SeatingPlanControllerTest extends TestCase
     public function testSelectReassignsWhenTicketHasExistingSeat()
     {
         // When ticket already has a seat, old seat should be disassociated and new seat assigned
-        $event = \App\Models\Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
 
-        $oldSeat = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'disabled' => 0]);
-        $newSeat = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'disabled' => 0]);
+        $oldSeat = Seat::factory()->create(['seating_plan_id' => $plan->id, 'disabled' => 0]);
+        $newSeat = Seat::factory()->create(['seating_plan_id' => $plan->id, 'disabled' => 0]);
 
-        $user = \App\Models\User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id]);
-        $type = \App\Models\TicketType::factory()->create(['event_id' => $event->id, 'has_seat' => 1]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id]);
+        $type = TicketType::factory()->create(['event_id' => $event->id, 'has_seat' => 1]);
         $ticket->type()->associate($type);
         $ticket->save();
 
@@ -476,8 +484,8 @@ class SeatingPlanControllerTest extends TestCase
         $oldSeat->ticket()->associate($ticket);
         $oldSeat->save();
 
-        $controller = new \App\Http\Controllers\SeatingPlanController();
-        $req = \Illuminate\Http\Request::create('/select', 'POST');
+        $controller = new SeatingPlanController();
+        $req = Request::create('/select', 'POST');
         $req->setUserResolver(function () use ($user) {
             return $user;
         });
@@ -487,25 +495,25 @@ class SeatingPlanControllerTest extends TestCase
         // Ensure old seat no longer has ticket and new seat is associated
         $this->assertNull($oldSeat->fresh()->ticket_id);
         $this->assertEquals($ticket->id, $newSeat->fresh()->ticket_id);
-        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $resp);
+        $this->assertInstanceOf(RedirectResponse::class, $resp);
         $this->assertStringContainsString($event->code, $resp->getTargetUrl());
     }
 
     public function testSelectAssignsWhenTicketHasNoSeat()
     {
         // When ticket has no seat, selecting should associate the seat with the ticket
-        $event = \App\Models\Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id]);
+        $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
 
-        $seat = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'disabled' => 0]);
-        $user = \App\Models\User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id]);
-        $type = \App\Models\TicketType::factory()->create(['event_id' => $event->id, 'has_seat' => 1]);
+        $seat = Seat::factory()->create(['seating_plan_id' => $plan->id, 'disabled' => 0]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id]);
+        $type = TicketType::factory()->create(['event_id' => $event->id, 'has_seat' => 1]);
         $ticket->type()->associate($type);
         $ticket->save();
 
-        $controller = new \App\Http\Controllers\SeatingPlanController();
-        $req = \Illuminate\Http\Request::create('/select', 'POST');
+        $controller = new SeatingPlanController();
+        $req = Request::create('/select', 'POST');
         $req->setUserResolver(function () use ($user) {
             return $user;
         });
@@ -513,7 +521,7 @@ class SeatingPlanControllerTest extends TestCase
         $resp = $controller->select($req, $event, $ticket, $seat);
 
         $this->assertEquals($ticket->id, $seat->fresh()->ticket_id);
-        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $resp);
+        $this->assertInstanceOf(RedirectResponse::class, $resp);
         $this->assertStringContainsString($event->code, $resp->getTargetUrl());
     }
 

@@ -2,17 +2,17 @@
 
 namespace Tests\Unit\app\Policies;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Policies\TicketPolicy;
+use App\Models\Role;
 use App\Models\Ticket;
 use App\Models\User;
-use stdClass;
+use App\Policies\TicketPolicy;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class TicketPolicyTest extends TestCase
 {
     use RefreshDatabase;
-    
+
     public function testUpdateReturnsTrueWhenUserOwnsTicket()
     {
         $user = User::factory()->create();
@@ -45,9 +45,9 @@ class TicketPolicyTest extends TestCase
     {
         // Create a lightweight User subclass that returns true for hasRole('admin')
         $user = new class extends User {
-            public function hasRole(string|\App\Models\Role $role): bool
+            public function hasRole(string|Role $role): bool
             {
-                if ($role instanceof \App\Models\Role) {
+                if ($role instanceof Role) {
                     $role = $role->code;
                 }
                 return $role === 'admin';
@@ -65,7 +65,7 @@ class TicketPolicyTest extends TestCase
     {
         // Create a lightweight User subclass that returns false for hasRole('admin')
         $user = new class extends User {
-            public function hasRole(string|\App\Models\Role $role): bool
+            public function hasRole(string|Role $role): bool
             {
                 return false;
             }

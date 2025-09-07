@@ -2,11 +2,16 @@
 
 namespace Tests\Unit\app\Observers;
 
-use Tests\TestCase;
-use App\Observers\ClanObserver;
 use App\Models\Clan;
+use App\Models\ClanMembership;
+use App\Models\Event;
+use App\Models\Seat;
 use App\Models\SeatingPlan;
+use App\Models\Ticket;
+use App\Models\User;
+use App\Observers\ClanObserver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 use function App\makePermalink;
 
@@ -18,21 +23,21 @@ class ClanObserverTest extends TestCase
     {
         // Create a clan and a seating plan with a seat -> ticket -> user -> clan membership chain
         $clan = Clan::factory()->create();
-        $event = \App\Models\Event::factory()->create();
+        $event = Event::factory()->create();
         $plan = SeatingPlan::factory()->create(['revision' => 1, 'event_id' => $event->id]);
 
         // create a ticket with a user who is a member of the clan and a seat on the plan
-        $user = \App\Models\User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['user_id' => $user->id]);
         // Create a clan membership linking the user to the clan
-        \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
 
         // Create a seat attached to the plan and associate the ticket
-        $seat = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+        $seat = Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
 
         $this->assertEquals(1, $plan->revision);
 
-        $observer = new \App\Observers\ClanObserver();
+        $observer = new ClanObserver();
         $observer->deleting($clan);
 
         $plan->refresh();
@@ -42,19 +47,19 @@ class ClanObserverTest extends TestCase
     public function testSavedUpdatesPlansIfNameDirty()
     {
         // Create clan and seating plan with linked seat/ticket/user/membership
-        $clan = \App\Models\Clan::factory()->create(['name' => 'Old Name']);
-        $event = \App\Models\Event::factory()->create();
+        $clan = Clan::factory()->create(['name' => 'Old Name']);
+        $event = Event::factory()->create();
         $plan = SeatingPlan::factory()->create(['revision' => 1, 'event_id' => $event->id]);
 
-        $user = \App\Models\User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
-        \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
-        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['user_id' => $user->id]);
+        ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
 
         // Make the name dirty
         $clan->name = 'New Name';
 
-        $observer = new \App\Observers\ClanObserver();
+        $observer = new ClanObserver();
         $observer->saved($clan);
 
         $plan->refresh();
@@ -63,16 +68,16 @@ class ClanObserverTest extends TestCase
 
     public function testSavedDoesNothingIfNameNotDirty()
     {
-        $clan = \App\Models\Clan::factory()->create(['name' => 'Same Name']);
-        $event = \App\Models\Event::factory()->create();
+        $clan = Clan::factory()->create(['name' => 'Same Name']);
+        $event = Event::factory()->create();
         $plan = SeatingPlan::factory()->create(['revision' => 1, 'event_id' => $event->id]);
 
-        $user = \App\Models\User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
-        \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
-        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['user_id' => $user->id]);
+        ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
 
-        $observer = new \App\Observers\ClanObserver();
+        $observer = new ClanObserver();
         $observer->saved($clan);
 
         $plan->refresh();

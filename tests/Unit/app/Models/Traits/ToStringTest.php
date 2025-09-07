@@ -2,9 +2,9 @@
 
 namespace Tests\Unit\app\Models\Traits;
 
-use Tests\TestCase;
-
 use App\Models\Traits\ToString;
+use ReflectionClass;
+use Tests\TestCase;
 
 class ToStringTest extends TestCase
 {
@@ -12,11 +12,14 @@ class ToStringTest extends TestCase
     {
         $model = new class {
             use ToString;
+
             public $id = 42;
+
             public function toStringModelName()
             {
                 return 'CustomModel';
             }
+
             public function toStringName()
             {
                 return 'TestName';
@@ -30,11 +33,12 @@ class ToStringTest extends TestCase
     {
         $model = new class {
             use ToString;
+
             public $id = 7;
         };
 
         // The anonymous class name will be something like "class@anonymous"
-        $expectedClass = (new \ReflectionClass($model))->getShortName();
+        $expectedClass = (new ReflectionClass($model))->getShortName();
         $this->assertEquals("[$expectedClass:7]", (string)$model);
     }
 
@@ -44,7 +48,7 @@ class ToStringTest extends TestCase
             use ToString;
         };
 
-        $expectedClass = (new \ReflectionClass($model))->getShortName();
+        $expectedClass = (new ReflectionClass($model))->getShortName();
         $this->assertEquals("[$expectedClass:#]", (string)$model);
     }
 
@@ -52,14 +56,16 @@ class ToStringTest extends TestCase
     {
         $model = new class {
             use ToString;
+
             public $id = 5;
+
             public function toStringName()
             {
                 return 'OnlyName';
             }
         };
 
-        $expectedClass = (new \ReflectionClass($model))->getShortName();
+        $expectedClass = (new ReflectionClass($model))->getShortName();
         $this->assertEquals("[$expectedClass:5] OnlyName", (string)$model);
     }
 }

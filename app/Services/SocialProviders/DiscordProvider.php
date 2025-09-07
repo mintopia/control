@@ -14,16 +14,6 @@ class DiscordProvider extends AbstractSocialProvider
     protected string $socialiteProviderCode = 'discord';
     protected bool $supportsAuth = true;
 
-    protected function getSocialiteProvider()
-    {
-        return Socialite::buildProvider(Provider::class, [
-            'client_id' => $this->provider->getSetting('client_id'),
-            'client_secret' => $this->provider->getSetting('client_secret'),
-            'redirect' => $this->redirectUrl,
-        ]);
-    }
-
-
     public function configMapping(): array
     {
         return array_merge(
@@ -38,12 +28,9 @@ class DiscordProvider extends AbstractSocialProvider
         );
     }
 
-    protected function updateAccount(LinkedAccount $account, $remoteUser): void
+    public function addBotToServer(): RedirectResponse
     {
-        $account->avatar_url = $remoteUser->getAvatar();
-        $account->refresh_token = $remoteUser->refreshToken;
-        $account->access_token = $remoteUser->token;
-        $account->name = $remoteUser->getNickname();
+        return $this->getBotProvider()->redirect();
     }
 
     protected function getBotProvider()
@@ -53,13 +40,25 @@ class DiscordProvider extends AbstractSocialProvider
         ]);
     }
 
-    public function addBotToServer(): RedirectResponse
+    protected function getSocialiteProvider()
     {
-        return $this->getBotProvider()->redirect();
+        return Socialite::buildProvider(Provider::class, [
+            'client_id' => $this->provider->getSetting('client_id'),
+            'client_secret' => $this->provider->getSetting('client_secret'),
+            'redirect' => $this->redirectUrl,
+        ]);
     }
 
     public function bot()
     {
         return $this->getBotProvider()->user();
+    }
+
+    protected function updateAccount(LinkedAccount $account, $remoteUser): void
+    {
+        $account->avatar_url = $remoteUser->getAvatar();
+        $account->refresh_token = $remoteUser->refreshToken;
+        $account->access_token = $remoteUser->token;
+        $account->name = $remoteUser->getNickname();
     }
 }

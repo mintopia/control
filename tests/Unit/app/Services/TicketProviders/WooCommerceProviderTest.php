@@ -3,20 +3,27 @@
 namespace Tests\Unit\app\Services\TicketProviders;
 
 use App\Exceptions\TicketProviderWebhookException;
-use App\Models\TicketProvider;
-use App\Models\ProviderSetting;
-use App\Models\TicketType;
-use App\Models\Ticket;
-use App\Models\User;
 use App\Models\EmailAddress;
+use App\Models\Event;
+use App\Models\EventMapping;
+use App\Models\ProviderSetting;
+use App\Models\Ticket;
+use App\Models\TicketProvider;
+use App\Models\TicketType;
+use App\Models\TicketTypeMapping;
+use App\Models\User;
 use App\Services\TicketProviders\WooCommerceProvider;
+use Closure;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
+use ReflectionClass;
 use Tests\TestCase;
-use Tests\Unit\app\Services\TicketProviders\DummyWooCommerceProvider;
-use GuzzleHttp\Client;
+use Tests\Unit\app\Services\TicketProviders\HelperClasses\DummyWooCommerceProvider;
 
 class WooCommerceProviderTest extends TestCase
 {
@@ -68,7 +75,7 @@ class WooCommerceProviderTest extends TestCase
         $provider = $this->getProvider();
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['foo' => 'bar']));
         $this->expectException(TicketProviderWebhookException::class);
-        $verifyWebhook = \Closure::bind(function ($request) {
+        $verifyWebhook = Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
         $verifyWebhook($request);
@@ -78,7 +85,7 @@ class WooCommerceProviderTest extends TestCase
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['foo' => 'bar']));
-        $verifyWebhook = \Closure::bind(function ($request) {
+        $verifyWebhook = Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
         $this->expectException(TicketProviderWebhookException::class);
@@ -91,7 +98,7 @@ class WooCommerceProviderTest extends TestCase
         $request = Request::create('/webhook', 'POST', [], [], [], [
             'HTTP_X_WC_WEBHOOK_SIGNATURE' => base64_encode('invalid'),
         ], json_encode(['foo' => 'bar']));
-        $verifyWebhook = \Closure::bind(function ($request) {
+        $verifyWebhook = Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
         $this->expectException(TicketProviderWebhookException::class);
@@ -108,7 +115,7 @@ class WooCommerceProviderTest extends TestCase
         $request = Request::create('/webhook', 'POST', [], [], [], [
             'HTTP_X_WC_WEBHOOK_SIGNATURE' => $signature,
         ], $content);
-        $verifyWebhook = \Closure::bind(function ($request) {
+        $verifyWebhook = Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
         $this->assertTrue($verifyWebhook($request));
@@ -146,7 +153,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertEquals($secret, $providerModel->getSetting('webhook_secret'));
 
         // Use DummyWooCommerceProvider to override protected behaviour
-        $dummy = new \Tests\Unit\app\Services\TicketProviders\DummyWooCommerceProvider($providerModel);
+        $dummy = new DummyWooCommerceProvider($providerModel);
         $dummy->forceVerify = true;
         $dummy->parseOverride = [
             (object)[
@@ -168,7 +175,7 @@ class WooCommerceProviderTest extends TestCase
     {
         $provider = $this->getProvider();
         $data = (object)['id' => 'abc123'];
-        $getQrCode = \Closure::bind(function ($data) {
+        $getQrCode = Closure::bind(function ($data) {
             return $this->getQrCode($data);
         }, $provider, get_class($provider));
         $url = $getQrCode($data);
@@ -192,7 +199,7 @@ class WooCommerceProviderTest extends TestCase
                 ]
             ]
         ];
-        $parseOrder = \Closure::bind(function ($order) {
+        $parseOrder = Closure::bind(function ($order) {
             return $this->parseOrder($order);
         }, $provider, get_class($provider));
         $tickets = $parseOrder($order);
@@ -317,19 +324,19 @@ class WooCommerceProviderTest extends TestCase
             'billing' => (object)['email' => 'a@x.com'],
             'line_items' => [(object)['id' => 10, 'product_id' => 100, 'name' => 'T', 'quantity' => 1]],
         ];
-        $resp1 = new \GuzzleHttp\Psr7\Response(200, [], json_encode([$order1]));
-        $resp2 = new \GuzzleHttp\Psr7\Response(200, [], json_encode([]));
+        $resp1 = new Response(200, [], json_encode([$order1]));
+        $resp2 = new Response(200, [], json_encode([]));
 
-        $mock = new \GuzzleHttp\Handler\MockHandler([$resp1, $resp2]);
-        $handler = \GuzzleHttp\HandlerStack::create($mock);
-        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+        $mock = new MockHandler([$resp1, $resp2]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
 
-        $ref = new \ReflectionClass($provider);
+        $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
 
-        $getTickets = \Closure::bind(function ($address = null) {
+        $getTickets = Closure::bind(function ($address = null) {
             return $this->getTickets($address);
         }, $provider, get_class($provider));
 
@@ -354,19 +361,19 @@ class WooCommerceProviderTest extends TestCase
             'line_items' => [(object)['id' => 11, 'product_id' => 101, 'name' => 'T2', 'quantity' => 1]],
         ];
 
-        $resp1 = new \GuzzleHttp\Psr7\Response(200, [], json_encode([$order1, $order2]));
-        $resp2 = new \GuzzleHttp\Psr7\Response(200, [], json_encode([]));
+        $resp1 = new Response(200, [], json_encode([$order1, $order2]));
+        $resp2 = new Response(200, [], json_encode([]));
 
-        $mock = new \GuzzleHttp\Handler\MockHandler([$resp1, $resp2]);
-        $handler = \GuzzleHttp\HandlerStack::create($mock);
-        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+        $mock = new MockHandler([$resp1, $resp2]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
 
-        $ref = new \ReflectionClass($provider);
+        $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
 
-        $getTickets = \Closure::bind(function ($address = null) {
+        $getTickets = Closure::bind(function ($address = null) {
             return $this->getTickets($address);
         }, $provider, get_class($provider));
 
@@ -381,11 +388,12 @@ class WooCommerceProviderTest extends TestCase
 
         $existing = Ticket::factory()->create(['ticket_provider_id' => $prov->id, 'external_id' => '1-10-1']);
 
-        $mock = new class($prov) extends WooCommerceProvider {
-            public function __construct(?\App\Models\TicketProvider $provider = null)
+        $mock = new class ($prov) extends WooCommerceProvider {
+            public function __construct(?TicketProvider $provider = null)
             {
                 parent::__construct($provider);
             }
+
             protected function getTickets(?string $address = null): array
             {
                 // order->status not in ['processing','completed'] => treated as voided
@@ -409,11 +417,12 @@ class WooCommerceProviderTest extends TestCase
         $ticket = Ticket::factory()->create(['ticket_provider_id' => $prov->id, 'external_id' => '1-10-1', 'user_id' => null]);
 
         // Create a provider subclass that returns the parsed ticket for the email
-        $mock = new class($prov) extends WooCommerceProvider {
-            public function __construct(?\App\Models\TicketProvider $provider = null)
+        $mock = new class ($prov) extends WooCommerceProvider {
+            public function __construct(?TicketProvider $provider = null)
             {
                 parent::__construct($provider);
             }
+
             protected function getTickets(?string $address = null): array
             {
                 return [(object)['id' => '1-10-1', 'order' => (object)['billing' => (object)['email' => $address], 'id' => 1, 'status' => 'completed'], 'item' => (object)['id' => 10, 'product_id' => 100, 'name' => 'T', 'quantity' => 1], 'status' => 'valid', 'email' => $address]];
@@ -443,10 +452,10 @@ class WooCommerceProviderTest extends TestCase
         $prov = $provider->getProvider();
 
         // Ensure Event and TicketType mapping exist for provider
-        $event = \App\Models\Event::factory()->create();
-        \App\Models\EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evt1']);
-        $type = \App\Models\TicketType::factory()->for($event)->create();
-        \App\Models\TicketTypeMapping::create(['ticket_type_id' => $type->id, 'ticket_provider_id' => $prov->id, 'external_id' => 100]);
+        $event = Event::factory()->create();
+        EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evt1']);
+        $type = TicketType::factory()->for($event)->create();
+        TicketTypeMapping::create(['ticket_type_id' => $type->id, 'ticket_provider_id' => $prov->id, 'external_id' => 100]);
 
         // Prepare a parsed ticket (order status completed -> valid)
         $parsed = (object)[
@@ -459,7 +468,7 @@ class WooCommerceProviderTest extends TestCase
         ];
 
         // Call protected processTickets on real provider via bound closure so we exercise parent logic
-        $processTickets = \Closure::bind(function ($ticketData, $address, $user = null) {
+        $processTickets = Closure::bind(function ($ticketData, $address, $user = null) {
             return $this->processTickets($ticketData, $address, $user);
         }, $provider, get_class($provider));
 
@@ -476,13 +485,13 @@ class WooCommerceProviderTest extends TestCase
         $key = "ticketproviders.{$prov->id}.{$prov->cache_prefix}.events.{$eventId}.tickettypes";
         Cache::forget($key);
 
-        $resp1 = new \GuzzleHttp\Psr7\Response(200, [], json_encode([(object)['id' => 100, 'name' => 'VIP']]));
-        $resp2 = new \GuzzleHttp\Psr7\Response(200, [], json_encode([]));
-        $mock = new \GuzzleHttp\Handler\MockHandler([$resp1, $resp2]);
-        $handler = \GuzzleHttp\HandlerStack::create($mock);
-        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+        $resp1 = new Response(200, [], json_encode([(object)['id' => 100, 'name' => 'VIP']]));
+        $resp2 = new Response(200, [], json_encode([]));
+        $mock = new MockHandler([$resp1, $resp2]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
 
-        $ref = new \ReflectionClass($provider);
+        $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
@@ -501,7 +510,7 @@ class WooCommerceProviderTest extends TestCase
         $item = (object)['id' => 10, 'product_id' => 9999, 'name' => 'X'];
         $data = (object)['id' => '1-10-1', 'order' => $order, 'item' => $item, 'ticket_type_id' => 'no-type', 'event_id' => 'evtX', 'email' => 'a@b.com', 'description' => 'd'];
 
-        $makeTicket = \Closure::bind(function ($user, $data) {
+        $makeTicket = Closure::bind(function ($user, $data) {
             return $this->makeTicket($user, $data);
         }, $provider, get_class($provider));
         $this->assertNull($makeTicket(null, $data));

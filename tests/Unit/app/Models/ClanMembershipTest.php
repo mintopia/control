@@ -2,12 +2,12 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Clan;
 use App\Models\ClanMembership;
 use App\Models\ClanRole;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ClanMembershipTest extends TestCase
 {

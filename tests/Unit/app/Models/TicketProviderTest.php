@@ -2,13 +2,24 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
+use App\Models\EmailAddress;
+use App\Models\Event;
 use App\Models\TicketProvider;
+use App\Services\Contracts\TicketProviderContract;
+use Database\Factories\EventMappingFactory;
+use Illuminate\Console\OutputStyle;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use ReflectionClass;
+use ReflectionProperty;
+use Tests\TestCase;
 
 class TicketProviderTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testCanInstantiateTicketProvider()
     {
         $provider = new TicketProvider();
@@ -18,25 +29,25 @@ class TicketProviderTest extends TestCase
     public function testTicketsRelationship()
     {
         $provider = new TicketProvider();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $provider->tickets());
+        $this->assertInstanceOf(HasMany::class, $provider->tickets());
     }
 
     public function testEventsRelationship()
     {
         $provider = new TicketProvider();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $provider->events());
+        $this->assertInstanceOf(HasMany::class, $provider->events());
     }
 
     public function testTypesRelationship()
     {
         $provider = new TicketProvider();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $provider->types());
+        $this->assertInstanceOf(HasMany::class, $provider->types());
     }
 
     public function testSettingsRelationship()
     {
         $provider = new TicketProvider();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphMany::class, $provider->settings());
+        $this->assertInstanceOf(MorphMany::class, $provider->settings());
     }
 
     public function testGetEventsReturnsEmptyIfNotEnabled()
@@ -50,7 +61,7 @@ class TicketProviderTest extends TestCase
     {
         $provider = new TicketProvider();
         $provider->enabled = false;
-        $mockEvent = $this->createMock(\App\Models\Event::class);
+        $mockEvent = $this->createMock(Event::class);
         $this->assertEquals([], $provider->getTicketTypes($mockEvent));
     }
 
@@ -60,7 +71,7 @@ class TicketProviderTest extends TestCase
             ->onlyMethods(['settings'])
             ->getMock();
         // set the protected property properly via reflection so the class sees it
-        $rp = new \ReflectionProperty(TicketProvider::class, '_settings');
+        $rp = new ReflectionProperty(TicketProvider::class, '_settings');
         $rp->setAccessible(true);
         $rp->setValue($provider, ['foo' => 'bar']);
         $this->assertEquals('bar', $provider->getSetting('foo'));
@@ -78,7 +89,7 @@ class TicketProviderTest extends TestCase
 
     public function testConfigMappingDelegatesToProvider()
     {
-        $mockProvider = $this->createMock(\App\Services\Contracts\TicketProviderContract::class);
+        $mockProvider = $this->createMock(TicketProviderContract::class);
         $mockProvider->expects($this->once())->method('configMapping')->willReturn(['foo' => 'bar']);
         $provider = $this->getMockBuilder(TicketProvider::class)
             ->onlyMethods(['getProvider'])
@@ -91,7 +102,7 @@ class TicketProviderTest extends TestCase
     {
         $provider = new TicketProvider();
         $provider->code = 'test_code';
-        $reflection = new \ReflectionClass($provider);
+        $reflection = new ReflectionClass($provider);
         $method = $reflection->getMethod('toStringName');
         $method->setAccessible(true);
         $this->assertEquals('test_code', $method->invoke($provider));
@@ -103,38 +114,51 @@ class TicketProviderTest extends TestCase
         $provider = TicketProvider::factory()->create(['enabled' => 1]);
 
         // Create an event and a provider event mapping so getTicketTypes will be invoked
-        $event = \App\Models\Event::factory()->create();
-        \Database\Factories\EventMappingFactory::new()->create([
+        $event = Event::factory()->create();
+        EventMappingFactory::new()->create([
             'ticket_provider_id' => $provider->id,
             'event_id' => $event->id,
             'external_id' => 'e1',
         ]);
 
         // Bind a provider implementation that returns an indexed array of arrays (not objects)
-        $impl = new class implements \App\Services\Contracts\TicketProviderContract {
-            public function __construct(?\App\Models\TicketProvider $provider = null) {}
+        $impl = new class implements TicketProviderContract {
+            public function __construct(?TicketProvider $provider = null)
+            {
+            }
+
             public function configMapping(): array
             {
                 return [];
             }
-            public function install(): \App\Models\TicketProvider
+
+            public function install(): TicketProvider
             {
-                return new \App\Models\TicketProvider();
+                return new TicketProvider();
             }
-            public function processWebhook(\Illuminate\Http\Request $request): bool
+
+            public function processWebhook(Request $request): bool
             {
                 return false;
             }
-            public function syncTickets(string|\App\Models\EmailAddress $email): void {}
+
+            public function syncTickets(string|EmailAddress $email): void
+            {
+            }
+
             public function getEvents(): array
             {
                 return [];
             }
+
             public function getTicketTypes(string $eventExternalId): array
             {
                 return ['t1' => 'T1'];
             }
-            public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
+
+            public function syncAllTickets(?OutputStyle $output): void
+            {
+            }
         };
 
         app()->instance(get_class($impl), $impl);
@@ -150,7 +174,7 @@ class TicketProviderTest extends TestCase
 
     public function testProcessWebhookDelegatesToProvider()
     {
-        $mockProvider = $this->createMock(\App\Services\Contracts\TicketProviderContract::class);
+        $mockProvider = $this->createMock(TicketProviderContract::class);
         $mockProvider->expects($this->once())->method('processWebhook')->willReturn(true);
 
         $provider = $this->getMockBuilder(TicketProvider::class)
@@ -158,7 +182,7 @@ class TicketProviderTest extends TestCase
             ->getMock();
         $provider->method('getProvider')->willReturn($mockProvider);
 
-        $req = \Illuminate\Http\Request::create('/webhook', 'POST');
+        $req = Request::create('/webhook', 'POST');
         $this->assertTrue($provider->processWebhook($req));
     }
 
@@ -167,38 +191,51 @@ class TicketProviderTest extends TestCase
         $provider = TicketProvider::factory()->create(['enabled' => 1]);
 
         // Create an event mapping so the provider reports it as used
-        $event = \App\Models\Event::factory()->create();
-        \Database\Factories\EventMappingFactory::new()->create([
+        $event = Event::factory()->create();
+        EventMappingFactory::new()->create([
             'ticket_provider_id' => $provider->id,
             'event_id' => $event->id,
             'external_id' => 'external_e1',
         ]);
 
         // Bind an implementation that returns an associative mapping of events
-        $impl = new class implements \App\Services\Contracts\TicketProviderContract {
-            public function __construct(?\App\Models\TicketProvider $provider = null) {}
+        $impl = new class implements TicketProviderContract {
+            public function __construct(?TicketProvider $provider = null)
+            {
+            }
+
             public function configMapping(): array
             {
                 return [];
             }
-            public function install(): \App\Models\TicketProvider
+
+            public function install(): TicketProvider
             {
-                return new \App\Models\TicketProvider();
+                return new TicketProvider();
             }
-            public function processWebhook(\Illuminate\Http\Request $request): bool
+
+            public function processWebhook(Request $request): bool
             {
                 return false;
             }
-            public function syncTickets(string|\App\Models\EmailAddress $email): void {}
+
+            public function syncTickets(string|EmailAddress $email): void
+            {
+            }
+
             public function getEvents(): array
             {
                 return ['external_e1' => 'Event One', 'external_e2' => 'Event Two'];
             }
+
             public function getTicketTypes(string $eventExternalId): array
             {
                 return [];
             }
-            public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
+
+            public function syncAllTickets(?OutputStyle $output): void
+            {
+            }
         };
 
         app()->instance(get_class($impl), $impl);
@@ -220,37 +257,50 @@ class TicketProviderTest extends TestCase
     {
         $provider = TicketProvider::factory()->create(['enabled' => 1]);
 
-        $event = \App\Models\Event::factory()->create();
-        \Database\Factories\EventMappingFactory::new()->create([
+        $event = Event::factory()->create();
+        EventMappingFactory::new()->create([
             'ticket_provider_id' => $provider->id,
             'event_id' => $event->id,
             'external_id' => 'ext_empty',
         ]);
 
-        $impl = new class implements \App\Services\Contracts\TicketProviderContract {
-            public function __construct(?\App\Models\TicketProvider $provider = null) {}
+        $impl = new class implements TicketProviderContract {
+            public function __construct(?TicketProvider $provider = null)
+            {
+            }
+
             public function configMapping(): array
             {
                 return [];
             }
-            public function install(): \App\Models\TicketProvider
+
+            public function install(): TicketProvider
             {
-                return new \App\Models\TicketProvider();
+                return new TicketProvider();
             }
-            public function processWebhook(\Illuminate\Http\Request $request): bool
+
+            public function processWebhook(Request $request): bool
             {
                 return false;
             }
-            public function syncTickets(string|\App\Models\EmailAddress $email): void {}
+
+            public function syncTickets(string|EmailAddress $email): void
+            {
+            }
+
             public function getEvents(): array
             {
                 return [];
             }
+
             public function getTicketTypes(string $eventExternalId): array
             {
                 return [];
             }
-            public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
+
+            public function syncAllTickets(?OutputStyle $output): void
+            {
+            }
         };
 
         app()->instance(get_class($impl), $impl);

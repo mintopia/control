@@ -2,10 +2,10 @@
 
 namespace Tests\Unit\app\Observers;
 
-use Tests\TestCase;
-use App\Observers\SeatingPlanObserver;
 use App\Models\SeatingPlan;
+use App\Observers\SeatingPlanObserver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class SeatingPlanObserverTest extends TestCase
 {

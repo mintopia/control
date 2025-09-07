@@ -2,16 +2,18 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
 use App\Models\Setting;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use ReflectionClass;
+use Tests\TestCase;
 
 class SettingTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testCanInstantiateSetting()
     {
         $setting = new Setting();
@@ -25,8 +27,8 @@ class SettingTest extends TestCase
         $cached = new Setting(['code' => $code]);
         $cached->value = null;
         // Have Cache return our in-memory Setting object
-        \Illuminate\Support\Facades\Cache::shouldReceive('get')->with("settings.{$code}")->andReturn($cached);
-        \Illuminate\Support\Facades\Log::shouldReceive('debug')->atLeast()->once();
+        Cache::shouldReceive('get')->with("settings.{$code}")->andReturn($cached);
+        Log::shouldReceive('debug')->atLeast()->once();
 
         $this->assertEquals($default, Setting::fetch($code, $default));
     }
@@ -40,9 +42,9 @@ class SettingTest extends TestCase
         $cached->value = $encrypted;
         $cached->encrypted = 1;
 
-        \Illuminate\Support\Facades\Cache::shouldReceive('get')->with("settings.{$code}")->andReturn($cached);
-        \Illuminate\Support\Facades\Log::shouldReceive('debug')->atLeast()->once();
-        \Illuminate\Support\Facades\Crypt::shouldReceive('decrypt')->andReturn($decrypted);
+        Cache::shouldReceive('get')->with("settings.{$code}")->andReturn($cached);
+        Log::shouldReceive('debug')->atLeast()->once();
+        Crypt::shouldReceive('decrypt')->andReturn($decrypted);
 
         $this->assertEquals($decrypted, Setting::fetch($code));
     }
@@ -54,10 +56,10 @@ class SettingTest extends TestCase
         $cached->value = 'plain_value';
         $cached->encrypted = 0;
 
-        \Illuminate\Support\Facades\Cache::shouldReceive('get')->with("settings.{$code}")->andReturn($cached);
-        \Illuminate\Support\Facades\Log::shouldReceive('debug')->atLeast()->once();
+        Cache::shouldReceive('get')->with("settings.{$code}")->andReturn($cached);
+        Log::shouldReceive('debug')->atLeast()->once();
         // ensure no decrypt is attempted
-        \Illuminate\Support\Facades\Crypt::shouldReceive('decrypt')->never();
+        Crypt::shouldReceive('decrypt')->never();
 
         $this->assertEquals('plain_value', Setting::fetch($code, 'default'));
     }
@@ -65,7 +67,7 @@ class SettingTest extends TestCase
     public function testToStringNameReturnsCode()
     {
         $s = new Setting(['code' => 'my_code']);
-        $ref = new \ReflectionClass($s);
+        $ref = new ReflectionClass($s);
         $m = $ref->getMethod('toStringName');
         $m->setAccessible(true);
         $this->assertEquals('my_code', $m->invoke($s));
@@ -95,7 +97,7 @@ class SettingTest extends TestCase
         $result = Setting::fetch($code, $default);
         $this->assertEquals($default, $result);
         // static::$cached should be set to null for this code
-        $ref = new \ReflectionClass(Setting::class);
+        $ref = new ReflectionClass(Setting::class);
         $prop = $ref->getProperty('cached');
         $prop->setAccessible(true);
         $cached = $prop->getValue();
@@ -110,16 +112,16 @@ class SettingTest extends TestCase
         $key = "settings.{$code}";
 
         // Make Cache.get return null so code checks DB
-        \Illuminate\Support\Facades\Cache::shouldReceive('get')->with($key)->andReturn(null);
+        Cache::shouldReceive('get')->with($key)->andReturn(null);
         // Expect Cache::put called with null value when DB record missing
-        \Illuminate\Support\Facades\Cache::shouldReceive('put')->with($key, null)->once();
+        Cache::shouldReceive('put')->with($key, null)->once();
 
         $this->assertNull(Setting::whereCode($code)->first());
         $result = Setting::fetch($code, $default);
         $this->assertEquals($default, $result);
 
         // static::$cached should have the code set to null
-        $ref = new \ReflectionClass(Setting::class);
+        $ref = new ReflectionClass(Setting::class);
         $prop = $ref->getProperty('cached');
         $prop->setAccessible(true);
         $cached = $prop->getValue();

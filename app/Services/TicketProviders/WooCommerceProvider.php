@@ -4,20 +4,16 @@ namespace App\Services\TicketProviders;
 
 use App\Exceptions\TicketProviderWebhookException;
 use App\Models\EmailAddress;
-use App\Models\Event;
 use App\Models\Ticket;
+use App\Models\TicketProvider;
 use App\Models\TicketType;
 use App\Models\User;
 use App\Services\TicketProviders\Traits\GenericSyncAllTrait;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use Illuminate\Console\OutputStyle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use PharIo\Manifest\Email;
-use Ramsey\Uuid\Uuid;
 
 class WooCommerceProvider extends AbstractTicketProvider
 {
@@ -27,17 +23,16 @@ class WooCommerceProvider extends AbstractTicketProvider
     protected const EVENTS_CACHE_TTL = 86400;
 
     protected ?Client $client = null;
+    protected string $name = 'Woo Commerce';
+    protected string $code = 'woocommerce';
 
     /**
      * Public getter for the provider property (for testing and cache key access)
      */
-    public function getProvider(): ?\App\Models\TicketProvider
+    public function getProvider(): ?TicketProvider
     {
         return $this->provider;
     }
-
-    protected string $name = 'Woo Commerce';
-    protected string $code = 'woocommerce';
 
     public function configMapping(): array
     {
@@ -100,73 +95,27 @@ class WooCommerceProvider extends AbstractTicketProvider
         return true;
     }
 
-    protected function makeTicket(?User $user, object $data): ?Ticket
+    protected function parseOrder(object $order): array
     {
-        $type = $this->getType($data->ticket_type_id);
-        if (!$type) {
-            Log::debug("{$this->provider} {$data->id} not added. Unable to find ticket type {$data->ticket_type_id}");
-            return null;
-        }
-        if (!$user) {
-            $email = EmailAddress::whereEmail($data->order->billing->email)
-                ->where('verified_at', '<=', Carbon::now())
-                ->with('user')->first();
-            if ($email) {
-                $user = $email->user;
+        $tickets = [];
+        foreach ($order->line_items as $item) {
+            for ($i = 1; $i <= $item->quantity; $i++) {
+                $externalId = "{$order->id}-{$item->id}-{$i}";
+                $status = 'voided';
+                if (in_array($order->status, ['processing', 'completed'])) {
+                    $status = 'valid';
+                }
+                $tickets[$externalId] = (object)[
+                    'id' => $externalId,
+                    'ticket_type_id' => $item->product_id,
+                    'order' => $order,
+                    'item' => $item,
+                    'status' => $status,
+                    'email' => $order->billing->email,
+                ];
             }
         }
-        $ticket = new Ticket();
-        $ticket->provider()->associate($this->provider);
-        if ($user) {
-            $ticket->user()->associate($user);
-        }
-        $ticket->type()->associate($type);
-        $ticket->event()->associate($type->event);
-        $ticket->external_id = $data->id;
-        $ticket->original_email = $data->order->billing->email;
-        $ticket->name = $data->item->name;
-        $ticket->reference = $data->id;
-        $ticket->qrcode = $this->getQrCode($data);
-        $ticket->save();
-        return $ticket;
-    }
-
-    protected function getType(string $externalId): ?TicketType
-    {
-        return TicketType::whereHas('mappings', function ($query) use ($externalId) {
-            $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
-        })->first();
-    }
-
-    protected function getQrCode(object $data): string
-    {
-        return "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={$data->id}";
-    }
-
-    protected function getClient(): Client
-    {
-        if (!$this->client) {
-            $this->client = new Client([
-                'base_uri' => $this->provider->getSetting('endpoint'),
-                'verify' => config('services.woocommerce.verifytls', true),
-                'auth' => [$this->provider->getSetting('apikey'), $this->provider->getSetting('apisecret')],
-            ]);
-        }
-        return $this->client;
-    }
-
-    public function syncTickets(string|EmailAddress $email): void
-    {
-        $user = null;
-        if ($email instanceof EmailAddress) {
-            $address = $email->email;
-            $user = $email->user;
-        } else {
-            $address = $email;
-        }
-
-        $ticketData = $this->getTickets($address);
-        $this->processTickets($ticketData, $address, $user);
+        return $tickets;
     }
 
     protected function processTickets(array $ticketData, string $address, ?User $user = null): void
@@ -217,6 +166,63 @@ class WooCommerceProvider extends AbstractTicketProvider
         }
     }
 
+    protected function makeTicket(?User $user, object $data): ?Ticket
+    {
+        $type = $this->getType($data->ticket_type_id);
+        if (!$type) {
+            Log::debug("{$this->provider} {$data->id} not added. Unable to find ticket type {$data->ticket_type_id}");
+            return null;
+        }
+        if (!$user) {
+            $email = EmailAddress::whereEmail($data->order->billing->email)
+                ->where('verified_at', '<=', Carbon::now())
+                ->with('user')->first();
+            if ($email) {
+                $user = $email->user;
+            }
+        }
+        $ticket = new Ticket();
+        $ticket->provider()->associate($this->provider);
+        if ($user) {
+            $ticket->user()->associate($user);
+        }
+        $ticket->type()->associate($type);
+        $ticket->event()->associate($type->event);
+        $ticket->external_id = $data->id;
+        $ticket->original_email = $data->order->billing->email;
+        $ticket->name = $data->item->name;
+        $ticket->reference = $data->id;
+        $ticket->qrcode = $this->getQrCode($data);
+        $ticket->save();
+        return $ticket;
+    }
+
+    protected function getType(string $externalId): ?TicketType
+    {
+        return TicketType::whereHas('mappings', function ($query) use ($externalId) {
+            $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
+        })->first();
+    }
+
+    protected function getQrCode(object $data): string
+    {
+        return "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={$data->id}";
+    }
+
+    public function syncTickets(string|EmailAddress $email): void
+    {
+        $user = null;
+        if ($email instanceof EmailAddress) {
+            $address = $email->email;
+            $user = $email->user;
+        } else {
+            $address = $email;
+        }
+
+        $ticketData = $this->getTickets($address);
+        $this->processTickets($ticketData, $address, $user);
+    }
+
     protected function getTickets(?string $address = null): array
     {
         $orders = [];
@@ -250,27 +256,16 @@ class WooCommerceProvider extends AbstractTicketProvider
         return $tickets;
     }
 
-    protected function parseOrder(object $order): array
+    protected function getClient(): Client
     {
-        $tickets = [];
-        foreach ($order->line_items as $item) {
-            for ($i = 1; $i <= $item->quantity; $i++) {
-                $externalId = "{$order->id}-{$item->id}-{$i}";
-                $status = 'voided';
-                if (in_array($order->status, ['processing', 'completed'])) {
-                    $status = 'valid';
-                }
-                $tickets[$externalId] = (object)[
-                    'id' => $externalId,
-                    'ticket_type_id' => $item->product_id,
-                    'order' => $order,
-                    'item' => $item,
-                    'status' => $status,
-                    'email' => $order->billing->email,
-                ];
-            }
+        if (!$this->client) {
+            $this->client = new Client([
+                'base_uri' => $this->provider->getSetting('endpoint'),
+                'verify' => config('services.woocommerce.verifytls', true),
+                'auth' => [$this->provider->getSetting('apikey'), $this->provider->getSetting('apisecret')],
+            ]);
         }
-        return $tickets;
+        return $this->client;
     }
 
     public function getEvents(): array

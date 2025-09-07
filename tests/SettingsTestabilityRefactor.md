@@ -2,26 +2,32 @@
 
 ## Problem
 
-The current codebase uses static calls to `App\Models\Setting::fetch()` throughout the application. This makes it difficult to mock or stub the settings logic in unit tests, leading to brittle tests that may hit the database or require complex mocking.
+The current codebase uses static calls to `App\Models\Setting::fetch()` throughout the application. This makes it
+difficult to mock or stub the settings logic in unit tests, leading to brittle tests that may hit the database or
+require complex mocking.
 
 ## Solution: Use Dependency Injection for Settings
 
-To improve testability and maintainability, we recommend refactoring the code to use dependency injection for settings access. This involves:
+To improve testability and maintainability, we recommend refactoring the code to use dependency injection for settings
+access. This involves:
 
 1. **Create a Settings Repository Interface**
-   - Define an interface (e.g., `SettingRepositoryInterface`) that exposes a `fetch` method.
+    - Define an interface (e.g., `SettingRepositoryInterface`) that exposes a `fetch` method.
 
 2. **Create a Concrete Implementation**
-   - Implement the interface in a class (e.g., `SettingRepository`) that delegates to the current static method.
+    - Implement the interface in a class (e.g., `SettingRepository`) that delegates to the current static method.
 
 3. **Bind the Interface to the Implementation**
-   - In a service provider (e.g., `AppServiceProvider`), bind the interface to the implementation using Laravel's service container.
+    - In a service provider (e.g., `AppServiceProvider`), bind the interface to the implementation using Laravel's
+      service container.
 
 4. **Inject the Interface Where Needed**
-   - In classes that need settings (e.g., form requests, controllers, services), inject the interface via the constructor or setter injection.
+    - In classes that need settings (e.g., form requests, controllers, services), inject the interface via the
+      constructor or setter injection.
 
 5. **Mock the Interface in Tests**
-   - In tests, bind a mock implementation to the interface, allowing you to control the return values for different scenarios.
+    - In tests, bind a mock implementation to the interface, allowing you to control the return values for different
+      scenarios.
 
 ## Example
 

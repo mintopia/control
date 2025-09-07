@@ -3,21 +3,26 @@
 namespace Tests\Unit\app\Services\TicketProviders;
 
 use App\Exceptions\TicketProviderWebhookException;
-use App\Models\TicketProvider;
-use App\Models\ProviderSetting;
-use App\Models\TicketType;
-use App\Models\Ticket;
-use App\Models\User;
 use App\Models\EmailAddress;
 use App\Models\Event;
+use App\Models\EventMapping;
+use App\Models\ProviderSetting;
+use App\Models\Ticket;
+use App\Models\TicketProvider;
+use App\Models\TicketType;
+use App\Models\TicketTypeMapping;
+use App\Models\User;
 use App\Services\TicketProviders\TicketTailorProvider;
+use Closure;
+use GuzzleHttp\Client;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
+use ReflectionClass;
 use Tests\TestCase;
-use Tests\Unit\app\Services\TicketProviders\DummyTicketTailorProvider;
-use GuzzleHttp\Client;
 
 class TicketTailorProviderTest extends TestCase
 {
@@ -64,7 +69,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->getProvider();
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['payload' => []]));
-        $verifyWebhook = \Closure::bind(function ($request) {
+        $verifyWebhook = Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
         $this->assertTrue($verifyWebhook($request));
@@ -74,7 +79,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['payload' => []]));
-        $verifyWebhook = \Closure::bind(function ($request) {
+        $verifyWebhook = Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
         try {
@@ -91,7 +96,7 @@ class TicketTailorProviderTest extends TestCase
         $timestamp = now()->timestamp;
         $header = "t={$timestamp},v1=invalidsignature";
         $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], 'body');
-        $verifyWebhook = \Closure::bind(function ($request) {
+        $verifyWebhook = Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
         try {
@@ -110,7 +115,7 @@ class TicketTailorProviderTest extends TestCase
         $signature = hash_hmac('sha256', $timestamp . $body, 'secret');
         $header = "t={$timestamp},v1={$signature}";
         $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], $body);
-        $verifyWebhook = \Closure::bind(function ($request) {
+        $verifyWebhook = Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
         try {
@@ -129,7 +134,7 @@ class TicketTailorProviderTest extends TestCase
         $signature = hash_hmac('sha256', $timestamp . $body, 'secret');
         $header = "t={$timestamp},v1={$signature}";
         $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], $body);
-        $verifyWebhook = \Closure::bind(function ($request) {
+        $verifyWebhook = Closure::bind(function ($request) {
             return $this->verifyWebhook($request);
         }, $provider, get_class($provider));
         $this->assertTrue($verifyWebhook($request));
@@ -146,10 +151,10 @@ class TicketTailorProviderTest extends TestCase
         $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], $body);
 
         // Create an anonymous subclass that overrides processTicket to record invocation
-        $mock = new class($prov) extends TicketTailorProvider {
+        $mock = new class ($prov) extends TicketTailorProvider {
             public bool $wasCalled = false;
 
-            public function __construct(?\App\Models\TicketProvider $provider = null)
+            public function __construct(?TicketProvider $provider = null)
             {
                 parent::__construct($provider);
             }
@@ -176,7 +181,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->getProvider();
         $data = (object)['barcode' => 'abc123'];
-        $getQrCode = \Closure::bind(function ($data) {
+        $getQrCode = Closure::bind(function ($data) {
             return $this->getQrCode($data);
         }, $provider, get_class($provider));
         $url = $getQrCode($data);
@@ -243,7 +248,7 @@ class TicketTailorProviderTest extends TestCase
         $prov = $provider->getProvider();
 
         // Existing ticket that should be removed (voided)
-        $voided = \App\Models\Ticket::factory()->create([
+        $voided = Ticket::factory()->create([
             'ticket_provider_id' => $prov->id,
             'external_id' => 't2',
         ]);
@@ -269,10 +274,10 @@ class TicketTailorProviderTest extends TestCase
         ];
 
         // Use an anonymous provider subclass to override protected methods instead of mocking them
-        $mock = new class($prov) extends TicketTailorProvider {
+        $mock = new class ($prov) extends TicketTailorProvider {
             public array $stubTickets = [];
 
-            public function __construct(?\App\Models\TicketProvider $provider = null)
+            public function __construct(?TicketProvider $provider = null)
             {
                 parent::__construct($provider);
             }
@@ -284,7 +289,7 @@ class TicketTailorProviderTest extends TestCase
 
             protected function makeTicket(?User $user, object $data): ?Ticket
             {
-                return \App\Models\Ticket::factory()->create([
+                return Ticket::factory()->create([
                     'ticket_provider_id' => $this->provider->id,
                     'external_id' => $data->id,
                 ]);
@@ -333,10 +338,10 @@ class TicketTailorProviderTest extends TestCase
         ];
 
         // @var TicketTailorProvider $mock
-        $mock = new class($prov) extends TicketTailorProvider {
+        $mock = new class ($prov) extends TicketTailorProvider {
             public array $stubTickets = [];
 
-            public function __construct(?\App\Models\TicketProvider $provider = null)
+            public function __construct(?TicketProvider $provider = null)
             {
                 parent::__construct($provider);
             }
@@ -438,27 +443,27 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
         // prepare two paged responses
-        $resp1 = new \GuzzleHttp\Psr7\Response(200, [], json_encode((object)[
+        $resp1 = new Response(200, [], json_encode((object)[
             'data' => [(object)['id' => '1', 'status' => 'valid', 'email' => 'a@x.com', 'event_id' => 'e1', 'ticket_type_id' => 't1', 'barcode' => 'b1', 'description' => 'd1']],
             'links' => (object)['next' => true],
         ]));
-        $resp2 = new \GuzzleHttp\Psr7\Response(200, [], json_encode((object)[
+        $resp2 = new Response(200, [], json_encode((object)[
             'data' => [(object)['id' => '2', 'status' => 'valid', 'email' => 'b@x.com', 'event_id' => 'e2', 'ticket_type_id' => 't2', 'barcode' => 'b2', 'description' => 'd2']],
             'links' => (object)['next' => null],
         ]));
 
-        $mock = new \GuzzleHttp\Handler\MockHandler([$resp1, $resp2]);
-        $handler = \GuzzleHttp\HandlerStack::create($mock);
-        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+        $mock = new MockHandler([$resp1, $resp2]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
 
         // set client onto provider instance
-        $ref = new \ReflectionClass($provider);
+        $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
 
         // call the protected getTickets via bound closure
-        $getTickets = \Closure::bind(function ($address = null) {
+        $getTickets = Closure::bind(function ($address = null) {
             return $this->getTickets($address);
         }, $provider, get_class($provider));
 
@@ -470,27 +475,27 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
         // prepare two paged responses
-        $resp1 = new \GuzzleHttp\Psr7\Response(200, [], json_encode((object)[
+        $resp1 = new Response(200, [], json_encode((object)[
             'data' => [(object)['id' => '1', 'status' => 'valid', 'email' => 'a@x.com', 'event_id' => 'e1', 'ticket_type_id' => 't1', 'barcode' => 'b1', 'description' => 'd1']],
             'links' => (object)['next' => true],
         ]));
-        $resp2 = new \GuzzleHttp\Psr7\Response(200, [], json_encode((object)[
+        $resp2 = new Response(200, [], json_encode((object)[
             'data' => [(object)['id' => '2', 'status' => 'valid', 'email' => 'b@x.com', 'event_id' => 'e2', 'ticket_type_id' => 't2', 'barcode' => 'b2', 'description' => 'd2']],
             'links' => (object)['next' => null],
         ]));
 
-        $mock = new \GuzzleHttp\Handler\MockHandler([$resp1, $resp2]);
-        $handler = \GuzzleHttp\HandlerStack::create($mock);
-        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+        $mock = new MockHandler([$resp1, $resp2]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
 
         // set client onto provider instance
-        $ref = new \ReflectionClass($provider);
+        $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
 
         // call the protected getTickets via bound closure with an address
-        $getTickets = \Closure::bind(function ($address = null) {
+        $getTickets = Closure::bind(function ($address = null) {
             return $this->getTickets($address);
         }, $provider, get_class($provider));
 
@@ -504,18 +509,18 @@ class TicketTailorProviderTest extends TestCase
         $key = "ticketproviders.{$provider->getProvider()->id}.{$provider->getProvider()->cache_prefix}.events";
         Cache::forget($key);
 
-        $resp = new \GuzzleHttp\Psr7\Response(200, [], json_encode((object)[
+        $resp = new Response(200, [], json_encode((object)[
             'data' => [
                 (object)['id' => 'evt1', 'name' => 'Event 1'],
                 (object)['id' => 'evt2', 'name' => 'Event 2'],
             ],
             'links' => (object)['next' => null],
         ]));
-        $mock = new \GuzzleHttp\Handler\MockHandler([$resp]);
-        $handler = \GuzzleHttp\HandlerStack::create($mock);
-        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+        $mock = new MockHandler([$resp]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
 
-        $ref = new \ReflectionClass($provider);
+        $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
@@ -533,17 +538,17 @@ class TicketTailorProviderTest extends TestCase
         $key = "ticketproviders.{$prov->id}.{$prov->cache_prefix}.events.{$eventId}.tickettypes";
         Cache::forget($key);
 
-        $resp = new \GuzzleHttp\Psr7\Response(200, [], json_encode((object)[
+        $resp = new Response(200, [], json_encode((object)[
             'ticket_types' => [
                 (object)['id' => 'type1', 'name' => 'VIP'],
                 (object)['id' => 'type2', 'name' => 'Standard'],
             ],
         ]));
-        $mock = new \GuzzleHttp\Handler\MockHandler([$resp]);
-        $handler = \GuzzleHttp\HandlerStack::create($mock);
-        $client = new \GuzzleHttp\Client(['handler' => $handler]);
+        $mock = new MockHandler([$resp]);
+        $handler = HandlerStack::create($mock);
+        $client = new Client(['handler' => $handler]);
 
-        $ref = new \ReflectionClass($provider);
+        $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
@@ -607,9 +612,9 @@ class TicketTailorProviderTest extends TestCase
         EmailAddress::factory()->create(['email' => 'u@example.com', 'verified_at' => now(), 'user_id' => $user->id]);
 
         $event = Event::factory()->create();
-        \App\Models\EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evt1']);
+        EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evt1']);
         $type = TicketType::factory()->create();
-        \App\Models\TicketTypeMapping::create(['ticket_type_id' => $type->id, 'ticket_provider_id' => $prov->id, 'external_id' => 'type1']);
+        TicketTypeMapping::create(['ticket_type_id' => $type->id, 'ticket_provider_id' => $prov->id, 'external_id' => 'type1']);
 
         $data = (object)[
             'id' => 'tlink',
@@ -632,7 +637,7 @@ class TicketTailorProviderTest extends TestCase
         $prov = $provider->getProvider();
 
         $event = Event::factory()->create();
-        \App\Models\EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evtX']);
+        EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evtX']);
 
         $data = (object)[
             'id' => 'm1',
@@ -644,7 +649,7 @@ class TicketTailorProviderTest extends TestCase
         ];
 
         // call protected makeTicket on real provider so Dummy's auto-creation isn't used
-        $makeTicket = \Closure::bind(function ($user, $data) {
+        $makeTicket = Closure::bind(function ($user, $data) {
             return $this->makeTicket($user, $data);
         }, $provider, get_class($provider));
 
@@ -661,9 +666,9 @@ class TicketTailorProviderTest extends TestCase
         EmailAddress::factory()->create(['email' => 'email-user@example.com', 'verified_at' => now(), 'user_id' => $user->id]);
 
         $event = Event::factory()->create();
-        \App\Models\EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evtY']);
+        EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evtY']);
         $type = TicketType::factory()->create();
-        \App\Models\TicketTypeMapping::create(['ticket_type_id' => $type->id, 'ticket_provider_id' => $prov->id, 'external_id' => 'typeY']);
+        TicketTypeMapping::create(['ticket_type_id' => $type->id, 'ticket_provider_id' => $prov->id, 'external_id' => 'typeY']);
 
         $data = (object)[
             'id' => 'm2',
@@ -690,9 +695,9 @@ class TicketTailorProviderTest extends TestCase
         EmailAddress::factory()->create(['email' => 'userb@example.com', 'verified_at' => now(), 'user_id' => $userB->id]);
 
         $event = Event::factory()->create();
-        \App\Models\EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evtZ']);
+        EventMapping::factory()->for($event)->for($prov, 'provider')->create(['external_id' => 'evtZ']);
         $type = TicketType::factory()->create();
-        \App\Models\TicketTypeMapping::create(['ticket_type_id' => $type->id, 'ticket_provider_id' => $prov->id, 'external_id' => 'typeZ']);
+        TicketTypeMapping::create(['ticket_type_id' => $type->id, 'ticket_provider_id' => $prov->id, 'external_id' => 'typeZ']);
 
         $data = (object)[
             'id' => 'm3',

@@ -2,13 +2,19 @@
 
 namespace Tests\Unit\app\Providers;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\LinkedAccount;
 use App\Models\User;
+use App\Providers\TelescopeServiceProvider;
+use Closure;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Gate;
+use Laravel\Telescope\Avatar;
+use Laravel\Telescope\EntryType;
 use Laravel\Telescope\IncomingEntry;
-use Illuminate\Support\Facades\Facade;
 use Laravel\Telescope\Telescope;
+use Mockery;
+use ReflectionClass;
+use Tests\TestCase;
 
 class TelescopeServiceProviderTest extends TestCase
 {
@@ -39,22 +45,25 @@ class TelescopeServiceProviderTest extends TestCase
             }
 
             public function hideRequestParameters($params)
-            { /* noop for register test */
+            {
+                /* noop for register test */
             }
+
             public function hideRequestHeaders($headers)
-            { /* noop for register test */
+            {
+                /* noop for register test */
             }
         };
 
         // Clear Telescope static callbacks to ensure a clean test environment
-        \Laravel\Telescope\Telescope::$filterUsing = [];
-        \Laravel\Telescope\Telescope::$tagUsing = [];
+        Telescope::$filterUsing = [];
+        Telescope::$tagUsing = [];
 
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider = new TelescopeServiceProvider(app());
         $provider->register();
 
-        $this->assertIsArray(\Laravel\Telescope\Telescope::$filterUsing);
-        $this->assertNotEmpty(\Laravel\Telescope\Telescope::$filterUsing, 'Telescope filter callback was not registered');
+        $this->assertIsArray(Telescope::$filterUsing);
+        $this->assertNotEmpty(Telescope::$filterUsing, 'Telescope filter callback was not registered');
     }
 
     public function testRegisterInLocalEnvironmentAllowsAllEntries()
@@ -63,14 +72,14 @@ class TelescopeServiceProviderTest extends TestCase
         $this->app['env'] = 'local';
 
         // Reset filter registry
-        \Laravel\Telescope\Telescope::$filterUsing = [];
+        Telescope::$filterUsing = [];
 
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider = new TelescopeServiceProvider(app());
         $provider->register();
 
-        $this->assertNotEmpty(\Laravel\Telescope\Telescope::$filterUsing);
-        $callback = \Laravel\Telescope\Telescope::$filterUsing[0];
-        $fakeEntry = \Mockery::mock(\Laravel\Telescope\IncomingEntry::class);
+        $this->assertNotEmpty(Telescope::$filterUsing);
+        $callback = Telescope::$filterUsing[0];
+        $fakeEntry = Mockery::mock(IncomingEntry::class);
         $fakeEntry->shouldReceive('isRequest')->andReturn(false);
         // In local env the filter should return true
         $this->assertTrue($callback($fakeEntry));
@@ -82,33 +91,33 @@ class TelescopeServiceProviderTest extends TestCase
         $this->app['env'] = 'production';
 
         // Case 1: API path should be filtered out
-        \Laravel\Telescope\Telescope::$filterUsing = [];
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        Telescope::$filterUsing = [];
+        $provider = new TelescopeServiceProvider(app());
         $provider->register();
-        $callback = \Laravel\Telescope\Telescope::$filterUsing[0];
+        $callback = Telescope::$filterUsing[0];
 
-        $entry = new \Laravel\Telescope\IncomingEntry(['uri' => '/api/v1/something']);
-        $entry->type = \Laravel\Telescope\EntryType::REQUEST;
+        $entry = new IncomingEntry(['uri' => '/api/v1/something']);
+        $entry->type = EntryType::REQUEST;
         $entry->content = ['uri' => '/api/v1/something'];
         $this->assertFalse($callback($entry));
 
         // Additional explicit test: ensure URIs starting with '/api/v1/' are filtered out
-        \Laravel\Telescope\Telescope::$filterUsing = [];
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        Telescope::$filterUsing = [];
+        $provider = new TelescopeServiceProvider(app());
         $provider->register();
-        $callback2 = \Laravel\Telescope\Telescope::$filterUsing[0];
-        $entryApi = new \Laravel\Telescope\IncomingEntry(['uri' => '/api/v1/other']);
-        $entryApi->type = \Laravel\Telescope\EntryType::REQUEST;
+        $callback2 = Telescope::$filterUsing[0];
+        $entryApi = new IncomingEntry(['uri' => '/api/v1/other']);
+        $entryApi->type = EntryType::REQUEST;
         $entryApi->content = ['uri' => '/api/v1/other'];
         $this->assertFalse($callback2($entryApi), 'API v1 URIs should be filtered out by the telescope filter');
 
         // Case 2: config nofilter true should allow all
         config(['telescope.nofilter' => true]);
-        \Laravel\Telescope\Telescope::$filterUsing = [];
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        Telescope::$filterUsing = [];
+        $provider = new TelescopeServiceProvider(app());
         $provider->register();
-        $callback = \Laravel\Telescope\Telescope::$filterUsing[0];
-        $entry2 = new \Laravel\Telescope\IncomingEntry(['uri' => '/not-api']);
+        $callback = Telescope::$filterUsing[0];
+        $entry2 = new IncomingEntry(['uri' => '/not-api']);
         $entry2->type = 'other';
         $entry2->content = ['uri' => '/not-api'];
         $this->assertTrue($callback($entry2));
@@ -119,10 +128,12 @@ class TelescopeServiceProviderTest extends TestCase
         $fake = new class {
             public $hiddenParams = null;
             public $hiddenHeaders = null;
+
             public function hideRequestParameters($params)
             {
                 $this->hiddenParams = $params;
             }
+
             public function hideRequestHeaders($headers)
             {
                 $this->hiddenHeaders = $headers;
@@ -130,22 +141,22 @@ class TelescopeServiceProviderTest extends TestCase
         };
 
         // Reset Telescope hidden arrays
-        \Laravel\Telescope\Telescope::$hiddenRequestParameters = [];
-        \Laravel\Telescope\Telescope::$hiddenRequestHeaders = [];
+        Telescope::$hiddenRequestParameters = [];
+        Telescope::$hiddenRequestHeaders = [];
 
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider = new TelescopeServiceProvider(app());
         $this->invokeProtected($provider, 'hideSensitiveRequestDetails');
 
-        $this->assertIsArray(\Laravel\Telescope\Telescope::$hiddenRequestParameters);
-        $this->assertContains('_token', \Laravel\Telescope\Telescope::$hiddenRequestParameters);
-        $this->assertIsArray(\Laravel\Telescope\Telescope::$hiddenRequestHeaders);
-        $this->assertContains('cookie', \Laravel\Telescope\Telescope::$hiddenRequestHeaders);
+        $this->assertIsArray(Telescope::$hiddenRequestParameters);
+        $this->assertContains('_token', Telescope::$hiddenRequestParameters);
+        $this->assertIsArray(Telescope::$hiddenRequestHeaders);
+        $this->assertContains('cookie', Telescope::$hiddenRequestHeaders);
     }
 
     public function testGateDefinesViewTelescope()
     {
-        Gate::shouldReceive('define')->with('viewTelescope', \Closure::class)->once();
-        $provider = new \app\Providers\TelescopeServiceProvider(app());
+        Gate::shouldReceive('define')->with('viewTelescope', Closure::class)->once();
+        $provider = new TelescopeServiceProvider(app());
         $this->invokeProtected($provider, 'gate');
         $this->assertTrue(true);
     }
@@ -153,10 +164,10 @@ class TelescopeServiceProviderTest extends TestCase
     public function testRegisterRegistersAvatarCallbackReturnsAvatarUrl()
     {
         // Ensure provider registers an avatar callback (Avatar::$callback is protected; use reflection)
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider = new TelescopeServiceProvider(app());
         $provider->register();
 
-        $ref = new \ReflectionClass(\Laravel\Telescope\Avatar::class);
+        $ref = new ReflectionClass(Avatar::class);
         $prop = $ref->getProperty('callback');
         $prop->setAccessible(true);
         $cb = $prop->getValue();
@@ -166,11 +177,11 @@ class TelescopeServiceProviderTest extends TestCase
     public function testRegisterAvatarCallbackHandlesMissingUser()
     {
         // Register a custom avatar callback that returns null to simulate missing user
-        \Laravel\Telescope\Avatar::register(function ($id, $email) {
+        Avatar::register(function ($id, $email) {
             return null;
         });
 
-        $result = \Laravel\Telescope\Avatar::url(['id' => '9999', 'email' => 'noone@example.test']);
+        $result = Avatar::url(['id' => '9999', 'email' => 'noone@example.test']);
         $this->assertNull($result);
     }
 
@@ -178,8 +189,8 @@ class TelescopeServiceProviderTest extends TestCase
     {
         // Use a real user created in the test database so User::find returns it
         $user = User::factory()->create(['avatar' => null]);
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
-        $ref = new \ReflectionClass($provider);
+        $provider = new TelescopeServiceProvider(app());
+        $ref = new ReflectionClass($provider);
         $method = $ref->getMethod('resolveAvatar');
         $method->setAccessible(true);
         $result = $method->invokeArgs($provider, [(string)$user->id, $user->email ?? $user->nickname]);
@@ -190,8 +201,8 @@ class TelescopeServiceProviderTest extends TestCase
     public function testResolveAvatarReturnsGravatarForMissingUser()
     {
         // No users created for this test; find should return null and gravatar will be used
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
-        $ref = new \ReflectionClass($provider);
+        $provider = new TelescopeServiceProvider(app());
+        $ref = new ReflectionClass($provider);
         $method = $ref->getMethod('resolveAvatar');
         $method->setAccessible(true);
         $result = $method->invokeArgs($provider, ['999999', 'noone@example.test']);
@@ -204,14 +215,14 @@ class TelescopeServiceProviderTest extends TestCase
     {
         // Create a user and attach a linked account that contains an avatar_url
         $user = User::factory()->create(['avatar' => null]);
-        $acc = \App\Models\LinkedAccount::create([
+        $acc = LinkedAccount::create([
             'user_id' => $user->id,
             'avatar_url' => 'https://cdn.example/test-avatar.png',
             'external_id' => '12345',
         ]);
 
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
-        $ref = new \ReflectionClass($provider);
+        $provider = new TelescopeServiceProvider(app());
+        $ref = new ReflectionClass($provider);
         $method = $ref->getMethod('resolveAvatar');
         $method->setAccessible(true);
         $result = $method->invokeArgs($provider, [(string)$user->id, $user->email ?? $user->nickname]);
@@ -225,22 +236,22 @@ class TelescopeServiceProviderTest extends TestCase
     {
         // Create a user with linked account avatar
         $user = User::factory()->create(['avatar' => null]);
-        \App\Models\LinkedAccount::create([
+        LinkedAccount::create([
             'user_id' => $user->id,
             'avatar_url' => 'https://cdn.example/provider-avatar.png',
             'external_id' => 'xyz',
         ]);
 
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider = new TelescopeServiceProvider(app());
         // Register the provider which will call Telescope::avatar with a closure
         $provider->register();
 
         // Invoke the avatar callback via the public API; Avatar::url should call the closure registered above
-        $result = \Laravel\Telescope\Avatar::url(['id' => (string)$user->id, 'email' => $user->email ?? $user->nickname]);
+        $result = Avatar::url(['id' => (string)$user->id, 'email' => $user->email ?? $user->nickname]);
         $this->assertEquals($user->avatarUrl(), $result);
 
         // Also reflect into the Avatar class to get the registered callback and invoke it directly
-        $ref = new \ReflectionClass(\Laravel\Telescope\Avatar::class);
+        $ref = new ReflectionClass(Avatar::class);
         $prop = $ref->getProperty('callback');
         $prop->setAccessible(true);
         $cb = $prop->getValue();
@@ -255,16 +266,16 @@ class TelescopeServiceProviderTest extends TestCase
         $this->app['env'] = 'production';
 
         // Reset filter registry
-        \Laravel\Telescope\Telescope::$filterUsing = [];
+        Telescope::$filterUsing = [];
 
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider = new TelescopeServiceProvider(app());
         $provider->register();
 
-        $this->assertNotEmpty(\Laravel\Telescope\Telescope::$filterUsing);
-        $callback = \Laravel\Telescope\Telescope::$filterUsing[0];
+        $this->assertNotEmpty(Telescope::$filterUsing);
+        $callback = Telescope::$filterUsing[0];
 
         // Create a fake entry that is reportable
-        $fakeEntry = \Mockery::mock(\Laravel\Telescope\IncomingEntry::class);
+        $fakeEntry = Mockery::mock(IncomingEntry::class);
         $fakeEntry->shouldReceive('isRequest')->andReturn(false);
         $fakeEntry->shouldReceive('isReportableException')->andReturn(true);
         $fakeEntry->shouldReceive('isFailedRequest')->andReturn(false);
@@ -281,15 +292,15 @@ class TelescopeServiceProviderTest extends TestCase
         $this->app['env'] = 'local';
 
         // Reset filter registry
-        \Laravel\Telescope\Telescope::$filterUsing = [];
+        Telescope::$filterUsing = [];
 
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider = new TelescopeServiceProvider(app());
         $provider->register();
-        $this->assertNotEmpty(\Laravel\Telescope\Telescope::$filterUsing);
-        $callback = \Laravel\Telescope\Telescope::$filterUsing[0];
+        $this->assertNotEmpty(Telescope::$filterUsing);
+        $callback = Telescope::$filterUsing[0];
 
-        $entry = new \Laravel\Telescope\IncomingEntry(['uri' => '/api/v1/test']);
-        $entry->type = \Laravel\Telescope\EntryType::REQUEST;
+        $entry = new IncomingEntry(['uri' => '/api/v1/test']);
+        $entry->type = EntryType::REQUEST;
         $entry->content = ['uri' => '/api/v1/test'];
 
         // In local environment the callback should always allow entries
@@ -300,7 +311,7 @@ class TelescopeServiceProviderTest extends TestCase
     {
         // Ensure Gate is using the real registry for this assertion
         // Call the provider->gate to register the gate
-        $provider = new \App\Providers\TelescopeServiceProvider(app());
+        $provider = new TelescopeServiceProvider(app());
         $this->invokeProtected($provider, 'gate');
 
         // Create a user stub that returns true for hasRole('admin')
@@ -325,7 +336,7 @@ class TelescopeServiceProviderTest extends TestCase
 
     private function invokeProtected($object, $method, $args = [])
     {
-        $reflection = new \ReflectionClass($object);
+        $reflection = new ReflectionClass($object);
         $method = $reflection->getMethod($method);
         $method->setAccessible(true);
         return $method->invokeArgs($object, $args);

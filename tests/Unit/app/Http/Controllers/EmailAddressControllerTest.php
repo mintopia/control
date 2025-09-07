@@ -2,16 +2,19 @@
 
 namespace Tests\Unit\app\Http\Controllers;
 
-use Tests\TestCase;
 use App\Http\Controllers\EmailAddressController;
-use App\Models\User;
+use App\Http\Requests\EmailAddressRequest;
+use App\Http\Requests\EmailVerifyRequest;
+use App\Mail\VerifyEmail;
 use App\Models\EmailAddress;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Http\Request;
-use Mockery;
-use Laravel\Sanctum\Sanctum;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Route;
+use Illuminate\View\View;
+use Laravel\Sanctum\Sanctum;
+use Tests\TestCase;
 
 class EmailAddressControllerTest extends TestCase
 {
@@ -29,13 +32,14 @@ class EmailAddressControllerTest extends TestCase
         $response = $controller->create();
         $this->assertTrue(is_object($response));
     }
+
     public function testStoreCreatesEmailAndSendsVerification()
     {
         Mail::fake();
 
         $user = User::factory()->create();
 
-        $request = \App\Http\Requests\EmailAddressRequest::create('/emails', 'POST', ['email' => 'test@example.com']);
+        $request = EmailAddressRequest::create('/emails', 'POST', ['email' => 'test@example.com']);
         $request->setUserResolver(fn() => $user);
 
         $controller = new EmailAddressController();
@@ -72,7 +76,7 @@ class EmailAddressControllerTest extends TestCase
 
         // After storing, there should be a single email record for that address
         $this->assertDatabaseCount('email_addresses', 1);
-        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\VerifyEmail::class);
+        Mail::assertSent(VerifyEmail::class);
     }
 
     public function testDeleteReturnsViewOrRedirects()
@@ -114,7 +118,7 @@ class EmailAddressControllerTest extends TestCase
         $controller = new EmailAddressController();
         $response = $controller->delete($email);
 
-        $this->assertInstanceOf(\Illuminate\View\View::class, $response);
+        $this->assertInstanceOf(View::class, $response);
         $this->assertArrayHasKey('email', $response->getData());
     }
 
@@ -183,10 +187,10 @@ class EmailAddressControllerTest extends TestCase
             'verification_sent_at' => now(),
         ]);
 
-        $request = \App\Http\Requests\EmailVerifyRequest::create('/emails/' . $email->id . '/verify', 'POST', ['code' => 'CODE123']);
+        $request = EmailVerifyRequest::create('/emails/' . $email->id . '/verify', 'POST', ['code' => 'CODE123']);
         $request->setUserResolver(fn() => $user);
 
-        $controller = new \App\Http\Controllers\EmailAddressController();
+        $controller = new EmailAddressController();
         $response = $controller->verifyProcess($request, $email);
 
         $this->assertTrue(method_exists($response, 'getTargetUrl'));
@@ -207,7 +211,7 @@ class EmailAddressControllerTest extends TestCase
         $this->withoutExceptionHandling();
 
         // Ensure route-model binding returns a model instance (some test flows surface the raw id)
-        \Illuminate\Support\Facades\Route::bind('emailaddress', fn($value) => EmailAddress::findOrFail($value));
+        Route::bind('emailaddress', fn($value) => EmailAddress::findOrFail($value));
 
         // Ensure the authenticated user will not be redirected by the first-login middleware
         $user->first_login = false;
@@ -256,7 +260,7 @@ class EmailAddressControllerTest extends TestCase
             'verification_sent_at' => now(),
         ]);
 
-        $request = \App\Http\Requests\EmailVerifyRequest::create('/emails/' . $email->id . '/verify_code', 'POST', ['code' => 'CODE123']);
+        $request = EmailVerifyRequest::create('/emails/' . $email->id . '/verify_code', 'POST', ['code' => 'CODE123']);
         $request->setUserResolver(fn() => $user);
 
         $controller = new EmailAddressController();
@@ -277,7 +281,7 @@ class EmailAddressControllerTest extends TestCase
 
         $this->assertTrue(method_exists($response, 'getTargetUrl'));
         $this->assertStringContainsString('/verify', $response->getTargetUrl());
-        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\VerifyEmail::class);
+        Mail::assertSent(VerifyEmail::class);
         $this->assertNotNull($email->fresh()->verification_code);
     }
 

@@ -2,17 +2,17 @@
 
 namespace Tests\Unit\app\Services\SocialProviders;
 
-use Tests\TestCase;
-use App\Services\SocialProviders\SteamProvider;
-use App\Models\SocialProvider;
-use App\Models\ProviderSetting;
 use App\Models\LinkedAccount;
+use App\Models\ProviderSetting;
+use App\Models\SocialProvider;
+use App\Services\SocialProviders\SteamProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Socialite\Facades\Socialite;
-use SocialiteProviders\Manager\Config;
-use SocialiteProviders\Steam\Provider as SteamSocialiteProvider;
 use Illuminate\Http\Request;
+use Laravel\Socialite\Facades\Socialite;
 use Mockery;
+use ReflectionMethod;
+use SocialiteProviders\Steam\Provider as SteamSocialiteProvider;
+use Tests\TestCase;
 
 class SteamProviderTest extends TestCase
 {
@@ -63,7 +63,7 @@ class SteamProviderTest extends TestCase
             ->with(SteamSocialiteProvider::class, Mockery::type('array'))
             ->andReturn($mockSocialiteProvider);
 
-        $method = new \ReflectionMethod($provider, 'getSocialiteProvider');
+        $method = new ReflectionMethod($provider, 'getSocialiteProvider');
         $method->setAccessible(true);
         $result = $method->invoke($provider);
 
@@ -80,13 +80,14 @@ class SteamProviderTest extends TestCase
             {
                 return 'avatar_url';
             }
+
             public function getNickname()
             {
                 return 'nickname';
             }
         };
 
-        $method = new \ReflectionMethod($provider, 'updateAccount');
+        $method = new ReflectionMethod($provider, 'updateAccount');
         $method->setAccessible(true);
         $method->invoke($provider, $account, $remoteUser);
 

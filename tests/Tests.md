@@ -7,7 +7,8 @@ Two test suites have been created:
 - **Unit**: Contains stand-alone tests
 - **Feature**: Contains tests that require a database connection and proper scaffolding
 
-> **Info:** ℹ️ Most tests in Unit are, strictly speaking, integration tests as they touch the database. We will amend this at a later date.
+> **Info:** ℹ️ Most tests in Unit are, strictly speaking, integration tests as they touch the database. We will amend
+> this at a later date.
 
 ### Scope
 
@@ -20,11 +21,13 @@ It may be missing some additions to properly test certain scenarios (getters, se
 
 ## Test Environment
 
-Following the Development Setup in [README.md](..\readme.md), create a local environment to execute `docker compose` commands in.
+Following the Development Setup in [README.md](..\readme.md), create a local environment to execute `docker compose`
+commands in.
 
 ### Example - Windows with VSCode
 
-You can use VsCode and the recommended extensions in this repo to get started. We are using the `PHPunit Test Explorer` with native Test Adapter configuration
+You can use VsCode and the recommended extensions in this repo to get started. We are using the `PHPunit Test Explorer`
+with native Test Adapter configuration
 
 ## Execution
 
@@ -105,7 +108,8 @@ php vendor/bin/phpunit
 
 ### Wave 1 - AUG 2025
 
-- [x] Each file has _at least_ a stub file with the same name + `test.php` in the corresponding Folder Structure (some were missed, mea culpa - David)
+- [x] Each file has _at least_ a stub file with the same name + `test.php` in the corresponding Folder Structure (some
+  were missed, mea culpa - David)
 - [x] Each file has a few unit tests created
 - [x] Database is up-and-running for testing (sqllite)
 - [x] All Unit Tests succeed
@@ -138,7 +142,8 @@ Mockery was initially used, before switching to Eloquent-backed tooling
 
 Code Coverage: We currently have 50% coverage across the board.
 
-> **Note:** 💡 Currently, we have tests that live mostly in Unit but are Feature/Integration tests, this will be addressed later, when expanding upon it more.
+> **Note:** 💡 Currently, we have tests that live mostly in Unit but are Feature/Integration tests, this will be
+> addressed later, when expanding upon it more.
 
 ### Wave 2 - SEP 2025 (planned)
 
@@ -149,8 +154,8 @@ Code Coverage: We currently have 50% coverage across the board.
 - [x] Increase coverage for Classes and Traits to 75%
 - [ ] Separating Test scopes properly - deferred, some tests that are more involved have been put into `tests/feature/`
 - [ ] Define proper exclusions - Elements not tested:
-  - Lavarel default code (if not adapted)
-  - OpenTelemetry - Standard library
+    - Lavarel default code (if not adapted)
+    - OpenTelemetry - Standard library
 - [ ] Replace Mockery with Eloquent-backed methods across the board - some tests still use it
 - [ ] Add GitHub Action to run Unit Tests on PR
 - [ ] Add GitHub Action to run Code Coverage validation on Dispatch
@@ -159,8 +164,10 @@ Code Coverage: We currently have 50% coverage across the board.
 
 Tasks have been created for easier access to testing:
 
-- Run Laravel Tests (current file) - Executes a direct test against the currently focused file<br />`docker compose run --rm -e XDEBUG_MODE=coverage artisan test --filter \"${fileBasenameNoExtension}\"`
+- Run Laravel Tests (current file) - Executes a direct test against the currently focused file<br />
+  `docker compose run --rm -e XDEBUG_MODE=coverage artisan test --filter \"${fileBasenameNoExtension}\"`
 - Run Laravel Test Suite for Unit Tests<br />`docker compose run --rm artisan test --testsuite=Unit`
 - Run Laravel Test Suite for Feature Tests<br />`docker compose run --rm artisan test --testsuite=Feature`
 - Run Laravel Tests (full) - Runs all tests in the terminal - Runs for 7+ minutes!<br />`docker compose artisan test`
-- Run Laravel Tests with Coverage Report - Creates coverage report locally - Runs for 10+ minutes!<br />`docker compose run --rm -e XDEBUG_MODE=coverage test --configuration=phpunit.xml --coverage-clover=clover.xml --coverage-html=html-coverage`
+- Run Laravel Tests with Coverage Report - Creates coverage report locally - Runs for 10+ minutes!<br />
+  `docker compose run --rm -e XDEBUG_MODE=coverage test --configuration=phpunit.xml --coverage-clover=clover.xml --coverage-html=html-coverage`

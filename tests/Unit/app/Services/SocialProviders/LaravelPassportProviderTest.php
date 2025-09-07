@@ -2,16 +2,15 @@
 
 namespace Tests\Unit\app\Services\SocialProviders;
 
-use Tests\TestCase;
-use App\Services\SocialProviders\LaravelPassportProvider;
-use App\Models\SocialProvider;
-use App\Models\ProviderSetting;
 use App\Models\LinkedAccount;
-use Laravel\Socialite\Facades\Socialite;
-use SocialiteProviders\LaravelPassport\Provider as PassportSocialiteProvider;
-use SocialiteProviders\Manager\Config;
-use Illuminate\Http\RedirectResponse;
+use App\Models\ProviderSetting;
+use App\Models\SocialProvider;
+use App\Services\SocialProviders\LaravelPassportProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Socialite\Facades\Socialite;
+use ReflectionClass;
+use ReflectionMethod;
+use Tests\TestCase;
 
 class LaravelPassportProviderTest extends TestCase
 {
@@ -54,7 +53,7 @@ class LaravelPassportProviderTest extends TestCase
             'provider_class' => LaravelPassportProvider::class,
         ]);
         $provider = new LaravelPassportProvider($socialProvider);
-        $reflection = new \ReflectionClass($provider);
+        $reflection = new ReflectionClass($provider);
         $nameProperty = $reflection->getProperty('name');
         $nameProperty->setAccessible(true);
         $this->assertEquals('Custom Passport', $nameProperty->getValue($provider));
@@ -75,6 +74,7 @@ class LaravelPassportProviderTest extends TestCase
             {
                 return $this;
             }
+
             public function with($arr)
             {
                 return $this;
@@ -85,7 +85,7 @@ class LaravelPassportProviderTest extends TestCase
         // our provider instance so the provider's internal call path can be exercised.
         Socialite::shouldReceive('buildProvider')->andReturn($mockSocialiteProvider);
 
-        $method = new \ReflectionMethod($provider, 'getSocialiteProvider');
+        $method = new ReflectionMethod($provider, 'getSocialiteProvider');
         $method->setAccessible(true);
         $result = $method->invoke($provider);
 
@@ -102,15 +102,17 @@ class LaravelPassportProviderTest extends TestCase
             {
                 return 'avatar_url';
             }
+
             public $refreshToken = 'refresh_token';
             public $token = 'access_token';
+
             public function getNickname()
             {
                 return 'nickname';
             }
         };
 
-        $method = new \ReflectionMethod($provider, 'updateAccount');
+        $method = new ReflectionMethod($provider, 'updateAccount');
         $method->setAccessible(true);
         $method->invoke($provider, $account, $remoteUser);
 

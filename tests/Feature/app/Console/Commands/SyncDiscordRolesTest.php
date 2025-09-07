@@ -2,15 +2,18 @@
 
 namespace Tests\Feature\app\Console\Commands;
 
-use Tests\TestCase;
 use App\Console\Commands\SyncDiscordRoles;
-use App\Models\User;
-use App\Models\SocialProvider;
 use App\Models\LinkedAccount;
-use App\Models\TicketType;
+use App\Models\SocialProvider;
 use App\Models\Ticket;
-use Illuminate\Support\Facades\Log;
+use App\Models\TicketType;
+use App\Models\User;
+use App\Services\DiscordApi;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use ReflectionMethod;
+use ReflectionProperty;
+use Tests\TestCase;
 
 class SyncDiscordRolesTest extends TestCase
 {
@@ -38,7 +41,7 @@ class SyncDiscordRolesTest extends TestCase
             $msg = is_array($args) ? ($args[0] ?? '') : $args;
             return (is_string($msg) || is_numeric($msg)) && strpos((string)$msg, 'Social Provider was not found') !== false;
         });
-        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+        $mockApi = $this->getMockBuilder(DiscordApi::class)
             ->disableOriginalConstructor()
             ->getMock();
         $command = new SyncDiscordRoles();
@@ -58,7 +61,7 @@ class SyncDiscordRolesTest extends TestCase
         // create a full Ticket via factory so required fields (ticket_provider_id, event_id, etc.) are populated
         Ticket::factory()->create(['user_id' => $user->id, 'ticket_type_id' => $ticketType->id]);
 
-        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+        $mockApi = $this->getMockBuilder(DiscordApi::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['getMemberRoles', 'addRoleToMember', 'removeRoleFromMember'])
             ->getMock();
@@ -69,7 +72,7 @@ class SyncDiscordRolesTest extends TestCase
         $mockApi->expects($this->never())->method('removeRoleFromMember');
 
         // Bind the mock into the container so the command resolves it via DI
-        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+        $this->app->instance(DiscordApi::class, $mockApi);
 
         // Run the command through Artisan so Eloquent and container resolution behave as in production
         $this->artisan('control:sync-discord-roles')->assertExitCode(0);
@@ -97,7 +100,7 @@ class SyncDiscordRolesTest extends TestCase
         $tt = TicketType::factory()->create(['discord_role_id' => '10']);
         Ticket::factory()->create(['user_id' => $userA->id, 'ticket_type_id' => $tt->id]);
 
-        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+        $mockApi = $this->getMockBuilder(DiscordApi::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['getMemberRoles', 'addRoleToMember', 'removeRoleFromMember'])
             ->getMock();
@@ -110,7 +113,7 @@ class SyncDiscordRolesTest extends TestCase
         $mockApi->expects($this->once())->method('addRoleToMember');
         $mockApi->expects($this->never())->method('removeRoleFromMember');
 
-        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+        $this->app->instance(DiscordApi::class, $mockApi);
 
         // Call the command for userA specifically
         $this->artisan('control:sync-discord-roles', ['user' => $userA->id])->assertExitCode(0);
@@ -124,7 +127,7 @@ class SyncDiscordRolesTest extends TestCase
         TicketType::factory()->create(['discord_role_id' => '200']);
 
         $cmd = new SyncDiscordRoles();
-        $rm = new \ReflectionMethod(SyncDiscordRoles::class, 'getManagedRoles');
+        $rm = new ReflectionMethod(SyncDiscordRoles::class, 'getManagedRoles');
         $rm->setAccessible(true);
         $roles = $rm->invoke($cmd);
 
@@ -150,7 +153,7 @@ class SyncDiscordRolesTest extends TestCase
         // User only has ticket for 300 (so shouldHave = [300])
         Ticket::factory()->create(['user_id' => $user->id, 'ticket_type_id' => $ttKeep->id]);
 
-        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+        $mockApi = $this->getMockBuilder(DiscordApi::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['getMemberRoles', 'addRoleToMember', 'removeRoleFromMember'])
             ->getMock();
@@ -162,7 +165,7 @@ class SyncDiscordRolesTest extends TestCase
         $mockApi->expects($this->once())->method('addRoleToMember')->with('300', '999');
         $mockApi->expects($this->once())->method('removeRoleFromMember')->with('400', '999');
 
-        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+        $this->app->instance(DiscordApi::class, $mockApi);
 
         $this->artisan('control:sync-discord-roles')->assertExitCode(0);
     }
@@ -177,7 +180,7 @@ class SyncDiscordRolesTest extends TestCase
             'external_id' => 'nope',
         ]);
 
-        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+        $mockApi = $this->getMockBuilder(DiscordApi::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['getMemberRoles', 'addRoleToMember', 'removeRoleFromMember'])
             ->getMock();
@@ -186,7 +189,7 @@ class SyncDiscordRolesTest extends TestCase
         $mockApi->expects($this->never())->method('addRoleToMember');
         $mockApi->expects($this->never())->method('removeRoleFromMember');
 
-        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+        $this->app->instance(DiscordApi::class, $mockApi);
 
         $this->artisan('control:sync-discord-roles')->assertExitCode(0);
     }
@@ -195,13 +198,13 @@ class SyncDiscordRolesTest extends TestCase
     {
         TicketType::factory()->create(['discord_role_id' => '500']);
         $cmd = new SyncDiscordRoles();
-        $rm = new \ReflectionMethod(SyncDiscordRoles::class, 'getManagedRoles');
+        $rm = new ReflectionMethod(SyncDiscordRoles::class, 'getManagedRoles');
         $rm->setAccessible(true);
         $roles1 = $rm->invoke($cmd);
         $this->assertNotEmpty($roles1);
 
         // ensure property now cached
-        $prop = new \ReflectionProperty(SyncDiscordRoles::class, 'managedRoles');
+        $prop = new ReflectionProperty(SyncDiscordRoles::class, 'managedRoles');
         $prop->setAccessible(true);
         $cached = $prop->getValue($cmd);
         $this->assertEquals($roles1, $cached);
@@ -222,7 +225,7 @@ class SyncDiscordRolesTest extends TestCase
         ]);
 
         // No ticket types with discord_role_id -> shouldHave empty
-        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+        $mockApi = $this->getMockBuilder(DiscordApi::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['getMemberRoles', 'addRoleToMember', 'removeRoleFromMember'])
             ->getMock();
@@ -233,7 +236,7 @@ class SyncDiscordRolesTest extends TestCase
         $mockApi->expects($this->never())->method('addRoleToMember');
         $mockApi->expects($this->never())->method('removeRoleFromMember');
 
-        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+        $this->app->instance(DiscordApi::class, $mockApi);
         $this->artisan('control:sync-discord-roles')->assertExitCode(0);
     }
 
@@ -253,7 +256,7 @@ class SyncDiscordRolesTest extends TestCase
         Ticket::factory()->create(['user_id' => $user->id, 'ticket_type_id' => $tt1->id]);
         Ticket::factory()->create(['user_id' => $user->id, 'ticket_type_id' => $tt2->id]);
 
-        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+        $mockApi = $this->getMockBuilder(DiscordApi::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['getMemberRoles', 'addRoleToMember', 'removeRoleFromMember'])
             ->getMock();
@@ -265,7 +268,7 @@ class SyncDiscordRolesTest extends TestCase
         $mockApi->expects($this->once())->method('addRoleToMember')->with('400', 'abc');
         $mockApi->expects($this->never())->method('removeRoleFromMember');
 
-        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+        $this->app->instance(DiscordApi::class, $mockApi);
 
         $this->artisan('control:sync-discord-roles')->assertExitCode(0);
     }
@@ -274,12 +277,12 @@ class SyncDiscordRolesTest extends TestCase
     {
         $provider = SocialProvider::factory()->create(['code' => 'discord']);
 
-        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+        $mockApi = $this->getMockBuilder(DiscordApi::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['getMemberRoles'])
             ->getMock();
         $mockApi->expects($this->once())->method('getMemberRoles')->willReturn([]);
-        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+        $this->app->instance(DiscordApi::class, $mockApi);
 
         // Use a user id that does not exist
         $this->artisan('control:sync-discord-roles', ['user' => 99999])->assertExitCode(0);
@@ -289,11 +292,11 @@ class SyncDiscordRolesTest extends TestCase
     {
         $cmd = new SyncDiscordRoles();
         // Ensure the typed property is initialized to null to avoid PHP uninitialized property error
-        $prop = new \ReflectionProperty(SyncDiscordRoles::class, 'discord');
+        $prop = new ReflectionProperty(SyncDiscordRoles::class, 'discord');
         $prop->setAccessible(true);
         $prop->setValue($cmd, null);
 
-        $rm = new \ReflectionMethod(SyncDiscordRoles::class, 'getDiscordMembers');
+        $rm = new ReflectionMethod(SyncDiscordRoles::class, 'getDiscordMembers');
         $rm->setAccessible(true);
         $members = $rm->invoke($cmd);
         $this->assertIsArray($members);
@@ -304,18 +307,18 @@ class SyncDiscordRolesTest extends TestCase
     {
         $cmd = new SyncDiscordRoles();
 
-        $mockApi = $this->getMockBuilder(\App\Services\DiscordApi::class)
+        $mockApi = $this->getMockBuilder(DiscordApi::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['getMemberRoles'])
             ->getMock();
         $expected = ['x' => (object)['id' => 'x']];
         $mockApi->expects($this->once())->method('getMemberRoles')->willReturn($expected);
 
-        $prop = new \ReflectionProperty(SyncDiscordRoles::class, 'discord');
+        $prop = new ReflectionProperty(SyncDiscordRoles::class, 'discord');
         $prop->setAccessible(true);
         $prop->setValue($cmd, $mockApi);
 
-        $rm = new \ReflectionMethod(SyncDiscordRoles::class, 'getDiscordMembers');
+        $rm = new ReflectionMethod(SyncDiscordRoles::class, 'getDiscordMembers');
         $rm->setAccessible(true);
         $members = $rm->invoke($cmd);
         $this->assertEquals($expected, $members);

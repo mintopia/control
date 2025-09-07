@@ -2,20 +2,17 @@
 
 namespace Tests\Feature\app\Http\Controllers;
 
-use Tests\TestCase;
 use App\Http\Controllers\ClanMembershipController;
+use App\Http\Requests\ClanMembershipRequest;
+use App\Http\Requests\ClanMembershipUpdateRequest;
 use App\Models\Clan;
 use App\Models\ClanMembership;
 use App\Models\ClanRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Http\Request;
 use Mockery;
+use Tests\TestCase;
 
 class ClanMembershipControllerTest extends TestCase
 {
@@ -33,7 +30,7 @@ class ClanMembershipControllerTest extends TestCase
         $clan = Clan::factory()->create();
         $role = ClanRole::factory()->create(['code' => 'member']);
         $clan->addUser($user, $role);
-        $request = Mockery::mock(\App\Http\Requests\ClanMembershipRequest::class);
+        $request = Mockery::mock(ClanMembershipRequest::class);
         $request->shouldReceive('input')->with('code')->andReturn($clan->invite_code);
         $request->shouldReceive('user')->andReturn($user);
         $controller = new ClanMembershipController();
@@ -56,7 +53,7 @@ class ClanMembershipControllerTest extends TestCase
         $role = ClanRole::factory()->create(['code' => 'member']);
         $newRole = ClanRole::factory()->create(['code' => 'leader']);
         $member = ClanMembership::factory()->create(['clan_id' => $clan->id, 'clan_role_id' => $role->id]);
-        $request = Mockery::mock(\App\Http\Requests\ClanMembershipUpdateRequest::class);
+        $request = Mockery::mock(ClanMembershipUpdateRequest::class);
         $request->shouldReceive('input')->with('role')->andReturn($newRole->code);
         $controller = new ClanMembershipController();
         $response = $controller->update($request, $clan, $member);

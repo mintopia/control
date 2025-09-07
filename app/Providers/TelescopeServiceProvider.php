@@ -46,16 +46,6 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
     }
 
     /**
-     * Resolve an avatar URL for Telescope given a user id and email.
-     */
-    protected function resolveAvatar(string $id, string $email): string
-    {
-        $user = User::find($id);
-        return $user ? $user->avatarUrl() : 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($email)));
-    }
-
-
-    /**
      * Prevent sensitive request details from being logged by Telescope.
      */
     protected function hideSensitiveRequestDetails(): void
@@ -71,6 +61,15 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
             'x-csrf-token',
             'x-xsrf-token',
         ]);
+    }
+
+    /**
+     * Resolve an avatar URL for Telescope given a user id and email.
+     */
+    protected function resolveAvatar(string $id, string $email): string
+    {
+        $user = User::find($id);
+        return $user ? $user->avatarUrl() : 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($email)));
     }
 
     /**

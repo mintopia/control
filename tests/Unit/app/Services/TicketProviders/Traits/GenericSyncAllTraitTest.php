@@ -2,124 +2,19 @@
 
 namespace Tests\Unit\app\Services\TicketProviders\Traits;
 
-use Tests\TestCase;
-use App\Services\TicketProviders\Traits\GenericSyncAllTrait;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Console\OutputStyle;
-use Symfony\Component\Console\Output\OutputInterface;
-use Illuminate\Support\Collection;
+use App\Models\TicketProvider;
 use Carbon\Carbon;
+use Database\Factories\EmailAddressFactory;
+use Illuminate\Console\OutputStyle;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Mockery\MockInterface;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
-
-class DummyProviderWithSyncAll
-{
-    use GenericSyncAllTrait;
-
-    public $provider;
-    public $makeTicketCalled = false;
-    public $makeTicketArgs = [];
-
-    public function __construct($provider)
-    {
-        // use the passed provider object but ensure it's stringable for logging
-        $providerObj = $provider;
-        if (!method_exists($providerObj, '__toString')) {
-            $providerObj = new class($provider) {
-                private $inner;
-                public function __construct($inner)
-                {
-                    $this->inner = $inner;
-                }
-                public function __toString()
-                {
-                    return 'DummyProvider';
-                }
-                // forward dynamic property access to inner if needed
-                public function __get($k)
-                {
-                    return $this->inner->$k ?? null;
-                }
-                // forward method calls to inner provider
-                public function __call($name, $args)
-                {
-                    return call_user_func_array([$this->inner, $name], $args);
-                }
-            };
-        }
-        $this->provider = $providerObj;
-    }
-
-    public function getTickets()
-    {
-        return $this->provider->remoteTickets;
-    }
-
-    public function makeTicket($a, $b)
-    {
-        $this->makeTicketCalled = true;
-        $this->makeTicketArgs[] = [$a, $b];
-        // Return a dummy ticket object
-        return new class($b->id) {
-            public $id;
-            public function __construct($id)
-            {
-                $this->id = $id;
-            }
-            public function __toString()
-            {
-                return 'Ticket#' . $this->id;
-            }
-        };
-    }
-}
-
-class InternalTicketStub
-{
-    public $external_id;
-    public $user = null;
-    public $deleted = false;
-    public $saved = false;
-
-    public function __construct($external_id)
-    {
-        $this->external_id = $external_id;
-    }
-
-    public function __toString()
-    {
-        return 'Ticket#' . $this->external_id;
-    }
-
-    public function delete()
-    {
-        $this->deleted = true;
-    }
-
-    public function user()
-    {
-        $parent = $this;
-        return new class($parent) {
-            private $parent;
-            public function __construct($parent)
-            {
-                $this->parent = $parent;
-            }
-            public function associate($user)
-            {
-                $this->parent->user = $user;
-            }
-        };
-    }
-
-    public function save()
-    {
-        $this->saved = true;
-    }
-}
+use Tests\TestCase;
+use Tests\Unit\app\Services\TicketProviders\HelperClasses\DummyProviderWithSyncAll;
+use Tests\Unit\app\Services\TicketProviders\HelperClasses\InternalTicketStub;
 
 // We'll use a BufferedOutput and real OutputStyle in tests to capture output
 
@@ -136,51 +31,22 @@ class GenericSyncAllTraitTest extends TestCase
     protected function getProvider($remoteTickets = [], $internalTickets = [], $types = [1, 2])
     {
         // create a persistent ticket query object so tests can set internalTickets on it
-        $ticketQuery = new class {
-            public $internalTickets = [];
-            public function whereIn($col, $ids)
-            {
-                return $this;
-            }
-            public function with($rel)
-            {
-                return $this;
-            }
-            public function get()
-            {
-                return collect($this->internalTickets);
-            }
-        };
+        $ticketQuery = $this->partialMock(HasMany::class, function (MockInterface $mock) use ($internalTickets) {
+            $mock->shouldReceive('whereIn', 'with')->andReturn($mock);
+            $mock->shouldReceive('get')->andReturn(collect($internalTickets));
+        });
 
-        $provider = new class($ticketQuery) {
-            public $remoteTickets = [];
-            private $ticketQuery;
-            public function __construct($ticketQuery)
-            {
-                $this->ticketQuery = $ticketQuery;
-            }
-            public function types()
-            {
-                return new class($this) {
-                    public $parent;
-                    public function __construct($parent)
-                    {
-                        $this->parent = $parent;
-                    }
-                    public function pluck($col)
-                    {
-                        return collect([1, 2]);
-                    }
-                };
-            }
-            public function tickets()
-            {
-                return $this->ticketQuery;
-            }
-        };
+        $typesQuery = $this->partialMock(HasMany::class, function (MockInterface $mock) use ($types) {
+            $mock->shouldReceive('get')->andReturn(collect($types));
+            $mock->shouldReceive('pluck')->andReturn(collect(array_keys($types)));
+        });
 
-        $provider->remoteTickets = $remoteTickets;
-        $provider->tickets()->internalTickets = $internalTickets;
+        $provider = $this->partialMock(TicketProvider::class, function (MockInterface $mock) use ($ticketQuery, $typesQuery) {
+            $mock->shouldReceive('types')->andReturn($typesQuery);
+            $mock->shouldReceive('tickets')->andReturn($ticketQuery);
+        });
+        $provider->id = 42;
+        $provider->code = 'dummy';
         return $provider;
     }
 
@@ -194,7 +60,10 @@ class GenericSyncAllTraitTest extends TestCase
         ];
         $internalTicket = new InternalTicketStub(1);
         $provider = $this->getProvider([$remoteTicket], [$internalTicket]);
-        $dummy = new DummyProviderWithSyncAll($provider);
+        $dummy = $this->partialMock(DummyProviderWithSyncAll::class, function (MockInterface $mock) use ($remoteTicket, $provider) {
+            $mock->provider = $provider;
+            $mock->shouldReceive('getTickets')->andReturn([$remoteTicket]);
+        });
 
         $buffer = new BufferedOutput();
         $output = new OutputStyle(new ArrayInput([]), $buffer);
@@ -220,7 +89,7 @@ class GenericSyncAllTraitTest extends TestCase
             'email' => 'user@example.com'
         ];
         // Create a user and verified email address for lookup
-        $email = \Database\Factories\EmailAddressFactory::new()->create([
+        $email = EmailAddressFactory::new()->create([
             'email' => 'user@example.com',
             'verified_at' => Carbon::now(),
         ]);
@@ -228,7 +97,10 @@ class GenericSyncAllTraitTest extends TestCase
 
         $internalTicket = new InternalTicketStub(2);
         $provider = $this->getProvider([$remoteTicket], [$internalTicket]);
-        $dummy = new DummyProviderWithSyncAll($provider);
+        $dummy = $this->partialMock(DummyProviderWithSyncAll::class, function (MockInterface $mock) use ($remoteTicket, $provider) {
+            $mock->provider = $provider;
+            $mock->shouldReceive('getTickets')->andReturn([$remoteTicket]);
+        });
 
         $buffer = new BufferedOutput();
         $output = new OutputStyle(new ArrayInput([]), $buffer);
@@ -250,7 +122,10 @@ class GenericSyncAllTraitTest extends TestCase
         ];
         // No internal tickets
         $provider = $this->getProvider([$remoteTicket], []);
-        $dummy = new DummyProviderWithSyncAll($provider);
+        $dummy = $this->partialMock(DummyProviderWithSyncAll::class, function (MockInterface $mock) use ($remoteTicket, $provider) {
+            $mock->provider = $provider;
+            $mock->shouldReceive('getTickets')->andReturn([$remoteTicket]);
+        });
 
         $buffer = new BufferedOutput();
         $output = new OutputStyle(new ArrayInput([]), $buffer);
@@ -269,7 +144,10 @@ class GenericSyncAllTraitTest extends TestCase
             'email' => 'voided@example.com'
         ];
         $provider = $this->getProvider([$remoteTicket], []);
-        $dummy = new DummyProviderWithSyncAll($provider);
+        $dummy = $this->partialMock(DummyProviderWithSyncAll::class, function (MockInterface $mock) use ($remoteTicket, $provider) {
+            $mock->provider = $provider;
+            $mock->shouldReceive('getTickets')->andReturn([$remoteTicket]);
+        });
 
         $buffer = new BufferedOutput();
         $output = new OutputStyle(new ArrayInput([]), $buffer);

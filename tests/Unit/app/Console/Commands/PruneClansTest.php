@@ -4,8 +4,10 @@ namespace Tests\Unit\app\Console\Commands;
 
 use App\Console\Commands\PruneClans;
 use App\Models\Clan;
-use Illuminate\Support\Facades\App;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\App;
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Tests\TestCase;
 
 class PruneClansTest extends TestCase
@@ -19,8 +21,8 @@ class PruneClansTest extends TestCase
 
         $command = App::make(PruneClans::class);
         $command->setLaravel($this->app);
-        $input = new \Symfony\Component\Console\Input\ArrayInput([]);
-        $output = new \Symfony\Component\Console\Output\BufferedOutput();
+        $input = new ArrayInput([]);
+        $output = new BufferedOutput();
         $command->run($input, $output);
         $this->assertStringContainsString('0 clans with 0 members', trim($output->fetch()));
     }
@@ -33,8 +35,8 @@ class PruneClansTest extends TestCase
 
         $command = App::make(PruneClans::class);
         $command->setLaravel($this->app);
-        $input = new \Symfony\Component\Console\Input\ArrayInput([]);
-        $output = new \Symfony\Component\Console\Output\BufferedOutput();
+        $input = new ArrayInput([]);
+        $output = new BufferedOutput();
         $command->run($input, $output);
         $this->assertStringContainsString('3 clans with 0 members', trim($output->fetch()));
 

@@ -2,14 +2,18 @@
 
 namespace Tests\Unit\app\Observers;
 
-use Tests\TestCase;
-use App\Observers\SeatObserver;
+use App\Models\Event;
 use App\Models\Seat;
+use App\Models\SeatingPlan;
+use App\Models\Ticket;
+use App\Observers\SeatObserver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class SeatObserverTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testSavingSetsLabelIfMissing()
     {
         $seat = new Seat(['row' => 'A', 'number' => 1, 'label' => null]);
@@ -20,12 +24,12 @@ class SeatObserverTest extends TestCase
 
     public function testSavedDisassociatesOtherSeatsAndUpdatesRevision()
     {
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
-        $ticket = \App\Models\Ticket::factory()->create();
-        $seat1 = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
-        $seat2 = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id]);
+        $ticket = Ticket::factory()->create();
+        $seat1 = Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+        $seat2 = Seat::factory()->create(['seating_plan_id' => $plan->id]);
 
         // simulate saving seat1 triggers disassociation of seat2 (if it had same ticket)
         $seat2->ticket()->associate($ticket);
@@ -39,16 +43,16 @@ class SeatObserverTest extends TestCase
 
     public function testSavedDisassociatesOtherSeatInDifferentPlanAndUpdatesOtherPlanRevision()
     {
-        $event = \App\Models\Event::factory()->create();
-        $planA = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
-        $planB = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
+        $event = Event::factory()->create();
+        $planA = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
+        $planB = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
-        $ticket = \App\Models\Ticket::factory()->create(['event_id' => $event->id]);
+        $ticket = Ticket::factory()->create(['event_id' => $event->id]);
 
         // Seat in plan A (the one being saved)
-        $seatA = \App\Models\Seat::factory()->create(['seating_plan_id' => $planA->id, 'ticket_id' => $ticket->id]);
+        $seatA = Seat::factory()->create(['seating_plan_id' => $planA->id, 'ticket_id' => $ticket->id]);
         // Another seat in a different plan with same ticket
-        $seatB = \App\Models\Seat::factory()->create(['seating_plan_id' => $planB->id, 'ticket_id' => $ticket->id]);
+        $seatB = Seat::factory()->create(['seating_plan_id' => $planB->id, 'ticket_id' => $ticket->id]);
 
         $observer = new SeatObserver();
         $observer->saved($seatA);
@@ -61,8 +65,8 @@ class SeatObserverTest extends TestCase
 
     public function testDeletedUpdatesPlanRevision()
     {
-        $plan = \App\Models\SeatingPlan::factory()->create(['revision' => 1]);
-        $seat = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id]);
+        $plan = SeatingPlan::factory()->create(['revision' => 1]);
+        $seat = Seat::factory()->create(['seating_plan_id' => $plan->id]);
 
         $observer = new SeatObserver();
         $observer->deleted($seat);

@@ -4,10 +4,14 @@ namespace App\Models;
 
 use App\Models\Traits\ToString;
 use App\Services\Contracts\SocialProviderContract;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\SocialProvider
@@ -21,26 +25,26 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  * @property int $enabled
  * @property int $auth_enabled
  * @property int $can_be_renamed
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\LinkedAccount> $accounts
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Collection<int, LinkedAccount> $accounts
  * @property-read int|null $accounts_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProviderSetting> $settings
+ * @property-read Collection<int, ProviderSetting> $settings
  * @property-read int|null $settings_count
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider query()
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereAuthEnabled($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereCanBeRenamed($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereEnabled($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereProviderClass($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereSupportsAuth($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SocialProvider whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @method static Builder|SocialProvider newModelQuery()
+ * @method static Builder|SocialProvider newQuery()
+ * @method static Builder|SocialProvider query()
+ * @method static Builder|SocialProvider whereAuthEnabled($value)
+ * @method static Builder|SocialProvider whereCanBeRenamed($value)
+ * @method static Builder|SocialProvider whereCode($value)
+ * @method static Builder|SocialProvider whereCreatedAt($value)
+ * @method static Builder|SocialProvider whereEnabled($value)
+ * @method static Builder|SocialProvider whereId($value)
+ * @method static Builder|SocialProvider whereName($value)
+ * @method static Builder|SocialProvider whereProviderClass($value)
+ * @method static Builder|SocialProvider whereSupportsAuth($value)
+ * @method static Builder|SocialProvider whereUpdatedAt($value)
+ * @mixin Eloquent
  */
 class SocialProvider extends Model
 {
@@ -64,6 +68,11 @@ class SocialProvider extends Model
         return $this->hasMany(LinkedAccount::class);
     }
 
+    public function redirect(?string $redirectUrl = null)
+    {
+        return $this->getProvider($redirectUrl)->redirect();
+    }
+
     public function getProvider(?string $redirectUrl = null): SocialProviderContract
     {
         // Prefer resolving from the container if bound (tests may bind stubs)
@@ -71,11 +80,6 @@ class SocialProvider extends Model
             return app()->make($this->provider_class, ['provider' => $this, 'redirectUrl' => $redirectUrl]);
         }
         return new $this->provider_class($this, $redirectUrl);
-    }
-
-    public function redirect(?string $redirectUrl = null)
-    {
-        return $this->getProvider($redirectUrl)->redirect();
     }
 
     public function user(?string $redirectUrl = null)
@@ -86,16 +90,6 @@ class SocialProvider extends Model
     public function configMapping(): array
     {
         return $this->getProvider()->configMapping();
-    }
-
-    protected function toStringName(): string
-    {
-        return $this->code;
-    }
-
-    public function settings(): MorphMany
-    {
-        return $this->morphMany(ProviderSetting::class, 'provider');
     }
 
     public function getSetting(string $code): mixed
@@ -110,5 +104,15 @@ class SocialProvider extends Model
         }
         $this->_settings[$code] = $setting->value;
         return $setting->value;
+    }
+
+    public function settings(): MorphMany
+    {
+        return $this->morphMany(ProviderSetting::class, 'provider');
+    }
+
+    protected function toStringName(): string
+    {
+        return $this->code;
     }
 }

@@ -2,12 +2,15 @@
 
 namespace Tests\Unit\app\Services;
 
-use Tests\TestCase;
-use App\Services\DiscordApi;
-use App\Models\SocialProvider;
 use App\Models\ProviderSetting;
+use App\Models\SocialProvider;
+use App\Services\DiscordApi;
 use GuzzleHttp\Client;
+use GuzzleHttp\Psr7\Response;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Psr\Http\Message\ResponseInterface;
+use ReflectionClass;
+use Tests\TestCase;
 
 class DiscordApiTest extends TestCase
 {
@@ -15,7 +18,7 @@ class DiscordApiTest extends TestCase
 
     protected function invokeMethod(&$object, $methodName, array $parameters = [])
     {
-        $reflection = new \ReflectionClass(get_class($object));
+        $reflection = new ReflectionClass(get_class($object));
         $method = $reflection->getMethod($methodName);
         $method->setAccessible(true);
         return $method->invokeArgs($object, $parameters);
@@ -47,7 +50,7 @@ class DiscordApiTest extends TestCase
         ]);
 
         $discordApi = new DiscordApi($provider, 'guild123');
-        $reflection = new \ReflectionClass($discordApi);
+        $reflection = new ReflectionClass($discordApi);
         $providerProp = $reflection->getProperty('provider');
         $providerProp->setAccessible(true);
         $serverIdProp = $reflection->getProperty('serverId');
@@ -72,7 +75,8 @@ class DiscordApiTest extends TestCase
         // Fake client captures calls and returns a single member for the members GET
         $fake = new class extends Client {
             public $calls = [];
-            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+
+            public function request(string $method, $uri = '', array $options = []): ResponseInterface
             {
                 $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
                 if (strtoupper($method) === 'GET' && str_contains($uri, '/members')) {
@@ -82,13 +86,13 @@ class DiscordApiTest extends TestCase
                             'roles' => ['r1', 'r2']
                         ]
                     ];
-                    return new \GuzzleHttp\Psr7\Response(200, [], json_encode($data));
+                    return new Response(200, [], json_encode($data));
                 }
-                return new \GuzzleHttp\Psr7\Response(204);
+                return new Response(204);
             }
         };
 
-        $ref = new \ReflectionClass($discordApi);
+        $ref = new ReflectionClass($discordApi);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($discordApi, $fake);
@@ -114,14 +118,15 @@ class DiscordApiTest extends TestCase
 
         $fake = new class extends Client {
             public $calls = [];
-            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+
+            public function request(string $method, $uri = '', array $options = []): ResponseInterface
             {
                 $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
-                return new \GuzzleHttp\Psr7\Response(204);
+                return new Response(204);
             }
         };
 
-        $ref = new \ReflectionClass($discordApi);
+        $ref = new ReflectionClass($discordApi);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($discordApi, $fake);
@@ -146,14 +151,15 @@ class DiscordApiTest extends TestCase
 
         $fake = new class extends Client {
             public $calls = [];
-            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+
+            public function request(string $method, $uri = '', array $options = []): ResponseInterface
             {
                 $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
-                return new \GuzzleHttp\Psr7\Response(204);
+                return new Response(204);
             }
         };
 
-        $ref = new \ReflectionClass($discordApi);
+        $ref = new ReflectionClass($discordApi);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($discordApi, $fake);
@@ -178,7 +184,8 @@ class DiscordApiTest extends TestCase
 
         $fake = new class extends Client {
             public $calls = [];
-            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+
+            public function request(string $method, $uri = '', array $options = []): ResponseInterface
             {
                 $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
 
@@ -191,11 +198,11 @@ class DiscordApiTest extends TestCase
                     (object)['id' => 'r4', 'name' => 'bot-role', 'managed' => true],
                 ];
 
-                return new \GuzzleHttp\Psr7\Response(200, [], json_encode($data));
+                return new Response(200, [], json_encode($data));
             }
         };
 
-        $ref = new \ReflectionClass($discordApi);
+        $ref = new ReflectionClass($discordApi);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($discordApi, $fake);
@@ -237,15 +244,16 @@ class DiscordApiTest extends TestCase
 
         $fake = new class extends Client {
             public $calls = [];
-            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+
+            public function request(string $method, $uri = '', array $options = []): ResponseInterface
             {
                 $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
                 $data = [(object)['id' => 'r1', 'name' => 'role1', 'managed' => false]];
-                return new \GuzzleHttp\Psr7\Response(200, [], json_encode($data));
+                return new Response(200, [], json_encode($data));
             }
         };
 
-        $ref = new \ReflectionClass($discordApi);
+        $ref = new ReflectionClass($discordApi);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($discordApi, $fake);
@@ -272,7 +280,8 @@ class DiscordApiTest extends TestCase
         $fake = new class extends Client {
             public $calls = [];
             public $callCount = 0;
-            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+
+            public function request(string $method, $uri = '', array $options = []): ResponseInterface
             {
                 $this->callCount++;
                 $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
@@ -285,16 +294,16 @@ class DiscordApiTest extends TestCase
                                 'roles' => ['r1']
                             ];
                         }
-                        return new \GuzzleHttp\Psr7\Response(200, [], json_encode($data));
+                        return new Response(200, [], json_encode($data));
                     }
                     $data = [(object)['user' => (object)['id' => '1001', 'username' => 'user1001'], 'roles' => ['r1']]];
-                    return new \GuzzleHttp\Psr7\Response(200, [], json_encode($data));
+                    return new Response(200, [], json_encode($data));
                 }
-                return new \GuzzleHttp\Psr7\Response(204);
+                return new Response(204);
             }
         };
 
-        $ref = new \ReflectionClass($discordApi);
+        $ref = new ReflectionClass($discordApi);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($discordApi, $fake);
@@ -320,7 +329,8 @@ class DiscordApiTest extends TestCase
 
         $fake = new class extends Client {
             public $calls = [];
-            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+
+            public function request(string $method, $uri = '', array $options = []): ResponseInterface
             {
                 $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
                 $data = [
@@ -329,11 +339,11 @@ class DiscordApiTest extends TestCase
                         'roles' => ['r1']
                     ]
                 ];
-                return new \GuzzleHttp\Psr7\Response(200, [], json_encode($data));
+                return new Response(200, [], json_encode($data));
             }
         };
 
-        $ref = new \ReflectionClass($discordApi);
+        $ref = new ReflectionClass($discordApi);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($discordApi, $fake);
@@ -359,14 +369,15 @@ class DiscordApiTest extends TestCase
 
         $fake = new class extends Client {
             public $calls = [];
-            public function request(string $method, $uri = '', array $options = []): \Psr\Http\Message\ResponseInterface
+
+            public function request(string $method, $uri = '', array $options = []): ResponseInterface
             {
                 $this->calls[] = ['method' => strtoupper($method), 'uri' => $uri, 'options' => $options];
-                return new \GuzzleHttp\Psr7\Response(204);
+                return new Response(204);
             }
         };
 
-        $ref = new \ReflectionClass($discordApi);
+        $ref = new ReflectionClass($discordApi);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($discordApi, $fake);

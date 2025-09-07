@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\app\Http\Requests;
 
-use Tests\TestCase;
 use App\Http\Requests\ClanMembershipUpdateRequest;
+use Tests\TestCase;
 
 class ClanMembershipUpdateRequestTest extends TestCase
 {

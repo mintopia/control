@@ -2,14 +2,16 @@
 
 namespace Tests\Unit\app\Http\Requests;
 
-use Tests\TestCase;
 use App\Http\Requests\ClanMembershipRequest;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Clan;
+use Closure;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ClanMembershipRequestTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testAuthorizeReturnsTrue()
     {
         $request = new ClanMembershipRequest();
@@ -39,7 +41,7 @@ class ClanMembershipRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['code'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -62,7 +64,7 @@ class ClanMembershipRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['code'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }

@@ -2,8 +2,11 @@
 
 namespace Tests\Unit\app\Http\Requests;
 
-use Tests\TestCase;
+use App\Exceptions\EmailVerificationException;
 use App\Http\Requests\EmailVerifyRequest;
+use App\Models\EmailAddress;
+use Closure;
+use Tests\TestCase;
 
 class EmailVerifyRequestTest extends TestCase
 {
@@ -32,8 +35,8 @@ class EmailVerifyRequestTest extends TestCase
 
     public function testCodeRuleClosurePassesIfNoException()
     {
-        $request = new EmailVerifyRequestStub();
-        $mockEmail = $this->getMockBuilder(\App\Models\EmailAddress::class)
+        $request = new HelperClasses\EmailVerifyRequestStub();
+        $mockEmail = $this->getMockBuilder(EmailAddress::class)
             ->onlyMethods(['checkCode'])
             ->getMock();
         $mockEmail->expects($this->once())->method('checkCode')->with('abc123');
@@ -41,7 +44,7 @@ class EmailVerifyRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['code'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -54,17 +57,17 @@ class EmailVerifyRequestTest extends TestCase
 
     public function testCodeRuleClosureFailsOnException()
     {
-        $request = new EmailVerifyRequestStub();
-        $mockEmail = $this->getMockBuilder(\App\Models\EmailAddress::class)
+        $request = new HelperClasses\EmailVerifyRequestStub();
+        $mockEmail = $this->getMockBuilder(EmailAddress::class)
             ->onlyMethods(['checkCode'])
             ->getMock();
         $mockEmail->expects($this->once())->method('checkCode')->with('badcode')
-            ->willThrowException(new \App\Exceptions\EmailVerificationException('Invalid code'));
+            ->willThrowException(new EmailVerificationException('Invalid code'));
         $request->emailaddress = $mockEmail;
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['code'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -77,9 +80,4 @@ class EmailVerifyRequestTest extends TestCase
         $closure('code', 'badcode', $fail);
         $this->assertTrue($called, 'Fail closure was not called');
     }
-}
-
-class EmailVerifyRequestStub extends EmailVerifyRequest
-{
-    public $emailaddress;
 }

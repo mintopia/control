@@ -2,21 +2,24 @@
 
 namespace Tests\Unit\app\Http\Controllers;
 
-use Tests\TestCase;
 use App\Http\Controllers\TicketController;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Models\Setting;
-use App\Models\User;
-use App\Models\Ticket;
+use App\Http\Requests\TicketTransferRequest;
 use App\Models\Event;
+use App\Models\Setting;
+use App\Models\Ticket;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+use Tests\TestCase;
 
 /**
  * TicketController tests using factories and Eloquent.
  */
-
 class TicketControllerTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testCanInstantiateController()
     {
         $controller = new TicketController();
@@ -31,13 +34,13 @@ class TicketControllerTest extends TestCase
 
         $this->actingAs($user);
         $controller = new TicketController();
-        $request = \Illuminate\Http\Request::create('/', 'GET');
+        $request = Request::create('/', 'GET');
         $request->setUserResolver(function () use ($user) {
             return $user;
         });
 
         $response = $controller->index($request);
-        $this->assertInstanceOf(\Illuminate\View\View::class, $response);
+        $this->assertInstanceOf(View::class, $response);
         $data = $response->getData();
         $tickets = $data['tickets'];
         $ids = $tickets->pluck('id')->all();
@@ -49,9 +52,9 @@ class TicketControllerTest extends TestCase
     {
         $ticket = Ticket::factory()->create(['event_id' => Event::factory()->create(['starts_at' => now(), 'ends_at' => now()->addHour()])->id]);
         $controller = new TicketController();
-        $request = \Illuminate\Http\Request::create('/', 'GET');
+        $request = Request::create('/', 'GET');
         $response = $controller->show($request, $ticket);
-        $this->assertInstanceOf(\Illuminate\View\View::class, $response);
+        $this->assertInstanceOf(View::class, $response);
         $data = $response->getData();
         $this->assertArrayHasKey('ticket', $data);
         $this->assertEquals($ticket->id, $data['ticket']->id);
@@ -63,14 +66,14 @@ class TicketControllerTest extends TestCase
         $controller = new TicketController();
 
         // generate
-        $request = \Illuminate\Http\Request::create('/', 'POST', ['generate' => '1']);
+        $request = Request::create('/', 'POST', ['generate' => '1']);
         $response = $controller->update($request, $ticket);
         $this->assertStringContainsString('/tickets/' . $ticket->id, $response->getTargetUrl());
 
         // remove
         $ticket->transfer_code = 'abc123';
         $ticket->save();
-        $request = \Illuminate\Http\Request::create('/', 'POST', ['remove' => '1']);
+        $request = Request::create('/', 'POST', ['remove' => '1']);
         $response = $controller->update($request, $ticket);
         $this->assertStringContainsString('/tickets/' . $ticket->id, $response->getTargetUrl());
         $this->assertNull($ticket->fresh()->transfer_code);
@@ -84,7 +87,7 @@ class TicketControllerTest extends TestCase
         $ticket = Ticket::factory()->create(['event_id' => Event::factory()->create(['starts_at' => now(), 'ends_at' => now()->addHour()])->id, 'user_id' => $owner->id, 'transfer_code' => 'tx-1']);
 
         $this->actingAs($recipient);
-        $request = \App\Http\Requests\TicketTransferRequest::create('/', 'POST', ['code' => 'tx-1']);
+        $request = TicketTransferRequest::create('/', 'POST', ['code' => 'tx-1']);
         $request->setUserResolver(function () use ($recipient) {
             return $recipient;
         });
@@ -99,7 +102,7 @@ class TicketControllerTest extends TestCase
     {
         $ticket = Ticket::factory()->create(['event_id' => Event::factory()->create(['starts_at' => now(), 'ends_at' => now()->addHour()])->id]);
         $controller = new TicketController();
-        $request = \Illuminate\Http\Request::create('/', 'POST', []);
+        $request = Request::create('/', 'POST', []);
         $response = $controller->update($request, $ticket);
         $this->assertStringContainsString('/tickets/' . $ticket->id, $response->getTargetUrl());
     }
@@ -109,7 +112,7 @@ class TicketControllerTest extends TestCase
         Setting::create(['code' => 'disable-ticket-transfers', 'name' => 'Disable Transfers', 'value' => 1]);
         $ticket = Ticket::factory()->create(['event_id' => Event::factory()->create(['starts_at' => now(), 'ends_at' => now()->addHour()])->id]);
         $controller = new TicketController();
-        $request = \Illuminate\Http\Request::create('/', 'POST', ['generate' => '1']);
+        $request = Request::create('/', 'POST', ['generate' => '1']);
         $response = $controller->update($request, $ticket);
         $this->assertStringContainsString('/tickets/' . $ticket->id, $response->getTargetUrl());
         $this->assertNotEmpty($response->getSession()->get('errorMessage'));
@@ -123,7 +126,7 @@ class TicketControllerTest extends TestCase
         $ticket = Ticket::factory()->create(['event_id' => Event::factory()->create(['starts_at' => now(), 'ends_at' => now()->addHour()])->id, 'user_id' => $owner->id, 'transfer_code' => 'tx-2']);
 
         $this->actingAs($recipient);
-        $request = \App\Http\Requests\TicketTransferRequest::create('/', 'POST', ['code' => 'tx-2']);
+        $request = TicketTransferRequest::create('/', 'POST', ['code' => 'tx-2']);
         $request->setUserResolver(function () use ($recipient) {
             return $recipient;
         });

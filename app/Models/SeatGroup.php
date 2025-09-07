@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use App\Models\Traits\ToString;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\SeatGroup
@@ -15,23 +19,23 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $name
  * @property int $event_id
  * @property string|null $class
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SeatGroupAssignment> $assignments
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Collection<int, SeatGroupAssignment> $assignments
  * @property-read int|null $assignments_count
- * @property-read \App\Models\Event $event
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Seat> $seats
+ * @property-read Event $event
+ * @property-read Collection<int, Seat> $seats
  * @property-read int|null $seats_count
- * @method static \Illuminate\Database\Eloquent\Builder|SeatGroup newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|SeatGroup newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|SeatGroup query()
- * @method static \Illuminate\Database\Eloquent\Builder|SeatGroup whereClass($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SeatGroup whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SeatGroup whereEventId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SeatGroup whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SeatGroup whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SeatGroup whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @method static Builder|SeatGroup newModelQuery()
+ * @method static Builder|SeatGroup newQuery()
+ * @method static Builder|SeatGroup query()
+ * @method static Builder|SeatGroup whereClass($value)
+ * @method static Builder|SeatGroup whereCreatedAt($value)
+ * @method static Builder|SeatGroup whereEventId($value)
+ * @method static Builder|SeatGroup whereId($value)
+ * @method static Builder|SeatGroup whereName($value)
+ * @method static Builder|SeatGroup whereUpdatedAt($value)
+ * @mixin Eloquent
  */
 class SeatGroup extends Model
 {

@@ -1,11 +1,15 @@
 <?xml version="1.0"?>
 
-<ruleset  name="PHP_CodeSniffer">
+<ruleset  name="application">
 
-    <description>PHPCS configuration file.</description>
+    <description>PSR12 ruleset for application</description>
 
     <file>app</file>
+    <file>tests</file>
 
-    <arg  value="np"/>
-    <rule  ref="PSR12"/>
+    <arg value="np"/>
+    <rule ref="PSR12"/>
+    <rule ref="PSR1.Methods.CamelCapsMethodName.NotCamelCaps">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
 </ruleset>

@@ -219,11 +219,6 @@ class TicketController extends Controller
         ]);
     }
 
-    public function import()
-    {
-        return view('admin.tickets.import');
-    }
-
     public function importShow(TicketImportRequest $request)
     {
         $csv = $request->file('csv')->get();
@@ -232,6 +227,11 @@ class TicketController extends Controller
         return view('admin.tickets.import_show', [
             'imports' => $imports,
         ]);
+    }
+
+    public function import()
+    {
+        return view('admin.tickets.import');
     }
 
     public function importProcess(Request $request)

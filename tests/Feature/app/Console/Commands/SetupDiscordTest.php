@@ -2,11 +2,12 @@
 
 namespace Tests\Feature\app\Console\Commands;
 
-use Tests\TestCase;
 use App\Console\Commands\SetupDiscord;
-use App\Models\SocialProvider;
 use App\Models\ProviderSetting;
+use App\Models\SocialProvider;
+use App\Services\SocialProviders\DiscordProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class SetupDiscordTest extends TestCase
 {
@@ -23,7 +24,7 @@ class SetupDiscordTest extends TestCase
         $this->assertDatabaseMissing('social_providers', ['code' => 'discord']);
 
         // Use the DiscordProvider service to perform install logic non-interactively
-        $discord = new \App\Services\SocialProviders\DiscordProvider();
+        $discord = new DiscordProvider();
         $provider = $discord->install();
 
         $this->assertDatabaseHas('social_providers', ['code' => 'discord', 'id' => $provider->id]);
@@ -103,7 +104,7 @@ class SetupDiscordTest extends TestCase
     public function testHandleCreatesProviderWhenMissing()
     {
         // Ensure no provider exists
-        \App\Models\SocialProvider::whereCode('discord')->delete();
+        SocialProvider::whereCode('discord')->delete();
         $this->assertDatabaseMissing('social_providers', ['code' => 'discord']);
 
         // Run the command non-interactively by providing default answers

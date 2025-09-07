@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\app\Providers;
 
+use App\Providers\BroadcastServiceProvider;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\ServiceProvider;
 use Tests\TestCase;
@@ -12,14 +13,14 @@ class BroadcastServiceProviderTest extends TestCase
     {
         Broadcast::shouldReceive('routes')->once();
         // We can't easily test require base_path('routes/channels.php') without integration, but we can check no exceptions
-        $provider = new \App\Providers\BroadcastServiceProvider(app());
+        $provider = new BroadcastServiceProvider(app());
         $provider->boot();
         $this->assertTrue(true); // If no exception, pass
     }
 
     public function testProviderIsInstanceOfServiceProvider()
     {
-        $provider = new \App\Providers\BroadcastServiceProvider(app());
+        $provider = new BroadcastServiceProvider(app());
         $this->assertInstanceOf(ServiceProvider::class, $provider);
     }
 
@@ -29,7 +30,7 @@ class BroadcastServiceProviderTest extends TestCase
         // this test fragile. Create an anonymous subclass that only registers
         // broadcast routes so we can ensure the boot path that doesn't require
         // the channels file runs without throwing.
-        $provider = new class(app()) extends \App\Providers\BroadcastServiceProvider {
+        $provider = new class (app()) extends BroadcastServiceProvider {
             public function boot(): void
             {
                 Broadcast::routes();
@@ -44,7 +45,7 @@ class BroadcastServiceProviderTest extends TestCase
     public function testBootCallsBroadcastRoutesExactlyOnce()
     {
         Broadcast::shouldReceive('routes')->once();
-        $provider = new \App\Providers\BroadcastServiceProvider(app());
+        $provider = new BroadcastServiceProvider(app());
         $provider->boot();
         $this->assertTrue(true);
     }

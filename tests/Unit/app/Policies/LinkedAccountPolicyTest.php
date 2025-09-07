@@ -2,10 +2,10 @@
 
 namespace Tests\Unit\app\Policies;
 
-use Tests\TestCase;
-use App\Policies\LinkedAccountPolicy;
 use App\Models\LinkedAccount;
 use App\Models\User;
+use App\Policies\LinkedAccountPolicy;
+use Tests\TestCase;
 
 class LinkedAccountPolicyTest extends TestCase
 {

@@ -2,14 +2,18 @@
 
 namespace Tests\Unit\app\Http\Requests\Admin;
 
-use Tests\TestCase;
 use App\Http\Requests\Admin\TicketTypeMappingUpdateRequest;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\TicketProvider;
+use Closure;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Assert;
+use Tests\TestCase;
+use Throwable;
 
 class TicketTypeMappingUpdateRequestTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testAuthorizeReturnsTrue()
     {
         $request = new class extends TicketTypeMappingUpdateRequest {
@@ -60,7 +64,7 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -68,11 +72,11 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $called = false;
         $fail = function ($message) use (&$called) {
             $called = true;
-            \PHPUnit\Framework\Assert::assertEquals('Invalid ticket type specified', $message);
+            Assert::assertEquals('Invalid ticket type specified', $message);
         };
         try {
             $closure('external_id', 'badformat', $fail);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->assertStringContainsString('Undefined array key', $e->getMessage());
             return;
         }
@@ -94,7 +98,7 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -102,7 +106,7 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $called = false;
         $fail = function ($message) use (&$called) {
             $called = true;
-            \PHPUnit\Framework\Assert::assertEquals('Ticket Provider does not exist', $message);
+            Assert::assertEquals('Ticket Provider does not exist', $message);
         };
         $closure('external_id', '999:abc', $fail);
         $this->assertTrue($called, 'Fail closure was not called for missing provider');
@@ -116,12 +120,14 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $provider = TicketProvider::factory()->create();
         $mockType = (object)['id' => 'abc'];
         $mockMapping = (object)['provider' => $provider, 'types' => [$mockType]];
-        $request->event = new class($mockMapping) {
+        $request->event = new class ($mockMapping) {
             private $m;
+
             public function __construct($m)
             {
                 $this->m = $m;
             }
+
             public function getAvailableTicketMappings($mapping = null)
             {
                 return [$this->m];
@@ -131,7 +137,7 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -139,7 +145,7 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $called = false;
         $fail = function ($message) use (&$called) {
             $called = true;
-            \PHPUnit\Framework\Assert::assertEquals('That provider ticket type is already mapped', $message);
+            Assert::assertEquals('That provider ticket type is already mapped', $message);
         };
         $closure('external_id', $provider->id . ':xyz', $fail);
         $this->assertTrue($called, 'Fail closure was not called for already mapped type');
@@ -153,12 +159,14 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $provider = TicketProvider::factory()->create();
         $mockType = (object)['id' => 'abc'];
         $mockMapping = (object)['provider' => $provider, 'types' => [$mockType]];
-        $request->event = new class($mockMapping) {
+        $request->event = new class ($mockMapping) {
             private $m;
+
             public function __construct($m)
             {
                 $this->m = $m;
             }
+
             public function getAvailableTicketMappings($mapping = null)
             {
                 return [$this->m];
@@ -168,13 +176,13 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
         }
         $fail = function ($message) {
-            \PHPUnit\Framework\Assert::fail('Fail closure should not be called for valid mapping');
+            Assert::fail('Fail closure should not be called for valid mapping');
         };
         // Should not call fail for a valid mapping
         $closure('external_id', $provider->id . ':abc', $fail);
@@ -189,7 +197,7 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -197,7 +205,7 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $called = false;
         $fail = function ($message) use (&$called) {
             $called = true;
-            \PHPUnit\Framework\Assert::assertEquals('Invalid ticket type specified', $message);
+            Assert::assertEquals('Invalid ticket type specified', $message);
         };
         $closure('external_id', ':abc', $fail);
         $this->assertTrue($called, 'Fail closure was not called when provider id is empty');
@@ -211,7 +219,7 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -219,7 +227,7 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $called = false;
         $fail = function ($message) use (&$called) {
             $called = true;
-            \PHPUnit\Framework\Assert::assertEquals('Invalid ticket type specified', $message);
+            Assert::assertEquals('Invalid ticket type specified', $message);
         };
         $closure('external_id', '123:', $fail);
         $this->assertTrue($called, 'Fail closure was not called when external id is empty');
@@ -234,12 +242,14 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $other = TicketProvider::factory()->create();
         $mockType = (object)['id' => 'abc'];
         $mockMapping = (object)['provider' => $other, 'types' => [$mockType]];
-        $request->event = new class($mockMapping) {
+        $request->event = new class ($mockMapping) {
             private $m;
+
             public function __construct($m)
             {
                 $this->m = $m;
             }
+
             public function getAvailableTicketMappings($mapping = null)
             {
                 return [$this->m];
@@ -249,7 +259,7 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -257,7 +267,7 @@ class TicketTypeMappingUpdateRequestTest extends TestCase
         $called = false;
         $fail = function ($message) use (&$called) {
             $called = true;
-            \PHPUnit\Framework\Assert::assertEquals('That provider ticket type is already mapped', $message);
+            Assert::assertEquals('That provider ticket type is already mapped', $message);
         };
         $closure('external_id', $provider->id . ':xyz', $fail);
         $this->assertTrue($called, 'Fail closure was not called after non-matching provider in available mappings');

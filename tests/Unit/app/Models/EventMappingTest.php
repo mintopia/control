@@ -2,9 +2,9 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\EventMapping;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class EventMappingTest extends TestCase
 {

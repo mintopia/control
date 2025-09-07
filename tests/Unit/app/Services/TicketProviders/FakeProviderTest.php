@@ -4,12 +4,12 @@ namespace Tests\Unit\app\Services\TicketProviders;
 
 use App\Models\TicketProvider;
 use App\Services\TicketProviders\FakeProvider;
+use Illuminate\Console\OutputStyle;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
-use Illuminate\Console\OutputStyle;
+use RuntimeException;
 use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\BufferedOutput;
-use RuntimeException;
 use Tests\TestCase;
 
 class FakeProviderTest extends TestCase

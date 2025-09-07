@@ -2,36 +2,16 @@
 
 namespace Tests\Unit\app\Services\SocialProviders;
 
-use Tests\TestCase;
-use App\Services\SocialProviders\AbstractSocialProvider;
-use App\Models\SocialProvider;
-use App\Models\ProviderSetting;
-use App\Models\User;
-use App\Models\LinkedAccount;
+use App\Exceptions\SocialProviderException;
 use App\Models\EmailAddress;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Laravel\Socialite\Contracts\Factory as SocialiteFactoryContract;
+use App\Models\LinkedAccount;
+use App\Models\SocialProvider;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-
-class DummySocialProvider extends AbstractSocialProvider
-{
-    protected string $name = 'Dummy Social';
-    protected string $code = 'dummy';
-    protected string $socialiteProviderCode = 'dummy';
-
-    public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null)
-    {
-        parent::__construct($provider, $redirectUrl);
-    }
-
-    // Provide a no-op updateAccount so tests exercising user() don't fail
-    protected function updateAccount(\App\Models\LinkedAccount $account, $remoteUser): void
-    {
-        // intentionally empty for tests
-    }
-}
+use Illuminate\Http\RedirectResponse;
+use Laravel\Socialite\Contracts\Factory as SocialiteFactoryContract;
+use Tests\TestCase;
+use Tests\Unit\app\Services\SocialProviders\HelperClasses\DummySocialProvider;
 
 class AbstractSocialProviderTest extends TestCase
 {
@@ -63,39 +43,45 @@ class AbstractSocialProviderTest extends TestCase
             {
                 return 'rid-3';
             }
+
             public function getEmail()
             {
                 return 'u@x.com';
             }
+
             public function getNickname()
             {
                 return 'nick3';
             }
         };
 
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
+
             public function __construct($r)
             {
                 $this->remote = $r;
             }
+
             public function user()
             {
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
+
             public function __construct($d)
             {
                 $this->d = $d;
             }
+
             public function driver($n)
             {
                 return $this->d;
             }
         };
-        $this->app->instance(\Laravel\Socialite\Contracts\Factory::class, $factoryStub);
+        $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
         $provider = new DummySocialProvider($prov);
         $result = $provider->user($localUser);
@@ -122,38 +108,44 @@ class AbstractSocialProviderTest extends TestCase
             {
                 return 'rid-4';
             }
+
             public function getEmail()
             {
                 return null;
             }
+
             public function getNickname()
             {
                 return null;
             }
         };
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
+
             public function __construct($r)
             {
                 $this->remote = $r;
             }
+
             public function user()
             {
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
+
             public function __construct($d)
             {
                 $this->d = $d;
             }
+
             public function driver($n)
             {
                 return $this->d;
             }
         };
-        $this->app->instance(\Laravel\Socialite\Contracts\Factory::class, $factoryStub);
+        $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
         $provider = new DummySocialProvider($prov);
         $result = $provider->user(null);
@@ -169,38 +161,44 @@ class AbstractSocialProviderTest extends TestCase
             {
                 return 'rid-6';
             }
+
             public function getEmail()
             {
                 return 'newuser@example.com';
             }
+
             public function getNickname()
             {
                 return 'newnick';
             }
         };
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
+
             public function __construct($r)
             {
                 $this->remote = $r;
             }
+
             public function user()
             {
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
+
             public function __construct($d)
             {
                 $this->d = $d;
             }
+
             public function driver($n)
             {
                 return $this->d;
             }
         };
-        $this->app->instance(\Laravel\Socialite\Contracts\Factory::class, $factoryStub);
+        $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
         $provider = new DummySocialProvider($prov);
         $result = $provider->user(null);
@@ -217,12 +215,14 @@ class AbstractSocialProviderTest extends TestCase
                 return new RedirectResponse('https://example.test/redirect');
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
+
             public function __construct($d)
             {
                 $this->d = $d;
             }
+
             public function driver($n)
             {
                 return $this->d;
@@ -252,32 +252,38 @@ class AbstractSocialProviderTest extends TestCase
             {
                 return 'rid-local';
             }
+
             public function getEmail()
             {
                 return null;
             }
+
             public function getNickname()
             {
                 return null;
             }
         };
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
+
             public function __construct($r)
             {
                 $this->remote = $r;
             }
+
             public function user()
             {
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
+
             public function __construct($d)
             {
                 $this->d = $d;
             }
+
             public function driver($n)
             {
                 return $this->d;
@@ -307,10 +313,12 @@ class AbstractSocialProviderTest extends TestCase
                     {
                         return 'remote-id';
                     }
+
                     public function getEmail()
                     {
                         return 'test@example.com';
                     }
+
                     public function getNickname()
                     {
                         return 'nick';
@@ -318,12 +326,14 @@ class AbstractSocialProviderTest extends TestCase
                 };
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
+
             public function __construct($d)
             {
                 $this->d = $d;
             }
+
             public function driver($n)
             {
                 return $this->d;
@@ -358,10 +368,12 @@ class AbstractSocialProviderTest extends TestCase
                     {
                         return 'remote-id';
                     }
+
                     public function getEmail()
                     {
                         return null;
                     }
+
                     public function getNickname()
                     {
                         return 'nick';
@@ -369,12 +381,14 @@ class AbstractSocialProviderTest extends TestCase
                 };
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
+
             public function __construct($d)
             {
                 $this->d = $d;
             }
+
             public function driver($n)
             {
                 return $this->d;
@@ -399,50 +413,58 @@ class AbstractSocialProviderTest extends TestCase
         $account->provider()->associate($prov);
         $account->save();
         // Patch Socialite driver so the provider->user() call doesn't fail due to unsupported driver
-        $remoteUser = new class($account->external_id) {
+        $remoteUser = new class ($account->external_id) {
             private $id;
+
             public function __construct($id)
             {
                 $this->id = $id;
             }
+
             public function getId()
             {
                 return $this->id;
             }
+
             public function getEmail()
             {
                 return null;
             }
+
             public function getNickname()
             {
                 return null;
             }
         };
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
+
             public function __construct($r)
             {
                 $this->remote = $r;
             }
+
             public function user()
             {
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
+
             public function __construct($d)
             {
                 $this->d = $d;
             }
+
             public function driver($n)
             {
                 return $this->d;
             }
         };
-        $this->app->instance(\Laravel\Socialite\Contracts\Factory::class, $factoryStub);
+        $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
-        $this->expectException(\App\Exceptions\SocialProviderException::class);
+        $this->expectException(SocialProviderException::class);
         $this->expectExceptionMessage('Account is already associated with another user');
         $provider->user($localUser);
     }
@@ -460,42 +482,48 @@ class AbstractSocialProviderTest extends TestCase
             {
                 return 'rid-2';
             }
+
             public function getEmail()
             {
                 return 'a@x.com';
             }
+
             public function getNickname()
             {
                 return 'nick2';
             }
         };
 
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
+
             public function __construct($r)
             {
                 $this->remote = $r;
             }
+
             public function user()
             {
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
+
             public function __construct($d)
             {
                 $this->d = $d;
             }
+
             public function driver($n)
             {
                 return $this->d;
             }
         };
-        $this->app->instance(\Laravel\Socialite\Contracts\Factory::class, $factoryStub);
+        $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
         $provider = new DummySocialProvider($prov);
-        $this->expectException(\App\Exceptions\SocialProviderException::class);
+        $this->expectException(SocialProviderException::class);
         $this->expectExceptionMessage('Email is already associated with another user');
         $provider->user($localUser);
     }
@@ -509,41 +537,47 @@ class AbstractSocialProviderTest extends TestCase
             {
                 return 'rid-5';
             }
+
             public function getEmail()
             {
                 return null;
             }
+
             public function getNickname()
             {
                 return null;
             }
         };
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
+
             public function __construct($r)
             {
                 $this->remote = $r;
             }
+
             public function user()
             {
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
+
             public function __construct($d)
             {
                 $this->d = $d;
             }
+
             public function driver($n)
             {
                 return $this->d;
             }
         };
-        $this->app->instance(\Laravel\Socialite\Contracts\Factory::class, $factoryStub);
+        $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
         $provider = new DummySocialProvider($prov);
-        $this->expectException(\App\Exceptions\SocialProviderException::class);
+        $this->expectException(SocialProviderException::class);
         $this->expectExceptionMessage('Unable to login with this account');
         $provider->user(null);
     }

@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\app\Console\Commands;
 
-use Tests\TestCase;
 use App\Console\Commands\SyncTickets;
 use App\Models\TicketProvider;
-use Illuminate\Support\Facades\Log;
+use App\Services\TicketProviders\FakeProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class SyncTicketsTest extends TestCase
 {
@@ -29,7 +29,7 @@ class SyncTicketsTest extends TestCase
         $provider = TicketProvider::factory()->create(['enabled' => true]);
 
         // Use the real getProvider method, but mock the provider class it returns
-        $mock = $this->getMockBuilder(\App\Services\TicketProviders\FakeProvider::class)
+        $mock = $this->getMockBuilder(FakeProvider::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['syncAllTickets'])
             ->getMock();
@@ -37,7 +37,7 @@ class SyncTicketsTest extends TestCase
         $mock->expects($this->once())->method('syncAllTickets');
 
         // Set provider_class to the concrete provider class and bind the mock instance
-        $providerClass = \App\Services\TicketProviders\FakeProvider::class;
+        $providerClass = FakeProvider::class;
         $provider->update(['provider_class' => $providerClass]);
 
         // Bind via a factory so container->make($providerClass) returns our mock instance
@@ -57,14 +57,14 @@ class SyncTicketsTest extends TestCase
         $provider1 = TicketProvider::factory()->create(['enabled' => true, 'code' => 'foo']);
         $provider2 = TicketProvider::factory()->create(['enabled' => true, 'code' => 'bar']);
 
-        $mock = $this->getMockBuilder(\App\Services\TicketProviders\FakeProvider::class)
+        $mock = $this->getMockBuilder(FakeProvider::class)
             ->disableOriginalConstructor()
             ->onlyMethods(['syncAllTickets'])
             ->getMock();
 
         $mock->expects($this->once())->method('syncAllTickets');
 
-        $providerClass = \App\Services\TicketProviders\FakeProvider::class;
+        $providerClass = FakeProvider::class;
         $provider1->update(['provider_class' => $providerClass]);
         $this->app->bind($providerClass, function () use ($mock) {
             return $mock;

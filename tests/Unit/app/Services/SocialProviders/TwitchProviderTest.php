@@ -2,15 +2,16 @@
 
 namespace Tests\Unit\app\Services\SocialProviders;
 
-use Tests\TestCase;
-use App\Services\SocialProviders\TwitchProvider;
-use App\Models\SocialProvider;
-use App\Models\ProviderSetting;
 use App\Models\LinkedAccount;
-use Laravel\Socialite\Facades\Socialite;
-use SocialiteProviders\Twitch\Provider as TwitchSocialiteProvider;
-use Mockery;
+use App\Models\ProviderSetting;
+use App\Models\SocialProvider;
+use App\Services\SocialProviders\TwitchProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Socialite\Facades\Socialite;
+use Mockery;
+use ReflectionMethod;
+use SocialiteProviders\Twitch\Provider as TwitchSocialiteProvider;
+use Tests\TestCase;
 
 class TwitchProviderTest extends TestCase
 {
@@ -56,7 +57,7 @@ class TwitchProviderTest extends TestCase
             ->with(TwitchSocialiteProvider::class, Mockery::type('array'))
             ->andReturn($mockSocialiteProvider);
 
-        $method = new \ReflectionMethod($provider, 'getSocialiteProvider');
+        $method = new ReflectionMethod($provider, 'getSocialiteProvider');
         $method->setAccessible(true);
         $result = $method->invoke($provider);
 
@@ -73,15 +74,17 @@ class TwitchProviderTest extends TestCase
             {
                 return 'avatar_url';
             }
+
             public $refreshToken = 'refresh_token';
             public $token = 'access_token';
+
             public function getNickname()
             {
                 return 'nickname';
             }
         };
 
-        $method = new \ReflectionMethod($provider, 'updateAccount');
+        $method = new ReflectionMethod($provider, 'updateAccount');
         $method->setAccessible(true);
         $method->invoke($provider, $account, $remoteUser);
 

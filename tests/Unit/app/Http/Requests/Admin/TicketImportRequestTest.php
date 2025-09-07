@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\app\Http\Requests\Admin;
 
-use Tests\TestCase;
 use App\Http\Requests\Admin\TicketImportRequest;
+use Tests\TestCase;
 
 class TicketImportRequestTest extends TestCase
 {

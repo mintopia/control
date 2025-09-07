@@ -2,61 +2,17 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
 use App\Http\Controllers\Admin\EventMappingController;
+use App\Http\Requests\Admin\EventMappingUpdateRequest;
 use App\Models\Event;
 use App\Models\EventMapping;
 use App\Models\TicketProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
+use Tests\TestCase;
 
 // small test provider used to exercise TicketProvider->getEvents() path
-class TestProviderWithEvents implements \App\Services\Contracts\TicketProviderContract
-{
-    protected ?\App\Models\TicketProvider $provider;
-
-    public function __construct(?\App\Models\TicketProvider $provider = null)
-    {
-        $this->provider = $provider;
-    }
-
-    public function configMapping(): array
-    {
-        return [];
-    }
-
-    public function install(): \App\Models\TicketProvider
-    {
-        return $this->provider ?? new \App\Models\TicketProvider();
-    }
-
-    public function processWebhook(\Illuminate\Http\Request $request): bool
-    {
-        return false;
-    }
-
-    public function syncTickets(string|\App\Models\EmailAddress $email): void
-    {
-        // noop for tests
-    }
-
-    public function getEvents(): array
-    {
-        // return an array keyed by external id so the controller foreach can find a match
-        return ['54321' => 'Provider Event Name', '99999' => 'Other Event'];
-    }
-
-    public function getTicketTypes(string $eventExternalId): array
-    {
-        return [];
-    }
-
-    public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void
-    {
-        // noop
-    }
-}
 
 class EventMappingControllerTest extends TestCase
 {
@@ -73,7 +29,7 @@ class EventMappingControllerTest extends TestCase
         $event = Event::factory()->create();
         $provider = TicketProvider::factory()->create();
         // use test provider so getEvents() returns items
-        $provider->provider_class = TestProviderWithEvents::class;
+        $provider->provider_class = HelperClasses\TestProviderWithEvents::class;
         $provider->save();
 
         $controller = new EventMappingController();
@@ -99,7 +55,7 @@ class EventMappingControllerTest extends TestCase
         ];
 
         $controller = new EventMappingController();
-        $response = $controller->store(\App\Http\Requests\Admin\EventMappingUpdateRequest::create('/', 'POST', $requestData), $event);
+        $response = $controller->store(EventMappingUpdateRequest::create('/', 'POST', $requestData), $event);
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
         $this->assertDatabaseHas('event_mappings', ['event_id' => $event->id]);
@@ -113,7 +69,7 @@ class EventMappingControllerTest extends TestCase
 
         $controller = new EventMappingController();
         $requestData = ['external_id' => "{$provider->id}:54321"];
-        $response = $controller->update(\App\Http\Requests\Admin\EventMappingUpdateRequest::create('/', 'POST', $requestData), $event, $mapping);
+        $response = $controller->update(EventMappingUpdateRequest::create('/', 'POST', $requestData), $event, $mapping);
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
         $this->assertDatabaseHas('event_mappings', ['id' => $mapping->id, 'external_id' => '54321']);
@@ -170,14 +126,14 @@ class EventMappingControllerTest extends TestCase
 
         $provider = TicketProvider::factory()->create();
         // point provider to our small test provider class so getEvents() returns a matching id
-        $provider->provider_class = TestProviderWithEvents::class;
+        $provider->provider_class = HelperClasses\TestProviderWithEvents::class;
         $provider->save();
 
         $mapping = EventMapping::factory()->for($event)->for($provider, 'provider')->create(['external_id' => '111']);
 
         $controller = new EventMappingController();
         $requestData = ['external_id' => "{$provider->id}:54321"];
-        $response = $controller->update(\App\Http\Requests\Admin\EventMappingUpdateRequest::create('/', 'POST', $requestData), $event, $mapping);
+        $response = $controller->update(EventMappingUpdateRequest::create('/', 'POST', $requestData), $event, $mapping);
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
 

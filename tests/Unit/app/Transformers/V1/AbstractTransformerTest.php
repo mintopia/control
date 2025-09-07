@@ -2,53 +2,19 @@
 
 namespace Tests\Unit\app\Transformers\V1;
 
-use Tests\TestCase;
-
 use App\Models\User;
-use App\Transformers\V1\AbstractTransformer;
-use Illuminate\Support\Carbon;
-
-use function PHPUnit\Framework\assertTrue;
-
-class DummyTransformer extends AbstractTransformer
-{
-    protected function getAdminPropertiesPublic(object $object): array
-    {
-        return $this->getAdminProperties($object);
-    }
-
-    // Provide admin properties for testing
-    protected function getAdminProperties(object $object): array
-    {
-        return ['admin' => true];
-    }
-}
-
-class DummyTransformer2 extends AbstractTransformer
-{
-    public function getAdminPropertiesPublic(object $object): array
-    {
-        return $this->getAdminProperties($object);
-    }
-}
-
-class DummyObject
-{
-    public $id = 1;
-    public $created_at;
-    public $updated_at;
-    public function __construct()
-    {
-        $this->created_at = Carbon::parse('2022-01-01T00:00:00Z');
-        $this->updated_at = Carbon::parse('2022-01-02T00:00:00Z');
-    }
-}
+use ReflectionClass;
+use ReflectionMethod;
+use Tests\TestCase;
+use Tests\Unit\app\Transformers\V1\HelperClasses\DummyObject;
+use Tests\Unit\app\Transformers\V1\HelperClasses\DummyTransformer;
+use Tests\Unit\app\Transformers\V1\HelperClasses\DummyTransformer2;
 
 class AbstractTransformerTest extends TestCase
 {
     protected function invokeMethod($object, $method, array $parameters = [])
     {
-        $reflection = new \ReflectionClass($object);
+        $reflection = new ReflectionClass($object);
         $method = $reflection->getMethod($method);
         $method->setAccessible(true);
         return $method->invokeArgs($object, $parameters);
@@ -85,7 +51,7 @@ class AbstractTransformerTest extends TestCase
     {
         $transformer = new DummyTransformer($this->createMock(User::class));
         $object = new DummyObject();
-        $m = new \ReflectionMethod(DummyTransformer::class, 'getAdminPropertiesPublic');
+        $m = new ReflectionMethod(DummyTransformer::class, 'getAdminPropertiesPublic');
         $m->setAccessible(true);
         $result = $m->invoke($transformer, $object);
         $this->assertIsArray($result);

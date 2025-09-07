@@ -2,17 +2,17 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Http\Controllers\Admin\SeatGroupAssignmentController;
+use App\Http\Requests\Admin\DeleteRequest;
+use App\Http\Requests\Admin\SeatGroupAssignmentUpdateRequest;
 use App\Models\Event;
 use App\Models\SeatGroup;
 use App\Models\SeatGroupAssignment;
-use Illuminate\Http\Request;
-use App\Http\Requests\Admin\SeatGroupAssignmentUpdateRequest;
-use App\Http\Requests\Admin\DeleteRequest;
-use Illuminate\Routing\Exceptions\UrlGenerationException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Routing\Exceptions\UrlGenerationException;
+use ReflectionClass;
+use Tests\TestCase;
 
 class SeatGroupAssignmentControllerTest extends TestCase
 {
@@ -21,12 +21,12 @@ class SeatGroupAssignmentControllerTest extends TestCase
     public function testBasicViews()
     {
         $event = Event::factory()->create();
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $group->event()->associate($event);
         $group->name = 'Test Group';
         $group->class = 'default';
         $group->save();
-        $assignment = new \App\Models\SeatGroupAssignment();
+        $assignment = new SeatGroupAssignment();
         $assignment->group()->associate($group);
         $assignment->assignment_type = 'test';
         $assignment->assignment_type_id = 1;
@@ -41,7 +41,7 @@ class SeatGroupAssignmentControllerTest extends TestCase
     public function testUpdateObjectSavesFields()
     {
         $event = Event::factory()->create();
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $group->event()->associate($event);
         $group->name = 'Test Group';
         $group->class = 'default';
@@ -56,7 +56,7 @@ class SeatGroupAssignmentControllerTest extends TestCase
         ]);
 
         $controller = new SeatGroupAssignmentController();
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $assignment, $req);
@@ -71,7 +71,7 @@ class SeatGroupAssignmentControllerTest extends TestCase
     public function testStoreRedirectsOrCreatesAssignment()
     {
         $event = Event::factory()->create();
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $group->event()->associate($event);
         $group->name = 'Test Group';
         $group->class = 'default';
@@ -104,13 +104,13 @@ class SeatGroupAssignmentControllerTest extends TestCase
     public function testUpdatePersistsChanges()
     {
         $event = Event::factory()->create();
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $group->event()->associate($event);
         $group->name = 'Test Group';
         $group->class = 'default';
         $group->save();
 
-        $assignment = new \App\Models\SeatGroupAssignment();
+        $assignment = new SeatGroupAssignment();
         $assignment->group()->associate($group);
         $assignment->assignment_type = 'old';
         $assignment->assignment_type_id = 1;
@@ -143,13 +143,13 @@ class SeatGroupAssignmentControllerTest extends TestCase
     public function testDestroyRemovesAssignment()
     {
         $event = Event::factory()->create();
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $group->event()->associate($event);
         $group->name = 'Test Group';
         $group->class = 'default';
         $group->save();
 
-        $assignment = new \App\Models\SeatGroupAssignment();
+        $assignment = new SeatGroupAssignment();
         $assignment->group()->associate($group);
         $assignment->assignment_type = 'x';
         $assignment->assignment_type_id = 1;

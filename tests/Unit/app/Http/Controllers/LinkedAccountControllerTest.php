@@ -2,10 +2,10 @@
 
 namespace Tests\Unit\app\Http\Controllers;
 
-use Tests\TestCase;
+use App\Exceptions\SocialProviderException;
 use App\Http\Controllers\LinkedAccountController;
 use App\Models\SocialProvider;
-use App\Exceptions\SocialProviderException;
+use Tests\TestCase;
 
 class LinkedAccountControllerTest extends TestCase
 {
@@ -32,6 +32,7 @@ class LinkedAccountControllerTest extends TestCase
     {
         $provider = new class extends SocialProvider {
             public $name = 'test';
+
             public function user(?string $redirectUrl = null)
             {
                 return true;
@@ -46,6 +47,7 @@ class LinkedAccountControllerTest extends TestCase
     {
         $provider = new class extends SocialProvider {
             public $name = 'test';
+
             public function user(?string $redirectUrl = null)
             {
                 throw new SocialProviderException('fail');

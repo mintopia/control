@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\app\Enums;
 
-use Tests\TestCase;
 use App\Enums\SettingType;
+use Tests\TestCase;
 
 class SettingTypeTest extends TestCase
 {

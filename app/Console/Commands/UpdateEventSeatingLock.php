@@ -23,6 +23,7 @@ class UpdateEventSeatingLock extends Command
      *
      */
     protected $description = 'Update Event Seating Locks';
+
     public function handle()
     {
         Event::where('seating_opens_at', '<=', Carbon::now())->chunk(100, function ($chunk) {

@@ -2,11 +2,12 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
+use App\Http\Controllers\Admin\EventTicketProviderController;
 use App\Models\Event;
 use App\Models\EventMapping;
 use App\Models\TicketProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class EventTicketProviderControllerTest extends TestCase
 {
@@ -15,8 +16,8 @@ class EventTicketProviderControllerTest extends TestCase
     public function testCanInstantiateController()
     {
         // Controller is intentionally empty; ensure it can be instantiated
-        $controller = new \App\Http\Controllers\Admin\EventTicketProviderController();
-        $this->assertInstanceOf(\App\Http\Controllers\Admin\EventTicketProviderController::class, $controller);
+        $controller = new EventTicketProviderController();
+        $this->assertInstanceOf(EventTicketProviderController::class, $controller);
     }
 
     public function testAttachTicketProviderCreatesRecord()

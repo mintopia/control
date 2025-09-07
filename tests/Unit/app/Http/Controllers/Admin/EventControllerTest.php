@@ -2,21 +2,25 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
 use App\Http\Controllers\Admin\EventController;
+use App\Http\Requests\Admin\DeleteRequest;
+use App\Http\Requests\Admin\EventUpdateRequest;
+use App\Models\EmailAddress;
 use App\Models\Event;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Request;
-use App\Models\SeatingPlan;
-use App\Models\Seat;
-use App\Models\Ticket;
-use App\Models\TicketType;
-use App\Models\TicketProvider;
 use App\Models\EventMapping;
+use App\Models\Seat;
+use App\Models\SeatingPlan;
+use App\Models\Ticket;
+use App\Models\TicketProvider;
+use App\Models\TicketType;
 use App\Models\User;
-use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+use ReflectionClass;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Tests\TestCase;
 
 class EventControllerTest extends TestCase
 {
@@ -39,7 +43,7 @@ class EventControllerTest extends TestCase
         ]);
 
         // Use updateObject indirectly by calling store with a manually created request object
-        $response = $controller->store(\App\Http\Requests\Admin\EventUpdateRequest::create('/', 'POST', $request->toArray()));
+        $response = $controller->store(EventUpdateRequest::create('/', 'POST', $request->toArray()));
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
         $this->assertDatabaseHas('events', ['name' => 'Test Event']);
@@ -61,7 +65,7 @@ class EventControllerTest extends TestCase
             'ends_at' => '2025-08-08 12:00:00',
         ];
 
-        $response = $controller->update(\App\Http\Requests\Admin\EventUpdateRequest::create('/', 'POST', $requestData), $event);
+        $response = $controller->update(EventUpdateRequest::create('/', 'POST', $requestData), $event);
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
         $this->assertDatabaseHas('events', ['id' => $event->id, 'name' => 'Updated Event']);
@@ -73,7 +77,7 @@ class EventControllerTest extends TestCase
         $controller = new EventController();
 
         // Delete request requires confirm field; use a stubbed DeleteRequest with required data
-        $response = $controller->destroy(\App\Http\Requests\Admin\DeleteRequest::create('/', 'DELETE', ['confirm' => 'delete']), $event);
+        $response = $controller->destroy(DeleteRequest::create('/', 'DELETE', ['confirm' => 'delete']), $event);
 
         $this->assertInstanceOf(RedirectResponse::class, $response);
         $this->assertDatabaseMissing('events', ['id' => $event->id]);
@@ -183,7 +187,6 @@ class EventControllerTest extends TestCase
     }
 
 
-
     public function testIndexFiltersByIdNameAndCode()
     {
         $event = Event::factory()->create(['name' => 'FilterMe', 'code' => 'F123']);
@@ -221,7 +224,6 @@ class EventControllerTest extends TestCase
     }
 
 
-
     public function testUpdateObjectHandlesOptionalDates()
     {
         $event = new Event();
@@ -237,7 +239,7 @@ class EventControllerTest extends TestCase
             'draft' => false,
         ]);
 
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $event, $request);
@@ -262,7 +264,7 @@ class EventControllerTest extends TestCase
             'draft' => false,
         ]);
 
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $event, $request);
@@ -278,7 +280,7 @@ class EventControllerTest extends TestCase
         $provider = TicketProvider::factory()->create(['name' => 'P1']);
         $type = TicketType::factory()->create(['has_seat' => true, 'event_id' => $event->id]);
         $user = User::factory()->create();
-        $email = \App\Models\EmailAddress::factory()->create(['user_id' => $user->id, 'email' => 'prim@example.com']);
+        $email = EmailAddress::factory()->create(['user_id' => $user->id, 'email' => 'prim@example.com']);
         $user->primary_email_id = $email->id;
         $user->save();
 
@@ -321,7 +323,7 @@ class EventControllerTest extends TestCase
         $ticketA = Ticket::factory()->create(['event_id' => $eventA->id]);
 
         $controller = new EventController();
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
+        $this->expectException(NotFoundHttpException::class);
         $controller->pickseat($eventA, $ticketA, $seatB);
     }
 
@@ -351,7 +353,7 @@ class EventControllerTest extends TestCase
         $event = Event::factory()->create();
         $controller = new EventController();
         $resp = $controller->delete($event);
-        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $this->assertInstanceOf(View::class, $resp);
         $this->assertArrayHasKey('event', $resp->getData());
     }
 
@@ -372,7 +374,7 @@ class EventControllerTest extends TestCase
         $controller = new EventController();
         // pass ticket_id to set currentTicket
         $resp = $controller->seats(Request::create('/admin/events/seats', 'GET', ['ticket_id' => $ticketA->id]), $event);
-        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $this->assertInstanceOf(View::class, $resp);
         $data = $resp->getData();
         $this->assertArrayHasKey('currentTicket', $data);
         $this->assertNotNull($data['currentTicket']);

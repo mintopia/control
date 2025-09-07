@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use App\Models\Traits\ToString;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\Seat
@@ -24,29 +26,29 @@ use Illuminate\Support\Collection;
  * @property string|null $description
  * @property string|null $class
  * @property int $disabled
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\SeatGroup|null $group
- * @property-read \App\Models\SeatingPlan $plan
- * @property-read \App\Models\Ticket|null $ticket
- * @method static \Illuminate\Database\Eloquent\Builder|Seat newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Seat newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Seat query()
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereClass($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereDescription($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereDisabled($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereLabel($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereNumber($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereRow($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereSeatGroupId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereSeatingPlanId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereTicketId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereX($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Seat whereY($value)
- * @mixin \Eloquent
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read SeatGroup|null $group
+ * @property-read SeatingPlan $plan
+ * @property-read Ticket|null $ticket
+ * @method static Builder|Seat newModelQuery()
+ * @method static Builder|Seat newQuery()
+ * @method static Builder|Seat query()
+ * @method static Builder|Seat whereClass($value)
+ * @method static Builder|Seat whereCreatedAt($value)
+ * @method static Builder|Seat whereDescription($value)
+ * @method static Builder|Seat whereDisabled($value)
+ * @method static Builder|Seat whereId($value)
+ * @method static Builder|Seat whereLabel($value)
+ * @method static Builder|Seat whereNumber($value)
+ * @method static Builder|Seat whereRow($value)
+ * @method static Builder|Seat whereSeatGroupId($value)
+ * @method static Builder|Seat whereSeatingPlanId($value)
+ * @method static Builder|Seat whereTicketId($value)
+ * @method static Builder|Seat whereUpdatedAt($value)
+ * @method static Builder|Seat whereX($value)
+ * @method static Builder|Seat whereY($value)
+ * @mixin Eloquent
  */
 class Seat extends Model
 {

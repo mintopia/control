@@ -2,121 +2,23 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Http\Controllers\Admin\TicketTypeMappingController;
+use App\Http\Requests\Admin\TicketTypeMappingUpdateRequest;
+use App\Models\EmailAddress;
 use App\Models\Event;
+use App\Models\EventMapping;
+use App\Models\TicketProvider;
 use App\Models\TicketType;
 use App\Models\TicketTypeMapping;
+use App\Services\Contracts\TicketProviderContract;
+use Illuminate\Console\OutputStyle;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Exceptions\UrlGenerationException;
+use ReflectionClass;
+use Tests\TestCase;
 
 // Provider stubs implementing the contract so app()->make() returns correct types
-class TicketProviderStubWithTypes implements \App\Services\Contracts\TicketProviderContract
-{
-    public function __construct(?\App\Models\TicketProvider $provider = null) {}
-    public function configMapping(): array
-    {
-        return [];
-    }
-    public function install(): \App\Models\TicketProvider
-    {
-        return new \App\Models\TicketProvider();
-    }
-    public function processWebhook(\Illuminate\Http\Request $request): bool
-    {
-        return true;
-    }
-    public function syncTickets(string|\App\Models\EmailAddress $email): void {}
-    public function getEvents(): array
-    {
-        return ['EV1' => 'E1'];
-    }
-    public function getTicketTypes(string $eventExternalId): array
-    {
-        return ['42' => 'External Type'];
-    }
-    public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
-}
-
-class TicketProviderStubNoTypes implements \App\Services\Contracts\TicketProviderContract
-{
-    public function __construct(?\App\Models\TicketProvider $provider = null) {}
-    public function configMapping(): array
-    {
-        return [];
-    }
-    public function install(): \App\Models\TicketProvider
-    {
-        return new \App\Models\TicketProvider();
-    }
-    public function processWebhook(\Illuminate\Http\Request $request): bool
-    {
-        return true;
-    }
-    public function syncTickets(string|\App\Models\EmailAddress $email): void {}
-    public function getEvents(): array
-    {
-        return ['EV1' => 'E1'];
-    }
-    public function getTicketTypes(string $eventExternalId): array
-    {
-        return [];
-    }
-    public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
-}
-
-class TicketProviderStub99 implements \App\Services\Contracts\TicketProviderContract
-{
-    public function __construct(?\App\Models\TicketProvider $provider = null) {}
-    public function configMapping(): array
-    {
-        return [];
-    }
-    public function install(): \App\Models\TicketProvider
-    {
-        return new \App\Models\TicketProvider();
-    }
-    public function processWebhook(\Illuminate\Http\Request $request): bool
-    {
-        return true;
-    }
-    public function syncTickets(string|\App\Models\EmailAddress $email): void {}
-    public function getEvents(): array
-    {
-        return ['EV1' => 'E1'];
-    }
-    public function getTicketTypes(string $eventExternalId): array
-    {
-        return ['99' => 'New Name'];
-    }
-    public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
-}
-
-class TicketProviderStubObj implements \App\Services\Contracts\TicketProviderContract
-{
-    public function __construct(?\App\Models\TicketProvider $provider = null) {}
-    public function configMapping(): array
-    {
-        return [];
-    }
-    public function install(): \App\Models\TicketProvider
-    {
-        return new \App\Models\TicketProvider();
-    }
-    public function processWebhook(\Illuminate\Http\Request $request): bool
-    {
-        return true;
-    }
-    public function syncTickets(string|\App\Models\EmailAddress $email): void {}
-    public function getEvents(): array
-    {
-        return ['EV1' => 'E1'];
-    }
-    public function getTicketTypes(string $eventExternalId): array
-    {
-        return [(object)['id' => '11', 'name' => 'First'], (object)['id' => '22', 'name' => 'Second'], (object)['id' => '42', 'name' => 'Matched']];
-    }
-    public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void {}
-}
 
 class TicketTypeMappingControllerTest extends TestCase
 {
@@ -126,8 +28,8 @@ class TicketTypeMappingControllerTest extends TestCase
     {
         $event = Event::factory()->create();
         $type = TicketType::factory()->for($event)->create();
-        $provider = \App\Models\TicketProvider::factory()->create();
-        $mapping = new \App\Models\TicketTypeMapping();
+        $provider = TicketProvider::factory()->create();
+        $mapping = new TicketTypeMapping();
         $mapping->type()->associate($type);
         $mapping->provider()->associate($provider);
         $mapping->external_id = 'x1';
@@ -142,31 +44,31 @@ class TicketTypeMappingControllerTest extends TestCase
     {
         $event = Event::factory()->create();
         $type = TicketType::factory()->for($event)->create();
-        $provider = \App\Models\TicketProvider::factory()->create();
+        $provider = TicketProvider::factory()->create();
 
-        $provider->provider_class = TicketProviderStubWithTypes::class;
+        $provider->provider_class = HelperClasses\TicketProviderStubWithTypes::class;
         $provider->save();
         // bind the stub into the container
-        $this->app->bind(TicketProviderStubWithTypes::class, function () {
-            return new TicketProviderStubWithTypes();
+        $this->app->bind(HelperClasses\TicketProviderStubWithTypes::class, function () {
+            return new HelperClasses\TicketProviderStubWithTypes();
         });
 
         // ensure there's an EventMapping linking provider to event so getTicketTypes will be invoked
-        $em = new \App\Models\EventMapping();
+        $em = new EventMapping();
         $em->provider()->associate($provider);
         $em->event()->associate($event);
         $em->external_id = 'EV1';
         $em->save();
 
         $controller = new TicketTypeMappingController();
-        $req = \App\Http\Requests\Admin\TicketTypeMappingUpdateRequest::create('/', 'POST', ['external_id' => $provider->id . ':42']);
+        $req = TicketTypeMappingUpdateRequest::create('/', 'POST', ['external_id' => $provider->id . ':42']);
         try {
             $controller->store($req, $event, $type);
-        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+        } catch (UrlGenerationException $ex) {
             // ignore missing route redirect
         }
 
-        $mapping = \App\Models\TicketTypeMapping::whereExternalId('42')->first();
+        $mapping = TicketTypeMapping::whereExternalId('42')->first();
         $this->assertNotNull($mapping);
         $this->assertEquals('External Type', $mapping->name);
     }
@@ -175,28 +77,28 @@ class TicketTypeMappingControllerTest extends TestCase
     {
         $event = Event::factory()->create();
         $type = TicketType::factory()->for($event)->create();
-        $provider = \App\Models\TicketProvider::factory()->create();
-        $mapping = new \App\Models\TicketTypeMapping();
+        $provider = TicketProvider::factory()->create();
+        $mapping = new TicketTypeMapping();
         $mapping->type()->associate($type);
         $mapping->provider()->associate($provider);
         $mapping->external_id = 'x1';
         $mapping->save();
 
-        $provider->provider_class = TicketProviderStubNoTypes::class;
+        $provider->provider_class = HelperClasses\TicketProviderStubNoTypes::class;
         $provider->save();
-        $this->app->bind(TicketProviderStubNoTypes::class, function () {
-            return new TicketProviderStubNoTypes();
+        $this->app->bind(HelperClasses\TicketProviderStubNoTypes::class, function () {
+            return new HelperClasses\TicketProviderStubNoTypes();
         });
         // add event mapping so provider->getTicketTypes is called
-        $em = new \App\Models\EventMapping();
+        $em = new EventMapping();
         $em->provider()->associate($provider);
         $em->event()->associate($event);
         $em->external_id = 'EV1';
         $em->save();
 
         $controller = new TicketTypeMappingController();
-        $req2 = \App\Http\Requests\Admin\TicketTypeMappingUpdateRequest::create('/', 'POST', ['external_id' => $provider->id . ':99']);
-        $ref = new \ReflectionClass($controller);
+        $req2 = TicketTypeMappingUpdateRequest::create('/', 'POST', ['external_id' => $provider->id . ':99']);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $mapping, $req2);
@@ -208,30 +110,30 @@ class TicketTypeMappingControllerTest extends TestCase
     {
         $event = Event::factory()->create();
         $type = TicketType::factory()->for($event)->create();
-        $provider = \App\Models\TicketProvider::factory()->create();
-        $mapping = new \App\Models\TicketTypeMapping();
+        $provider = TicketProvider::factory()->create();
+        $mapping = new TicketTypeMapping();
         $mapping->type()->associate($type);
         $mapping->provider()->associate($provider);
         $mapping->external_id = 'x1';
         $mapping->save();
 
-        $provider->provider_class = TicketProviderStub99::class;
+        $provider->provider_class = HelperClasses\TicketProviderStub99::class;
         $provider->save();
-        $this->app->bind(TicketProviderStub99::class, function () {
-            return new TicketProviderStub99();
+        $this->app->bind(HelperClasses\TicketProviderStub99::class, function () {
+            return new HelperClasses\TicketProviderStub99();
         });
         // add event mapping so provider->getTicketTypes returns our stubbed list
-        $em = new \App\Models\EventMapping();
+        $em = new EventMapping();
         $em->provider()->associate($provider);
         $em->event()->associate($event);
         $em->external_id = 'EV1';
         $em->save();
 
         $controller = new TicketTypeMappingController();
-        $req = \App\Http\Requests\Admin\TicketTypeMappingUpdateRequest::create('/', 'POST', ['external_id' => $provider->id . ':99']);
+        $req = TicketTypeMappingUpdateRequest::create('/', 'POST', ['external_id' => $provider->id . ':99']);
         try {
             $controller->update($req, $event, $type, $mapping);
-        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+        } catch (UrlGenerationException $ex) {
             // ignore redirect
         }
 
@@ -242,8 +144,8 @@ class TicketTypeMappingControllerTest extends TestCase
     {
         $event = Event::factory()->create();
         $type = TicketType::factory()->for($event)->create();
-        $provider = \App\Models\TicketProvider::factory()->create();
-        $mapping = new \App\Models\TicketTypeMapping();
+        $provider = TicketProvider::factory()->create();
+        $mapping = new TicketTypeMapping();
         $mapping->type()->associate($type);
         $mapping->provider()->associate($provider);
         $mapping->external_id = 'x1';
@@ -252,9 +154,9 @@ class TicketTypeMappingControllerTest extends TestCase
         $controller = new TicketTypeMappingController();
         try {
             $controller->destroy($event, $type, $mapping);
-        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+        } catch (UrlGenerationException $ex) {
             // ignore redirect
         }
-        $this->assertNull(\App\Models\TicketTypeMapping::find($mapping->id));
+        $this->assertNull(TicketTypeMapping::find($mapping->id));
     }
 }

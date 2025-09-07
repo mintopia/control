@@ -2,8 +2,16 @@
 
 namespace Tests\Unit\app\Http;
 
-use Tests\TestCase;
 use App\Http\Kernel;
+use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\EncryptCookies;
+use App\Http\Middleware\MetricsCollector;
+use App\Http\Middleware\TrustProxies;
+use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
+use Illuminate\Routing\Middleware\ThrottleRequests;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use ReflectionClass;
+use Tests\TestCase;
 
 class KernelTest extends TestCase
 {
@@ -15,7 +23,7 @@ class KernelTest extends TestCase
 
     private function getProtectedProperty($object, string $property)
     {
-        $reflection = new \ReflectionClass($object);
+        $reflection = new ReflectionClass($object);
         $prop = $reflection->getProperty($property);
         $prop->setAccessible(true);
         return $prop->getValue($object);
@@ -25,9 +33,9 @@ class KernelTest extends TestCase
     {
         $kernel = new Kernel(app(), app('router'));
         $middleware = $this->getProtectedProperty($kernel, 'middleware');
-        $this->assertContains(\App\Http\Middleware\MetricsCollector::class, $middleware);
-        $this->assertContains(\App\Http\Middleware\TrustProxies::class, $middleware);
-        $this->assertContains(\Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class, $middleware);
+        $this->assertContains(MetricsCollector::class, $middleware);
+        $this->assertContains(TrustProxies::class, $middleware);
+        $this->assertContains(ConvertEmptyStringsToNull::class, $middleware);
     }
 
     public function testMiddlewareGroupsContainExpectedMiddleware()
@@ -35,9 +43,9 @@ class KernelTest extends TestCase
         $kernel = new Kernel(app(), app('router'));
         $groups = $this->getProtectedProperty($kernel, 'middlewareGroups');
         $this->assertArrayHasKey('web', $groups);
-        $this->assertContains(\App\Http\Middleware\EncryptCookies::class, $groups['web']);
+        $this->assertContains(EncryptCookies::class, $groups['web']);
         $this->assertArrayHasKey('api', $groups);
-        $this->assertContains(\Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, $groups['api']);
+        $this->assertContains(EnsureFrontendRequestsAreStateful::class, $groups['api']);
     }
 
     public function testMiddlewareAliasesContainExpectedAliases()
@@ -45,8 +53,8 @@ class KernelTest extends TestCase
         $kernel = new Kernel(app(), app('router'));
         $aliases = $this->getProtectedProperty($kernel, 'middlewareAliases');
         $this->assertArrayHasKey('auth', $aliases);
-        $this->assertEquals(\App\Http\Middleware\Authenticate::class, $aliases['auth']);
+        $this->assertEquals(Authenticate::class, $aliases['auth']);
         $this->assertArrayHasKey('throttle', $aliases);
-        $this->assertEquals(\Illuminate\Routing\Middleware\ThrottleRequests::class, $aliases['throttle']);
+        $this->assertEquals(ThrottleRequests::class, $aliases['throttle']);
     }
 }

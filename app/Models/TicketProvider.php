@@ -4,11 +4,15 @@ namespace App\Models;
 
 use App\Models\Traits\ToString;
 use App\Services\Contracts\TicketProviderContract;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\TicketProvider
@@ -20,28 +24,28 @@ use Illuminate\Http\Request;
  * @property string $provider_class
  * @property int $enabled
  * @property string $cache_prefix
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventMapping> $events
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Collection<int, EventMapping> $events
  * @property-read int|null $events_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ProviderSetting> $settings
+ * @property-read Collection<int, ProviderSetting> $settings
  * @property-read int|null $settings_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
+ * @property-read Collection<int, Ticket> $tickets
  * @property-read int|null $tickets_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketTypeMapping> $types
+ * @property-read Collection<int, TicketTypeMapping> $types
  * @property-read int|null $types_count
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider query()
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCachePrefix($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereEnabled($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereProviderClass($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketProvider whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @method static Builder|TicketProvider newModelQuery()
+ * @method static Builder|TicketProvider newQuery()
+ * @method static Builder|TicketProvider query()
+ * @method static Builder|TicketProvider whereCachePrefix($value)
+ * @method static Builder|TicketProvider whereCode($value)
+ * @method static Builder|TicketProvider whereCreatedAt($value)
+ * @method static Builder|TicketProvider whereEnabled($value)
+ * @method static Builder|TicketProvider whereId($value)
+ * @method static Builder|TicketProvider whereName($value)
+ * @method static Builder|TicketProvider whereProviderClass($value)
+ * @method static Builder|TicketProvider whereUpdatedAt($value)
+ * @mixin Eloquent
  */
 class TicketProvider extends Model
 {
@@ -63,14 +67,14 @@ class TicketProvider extends Model
         return $this->hasMany(Ticket::class);
     }
 
-    public function getProvider(): TicketProviderContract
-    {
-        return app()->make($this->provider_class, ['provider' => $this]);
-    }
-
     public function syncTickets(string|EmailAddress $email): void
     {
         $this->getProvider()->syncTickets($email);
+    }
+
+    public function getProvider(): TicketProviderContract
+    {
+        return app()->make($this->provider_class, ['provider' => $this]);
     }
 
     public function processWebhook(Request $request): bool
@@ -145,11 +149,6 @@ class TicketProvider extends Model
         return $this->hasMany(TicketTypeMapping::class);
     }
 
-    public function settings(): MorphMany
-    {
-        return $this->morphMany(ProviderSetting::class, 'provider');
-    }
-
     public function getSetting(string $code): mixed
     {
         if (isset($this->_settings[$code])) {
@@ -162,6 +161,11 @@ class TicketProvider extends Model
         }
         $this->_settings[$code] = $setting->value;
         return $setting->value;
+    }
+
+    public function settings(): MorphMany
+    {
+        return $this->morphMany(ProviderSetting::class, 'provider');
     }
 
     public function clearCache(): void

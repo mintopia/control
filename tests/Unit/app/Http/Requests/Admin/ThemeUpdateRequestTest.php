@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\app\Http\Requests\Admin;
 
-use Tests\TestCase;
 use App\Http\Requests\Admin\ThemeUpdateRequest;
+use Tests\TestCase;
 
 class ThemeUpdateRequestTest extends TestCase
 {
@@ -22,7 +22,7 @@ class ThemeUpdateRequestTest extends TestCase
 
     public function testRulesIncludeActiveAndDarkMode()
     {
-        $request = new ThemeUpdateRequestStub();
+        $request = new HelperClasses\ThemeUpdateRequestStub();
         $request->theme = null;
         $rules = $request->rules();
         $this->assertArrayHasKey('active', $rules);
@@ -33,7 +33,7 @@ class ThemeUpdateRequestTest extends TestCase
 
     public function testRulesIncludeAllFieldsIfThemeNotReadonly()
     {
-        $request = new ThemeUpdateRequestStub();
+        $request = new HelperClasses\ThemeUpdateRequestStub();
         $request->theme = (object)['readonly' => false];
         $rules = $request->rules();
         $expected = [
@@ -54,16 +54,11 @@ class ThemeUpdateRequestTest extends TestCase
 
     public function testRulesOmitsFieldsIfThemeReadonly()
     {
-        $request = new ThemeUpdateRequestStub();
+        $request = new HelperClasses\ThemeUpdateRequestStub();
         $request->theme = (object)['readonly' => true];
         $rules = $request->rules();
         $this->assertArrayNotHasKey('name', $rules);
         $this->assertArrayNotHasKey('primary', $rules);
         $this->assertArrayNotHasKey('nav_background', $rules);
     }
-}
-
-class ThemeUpdateRequestStub extends ThemeUpdateRequest
-{
-    public $theme = null;
 }

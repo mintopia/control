@@ -2,16 +2,23 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Http\Controllers\Admin\TicketController;
+use App\Http\Requests\Admin\TicketImportRequest;
+use App\Http\Requests\Admin\TicketUpdateRequest;
 use App\Models\Event;
+use App\Models\Seat;
+use App\Models\SeatingPlan;
 use App\Models\Ticket;
-use App\Models\TicketType;
 use App\Models\TicketProvider;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Str;
+use App\Models\TicketType;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Routing\Exceptions\UrlGenerationException;
+use ReflectionClass;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Tests\TestCase;
 
 class TicketControllerTest extends TestCase
 {
@@ -37,7 +44,7 @@ class TicketControllerTest extends TestCase
     {
         $c = new TicketController();
         // missing event should abort 404
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
         $c->create(request());
 
         // with event parameter should return a view-like object
@@ -54,10 +61,10 @@ class TicketControllerTest extends TestCase
         $internal = TicketProvider::factory()->create(['code' => 'internal']);
 
         $controller = new TicketController();
-        $req = \App\Http\Requests\Admin\TicketUpdateRequest::create('/', 'POST', ['ticket_type_id' => $type->id, 'reference' => 'R1']);
+        $req = TicketUpdateRequest::create('/', 'POST', ['ticket_type_id' => $type->id, 'reference' => 'R1']);
         try {
             $controller->store($req);
-        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+        } catch (UrlGenerationException $ex) {
             // ignore redirects
         }
 
@@ -73,7 +80,7 @@ class TicketControllerTest extends TestCase
 
         $controller = new TicketController();
         $req = request()->create('/', 'POST', ['reference' => 'NEWREF', 'user_id' => null, 'ticket_type_id' => $type->id]);
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $ticket, $req);
@@ -89,10 +96,10 @@ class TicketControllerTest extends TestCase
         $ticket = Ticket::factory()->for($event)->for($type, 'type')->for($provider, 'provider')->create(['reference' => 'OLD']);
 
         $controller = new TicketController();
-        $req = \App\Http\Requests\Admin\TicketUpdateRequest::create('/', 'POST', ['reference' => 'UPDATED', 'ticket_type_id' => $type->id]);
+        $req = TicketUpdateRequest::create('/', 'POST', ['reference' => 'UPDATED', 'ticket_type_id' => $type->id]);
         try {
             $controller->update($req, $ticket);
-        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+        } catch (UrlGenerationException $ex) {
             // ignore
         }
         $this->assertEquals('UPDATED', $ticket->fresh()->reference);
@@ -108,7 +115,7 @@ class TicketControllerTest extends TestCase
         $controller = new TicketController();
         try {
             $controller->destroy($ticket);
-        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+        } catch (UrlGenerationException $ex) {
             // ignore
         }
         $this->assertNull(Ticket::find($ticket->id));
@@ -118,9 +125,9 @@ class TicketControllerTest extends TestCase
     {
         $event = Event::factory()->create();
         $type = TicketType::factory()->for($event)->create();
-        $user = \App\Models\User::factory()->create();
+        $user = User::factory()->create();
         // ensure internal provider exists
-        \App\Models\TicketProvider::factory()->create(['code' => 'internal']);
+        TicketProvider::factory()->create(['code' => 'internal']);
 
         // create CSV rows: typeId,userId,seatLabel
         $csv = $type->id . ',' . $user->id . ",\n";
@@ -128,7 +135,7 @@ class TicketControllerTest extends TestCase
         file_put_contents($tmp, $csv);
         $uploaded = new UploadedFile($tmp, 'tickets.csv', 'text/csv', null, true);
 
-        $req = \App\Http\Requests\Admin\TicketImportRequest::create('/', 'POST', [], [], ['csv' => $uploaded]);
+        $req = TicketImportRequest::create('/', 'POST', [], [], ['csv' => $uploaded]);
         $req->setLaravelSession($this->app['session.store']);
 
         $controller = new TicketController();
@@ -141,7 +148,7 @@ class TicketControllerTest extends TestCase
         $req2->setLaravelSession($this->app['session.store']);
         try {
             $controller->importProcess($req2);
-        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+        } catch (UrlGenerationException $ex) {
             // ignore
         }
 
@@ -167,12 +174,12 @@ class TicketControllerTest extends TestCase
         $event = Event::factory()->create(['code' => 'EVX']);
         $type = TicketType::factory()->for($event)->create();
         $provider = TicketProvider::factory()->create();
-        $user = \App\Models\User::factory()->create(['nickname' => 'Zed']);
+        $user = User::factory()->create(['nickname' => 'Zed']);
 
         $ticket = Ticket::factory()->for($event)->for($type, 'type')->for($provider, 'provider')->create(['user_id' => $user->id, 'external_id' => 'EXT-1', 'original_email' => 'orig@example.com']);
 
         // seat
-        $seat = \App\Models\Seat::factory()->create(['ticket_id' => $ticket->id, 'label' => 'S1']);
+        $seat = Seat::factory()->create(['ticket_id' => $ticket->id, 'label' => 'S1']);
 
         $controller = new TicketController();
 
@@ -259,8 +266,8 @@ class TicketControllerTest extends TestCase
         $typeB = TicketType::factory()->for($e1)->create(['name' => 'ZZZ']);
 
         // order by user
-        $uA = \App\Models\User::factory()->create(['nickname' => 'AA']);
-        $uB = \App\Models\User::factory()->create(['nickname' => 'ZZ']);
+        $uA = User::factory()->create(['nickname' => 'AA']);
+        $uB = User::factory()->create(['nickname' => 'ZZ']);
         $tua = Ticket::factory()->for($e1)->for($typeA, 'type')->for($provider, 'provider')->create(['user_id' => $uA->id]);
         $tub = Ticket::factory()->for($e1)->for($typeA, 'type')->for($provider, 'provider')->create(['user_id' => $uB->id]);
         $resp = $controller->index(Request::create('/admin/tickets', 'GET', ['order' => 'user', 'order_direction' => 'asc']));
@@ -282,9 +289,9 @@ class TicketControllerTest extends TestCase
         $tb = Ticket::factory()->for($e1)->for($typeB, 'type')->for($provider, 'provider')->create();
 
         // order by seat
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $e1->id]);
-        $seat1 = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'row' => 'A', 'number' => 1]);
-        $seat2 = \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'row' => 'B', 'number' => 1]);
+        $plan = SeatingPlan::factory()->create(['event_id' => $e1->id]);
+        $seat1 = Seat::factory()->create(['seating_plan_id' => $plan->id, 'row' => 'A', 'number' => 1]);
+        $seat2 = Seat::factory()->create(['seating_plan_id' => $plan->id, 'row' => 'B', 'number' => 1]);
         // assign seats to tickets
         $seat1->ticket()->associate($ta);
         $seat1->save();

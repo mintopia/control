@@ -2,15 +2,15 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Models\EmailAddress;
-use App\Models\User;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Bus;
+use App\Exceptions\EmailVerificationException;
 use App\Jobs\SyncTicketsForEmailJob;
 use App\Mail\VerifyEmail;
-use App\Exceptions\EmailVerificationException;
+use App\Models\EmailAddress;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Mail;
+use Tests\TestCase;
 
 class EmailAddressTest extends TestCase
 {

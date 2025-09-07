@@ -2,10 +2,15 @@
 
 namespace Tests\Unit\app\Http\Requests;
 
-use Tests\TestCase;
 use App\Http\Requests\UserSignupRequest;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Mockery;
+use ReflectionClass;
+use ReflectionException;
+use Tests\TestCase;
 
 class UserSignupRequestTest extends TestCase
 {
@@ -17,18 +22,18 @@ class UserSignupRequestTest extends TestCase
         // Ensure any static cache on Setting is cleared between tests so each test is isolated.
         // Reset the protected static::$cached property via reflection.
         try {
-            $settingClass = \App\Models\Setting::class;
-            $ref = new \ReflectionClass($settingClass);
+            $settingClass = Setting::class;
+            $ref = new ReflectionClass($settingClass);
             if ($ref->hasProperty('cached')) {
                 $prop = $ref->getProperty('cached');
                 $prop->setAccessible(true);
                 $prop->setValue([]);
             }
-        } catch (\ReflectionException $e) {
+        } catch (ReflectionException $e) {
             // ignore - best effort
         }
         // Also clear application cache used by Setting::fetch
-        \Illuminate\Support\Facades\Cache::flush();
+        Cache::flush();
     }
 
     public function testAuthorizeReturnsTrue()
@@ -51,10 +56,10 @@ class UserSignupRequestTest extends TestCase
     public function testMessagesReturnsCombinedMessageIfTermsAndPrivacySet()
     {
         // create settings in the DB so Setting::fetch reads them
-        \App\Models\Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => true]);
-        \App\Models\Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => true]);
+        Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => true]);
+        Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => true]);
         // clear any cached value
-        \App\Models\Setting::first()->clearCache();
+        Setting::first()->clearCache();
         $request = new UserSignupRequest();
         $messages = $request->messages();
         $this->assertArrayHasKey('terms.accepted', $messages);
@@ -64,9 +69,9 @@ class UserSignupRequestTest extends TestCase
 
     public function testMessagesReturnsMessageIfOnlyTermsSet()
     {
-        \App\Models\Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => true]);
-        \App\Models\Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => false]);
-        \App\Models\Setting::first()->clearCache();
+        Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => true]);
+        Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => false]);
+        Setting::first()->clearCache();
         $request = new UserSignupRequest();
         $messages = $request->messages();
         $this->assertArrayHasKey('terms.accepted', $messages);
@@ -75,9 +80,9 @@ class UserSignupRequestTest extends TestCase
 
     public function testMessagesReturnsMessageIfOnlyPrivacySet()
     {
-        \App\Models\Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => false]);
-        \App\Models\Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => true]);
-        \App\Models\Setting::first()->clearCache();
+        Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => false]);
+        Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => true]);
+        Setting::first()->clearCache();
         $request = new UserSignupRequest();
         $messages = $request->messages();
         $this->assertArrayHasKey('terms.accepted', $messages);
@@ -94,9 +99,9 @@ class UserSignupRequestTest extends TestCase
 
     public function testRulesIncludesTermsIfTermsOrPrivacySet()
     {
-        \App\Models\Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => true]);
-        \App\Models\Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => false]);
-        \App\Models\Setting::first()->clearCache();
+        Setting::create(['code' => 'terms', 'name' => 'Terms', 'value' => true]);
+        Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => false]);
+        Setting::first()->clearCache();
         $user = User::factory()->create();
         $this->be($user);
         $request = new UserSignupRequest();
@@ -119,7 +124,7 @@ class UserSignupRequestTest extends TestCase
 
     protected function tearDown(): void
     {
-        \Mockery::close();
+        Mockery::close();
         parent::tearDown();
     }
 }

@@ -2,10 +2,13 @@
 
 namespace Tests\Unit\app\Http\Requests\Admin;
 
-use Tests\TestCase;
 use App\Http\Requests\Admin\EventMappingUpdateRequest;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\TicketProvider;
+use Closure;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Assert;
+use Tests\TestCase;
+use Throwable;
 
 class EventMappingUpdateRequestTest extends TestCase
 {
@@ -45,7 +48,7 @@ class EventMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -57,7 +60,7 @@ class EventMappingUpdateRequestTest extends TestCase
         };
         try {
             $closure('external_id', 'badformat', $fail);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->assertStringContainsString('Undefined array key', $e->getMessage());
             return;
         }
@@ -80,7 +83,7 @@ class EventMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -88,7 +91,7 @@ class EventMappingUpdateRequestTest extends TestCase
         $called = false;
         $fail = function ($message) use (&$called) {
             $called = true;
-            \PHPUnit\Framework\Assert::assertEquals('Ticket Provider does not exist', $message);
+            Assert::assertEquals('Ticket Provider does not exist', $message);
         };
         $closure('external_id', '999:abc', $fail);
         $this->assertTrue($called, 'Fail closure was not called for missing provider');
@@ -109,12 +112,14 @@ class EventMappingUpdateRequestTest extends TestCase
         ];
 
         // Event object that returns available mappings
-        $request->event = new class($mockMapping) {
+        $request->event = new class ($mockMapping) {
             private $mapping;
+
             public function __construct($m)
             {
                 $this->mapping = $m;
             }
+
             public function getAvailableEventMappings($mapping = null)
             {
                 return [$this->mapping];
@@ -124,7 +129,7 @@ class EventMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -132,7 +137,7 @@ class EventMappingUpdateRequestTest extends TestCase
         $called = false;
         $fail = function ($message) use (&$called) {
             $called = true;
-            \PHPUnit\Framework\Assert::assertEquals('That provider event is already mapped', $message);
+            Assert::assertEquals('That provider event is already mapped', $message);
         };
         $closure('external_id', $provider->id . ':xyz', $fail);
         $this->assertTrue($called, 'Fail closure was not called for already mapped event');
@@ -152,12 +157,14 @@ class EventMappingUpdateRequestTest extends TestCase
             'events' => [$mockEvent]
         ];
 
-        $request->event = new class($mockMapping) {
+        $request->event = new class ($mockMapping) {
             private $mapping;
+
             public function __construct($m)
             {
                 $this->mapping = $m;
             }
+
             public function getAvailableEventMappings($mapping = null)
             {
                 return [$this->mapping];
@@ -167,13 +174,13 @@ class EventMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
         }
         $fail = function ($message) {
-            \PHPUnit\Framework\Assert::fail('Fail closure should not be called for valid mapping');
+            Assert::fail('Fail closure should not be called for valid mapping');
         };
         // Should not call fail for a valid mapping
         $closure('external_id', $provider->id . ':abc', $fail);
@@ -188,7 +195,7 @@ class EventMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -196,7 +203,7 @@ class EventMappingUpdateRequestTest extends TestCase
         $called = false;
         $fail = function ($message) use (&$called) {
             $called = true;
-            \PHPUnit\Framework\Assert::assertEquals('Invalid event specified', $message);
+            Assert::assertEquals('Invalid event specified', $message);
         };
         $closure('external_id', ':abc', $fail);
         $this->assertTrue($called, 'Fail closure was not called when provider id is empty');
@@ -210,7 +217,7 @@ class EventMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -218,7 +225,7 @@ class EventMappingUpdateRequestTest extends TestCase
         $called = false;
         $fail = function ($message) use (&$called) {
             $called = true;
-            \PHPUnit\Framework\Assert::assertEquals('Invalid event specified', $message);
+            Assert::assertEquals('Invalid event specified', $message);
         };
         $closure('external_id', '123:', $fail);
         $this->assertTrue($called, 'Fail closure was not called when external id is empty');
@@ -239,12 +246,14 @@ class EventMappingUpdateRequestTest extends TestCase
             'events' => [$mockEvent]
         ];
 
-        $request->event = new class($mockMapping) {
+        $request->event = new class ($mockMapping) {
             private $mapping;
+
             public function __construct($m)
             {
                 $this->mapping = $m;
             }
+
             public function getAvailableEventMappings($mapping = null)
             {
                 return [$this->mapping];
@@ -254,7 +263,7 @@ class EventMappingUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['external_id'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -262,7 +271,7 @@ class EventMappingUpdateRequestTest extends TestCase
         $called = false;
         $fail = function ($message) use (&$called) {
             $called = true;
-            \PHPUnit\Framework\Assert::assertEquals('That provider event is already mapped', $message);
+            Assert::assertEquals('That provider event is already mapped', $message);
         };
         // Use the other provider id so loop will continue and ultimately fail
         $closure('external_id', $provider->id . ':xyz', $fail);

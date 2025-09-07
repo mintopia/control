@@ -2,17 +2,19 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Http\Controllers\Admin\SeatingPlanController;
-use App\Models\Event;
-use App\Models\SeatingPlan;
-use App\Http\Requests\Admin\SeatingPlanUpdateRequest;
+use App\Http\Requests\Admin\DeleteRequest;
 use App\Http\Requests\Admin\SeatingPlanImportRequest;
-use Illuminate\Routing\Exceptions\UrlGenerationException;
-use Symfony\Component\HttpFoundation\StreamedResponse;
-use Illuminate\Http\Request;
+use App\Http\Requests\Admin\SeatingPlanUpdateRequest;
+use App\Models\Event;
 use App\Models\Seat;
+use App\Models\SeatingPlan;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Routing\Exceptions\UrlGenerationException;
+use ReflectionClass;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Tests\TestCase;
 
 class SeatingPlanControllerTest extends TestCase
 {
@@ -54,7 +56,7 @@ class SeatingPlanControllerTest extends TestCase
         $plan = SeatingPlan::whereName('PlanX')->first();
         $this->assertNotNull($plan, 'SeatingPlan created');
         // call updateObject directly to ensure image sizes are set
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         // change name to ensure update occurs
@@ -87,7 +89,7 @@ class SeatingPlanControllerTest extends TestCase
         $this->assertTrue(is_object($controller->down($event, $plan)));
 
         // destroy
-        $reqDel = \App\Http\Requests\Admin\DeleteRequest::create('/admin', 'DELETE', ['confirm' => 'delete']);
+        $reqDel = DeleteRequest::create('/admin', 'DELETE', ['confirm' => 'delete']);
         try {
             $controller->destroy($reqDel, $event, $plan);
         } catch (UrlGenerationException $ex) {
@@ -158,7 +160,7 @@ class SeatingPlanControllerTest extends TestCase
         // create a real temporary file and an UploadedFile instance for the request
         $tmp = tempnam(sys_get_temp_dir(), 'test_seating_');
         file_put_contents($tmp, $csv);
-        $uploaded = new \Illuminate\Http\UploadedFile($tmp, 'test_seating.csv', null, null, true);
+        $uploaded = new UploadedFile($tmp, 'test_seating.csv', null, null, true);
 
         $req = SeatingPlanImportRequest::create('/admin', 'POST', ['wipe' => false]);
         $req->files->set('csv', $uploaded);
@@ -186,7 +188,7 @@ class SeatingPlanControllerTest extends TestCase
         // Create a request without image_url so the sizing branch is skipped
         $req = SeatingPlanUpdateRequest::create('/admin', 'POST', ['name' => 'NoImage']);
 
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $plan, $req);
@@ -206,7 +208,7 @@ class SeatingPlanControllerTest extends TestCase
         // No scale provided -> should default to 100
         $req = SeatingPlanUpdateRequest::create('/admin', 'POST', ['name' => 'DefaultScale']);
 
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $plan, $req);

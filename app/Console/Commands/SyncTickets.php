@@ -2,9 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\LinkedAccount;
 use App\Models\TicketProvider;
-use App\Models\TicketType;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 

@@ -2,13 +2,12 @@
 
 namespace Tests\Unit\app\Transformers\V1;
 
-use Tests\TestCase;
-
-use App\Models\SeatingPlan;
 use App\Models\Event;
+use App\Models\SeatingPlan;
 use App\Models\User;
 use App\Transformers\V1\SeatingPlanTransformer;
 use Illuminate\Support\Carbon;
+use Tests\TestCase;
 
 class SeatingPlanTransformerTest extends TestCase
 {

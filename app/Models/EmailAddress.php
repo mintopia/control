@@ -7,6 +7,9 @@ use App\Jobs\SyncTicketsForEmailJob;
 use App\Mail\VerifyEmail;
 use App\Models\Traits\ToString;
 use Carbon\Carbon;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,21 +30,21 @@ use function App\makeCode;
  * @property \Illuminate\Support\Carbon|null $verified_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\LinkedAccount> $linkedAccounts
+ * @property-read Collection<int, LinkedAccount> $linkedAccounts
  * @property-read int|null $linked_accounts_count
- * @property-read \App\Models\User $user
- * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress query()
- * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereEmail($value)
- * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereUserId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereVerificationCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereVerificationSentAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|EmailAddress whereVerifiedAt($value)
- * @mixin \Eloquent
+ * @property-read User $user
+ * @method static Builder|EmailAddress newModelQuery()
+ * @method static Builder|EmailAddress newQuery()
+ * @method static Builder|EmailAddress query()
+ * @method static Builder|EmailAddress whereCreatedAt($value)
+ * @method static Builder|EmailAddress whereEmail($value)
+ * @method static Builder|EmailAddress whereId($value)
+ * @method static Builder|EmailAddress whereUpdatedAt($value)
+ * @method static Builder|EmailAddress whereUserId($value)
+ * @method static Builder|EmailAddress whereVerificationCode($value)
+ * @method static Builder|EmailAddress whereVerificationSentAt($value)
+ * @method static Builder|EmailAddress whereVerifiedAt($value)
+ * @mixin Eloquent
  */
 class EmailAddress extends Model
 {

@@ -4,10 +4,14 @@ namespace App\Models;
 
 use App\Models\Traits\ToString;
 use App\Services\DiscordApi;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 
 /**
@@ -20,25 +24,25 @@ use Illuminate\Support\Facades\Artisan;
  * @property int $has_seat
  * @property string|null $discord_role_id
  * @property string|null $discord_role_name
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Event $event
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketTypeMapping> $mappings
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Event $event
+ * @property-read Collection<int, TicketTypeMapping> $mappings
  * @property-read int|null $mappings_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
+ * @property-read Collection<int, Ticket> $tickets
  * @property-read int|null $tickets_count
- * @method static \Illuminate\Database\Eloquent\Builder|TicketType newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|TicketType newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|TicketType query()
- * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereDiscordRoleId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereDiscordRoleName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereEventId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereHasSeat($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|TicketType whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @method static Builder|TicketType newModelQuery()
+ * @method static Builder|TicketType newQuery()
+ * @method static Builder|TicketType query()
+ * @method static Builder|TicketType whereCreatedAt($value)
+ * @method static Builder|TicketType whereDiscordRoleId($value)
+ * @method static Builder|TicketType whereDiscordRoleName($value)
+ * @method static Builder|TicketType whereEventId($value)
+ * @method static Builder|TicketType whereHasSeat($value)
+ * @method static Builder|TicketType whereId($value)
+ * @method static Builder|TicketType whereName($value)
+ * @method static Builder|TicketType whereUpdatedAt($value)
+ * @mixin Eloquent
  */
 class TicketType extends Model
 {

@@ -2,11 +2,13 @@
 
 namespace Tests\Unit\app\Policies;
 
-use Tests\TestCase;
-use App\Policies\ClanPolicy;
 use App\Models\Clan;
+use App\Models\ClanMembership;
+use App\Models\ClanRole;
 use App\Models\User;
+use App\Policies\ClanPolicy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ClanPolicyTest extends TestCase
 {
@@ -16,7 +18,7 @@ class ClanPolicyTest extends TestCase
     {
         $user = User::factory()->create();
         $clan = Clan::factory()->create();
-        \App\Models\ClanMembership::factory()->create([
+        ClanMembership::factory()->create([
             'user_id' => $user->id,
             'clan_id' => $clan->id,
         ]);
@@ -37,21 +39,21 @@ class ClanPolicyTest extends TestCase
     public function testUpdateReturnsTrueForLeaderAndFalseForNonLeader()
     {
         // ensure leader role exists
-        \App\Models\ClanRole::factory()->create(['code' => 'leader']);
+        ClanRole::factory()->create(['code' => 'leader']);
 
         $leader = User::factory()->create();
         $member = User::factory()->create();
         $clan = Clan::factory()->create();
 
         // create leader membership
-        \App\Models\ClanMembership::factory()->create([
+        ClanMembership::factory()->create([
             'user_id' => $leader->id,
             'clan_id' => $clan->id,
-            'clan_role_id' => \App\Models\ClanRole::whereCode('leader')->first()->id,
+            'clan_role_id' => ClanRole::whereCode('leader')->first()->id,
         ]);
 
         // create regular member
-        \App\Models\ClanMembership::factory()->create([
+        ClanMembership::factory()->create([
             'user_id' => $member->id,
             'clan_id' => $clan->id,
         ]);

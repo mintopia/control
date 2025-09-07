@@ -2,9 +2,9 @@
 
 namespace Tests\Unit\app\Observers;
 
-use Tests\TestCase;
-use App\Observers\TicketTypeObserver;
 use App\Models\TicketType;
+use App\Observers\TicketTypeObserver;
+use Tests\TestCase;
 
 class TicketTypeObserverTest extends TestCase
 {

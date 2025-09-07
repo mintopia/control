@@ -2,14 +2,15 @@
 
 namespace Tests\Unit\app\Http\Requests\Admin;
 
-use Tests\TestCase;
 use App\Http\Requests\Admin\SettingUpdateRequest;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Setting;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class SettingUpdateRequestTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testAuthorizeReturnsTrue()
     {
         $request = new SettingUpdateRequest();

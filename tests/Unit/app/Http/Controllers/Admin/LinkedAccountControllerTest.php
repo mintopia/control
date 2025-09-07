@@ -2,14 +2,14 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
 use App\Http\Controllers\Admin\LinkedAccountController;
-use App\Models\User;
 use App\Models\LinkedAccount;
 use App\Models\SocialProvider;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+use Tests\TestCase;
 
 class LinkedAccountControllerTest extends TestCase
 {

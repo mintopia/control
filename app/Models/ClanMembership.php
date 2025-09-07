@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use App\Models\Traits\ToString;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\ClanMembership
@@ -15,21 +18,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $user_id
  * @property int $clan_id
  * @property int $clan_role_id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Clan $clan
- * @property-read \App\Models\ClanRole $role
- * @property-read \App\Models\User $user
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership query()
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereClanId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereClanRoleId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|ClanMembership whereUserId($value)
- * @mixin \Eloquent
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Clan $clan
+ * @property-read ClanRole $role
+ * @property-read User $user
+ * @method static Builder|ClanMembership newModelQuery()
+ * @method static Builder|ClanMembership newQuery()
+ * @method static Builder|ClanMembership query()
+ * @method static Builder|ClanMembership whereClanId($value)
+ * @method static Builder|ClanMembership whereClanRoleId($value)
+ * @method static Builder|ClanMembership whereCreatedAt($value)
+ * @method static Builder|ClanMembership whereId($value)
+ * @method static Builder|ClanMembership whereUpdatedAt($value)
+ * @method static Builder|ClanMembership whereUserId($value)
+ * @mixin Eloquent
  */
 class ClanMembership extends Model
 {

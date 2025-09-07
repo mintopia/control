@@ -2,10 +2,14 @@
 
 namespace Tests\Unit\app\Http\Requests\Admin;
 
-use Tests\TestCase;
 use App\Http\Requests\Admin\EventUpdateRequest;
+use App\Models\Event;
+use Closure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
+use PHPUnit\Framework\Assert;
+use ReflectionObject;
+use Tests\TestCase;
 
 class EventUpdateRequestTest extends TestCase
 {
@@ -55,11 +59,11 @@ class EventUpdateRequestTest extends TestCase
     public function testNameRuleClosureFailsIfEventNameExists()
     {
         // Create an event with a code matching makePermalink('Test Event') -> 'test-event'
-        \App\Models\Event::factory()->create(['code' => 'test-event']);
+        Event::factory()->create(['code' => 'test-event']);
 
         $request = new EventUpdateRequest();
         // Ensure we're simulating creation (no existing event)
-        $ref = new \ReflectionObject($request);
+        $ref = new ReflectionObject($request);
         if ($ref->hasProperty('event')) {
             $p = $ref->getProperty('event');
             $p->setAccessible(true);
@@ -72,7 +76,7 @@ class EventUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['name'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -80,7 +84,7 @@ class EventUpdateRequestTest extends TestCase
         $called = false;
         $fail = function ($message) use (&$called) {
             $called = true;
-            \PHPUnit\Framework\Assert::assertEquals('The event name is already in use', $message);
+            Assert::assertEquals('The event name is already in use', $message);
         };
         // Name that will produce permalink 'test-event'
         $closure('name', 'Test Event', $fail);
@@ -90,7 +94,7 @@ class EventUpdateRequestTest extends TestCase
     public function testNameRuleClosurePassesIfEventNameIsUnique()
     {
         $request = new EventUpdateRequest();
-        $ref = new \ReflectionObject($request);
+        $ref = new ReflectionObject($request);
         if ($ref->hasProperty('event')) {
             $p = $ref->getProperty('event');
             $p->setAccessible(true);
@@ -103,13 +107,13 @@ class EventUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['name'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
         }
         $fail = function ($message) {
-            \PHPUnit\Framework\Assert::fail('Fail closure should not be called for unique event name');
+            Assert::fail('Fail closure should not be called for unique event name');
         };
         // Should not call fail for a unique event name
         $closure('name', 'A Unique Event Name', $fail);

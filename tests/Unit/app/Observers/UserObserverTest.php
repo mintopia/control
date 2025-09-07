@@ -2,11 +2,15 @@
 
 namespace Tests\Unit\app\Observers;
 
-use Tests\TestCase;
-use App\Observers\UserObserver;
-use App\Models\User;
+use App\Models\Event;
 use App\Models\Role;
+use App\Models\Seat;
+use App\Models\SeatingPlan;
+use App\Models\Ticket;
+use App\Models\User;
+use App\Observers\UserObserver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class UserObserverTest extends TestCase
 {
@@ -32,11 +36,11 @@ class UserObserverTest extends TestCase
     public function testSavedUpdatesPlanRevisionsWhenNicknameDirty()
     {
         $user = User::factory()->create(['nickname' => 'old']);
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
-        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
-        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+        $ticket = Ticket::factory()->create(['user_id' => $user->id]);
+        Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
 
         $user->nickname = 'new';
         $observer = new UserObserver();
@@ -50,8 +54,8 @@ class UserObserverTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 41]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 41]);
 
         // Snapshot current revision after any creation observers
         $before = $plan->fresh()->revision;
@@ -69,8 +73,8 @@ class UserObserverTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 43]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 43]);
 
         $before = $plan->fresh()->revision;
 
@@ -87,8 +91,8 @@ class UserObserverTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 45]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 45]);
 
         $before = $plan->fresh()->revision;
 
@@ -105,8 +109,8 @@ class UserObserverTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 47]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 47]);
 
         $before = $plan->fresh()->revision;
 
@@ -123,8 +127,8 @@ class UserObserverTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 49]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 49]);
 
         $before = $plan->fresh()->revision;
 

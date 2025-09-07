@@ -2,15 +2,18 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
-use App\Models\Ticket;
-use App\Models\TicketType;
 use App\Models\Event;
-use App\Models\User;
+use App\Models\Helpers\TicketImport;
 use App\Models\Seat;
 use App\Models\SeatingPlan;
+use App\Models\Ticket;
 use App\Models\TicketProvider;
+use App\Models\TicketType;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class TicketTest extends TestCase
 {
@@ -25,36 +28,36 @@ class TicketTest extends TestCase
     public function testUserRelationship()
     {
         $ticket = new Ticket();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $ticket->user());
+        $this->assertInstanceOf(BelongsTo::class, $ticket->user());
     }
 
     public function testProviderRelationship()
     {
         $ticket = new Ticket();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $ticket->provider());
+        $this->assertInstanceOf(BelongsTo::class, $ticket->provider());
     }
 
     public function testTypeRelationship()
     {
         $ticket = new Ticket();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $ticket->type());
+        $this->assertInstanceOf(BelongsTo::class, $ticket->type());
     }
 
     public function testEventRelationship()
     {
         $ticket = new Ticket();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $ticket->event());
+        $this->assertInstanceOf(BelongsTo::class, $ticket->event());
     }
 
     public function testSeatRelationship()
     {
         $ticket = new Ticket();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasOne::class, $ticket->seat());
+        $this->assertInstanceOf(HasOne::class, $ticket->seat());
     }
 
     public function testGenerateTransferCodeSetsCodeAndSaves()
     {
-        $ticket = \App\Models\Ticket::factory()->create([
+        $ticket = Ticket::factory()->create([
             'transfer_code' => null,
         ]);
 
@@ -70,7 +73,7 @@ class TicketTest extends TestCase
         $event = Event::factory()->create([
             'ends_at' => now()->subDay(),
         ]);
-        $ticket = \App\Models\Ticket::factory()->create([
+        $ticket = Ticket::factory()->create([
             'event_id' => $event->id,
         ]);
         $this->assertFalse($ticket->canTransfer());
@@ -78,14 +81,14 @@ class TicketTest extends TestCase
 
     public function testCanPickSeatReturnsFalseIfTypeHasNoSeat()
     {
-        $type = \App\Models\TicketType::factory()->create([
+        $type = TicketType::factory()->create([
             'has_seat' => false,
         ]);
         $event = Event::factory()->create([
             'ends_at' => now()->addDay(),
             'seating_locked' => false,
         ]);
-        $ticket = \App\Models\Ticket::factory()->create([
+        $ticket = Ticket::factory()->create([
             'ticket_type_id' => $type->id,
             'event_id' => $event->id,
         ]);
@@ -94,14 +97,14 @@ class TicketTest extends TestCase
 
     public function testCanPickSeatReturnsFalseIfEventEnded()
     {
-        $type = \App\Models\TicketType::factory()->create([
+        $type = TicketType::factory()->create([
             'has_seat' => true,
         ]);
         $event = Event::factory()->create([
             'ends_at' => now()->subDay(),
             'seating_locked' => false,
         ]);
-        $ticket = \App\Models\Ticket::factory()->create([
+        $ticket = Ticket::factory()->create([
             'ticket_type_id' => $type->id,
             'event_id' => $event->id,
         ]);
@@ -110,14 +113,14 @@ class TicketTest extends TestCase
 
     public function testCanPickSeatReturnsFalseIfSeatingLocked()
     {
-        $type = \App\Models\TicketType::factory()->create([
+        $type = TicketType::factory()->create([
             'has_seat' => true,
         ]);
         $event = Event::factory()->create([
             'ends_at' => now()->addDay(),
             'seating_locked' => true,
         ]);
-        $ticket = \App\Models\Ticket::factory()->create([
+        $ticket = Ticket::factory()->create([
             'ticket_type_id' => $type->id,
             'event_id' => $event->id,
         ]);
@@ -126,14 +129,14 @@ class TicketTest extends TestCase
 
     public function testCanPickSeatReturnsTrueIfAllConditionsMet()
     {
-        $type = \App\Models\TicketType::factory()->create([
+        $type = TicketType::factory()->create([
             'has_seat' => true,
         ]);
         $event = Event::factory()->create([
             'ends_at' => now()->addDay(),
             'seating_locked' => false,
         ]);
-        $ticket = \App\Models\Ticket::factory()->create([
+        $ticket = Ticket::factory()->create([
             'ticket_type_id' => $type->id,
             'event_id' => $event->id,
         ]);
@@ -143,7 +146,7 @@ class TicketTest extends TestCase
     public function testCanBeManagedByReturnsTrueIfUserOwnsTicket()
     {
         $user = User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create([
+        $ticket = Ticket::factory()->create([
             'user_id' => $user->id,
         ]);
         $this->assertTrue($ticket->canBeManagedBy($user));
@@ -154,7 +157,7 @@ class TicketTest extends TestCase
         $event = Event::factory()->create([
             'ends_at' => now()->addDay(),
         ]);
-        $ticket = \App\Models\Ticket::factory()->create([
+        $ticket = Ticket::factory()->create([
             'event_id' => $event->id,
         ]);
         $this->assertTrue($ticket->canTransfer());
@@ -162,7 +165,7 @@ class TicketTest extends TestCase
 
     public function testGenerateTransferCodeProducesDifferentCodesWhenCalledTwice()
     {
-        $ticket = \App\Models\Ticket::factory()->create([
+        $ticket = Ticket::factory()->create([
             'transfer_code' => null,
         ]);
 
@@ -180,7 +183,7 @@ class TicketTest extends TestCase
     public function testCanBeManagedBy()
     {
         $user = User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create([
+        $ticket = Ticket::factory()->create([
             'user_id' => $user->id,
         ]);
         $this->assertTrue($ticket->canBeManagedBy($user));
@@ -263,7 +266,7 @@ class TicketTest extends TestCase
         $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
         $seat = Seat::factory()->create(['seating_plan_id' => $plan->id, 'label' => 'B1']);
 
-        $import = new \App\Models\Helpers\TicketImport($user, $event, $type, $seat);
+        $import = new TicketImport($user, $event, $type, $seat);
 
         // Act
         $ticket = Ticket::createFromImport($import);

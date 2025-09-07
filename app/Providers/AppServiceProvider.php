@@ -2,11 +2,7 @@
 
 namespace App\Providers;
 
-use App\Models\Setting;
-use App\Models\SocialProvider;
 use App\Models\Theme;
-use App\Services\DiscordApi;
-use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 

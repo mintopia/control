@@ -2,8 +2,9 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
 use App\Models\SeatGroupAssignment;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Tests\TestCase;
 
 class SeatGroupAssignmentTest extends TestCase
 {
@@ -16,6 +17,6 @@ class SeatGroupAssignmentTest extends TestCase
     public function testGroupRelationship()
     {
         $assignment = new SeatGroupAssignment();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $assignment->group());
+        $this->assertInstanceOf(BelongsTo::class, $assignment->group());
     }
 }

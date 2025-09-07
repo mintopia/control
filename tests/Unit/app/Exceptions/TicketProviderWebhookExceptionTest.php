@@ -2,8 +2,9 @@
 
 namespace Tests\Unit\app\Exceptions;
 
-use Tests\TestCase;
 use App\Exceptions\TicketProviderWebhookException;
+use Exception;
+use Tests\TestCase;
 
 class TicketProviderWebhookExceptionTest extends TestCase
 {
@@ -22,7 +23,7 @@ class TicketProviderWebhookExceptionTest extends TestCase
 
     public function testCanSetPreviousException()
     {
-        $previous = new \Exception('Previous');
+        $previous = new Exception('Previous');
         // previous is the fifth parameter in the new constructor signature
         $exception = new TicketProviderWebhookException('Test message', 0, null, null, $previous);
         $this->assertSame($previous, $exception->getPrevious());

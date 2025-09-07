@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DeleteRequest;
 use App\Http\Requests\Admin\SeatGroupAssignmentUpdateRequest;
-use App\Http\Requests\Admin\SeatGroupUpdateRequest;
 use App\Models\Event;
 use App\Models\SeatGroup;
 use App\Models\SeatGroupAssignment;

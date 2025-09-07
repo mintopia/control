@@ -43,21 +43,6 @@ abstract class AbstractSocialProvider implements SocialProviderContract
         }
     }
 
-    public function configMapping(): array
-    {
-        return [
-            'client_id' => (object)[
-                'name' => 'Client ID',
-                'validation' => 'required|string',
-            ],
-            'client_secret' => (object)[
-                'name' => 'Client Secret',
-                'validation' => 'required|string',
-                'encrypted' => true,
-            ],
-        ];
-    }
-
     public function install(): SocialProvider
     {
         $this->provider = SocialProvider::whereCode($this->code)->first();
@@ -107,6 +92,21 @@ abstract class AbstractSocialProvider implements SocialProviderContract
                 $setting->save();
             }
         }
+    }
+
+    public function configMapping(): array
+    {
+        return [
+            'client_id' => (object)[
+                'name' => 'Client ID',
+                'validation' => 'required|string',
+            ],
+            'client_secret' => (object)[
+                'name' => 'Client Secret',
+                'validation' => 'required|string',
+                'encrypted' => true,
+            ],
+        ];
     }
 
     public function redirect(): RedirectResponse

@@ -2,14 +2,16 @@
 
 namespace Tests\Unit\app\Http\Controllers;
 
-use Tests\TestCase;
 use App\Http\Controllers\ClanController;
-use Illuminate\Http\Request;
-use App\Models\Clan;
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Http\Requests\ClanRequest;
+use App\Models\Clan;
+use App\Models\ClanRole;
+use App\Models\User;
+use Database\Factories\ClanMembershipFactory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Tests\TestCase;
 
 class ClanControllerTest extends TestCase
 {
@@ -52,7 +54,7 @@ class ClanControllerTest extends TestCase
     {
         $user = User::factory()->create();
         // Ensure the 'leader' role exists so addUser() can resolve it
-        \App\Models\ClanRole::factory()->create(['code' => 'leader', 'name' => 'Leader']);
+        ClanRole::factory()->create(['code' => 'leader', 'name' => 'Leader']);
         $request = ClanRequest::create('/clans', 'POST', ['name' => 'Test Clan']);
         $request->setUserResolver(fn() => $user);
 
@@ -75,7 +77,7 @@ class ClanControllerTest extends TestCase
     {
         $controller = new ClanController();
         $view = $controller->create();
-        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $this->assertInstanceOf(View::class, $view);
     }
 
     public function testShowReturnsViewWithMembers()
@@ -83,12 +85,12 @@ class ClanControllerTest extends TestCase
         $clan = Clan::factory()->create();
         $user = User::factory()->create();
         // create membership so show() has something to paginate
-        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
 
         $request = Request::create('/clans/' . $clan->code, 'GET');
         $controller = new ClanController();
         $view = $controller->show($request, $clan);
-        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $this->assertInstanceOf(View::class, $view);
         $this->assertArrayHasKey('members', $view->getData());
     }
 
@@ -100,8 +102,8 @@ class ClanControllerTest extends TestCase
         $userB = User::factory()->create(['nickname' => 'zzz']);
 
         // create memberships so show() has something to paginate
-        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
-        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
+        ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
+        ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
 
         $request = Request::create('/clans/' . $clan->code, 'GET', ['order' => 'name', 'order_direction' => 'desc']);
         $request->setUserResolver(fn() => $userB);
@@ -109,7 +111,7 @@ class ClanControllerTest extends TestCase
         $controller = new ClanController();
         $view = $controller->show($request, $clan);
 
-        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $this->assertInstanceOf(View::class, $view);
         $members = $view->getData()['members']->items();
         $this->assertGreaterThanOrEqual(2, count($members));
         // first member should have nickname 'zzz' due to desc ordering
@@ -124,8 +126,8 @@ class ClanControllerTest extends TestCase
         $userB = User::factory()->create(['nickname' => 'zzz']);
 
         // create memberships so show() has something to paginate
-        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
-        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
+        ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
+        ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
 
         $request = Request::create('/clans/' . $clan->code, 'GET', ['order' => 'name']);
         $request->setUserResolver(fn() => $userA);
@@ -133,7 +135,7 @@ class ClanControllerTest extends TestCase
         $controller = new ClanController();
         $view = $controller->show($request, $clan);
 
-        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $this->assertInstanceOf(View::class, $view);
         $members = $view->getData()['members']->items();
         $this->assertGreaterThanOrEqual(2, count($members));
         // first member should have nickname 'aaa' due to asc ordering
@@ -146,8 +148,8 @@ class ClanControllerTest extends TestCase
         $userA = User::factory()->create(['nickname' => 'aaa']);
         $userB = User::factory()->create(['nickname' => 'zzz']);
 
-        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
-        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
+        ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
+        ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
 
         // provide an invalid order_direction to trigger the if branch that normalises it
         $request = Request::create('/clans/' . $clan->code, 'GET', ['order' => 'name', 'order_direction' => 'invalid']);
@@ -155,7 +157,7 @@ class ClanControllerTest extends TestCase
 
         $controller = new ClanController();
         $view = $controller->show($request, $clan);
-        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $this->assertInstanceOf(View::class, $view);
 
         $data = $view->getData();
         $this->assertArrayHasKey('params', $data);
@@ -167,7 +169,7 @@ class ClanControllerTest extends TestCase
         $clan = Clan::factory()->create();
         $controller = new ClanController();
         $view = $controller->edit($clan);
-        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $this->assertInstanceOf(View::class, $view);
         $this->assertArrayHasKey('clan', $view->getData());
     }
 
@@ -193,7 +195,7 @@ class ClanControllerTest extends TestCase
         $clan = Clan::factory()->create();
         $controller = new ClanController();
         $view = $controller->delete($clan);
-        $this->assertInstanceOf(\Illuminate\Contracts\View\View::class, $view);
+        $this->assertInstanceOf(View::class, $view);
         $this->assertArrayHasKey('clan', $view->getData());
     }
 }

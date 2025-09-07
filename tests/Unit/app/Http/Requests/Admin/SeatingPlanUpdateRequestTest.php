@@ -2,8 +2,9 @@
 
 namespace Tests\Unit\app\Http\Requests\Admin;
 
-use Tests\TestCase;
 use App\Http\Requests\Admin\SeatingPlanUpdateRequest;
+use Closure;
+use Tests\TestCase;
 
 class SeatingPlanUpdateRequestTest extends TestCase
 {
@@ -46,35 +47,41 @@ class SeatingPlanUpdateRequestTest extends TestCase
     public function testNameRuleClosureFailsIfPlanNameInUse()
     {
         $mockPlan = (object)['id' => 2];
-        $mockPlans = new class($mockPlan) {
+        $mockPlans = new class ($mockPlan) {
             private $mockPlan;
+
             public function __construct($mockPlan)
             {
                 $this->mockPlan = $mockPlan;
             }
+
             public function whereCode($code)
             {
                 return $this;
             }
+
             public function first()
             {
                 return $this->mockPlan;
             }
         };
-        $mockEvent = new class($mockPlans) {
+        $mockEvent = new class ($mockPlans) {
             private $mockPlans;
+
             public function __construct($mockPlans)
             {
                 $this->mockPlans = $mockPlans;
             }
+
             public function seatingPlans()
             {
                 return $this->mockPlans;
             }
         };
-        $request = new class($mockEvent) extends SeatingPlanUpdateRequest {
+        $request = new class ($mockEvent) extends SeatingPlanUpdateRequest {
             public $event;
             public $seatingplan;
+
             public function __construct($event)
             {
                 $this->event = $event;
@@ -84,7 +91,7 @@ class SeatingPlanUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['name'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -105,25 +112,29 @@ class SeatingPlanUpdateRequestTest extends TestCase
             {
                 return $this;
             }
+
             public function first()
             {
                 return null;
             }
         };
-        $mockEvent = new class($mockPlans) {
+        $mockEvent = new class ($mockPlans) {
             private $mockPlans;
+
             public function __construct($mockPlans)
             {
                 $this->mockPlans = $mockPlans;
             }
+
             public function seatingPlans()
             {
                 return $this->mockPlans;
             }
         };
-        $request = new class($mockEvent) extends SeatingPlanUpdateRequest {
+        $request = new class ($mockEvent) extends SeatingPlanUpdateRequest {
             public $event;
             public $seatingplan;
+
             public function __construct($event)
             {
                 $this->event = $event;
@@ -133,7 +144,7 @@ class SeatingPlanUpdateRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['name'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }

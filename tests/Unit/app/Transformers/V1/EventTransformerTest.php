@@ -2,12 +2,11 @@
 
 namespace Tests\Unit\app\Transformers\V1;
 
-use Tests\TestCase;
-
 use App\Models\Event;
 use App\Models\User;
 use App\Transformers\V1\EventTransformer;
 use Illuminate\Support\Carbon;
+use Tests\TestCase;
 
 class EventTransformerTest extends TestCase
 {

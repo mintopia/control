@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\UpdateEventSeatingLock;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -11,7 +12,7 @@ class Kernel extends ConsoleKernel
      * Define the application's commands.
      */
     protected $commands = [
-        \App\Console\Commands\UpdateEventSeatingLock::class,
+        UpdateEventSeatingLock::class,
     ];
 
     /**

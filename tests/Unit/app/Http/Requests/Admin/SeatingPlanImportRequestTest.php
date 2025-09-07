@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\app\Http\Requests\Admin;
 
-use Tests\TestCase;
 use App\Http\Requests\Admin\SeatingPlanImportRequest;
+use Tests\TestCase;
 
 class SeatingPlanImportRequestTest extends TestCase
 {

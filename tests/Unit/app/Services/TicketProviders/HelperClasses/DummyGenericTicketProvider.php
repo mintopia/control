@@ -1,17 +1,20 @@
 <?php
 
-namespace Tests\Unit\app\Services\TicketProviders;
+namespace Tests\Unit\app\Services\TicketProviders\HelperClasses;
 
-use GuzzleHttp\Client;
+use App\Models\TicketProvider;
+use App\Models\User;
 use App\Services\TicketProviders\GenericTicketProvider;
+use GuzzleHttp\Client;
 
 /**
  * Test helper exposing protected methods of GenericTicketProvider as public wrappers.
  */
 class DummyGenericTicketProvider extends GenericTicketProvider
 {
-    public ?\App\Models\TicketProvider $provider = null;
-    public function __construct(?\App\Models\TicketProvider $p = null)
+    public ?TicketProvider $provider = null;
+
+    public function __construct(?TicketProvider $p = null)
     {
         parent::__construct($p);
         $this->provider = $p;
@@ -33,7 +36,7 @@ class DummyGenericTicketProvider extends GenericTicketProvider
         return $this->processTicket($data);
     }
 
-    public function makeTicketPublic(?\App\Models\User $user, object $data)
+    public function makeTicketPublic(?User $user, object $data)
     {
         return $this->makeTicket($user, $data);
     }

@@ -2,15 +2,16 @@
 
 namespace Tests\Unit\app\Services\SocialProviders;
 
-use Tests\TestCase;
-use App\Services\SocialProviders\DiscordProvider;
-use App\Models\SocialProvider;
-use App\Models\ProviderSetting;
 use App\Models\LinkedAccount;
+use App\Models\ProviderSetting;
+use App\Models\SocialProvider;
+use App\Services\SocialProviders\DiscordProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\RedirectResponse;
 use Laravel\Socialite\Facades\Socialite;
 use Mockery;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use ReflectionMethod;
+use Tests\TestCase;
 
 class DiscordProviderTest extends TestCase
 {
@@ -53,7 +54,7 @@ class DiscordProviderTest extends TestCase
         ]);
         $mockSocialite = Mockery::mock();
         Socialite::shouldReceive('buildProvider')->once()->andReturn($mockSocialite);
-        $method = new \ReflectionMethod($provider, 'getSocialiteProvider');
+        $method = new ReflectionMethod($provider, 'getSocialiteProvider');
         $method->setAccessible(true);
         $this->assertSame($mockSocialite, $method->invoke($provider));
     }
@@ -74,14 +75,16 @@ class DiscordProviderTest extends TestCase
             {
                 return 'avatar_url';
             }
+
             public $refreshToken = 'refresh';
             public $token = 'access';
+
             public function getNickname()
             {
                 return 'nickname';
             }
         };
-        $method = new \ReflectionMethod($provider, 'updateAccount');
+        $method = new ReflectionMethod($provider, 'updateAccount');
         $method->setAccessible(true);
         $method->invoke($provider, $account, $remoteUser);
 
@@ -102,7 +105,7 @@ class DiscordProviderTest extends TestCase
         $mockSocialite->shouldReceive('with')->with(['permissions' => '268435456'])->andReturnSelf();
         Socialite::shouldReceive('buildProvider')->andReturn($mockSocialite);
 
-        $method = new \ReflectionMethod($provider, 'getBotProvider');
+        $method = new ReflectionMethod($provider, 'getBotProvider');
         $method->setAccessible(true);
         $this->assertSame($mockSocialite, $method->invoke($provider));
     }

@@ -2,14 +2,16 @@
 
 namespace Tests\Unit\app\Observers;
 
-use Tests\TestCase;
-use App\Observers\EventObserver;
 use App\Models\Event;
+use App\Models\SeatingPlan;
+use App\Observers\EventObserver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class EventObserverTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testSavingSetsCodeIfMissing()
     {
         $event = new Event(['name' => 'Test Event', 'code' => null]);
@@ -21,7 +23,7 @@ class EventObserverTest extends TestCase
     public function testSavedIncrementsRevisionWhenSeatingLockedDirty()
     {
         $event = Event::factory()->create(['seating_locked' => false]);
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
         // mark dirty
         $event->seating_locked = true;

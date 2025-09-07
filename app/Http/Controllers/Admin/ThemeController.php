@@ -32,38 +32,6 @@ class ThemeController extends Controller
         return response()->redirectToRoute('admin.settings.index')->with('successMessage', 'The theme has been created');
     }
 
-    public function edit(Theme $theme)
-    {
-        return view('admin.themes.edit', [
-            'theme' => $theme,
-        ]);
-    }
-
-    public function update(ThemeUpdateRequest $request, Theme $theme)
-    {
-        $this->updateObject($theme, $request);
-        return response()->redirectToRoute('admin.settings.index')->with('successMessage', 'The theme has been updated');
-    }
-
-    public function delete(Theme $theme)
-    {
-        if ($theme->readonly) {
-            abort(400);
-        }
-        return view('admin.themes.delete', [
-            'theme' => $theme,
-        ]);
-    }
-
-    public function destroy(Theme $theme)
-    {
-        if ($theme->readonly) {
-            abort(400);
-        }
-        $theme->delete();
-        return response()->redirectToRoute('admin.settings.index')->with('successMessage', 'The theme has been deleted');
-    }
-
     protected function updateObject(Theme $theme, Request $request)
     {
         $theme->active = (bool)$request->input('active');
@@ -85,5 +53,37 @@ class ThemeController extends Controller
             }
         }
         $theme->save();
+    }
+
+    public function edit(Theme $theme)
+    {
+        return view('admin.themes.edit', [
+            'theme' => $theme,
+        ]);
+    }
+
+    public function update(ThemeUpdateRequest $request, Theme $theme)
+    {
+        $this->updateObject($theme, $request);
+        return response()->redirectToRoute('admin.settings.index')->with('successMessage', 'The theme has been updated');
+    }
+
+    public function destroy(Theme $theme)
+    {
+        if ($theme->readonly) {
+            abort(400);
+        }
+        $theme->delete();
+        return response()->redirectToRoute('admin.settings.index')->with('successMessage', 'The theme has been deleted');
+    }
+
+    public function delete(Theme $theme)
+    {
+        if ($theme->readonly) {
+            abort(400);
+        }
+        return view('admin.themes.delete', [
+            'theme' => $theme,
+        ]);
     }
 }

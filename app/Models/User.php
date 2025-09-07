@@ -5,17 +5,24 @@ namespace App\Models;
 use App\Models\Traits\ToString;
 use App\Services\DiscordApi;
 use Carbon\Carbon;
+use Database\Factories\UserFactory;
+use Eloquent;
+use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Notifications\DatabaseNotificationCollection;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Laravel\Sanctum\HasApiTokens;
+use Laravel\Sanctum\PersonalAccessToken;
 
 /**
  * App\Models\User
@@ -33,38 +40,38 @@ use Laravel\Sanctum\HasApiTokens;
  * @property \Illuminate\Support\Carbon|null $tickets_synced_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\LinkedAccount> $accounts
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, LinkedAccount> $accounts
  * @property-read int|null $accounts_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClanMembership> $clanMemberships
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ClanMembership> $clanMemberships
  * @property-read int|null $clan_memberships_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EmailAddress> $emails
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EmailAddress> $emails
  * @property-read int|null $emails_count
- * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
+ * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
- * @property-read \App\Models\EmailAddress|null $primaryEmail
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Role> $roles
+ * @property-read EmailAddress|null $primaryEmail
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Role> $roles
  * @property-read int|null $roles_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Ticket> $tickets
  * @property-read int|null $tickets_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PersonalAccessToken> $tokens
  * @property-read int|null $tokens_count
- * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
- * @method static \Illuminate\Database\Eloquent\Builder|User newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|User newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|User query()
- * @method static \Illuminate\Database\Eloquent\Builder|User whereAvatar($value)
- * @method static \Illuminate\Database\Eloquent\Builder|User whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|User whereFirstLogin($value)
- * @method static \Illuminate\Database\Eloquent\Builder|User whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|User whereLastLogin($value)
- * @method static \Illuminate\Database\Eloquent\Builder|User whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|User whereNickname($value)
- * @method static \Illuminate\Database\Eloquent\Builder|User wherePrimaryEmailId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|User whereSuspended($value)
- * @method static \Illuminate\Database\Eloquent\Builder|User whereTermsAgreedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|User whereTicketsSyncedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|User whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @method static UserFactory factory($count = null, $state = [])
+ * @method static Builder|User newModelQuery()
+ * @method static Builder|User newQuery()
+ * @method static Builder|User query()
+ * @method static Builder|User whereAvatar($value)
+ * @method static Builder|User whereCreatedAt($value)
+ * @method static Builder|User whereFirstLogin($value)
+ * @method static Builder|User whereId($value)
+ * @method static Builder|User whereLastLogin($value)
+ * @method static Builder|User whereName($value)
+ * @method static Builder|User whereNickname($value)
+ * @method static Builder|User wherePrimaryEmailId($value)
+ * @method static Builder|User whereSuspended($value)
+ * @method static Builder|User whereTermsAgreedAt($value)
+ * @method static Builder|User whereTicketsSyncedAt($value)
+ * @method static Builder|User whereUpdatedAt($value)
+ * @mixin Eloquent
  */
 class User extends Authenticatable
 {
@@ -105,11 +112,6 @@ class User extends Authenticatable
         return $this->belongsTo(EmailAddress::class, 'primary_email_id');
     }
 
-    public function accounts(): HasMany
-    {
-        return $this->hasMany(LinkedAccount::class);
-    }
-
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
@@ -123,6 +125,11 @@ class User extends Authenticatable
         return (bool)$this->roles()->whereCode($role)->count();
     }
 
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class);
+    }
+
     public function hasAnyRole(array $roles): bool
     {
         foreach ($roles as $role) {
@@ -134,11 +141,6 @@ class User extends Authenticatable
             }
         }
         return false;
-    }
-
-    public function roles(): BelongsToMany
-    {
-        return $this->belongsToMany(Role::class);
     }
 
     public function avatarUrl(): string
@@ -204,27 +206,6 @@ class User extends Authenticatable
         return $this->hasMany(ClanMembership::class);
     }
 
-    protected function toStringName(): string
-    {
-        return $this->nickname;
-    }
-
-    protected function email(): Attribute
-    {
-        return Attribute::make(
-            get: function (mixed $value, array $attributes) {
-                return $this->primaryEmail->email ?? null;
-            },
-        );
-    }
-
-    protected function getDiscordAccount()
-    {
-        return $this->accounts()->whereHas('provider', function ($query) {
-            $query->whereCode('discord');
-        })->first();
-    }
-
     public function addDiscordRole(string $roleId): bool
     {
         $account = $this->getDiscordAccount();
@@ -238,9 +219,21 @@ class User extends Authenticatable
         try {
             $api->addRoleToMember($roleId, $account->external_id);
             return true;
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             return false;
         }
+    }
+
+    protected function getDiscordAccount()
+    {
+        return $this->accounts()->whereHas('provider', function ($query) {
+            $query->whereCode('discord');
+        })->first();
+    }
+
+    public function accounts(): HasMany
+    {
+        return $this->hasMany(LinkedAccount::class);
     }
 
     public function removeDiscordRole(string $roleId): bool
@@ -256,7 +249,7 @@ class User extends Authenticatable
         try {
             $api->removeRoleFromMember($roleId, $account->external_id);
             return true;
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             return false;
         }
     }
@@ -295,5 +288,19 @@ class User extends Authenticatable
             }
         }
         return false;
+    }
+
+    protected function toStringName(): string
+    {
+        return $this->nickname;
+    }
+
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            get: function (mixed $value, array $attributes) {
+                return $this->primaryEmail->email ?? null;
+            },
+        );
     }
 }

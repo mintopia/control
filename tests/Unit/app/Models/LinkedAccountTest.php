@@ -2,11 +2,11 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\LinkedAccount;
-use App\Models\User;
 use App\Models\SocialProvider;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class LinkedAccountTest extends TestCase
 {

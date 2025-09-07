@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\app\Http\Controllers;
 
-use Tests\TestCase;
 use App\Http\Controllers\Controller;
+use Tests\TestCase;
 
 class ControllerTest extends TestCase
 {
@@ -12,6 +12,7 @@ class ControllerTest extends TestCase
         $controller = new Controller();
         $this->assertInstanceOf(Controller::class, $controller);
     }
+
     public function testControllerProvidesAuthorizationAndValidationHelpers()
     {
         $controller = new Controller();

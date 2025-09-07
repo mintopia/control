@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
-use App\Models\EventMapping;
 use App\Models\Traits\ToString;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\Event
@@ -17,39 +20,39 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property string $code
  * @property int $draft
  * @property string|null $boxoffice_url
- * @property \Illuminate\Support\Carbon|null $starts_at
- * @property \Illuminate\Support\Carbon|null $ends_at
+ * @property Carbon|null $starts_at
+ * @property Carbon|null $ends_at
  * @property bool $seating_locked
- * @property \Illuminate\Support\Carbon|null $seating_opens_at
- * @property \Illuminate\Support\Carbon|null $seating_closes_at
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\EventMapping> $mappings
+ * @property Carbon|null $seating_opens_at
+ * @property Carbon|null $seating_closes_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Collection<int, EventMapping> $mappings
  * @property-read int|null $mappings_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SeatGroup> $seatGroups
+ * @property-read Collection<int, SeatGroup> $seatGroups
  * @property-read int|null $seat_groups_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SeatingPlan> $seatingPlans
+ * @property-read Collection<int, SeatingPlan> $seatingPlans
  * @property-read int|null $seating_plans_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\TicketType> $ticketTypes
+ * @property-read Collection<int, TicketType> $ticketTypes
  * @property-read int|null $ticket_types_count
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Ticket> $tickets
+ * @property-read Collection<int, Ticket> $tickets
  * @property-read int|null $tickets_count
- * @method static \Illuminate\Database\Eloquent\Builder|Event newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Event newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Event query()
- * @method static \Illuminate\Database\Eloquent\Builder|Event whereBoxofficeUrl($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Event whereCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Event whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Event whereDraft($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Event whereEndsAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Event whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Event whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Event whereSeatingClosesAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Event whereSeatingLocked($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Event whereSeatingOpensAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Event whereStartsAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Event whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @method static Builder|Event newModelQuery()
+ * @method static Builder|Event newQuery()
+ * @method static Builder|Event query()
+ * @method static Builder|Event whereBoxofficeUrl($value)
+ * @method static Builder|Event whereCode($value)
+ * @method static Builder|Event whereCreatedAt($value)
+ * @method static Builder|Event whereDraft($value)
+ * @method static Builder|Event whereEndsAt($value)
+ * @method static Builder|Event whereId($value)
+ * @method static Builder|Event whereName($value)
+ * @method static Builder|Event whereSeatingClosesAt($value)
+ * @method static Builder|Event whereSeatingLocked($value)
+ * @method static Builder|Event whereSeatingOpensAt($value)
+ * @method static Builder|Event whereStartsAt($value)
+ * @method static Builder|Event whereUpdatedAt($value)
+ * @mixin Eloquent
  */
 class Event extends Model
 {

@@ -2,13 +2,13 @@
 
 namespace Tests\Feature\app\Console\Commands;
 
-use Tests\TestCase;
 use App\Console\Commands\PruneClans;
 use App\Models\Clan;
-use App\Models\User;
 use App\Models\ClanRole;
-use Illuminate\Support\Facades\Artisan;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
+use Tests\TestCase;
 
 class PruneClansTest extends TestCase
 {
@@ -62,5 +62,4 @@ class PruneClansTest extends TestCase
         $this->assertDatabaseCount('clans', 1);
         $this->assertDatabaseHas('clans', ['id' => $clans[0]->id]);
     }
-
 }

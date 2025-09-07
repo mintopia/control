@@ -2,13 +2,14 @@
 
 namespace Tests\Unit\app\Http\Controllers;
 
-use Tests\TestCase;
 use App\Http\Controllers\HomeController;
-use Illuminate\Http\Request;
 use App\Models\Event;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+use Tests\TestCase;
 
 class HomeControllerTest extends TestCase
 {
@@ -32,7 +33,7 @@ class HomeControllerTest extends TestCase
         ]);
 
         // Ticket factory may exist; if not this will fail and tests will indicate needed factories
-        if (class_exists(\App\Models\Ticket::class)) {
+        if (class_exists(Ticket::class)) {
             Ticket::factory()->create([
                 'user_id' => $user->id,
                 'event_id' => $event->id,
@@ -49,7 +50,7 @@ class HomeControllerTest extends TestCase
 
         $response = $controller->home($request);
 
-        $this->assertInstanceOf(\Illuminate\View\View::class, $response);
+        $this->assertInstanceOf(View::class, $response);
 
         $data = $response->getData();
 

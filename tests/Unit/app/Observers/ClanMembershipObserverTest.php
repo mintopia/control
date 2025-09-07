@@ -2,26 +2,33 @@
 
 namespace Tests\Unit\app\Observers;
 
-use Tests\TestCase;
-use App\Observers\ClanMembershipObserver;
+use App\Models\Clan;
 use App\Models\ClanMembership;
+use App\Models\Event;
+use App\Models\Seat;
 use App\Models\SeatingPlan;
+use App\Models\Ticket;
+use App\Models\User;
+use App\Observers\ClanMembershipObserver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
+use Tests\TestCase;
 
 class ClanMembershipObserverTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testDeletingCallsDelayedRevisionUpdateOnPlans()
     {
         // Build a scenario: seating plan with seat->ticket->user->clanMembership to trigger whereHas
-        $clan = \App\Models\Clan::factory()->create();
-        $event = \App\Models\Event::factory()->create();
+        $clan = Clan::factory()->create();
+        $event = Event::factory()->create();
         $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
-        $user = \App\Models\User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
-        $membership = \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
-        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['user_id' => $user->id]);
+        $membership = ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
 
         $observer = new ClanMembershipObserver();
         $observer->deleting($membership);
@@ -32,14 +39,14 @@ class ClanMembershipObserverTest extends TestCase
 
     public function testSavedUpdatesPlansIfUserIdDirty()
     {
-        $clan = \App\Models\Clan::factory()->create();
-        $event = \App\Models\Event::factory()->create();
+        $clan = Clan::factory()->create();
+        $event = Event::factory()->create();
         $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
-        $user = \App\Models\User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
-        $membership = \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
-        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['user_id' => $user->id]);
+        $membership = ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
 
         // Simulate the model being dirty for user_id by using an anonymous subclass
         $membership->isDirty = fn($attr = null) => $attr === 'user_id' || (is_array($attr) && in_array('user_id', $attr));
@@ -53,17 +60,17 @@ class ClanMembershipObserverTest extends TestCase
 
     public function testSavedUpdatesRevisionWhenUserIdDirtyUsingMock()
     {
-        $clan = \App\Models\Clan::factory()->create();
-        $event = \App\Models\Event::factory()->create();
+        $clan = Clan::factory()->create();
+        $event = Event::factory()->create();
         $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
-        $user = \App\Models\User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
-        $membership = \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
-        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['user_id' => $user->id]);
+        $membership = ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
 
         // Create a partial mock that returns true for isDirty('user_id') but retains the real id
-        $membershipMock = \Mockery::mock(\App\Models\ClanMembership::class)->makePartial();
+        $membershipMock = Mockery::mock(ClanMembership::class)->makePartial();
         $membershipMock->id = $membership->id;
         $membershipMock->shouldReceive('isDirty')->with('user_id')->andReturn(true);
 
@@ -76,14 +83,14 @@ class ClanMembershipObserverTest extends TestCase
 
     public function testSavedDoesNothingIfUserIdNotDirty()
     {
-        $clan = \App\Models\Clan::factory()->create();
-        $event = \App\Models\Event::factory()->create();
+        $clan = Clan::factory()->create();
+        $event = Event::factory()->create();
         $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
-        $user = \App\Models\User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
-        $membership = \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
-        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['user_id' => $user->id]);
+        $membership = ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id]);
+        Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
 
         // Not dirty
         $membership->isDirty = fn($attr = null) => false;

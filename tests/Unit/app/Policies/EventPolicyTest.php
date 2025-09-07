@@ -2,10 +2,10 @@
 
 namespace Tests\Unit\app\Policies;
 
-use Tests\TestCase;
-use App\Policies\EventPolicy;
 use App\Models\Event;
 use App\Models\User;
+use App\Policies\EventPolicy;
+use Tests\TestCase;
 
 class EventPolicyTest extends TestCase
 {
@@ -30,7 +30,7 @@ class EventPolicyTest extends TestCase
     {
         $user = $this->getMockBuilder(User::class)->onlyMethods(['hasAnyRole'])->getMock();
         // Simulate user is admin
-        $user->method('hasAnyRole')->with(['admin', 'manager'])->willReturnCallback(function($roles) {
+        $user->method('hasAnyRole')->with(['admin', 'manager'])->willReturnCallback(function ($roles) {
             return in_array('admin', $roles);
         });
         $event = new Event(['draft' => true]);
@@ -42,7 +42,7 @@ class EventPolicyTest extends TestCase
     {
         $user = $this->getMockBuilder(User::class)->onlyMethods(['hasAnyRole'])->getMock();
         // Simulate user is manager
-        $user->method('hasAnyRole')->with(['admin', 'manager'])->willReturnCallback(function($roles) {
+        $user->method('hasAnyRole')->with(['admin', 'manager'])->willReturnCallback(function ($roles) {
             return in_array('manager', $roles);
         });
         $event = new Event(['draft' => true]);

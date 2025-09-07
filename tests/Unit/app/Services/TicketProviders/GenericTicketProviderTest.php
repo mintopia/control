@@ -2,23 +2,26 @@
 
 namespace Tests\Unit\app\Services\TicketProviders;
 
-use Tests\TestCase;
-use App\Services\TicketProviders\GenericTicketProvider;
-use App\Models\TicketProvider;
-use App\Models\ProviderSetting;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use GuzzleHttp\Psr7\Response;
 use App\Models\EmailAddress;
 use App\Models\Event;
 use App\Models\EventMapping;
+use App\Models\ProviderSetting;
 use App\Models\Ticket;
+use App\Models\TicketProvider;
 use App\Models\TicketType;
+use App\Models\TicketTypeMapping;
 use App\Models\User;
+use App\Services\TicketProviders\GenericTicketProvider;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use ReflectionClass;
+use Tests\TestCase;
+use Tests\Unit\app\Services\TicketProviders\HelperClasses\DummyGenericTicketProvider;
 
 class GenericTicketProviderTest extends TestCase
 {
@@ -41,7 +44,7 @@ class GenericTicketProviderTest extends TestCase
         // Allow tests to override the provider code/name via keys in $settings.
         // If not provided, generate a unique code so multiple providers can be created
         // within the same test class without triggering UNIQUE constraint errors.
-        $code = $settings['code'] ?? 'generic_' . substr(md5((string) microtime(true) . rand()), 0, 8);
+        $code = $settings['code'] ?? 'generic_' . substr(md5((string)microtime(true) . rand()), 0, 8);
         $name = $settings['_name'] ?? 'Generic Provider';
 
         $ticketProvider = TicketProvider::factory()->create([
@@ -62,7 +65,7 @@ class GenericTicketProviderTest extends TestCase
             ]);
         }
         // Return a test helper that exposes protected methods
-        return new \Tests\Unit\app\Services\TicketProviders\DummyGenericTicketProvider($ticketProvider);
+        return new DummyGenericTicketProvider($ticketProvider);
     }
 
     // --- Extra tests merged from GenericTicketProviderExtraTest.php ---
@@ -108,7 +111,7 @@ class GenericTicketProviderTest extends TestCase
         $event = Event::factory()->create();
         $type = TicketType::factory()->create();
         EventMapping::factory()->for($event)->for($provider->provider, 'provider')->create(['external_id' => 'evt1']);
-        \App\Models\TicketTypeMapping::create([
+        TicketTypeMapping::create([
             'ticket_type_id' => $type->id,
             'ticket_provider_id' => $provider->provider->id,
             'external_id' => 'type1',
@@ -157,7 +160,7 @@ class GenericTicketProviderTest extends TestCase
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
 
-        $ref = new \ReflectionClass($provider);
+        $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
@@ -188,7 +191,7 @@ class GenericTicketProviderTest extends TestCase
         $mock = new MockHandler([$resp]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
-        $ref = new \ReflectionClass($provider);
+        $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
@@ -197,7 +200,7 @@ class GenericTicketProviderTest extends TestCase
         $event = Event::factory()->create();
         $type = TicketType::factory()->create();
         EventMapping::factory()->for($event)->for($provider->provider, 'provider')->create(['external_id' => 'evtB']);
-        \App\Models\TicketTypeMapping::create([
+        TicketTypeMapping::create([
             'ticket_type_id' => $type->id,
             'ticket_provider_id' => $provider->provider->id,
             'external_id' => 'typeB',
@@ -226,12 +229,13 @@ class GenericTicketProviderTest extends TestCase
     public function test_process_webhook_calls_process_ticket_and_returns_true()
     {
         $provider = $this->provider;
-        $mock = new class($provider->provider) extends GenericTicketProvider {
-            public function __construct(?\App\Models\TicketProvider $p = null)
+        $mock = new class ($provider->provider) extends GenericTicketProvider {
+            public function __construct(?TicketProvider $p = null)
             {
                 parent::__construct($p);
             }
-            protected function processTicket(object $payload): ?\App\Models\Ticket
+
+            protected function processTicket(object $payload): ?Ticket
             {
                 return null;
             }
@@ -266,12 +270,12 @@ class GenericTicketProviderTest extends TestCase
             ],
             'hasMore' => false,
         ]));
-        $mock = new \GuzzleHttp\Handler\MockHandler([$mockResponse]);
-        $handlerStack = \GuzzleHttp\HandlerStack::create($mock);
-        $guzzleClient = new \GuzzleHttp\Client(['handler' => $handlerStack]);
+        $mock = new MockHandler([$mockResponse]);
+        $handlerStack = HandlerStack::create($mock);
+        $guzzleClient = new Client(['handler' => $handlerStack]);
 
         // Set the Guzzle client onto the provider (bypass visibility via reflection)
-        $providerReflection = new \ReflectionClass($provider);
+        $providerReflection = new ReflectionClass($provider);
         $clientProp = $providerReflection->getProperty('client');
         $clientProp->setAccessible(true);
         $clientProp->setValue($provider, $guzzleClient);
@@ -311,11 +315,11 @@ class GenericTicketProviderTest extends TestCase
                 (object)['id' => 'type2', 'name' => 'Standard'],
             ],
         ]));
-        $mock = new \GuzzleHttp\Handler\MockHandler([$mockResponse]);
-        $handlerStack = \GuzzleHttp\HandlerStack::create($mock);
-        $guzzleClient = new \GuzzleHttp\Client(['handler' => $handlerStack]);
+        $mock = new MockHandler([$mockResponse]);
+        $handlerStack = HandlerStack::create($mock);
+        $guzzleClient = new Client(['handler' => $handlerStack]);
 
-        $providerReflection = new \ReflectionClass($provider);
+        $providerReflection = new ReflectionClass($provider);
         $clientProp = $providerReflection->getProperty('client');
         $clientProp->setAccessible(true);
         $clientProp->setValue($provider, $guzzleClient);
@@ -333,8 +337,8 @@ class GenericTicketProviderTest extends TestCase
         $provider = $this->createProvider();
 
         // prepare mappings and related models so processTicket can create a Ticket
-        $user = \App\Models\User::factory()->create();
-        \App\Models\EmailAddress::factory()->create([
+        $user = User::factory()->create();
+        EmailAddress::factory()->create([
             'email' => 'foo@example.com',
             'verified_at' => now(),
             'user_id' => $user->id,
@@ -344,7 +348,7 @@ class GenericTicketProviderTest extends TestCase
         EventMapping::factory()->for($event)->for($provider->provider, 'provider')->create(['external_id' => 'evt1']);
 
         $type = TicketType::factory()->create();
-        \App\Models\TicketTypeMapping::create([
+        TicketTypeMapping::create([
             'ticket_type_id' => $type->id,
             'ticket_provider_id' => $provider->provider->id,
             'external_id' => 'type1',
@@ -422,7 +426,7 @@ class GenericTicketProviderTest extends TestCase
         $mock = new MockHandler([$resp]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
-        $ref = new \ReflectionClass($provider);
+        $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
@@ -480,7 +484,7 @@ class GenericTicketProviderTest extends TestCase
         $mock = new MockHandler([$resp]);
         $handler = HandlerStack::create($mock);
         $client = new Client(['handler' => $handler]);
-        $ref = new \ReflectionClass($provider);
+        $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);

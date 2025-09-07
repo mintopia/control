@@ -2,17 +2,21 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
 use App\Http\Controllers\Admin\HomeController;
 use App\Models\Event;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\View\View;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+use Tests\TestCase;
 
 class HomeControllerTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testCanInstantiateController()
     {
         $controller = new HomeController();
@@ -33,7 +37,7 @@ class HomeControllerTest extends TestCase
         $response = $controller->dashboard();
 
         // view() helper returns an instance of \Illuminate\View\View
-        $this->assertInstanceOf(\Illuminate\View\View::class, $response);
+        $this->assertInstanceOf(View::class, $response);
 
         $data = $response->getData();
 
@@ -47,7 +51,7 @@ class HomeControllerTest extends TestCase
 
     public function testUnimpersonateWithoutImpersonatingAborts()
     {
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
 
         $controller = new HomeController();
         $request = Request::create('/', 'GET');
@@ -82,7 +86,7 @@ class HomeControllerTest extends TestCase
 
         $response = $controller->unimpersonate($request);
 
-        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
+        $this->assertInstanceOf(RedirectResponse::class, $response);
         $this->assertEquals(route('admin.users.show', $impersonated->id), $response->getTargetUrl());
     }
 }

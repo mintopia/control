@@ -2,17 +2,9 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
 use App\Models\Role;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-
-class DummyRole extends Role
-{
-    public function toStringNamePublic(): string
-    {
-        return $this->toStringName();
-    }
-}
+use Tests\TestCase;
 
 class RoleTest extends TestCase
 {
@@ -30,7 +22,7 @@ class RoleTest extends TestCase
 
     public function testProtectedToStringNameReturnsCode()
     {
-        $dummy = new DummyRole();
+        $dummy = new HelperClasses\DummyRole();
         $dummy->code = 'test-code';
         $this->assertEquals('test-code', $dummy->toStringNamePublic());
     }

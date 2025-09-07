@@ -1,24 +1,13 @@
 <?php
 
-namespace Tests\Feature\app\Services\SocialProviders;
+namespace Tests\Feature\app\Services;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Services\SocialProviders\AbstractSocialProvider;
 use App\Models\SocialProvider;
+use Tests\Feature\app\Services\HelperClasses\ResolveDummyProvider;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
-
-class ResolveDummyProvider extends AbstractSocialProvider
-{
-    protected string $name = 'Resolve Dummy';
-    protected string $code = 'resolve_dummy_test';
-    protected string $socialiteProviderCode = 'resolve_dummy_code';
-
-    protected function updateAccount(\App\Models\LinkedAccount $account, $remoteUser): void
-    {
-        // no-op
-    }
-}
+use ReflectionClass;
+use Tests\TestCase;
 
 class AbstractSocialProviderResolveTest extends TestCase
 {
@@ -29,7 +18,7 @@ class AbstractSocialProviderResolveTest extends TestCase
         $prov = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'rd_x']);
         $svc = new ResolveDummyProvider($prov, 'https://example.test/custom');
 
-        $ref = new \ReflectionClass($svc);
+        $ref = new ReflectionClass($svc);
         $p = $ref->getProperty('redirectUrl');
         $p->setAccessible(true);
         $this->assertEquals('https://example.test/custom', $p->getValue($svc));
@@ -41,7 +30,7 @@ class AbstractSocialProviderResolveTest extends TestCase
         $prov = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'rd_guest']);
         $svc = new ResolveDummyProvider($prov);
 
-        $ref = new \ReflectionClass($svc);
+        $ref = new ReflectionClass($svc);
         $p = $ref->getProperty('redirectUrl');
         $p->setAccessible(true);
         $val = $p->getValue($svc);
@@ -56,7 +45,7 @@ class AbstractSocialProviderResolveTest extends TestCase
         $prov = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'rd_not_guest']);
         $svc = new ResolveDummyProvider($prov);
 
-        $ref = new \ReflectionClass($svc);
+        $ref = new ReflectionClass($svc);
         $p = $ref->getProperty('redirectUrl');
         $p->setAccessible(true);
         $val = $p->getValue($svc);

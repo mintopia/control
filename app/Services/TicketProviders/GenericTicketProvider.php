@@ -41,17 +41,6 @@ class GenericTicketProvider extends AbstractTicketProvider
         ];
     }
 
-    protected function getClient(): Client
-    {
-        if (!$this->client) {
-            $this->client = new Client([
-                'base_uri' => $this->provider->getSetting('endpoint'),
-                'auth' => [$this->provider->getSetting('apikey'), '']
-            ]);
-        }
-        return $this->client;
-    }
-
     public function processWebhook(Request $request): bool
     {
         $payload = $request->input('payload');
@@ -84,25 +73,6 @@ class GenericTicketProvider extends AbstractTicketProvider
             }
         }
         return $ticket;
-    }
-
-    protected function getEvent(string $externalId): ?Event
-    {
-        return Event::whereHas('mappings', function ($query) use ($externalId) {
-            $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
-        })->first();
-    }
-
-    protected function getType(string $externalId): ?TicketType
-    {
-        return TicketType::whereHas('mappings', function ($query) use ($externalId) {
-            $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
-        })->first();
-    }
-
-    protected function getQrCode(object $data): string
-    {
-        return "";
     }
 
     protected function makeTicket(?User $user, object $data): ?Ticket
@@ -140,24 +110,23 @@ class GenericTicketProvider extends AbstractTicketProvider
         return $ticket;
     }
 
-    protected function getTickets(?string $address = null): array
+    protected function getEvent(string $externalId): ?Event
     {
-        $query = [];
-        if ($address) {
-            $query['email'] = $address;
-        }
-        do {
-            $tickets = [];
-            $response = $this->getClient()->get('tickets', [
-                'query' => $query,
-            ]);
-            $data = json_decode($response->getBody());
-            foreach ($data->tickets as $ticket) {
-                $query['after'] = $ticket->id;
-                $tickets[$ticket->id] = $ticket;
-            }
-        } while ($data->hasMore);
-        return $tickets;
+        return Event::whereHas('mappings', function ($query) use ($externalId) {
+            $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
+        })->first();
+    }
+
+    protected function getType(string $externalId): ?TicketType
+    {
+        return TicketType::whereHas('mappings', function ($query) use ($externalId) {
+            $query->whereTicketProviderId($this->provider->id)->whereExternalId($externalId);
+        })->first();
+    }
+
+    protected function getQrCode(object $data): string
+    {
+        return "";
     }
 
     public function syncTickets(string|EmailAddress $email): void
@@ -217,6 +186,37 @@ class GenericTicketProvider extends AbstractTicketProvider
         }
     }
 
+    protected function getTickets(?string $address = null): array
+    {
+        $query = [];
+        if ($address) {
+            $query['email'] = $address;
+        }
+        do {
+            $tickets = [];
+            $response = $this->getClient()->get('tickets', [
+                'query' => $query,
+            ]);
+            $data = json_decode($response->getBody());
+            foreach ($data->tickets as $ticket) {
+                $query['after'] = $ticket->id;
+                $tickets[$ticket->id] = $ticket;
+            }
+        } while ($data->hasMore);
+        return $tickets;
+    }
+
+    protected function getClient(): Client
+    {
+        if (!$this->client) {
+            $this->client = new Client([
+                'base_uri' => $this->provider->getSetting('endpoint'),
+                'auth' => [$this->provider->getSetting('apikey'), '']
+            ]);
+        }
+        return $this->client;
+    }
+
     public function getEvents(): array
     {
         $key = "ticketproviders.{$this->provider->id}.{$this->provider->cache_prefix}.events";
@@ -257,7 +257,7 @@ class GenericTicketProvider extends AbstractTicketProvider
         $response = $this->getClient()->get(
             "tickettypes",
             [
-            'query' => $query,
+                'query' => $query,
             ]
         );
         $data = json_decode($response->getBody());

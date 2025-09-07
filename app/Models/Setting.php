@@ -5,8 +5,11 @@ namespace App\Models;
 use App\Casts\SettingValue;
 use App\Enums\SettingType;
 use App\Models\Traits\ToString;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
@@ -27,25 +30,25 @@ use Spatie\EloquentSortable\SortableTrait;
  * @property string|null $validation
  * @property SettingType $type
  * @property int $order
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @method static \Illuminate\Database\Eloquent\Builder|Setting newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Setting newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Setting ordered(string $direction = 'asc')
- * @method static \Illuminate\Database\Eloquent\Builder|Setting query()
- * @method static \Illuminate\Database\Eloquent\Builder|Setting whereCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Setting whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Setting whereDescription($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Setting whereEncrypted($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Setting whereHidden($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Setting whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Setting whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Setting whereOrder($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Setting whereType($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Setting whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Setting whereValidation($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Setting whereValue($value)
- * @mixin \Eloquent
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @method static Builder|Setting newModelQuery()
+ * @method static Builder|Setting newQuery()
+ * @method static Builder|Setting ordered(string $direction = 'asc')
+ * @method static Builder|Setting query()
+ * @method static Builder|Setting whereCode($value)
+ * @method static Builder|Setting whereCreatedAt($value)
+ * @method static Builder|Setting whereDescription($value)
+ * @method static Builder|Setting whereEncrypted($value)
+ * @method static Builder|Setting whereHidden($value)
+ * @method static Builder|Setting whereId($value)
+ * @method static Builder|Setting whereName($value)
+ * @method static Builder|Setting whereOrder($value)
+ * @method static Builder|Setting whereType($value)
+ * @method static Builder|Setting whereUpdatedAt($value)
+ * @method static Builder|Setting whereValidation($value)
+ * @method static Builder|Setting whereValue($value)
+ * @mixin Eloquent
  */
 class Setting extends Model implements Sortable
 {
@@ -103,13 +106,6 @@ class Setting extends Model implements Sortable
         return $setting->value ?? $default;
     }
 
-    public function clearCache(): void
-    {
-        Log::debug("Clearing settings.{$this->code} from cache");
-        unset(static::$cached[$this->code]);
-        Cache::forget("settings.{$this->code}");
-    }
-
     public function getValue()
     {
         return (object)[
@@ -117,6 +113,13 @@ class Setting extends Model implements Sortable
             'encrypted' => $this->encrypted,
             'value' => $this->encrypted ? Crypt::encrypt($this->value) : $this->value,
         ];
+    }
+
+    public function clearCache(): void
+    {
+        Log::debug("Clearing settings.{$this->code} from cache");
+        unset(static::$cached[$this->code]);
+        Cache::forget("settings.{$this->code}");
     }
 
     protected function toStringName(): string

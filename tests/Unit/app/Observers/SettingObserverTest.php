@@ -2,9 +2,9 @@
 
 namespace Tests\Unit\app\Observers;
 
-use Tests\TestCase;
-use App\Observers\SettingObserver;
 use App\Models\Setting;
+use App\Observers\SettingObserver;
+use Tests\TestCase;
 
 class SettingObserverTest extends TestCase
 {

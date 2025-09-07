@@ -2,10 +2,15 @@
 
 namespace Tests\Unit\app\Observers;
 
-use Tests\TestCase;
-use App\Observers\TicketObserver;
+use App\Models\Event;
+use App\Models\Seat;
+use App\Models\SeatingPlan;
 use App\Models\Ticket;
+use App\Models\User;
+use App\Observers\TicketObserver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
+use Tests\TestCase;
 
 class TicketObserverTest extends TestCase
 {
@@ -13,12 +18,12 @@ class TicketObserverTest extends TestCase
 
     public function testSavedUpdatesPlanRevisionIfDirtyAndHasSeat()
     {
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
-        $user = \App\Models\User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
-        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['user_id' => $user->id]);
+        Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
 
         // simulate change on ticket and call observer
         $ticket->some_flag = 1; // make it dirty
@@ -31,8 +36,8 @@ class TicketObserverTest extends TestCase
 
     public function testSavedSyncsDiscordRolesOnUserChange()
     {
-        $user = \App\Models\User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['user_id' => $user->id]);
 
         // simulate original user exists and new user exists
         $ticket->setRawAttributes(array_merge($ticket->getAttributes(), ['user_id' => $user->id]));
@@ -50,8 +55,8 @@ class TicketObserverTest extends TestCase
     {
         $ticket = Ticket::factory()->create();
 
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 51]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 51]);
 
         $before = $plan->fresh()->revision;
 
@@ -68,8 +73,8 @@ class TicketObserverTest extends TestCase
     {
         $ticket = Ticket::factory()->create();
 
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 53]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 53]);
 
         $before = $plan->fresh()->revision;
 
@@ -86,8 +91,8 @@ class TicketObserverTest extends TestCase
     {
         $ticket = Ticket::factory()->create();
 
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 55]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 55]);
 
         $before = $plan->fresh()->revision;
 
@@ -104,8 +109,8 @@ class TicketObserverTest extends TestCase
     {
         $ticket = Ticket::factory()->create();
 
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 57]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 57]);
 
         $before = $plan->fresh()->revision;
 
@@ -122,8 +127,8 @@ class TicketObserverTest extends TestCase
     {
         $ticket = Ticket::factory()->create();
 
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 59]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 59]);
 
         $before = $plan->fresh()->revision;
 
@@ -138,29 +143,29 @@ class TicketObserverTest extends TestCase
 
     public function testSavedCallsUpdateRevisionWhenDirtyAndHasSeatUsingMocks()
     {
-        $event = \App\Models\Event::factory()->create();
-        $plan = \App\Models\SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
+        $event = Event::factory()->create();
+        $plan = SeatingPlan::factory()->create(['event_id' => $event->id, 'revision' => 1]);
 
-        $user = \App\Models\User::factory()->create();
-        $ticket = \App\Models\Ticket::factory()->create(['user_id' => $user->id]);
-        \App\Models\Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
+        $user = User::factory()->create();
+        $ticket = Ticket::factory()->create(['user_id' => $user->id]);
+        Seat::factory()->create(['seating_plan_id' => $plan->id, 'ticket_id' => $ticket->id]);
 
         // Partial mock the plan to expect updateRevision
-        $planMock = \Mockery::mock(\App\Models\SeatingPlan::class)->makePartial();
+        $planMock = Mockery::mock(SeatingPlan::class)->makePartial();
         $planMock->shouldReceive('updateRevision')->once();
 
         // Seat mock that carries the mocked plan
-        $seatMock = \Mockery::mock(\App\Models\Seat::class)->makePartial();
+        $seatMock = Mockery::mock(Seat::class)->makePartial();
         $seatMock->plan = $planMock;
 
         // Ticket partial mock: isDirty() returns true and seat is present
-        $ticketMock = \Mockery::mock(\App\Models\Ticket::class)->makePartial();
+        $ticketMock = Mockery::mock(Ticket::class)->makePartial();
         $ticketMock->id = $ticket->id;
         $ticketMock->seat = $seatMock;
         $ticketMock->shouldReceive('isDirty')->withNoArgs()->andReturn(true);
 
         $observer = new TicketObserver();
-        /** @var \App\Models\Ticket $ticketMock */
+        /** @var Ticket $ticketMock */
         $observer->saved($ticketMock);
     }
 }

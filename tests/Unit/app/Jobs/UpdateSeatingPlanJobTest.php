@@ -2,9 +2,11 @@
 
 namespace Tests\Unit\app\Jobs;
 
-use Tests\TestCase;
 use App\Jobs\UpdateSeatingPlanJob;
 use App\Models\SeatingPlan;
+use Illuminate\Support\Facades\Log;
+use Psr\Log\LoggerInterface;
+use Tests\TestCase;
 
 class UpdateSeatingPlanJobTest extends TestCase
 {
@@ -31,9 +33,9 @@ class UpdateSeatingPlanJobTest extends TestCase
 
         // Standard mock to validate DEBUG message
         $message = 'not updating as';
-        $logger = $this->getMockBuilder(\Psr\Log\LoggerInterface::class)->getMock();
+        $logger = $this->getMockBuilder(LoggerInterface::class)->getMock();
         $logger->expects($this->once())->method('debug')->with($this->stringContains($message));
-        \Illuminate\Support\Facades\Log::swap($logger);
+        Log::swap($logger);
 
         $job = new UpdateSeatingPlanJob($plan, 1);
         $job->handle();
@@ -56,5 +58,4 @@ class UpdateSeatingPlanJobTest extends TestCase
         $job = new UpdateSeatingPlanJob($plan, 5);
         $job->handle();
     }
-
 }

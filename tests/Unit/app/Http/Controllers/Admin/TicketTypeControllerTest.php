@@ -2,11 +2,16 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Http\Controllers\Admin\TicketTypeController;
+use App\Http\Requests\Admin\DeleteRequest;
+use App\Http\Requests\Admin\TicketTypeUpdateRequest;
 use App\Models\Event;
 use App\Models\TicketType;
+use App\Services\DiscordApi;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\Exceptions\UrlGenerationException;
+use ReflectionClass;
+use Tests\TestCase;
 
 // ...existing code...
 
@@ -43,7 +48,7 @@ class TicketTypeControllerTest extends TestCase
         $type = TicketType::factory()->for($event)->create();
 
         // create a PHPUnit mock of the DiscordApi so no network calls are made
-        $discord = $this->createMock(\App\Services\DiscordApi::class);
+        $discord = $this->createMock(DiscordApi::class);
         $discord->method('getRoles')->willReturn(['r1' => 'Role One', 'r2' => 'Role Two']);
 
         $c = new TicketTypeController();
@@ -70,10 +75,10 @@ class TicketTypeControllerTest extends TestCase
     {
         $event = Event::factory()->create();
         $controller = new TicketTypeController();
-        $req = \App\Http\Requests\Admin\TicketTypeUpdateRequest::create('/', 'POST', ['name' => 'TT1', 'has_seat' => 1]);
+        $req = TicketTypeUpdateRequest::create('/', 'POST', ['name' => 'TT1', 'has_seat' => 1]);
         try {
             $controller->store($req, $event);
-        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+        } catch (UrlGenerationException $ex) {
             // ignore missing route
         }
         $this->assertDatabaseHas('ticket_types', ['name' => 'TT1']);
@@ -85,7 +90,7 @@ class TicketTypeControllerTest extends TestCase
         $type = TicketType::factory()->for($event)->create(['name' => 'Old', 'has_seat' => 0]);
         $controller = new TicketTypeController();
         $req = request()->create('/', 'POST', ['name' => 'NewName', 'has_seat' => 1, 'discord_role_id' => 'r1']);
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $type, $req);
@@ -99,10 +104,10 @@ class TicketTypeControllerTest extends TestCase
         $event = Event::factory()->create();
         $type = TicketType::factory()->for($event)->create(['name' => 'Before']);
         $controller = new TicketTypeController();
-        $req = \App\Http\Requests\Admin\TicketTypeUpdateRequest::create('/', 'POST', ['name' => 'After', 'has_seat' => 0]);
+        $req = TicketTypeUpdateRequest::create('/', 'POST', ['name' => 'After', 'has_seat' => 0]);
         try {
             $controller->update($req, $event, $type);
-        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+        } catch (UrlGenerationException $ex) {
             // ignore
         }
         $this->assertEquals('After', $type->fresh()->name);
@@ -113,12 +118,12 @@ class TicketTypeControllerTest extends TestCase
         $event = Event::factory()->create();
         $type = TicketType::factory()->for($event)->create();
         $controller = new TicketTypeController();
-        $req = \App\Http\Requests\Admin\DeleteRequest::create('/', 'POST', []);
+        $req = DeleteRequest::create('/', 'POST', []);
         try {
             $controller->destroy($req, $event, $type);
-        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+        } catch (UrlGenerationException $ex) {
             // ignore
         }
-        $this->assertNull(\App\Models\TicketType::find($type->id));
+        $this->assertNull(TicketType::find($type->id));
     }
 }

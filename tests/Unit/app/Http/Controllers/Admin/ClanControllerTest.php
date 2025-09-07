@@ -2,20 +2,23 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
 use App\Http\Controllers\Admin\ClanController;
-use Illuminate\Http\Request;
-use App\Models\Clan;
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Http\Requests\ClanRequest;
 use App\Http\Requests\Admin\DeleteRequest;
+use App\Http\Requests\ClanRequest;
+use App\Models\Clan;
+use App\Models\ClanRole;
+use App\Models\User;
+use Database\Factories\ClanMembershipFactory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
 
 class ClanControllerTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testCanInstantiateController()
     {
         $controller = new ClanController();
@@ -62,8 +65,8 @@ class ClanControllerTest extends TestCase
         $c2 = Clan::factory()->create(['name' => 'Other']);
 
         // ensure code column is set and persisted for filtering (factory doesn't populate code)
-        \Illuminate\Support\Facades\DB::table('clans')->where('id', $c1->id)->update(['code' => 'C100']);
-        \Illuminate\Support\Facades\DB::table('clans')->where('id', $c2->id)->update(['code' => 'O200']);
+        DB::table('clans')->where('id', $c1->id)->update(['code' => 'C100']);
+        DB::table('clans')->where('id', $c2->id)->update(['code' => 'O200']);
         $c1->refresh();
         $c2->refresh();
 
@@ -127,7 +130,7 @@ class ClanControllerTest extends TestCase
     {
         $user = User::factory()->create();
         // Ensure the 'leader' role exists so addUser() can resolve it
-        \App\Models\ClanRole::factory()->create(['code' => 'leader', 'name' => 'Leader']);
+        ClanRole::factory()->create(['code' => 'leader', 'name' => 'Leader']);
         $request = ClanRequest::create('/admin/clans', 'POST', ['name' => 'Test Clan']);
         $request->setUserResolver(fn() => $user);
 
@@ -157,8 +160,8 @@ class ClanControllerTest extends TestCase
         $userB = User::factory()->create(['nickname' => 'zzz']);
 
         // create memberships
-        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
-        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
+        ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
+        ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
 
         $request = Request::create('/admin/clans/' . $clan->id, 'GET', ['order' => 'user', 'order_direction' => 'desc']);
         $controller = new ClanController();
@@ -176,15 +179,15 @@ class ClanControllerTest extends TestCase
     public function testShowOrdersByRoleAndCreated()
     {
         $clan = Clan::factory()->create();
-        $role1 = \App\Models\ClanRole::factory()->create(['code' => 'member']);
-        $role2 = \App\Models\ClanRole::factory()->create(['code' => 'leader']);
+        $role1 = ClanRole::factory()->create(['code' => 'member']);
+        $role2 = ClanRole::factory()->create(['code' => 'leader']);
 
         $user1 = User::factory()->create(['nickname' => 'a']);
         $user2 = User::factory()->create(['nickname' => 'b']);
 
         // create memberships with different roles and created_at
-        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $user1->id, 'clan_role_id' => $role2->id, 'created_at' => now()->subDay()]);
-        \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $user2->id, 'clan_role_id' => $role1->id, 'created_at' => now()]);
+        ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $user1->id, 'clan_role_id' => $role2->id, 'created_at' => now()->subDay()]);
+        ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $user2->id, 'clan_role_id' => $role1->id, 'created_at' => now()]);
 
         $request = Request::create('/admin/clans/' . $clan->id, 'GET', ['order' => 'role', 'order_direction' => 'asc']);
         $controller = new ClanController();
@@ -212,8 +215,8 @@ class ClanControllerTest extends TestCase
         $userB = User::factory()->create(['nickname' => 'bbb']);
 
         // create memberships in order so membership id ordering can be asserted
-        $m1 = \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
-        $m2 = \Database\Factories\ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
+        $m1 = ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userA->id]);
+        $m2 = ClanMembershipFactory::new()->create(['clan_id' => $clan->id, 'user_id' => $userB->id]);
 
         $request = Request::create('/admin/clans/' . $clan->id, 'GET');
         $controller = new ClanController();
@@ -268,8 +271,8 @@ class ClanControllerTest extends TestCase
         $c2 = Clan::factory()->create(['name' => 'Other']);
 
         // Persist code values (factory may not populate 'code')
-        \Illuminate\Support\Facades\DB::table('clans')->where('id', $c1->id)->update(['code' => 'C100']);
-        \Illuminate\Support\Facades\DB::table('clans')->where('id', $c2->id)->update(['code' => 'O200']);
+        DB::table('clans')->where('id', $c1->id)->update(['code' => 'C100']);
+        DB::table('clans')->where('id', $c2->id)->update(['code' => 'O200']);
         $c1->refresh();
         $c2->refresh();
 

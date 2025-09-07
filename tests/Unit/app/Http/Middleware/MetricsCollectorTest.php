@@ -2,13 +2,14 @@
 
 namespace Tests\Unit\app\Http\Middleware;
 
-use Tests\TestCase;
 use App\Http\Middleware\MetricsCollector;
+use Exception;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
+use Symfony\Component\HttpFoundation\Response;
+use Tests\TestCase;
 
 class MetricsCollectorTest extends TestCase
 {
@@ -47,7 +48,7 @@ class MetricsCollectorTest extends TestCase
         $middleware = $this->getMockBuilder(MetricsCollector::class)
             ->onlyMethods(['storeMetrics'])
             ->getMock();
-        $middleware->expects($this->once())->method('storeMetrics')->willThrowException(new \Exception('fail'));
+        $middleware->expects($this->once())->method('storeMetrics')->willThrowException(new Exception('fail'));
         $request = Request::create('/not-prometheus', 'POST');
         $response = new Response('', 500);
         $next = function () use ($response) {

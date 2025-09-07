@@ -2,8 +2,9 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
 use App\Models\TicketTypeMapping;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Tests\TestCase;
 
 class TicketTypeMappingTest extends TestCase
 {
@@ -16,12 +17,12 @@ class TicketTypeMappingTest extends TestCase
     public function testProviderRelationship()
     {
         $mapping = new TicketTypeMapping();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $mapping->provider());
+        $this->assertInstanceOf(BelongsTo::class, $mapping->provider());
     }
 
     public function testTypeRelationship()
     {
         $mapping = new TicketTypeMapping();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $mapping->type());
+        $this->assertInstanceOf(BelongsTo::class, $mapping->type());
     }
 }

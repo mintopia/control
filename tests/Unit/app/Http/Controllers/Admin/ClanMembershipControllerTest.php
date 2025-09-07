@@ -2,15 +2,15 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
 use App\Http\Controllers\Admin\ClanMembershipController;
 use App\Http\Requests\ClanMembershipUpdateRequest;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Clan;
 use App\Models\ClanMembership;
 use App\Models\ClanRole;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
+use Tests\TestCase;
 
 class ClanMembershipControllerTest extends TestCase
 {

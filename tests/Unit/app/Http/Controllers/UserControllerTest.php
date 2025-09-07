@@ -2,13 +2,20 @@
 
 namespace Tests\Unit\app\Http\Controllers;
 
-use Tests\TestCase;
+use App\Exceptions\SocialProviderException;
 use App\Http\Controllers\UserController;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Models\SocialProvider;
-use App\Models\User;
+use App\Http\Requests\ProfileUpdateRequest;
+use App\Http\Requests\UserSignupRequest;
 use App\Models\LinkedAccount;
 use App\Models\Setting;
+use App\Models\SocialProvider;
+use App\Models\User;
+use Exception;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
+use Tests\TestCase;
 
 class UserControllerTest extends TestCase
 {
@@ -33,13 +40,13 @@ class UserControllerTest extends TestCase
         ]);
 
         $controller = new UserController();
-        $request = \Illuminate\Http\Request::create('/', 'GET');
+        $request = Request::create('/', 'GET');
         $request->setUserResolver(function () use ($user) {
             return $user;
         });
 
         $response = $controller->profile($request);
-        $this->assertInstanceOf(\Illuminate\View\View::class, $response);
+        $this->assertInstanceOf(View::class, $response);
         $data = $response->getData();
         $this->assertArrayHasKey('availableLinks', $data);
         $codes = $data['availableLinks']->pluck('code')->all();
@@ -53,7 +60,7 @@ class UserControllerTest extends TestCase
         $this->actingAs($user);
         $controller = new UserController();
 
-        $request = \Illuminate\Http\Request::create('/', 'GET');
+        $request = Request::create('/', 'GET');
         // provide a session store so regenerate() works
         $request->setLaravelSession(app('session.store'));
 
@@ -73,7 +80,7 @@ class UserControllerTest extends TestCase
         // For the enabled case, avoid calling the model code path that relies on getProvider()
         // (getProvider is commented out in the model). Create a lightweight SocialProvider
         // subclass that overrides redirect() so controller->login_redirect can call it.
-        $enabledProvider = new class extends \App\Models\SocialProvider {
+        $enabledProvider = new class extends SocialProvider {
             public function redirect(?string $redirectUrl = null)
             {
                 return response('ok');
@@ -94,7 +101,7 @@ class UserControllerTest extends TestCase
         $controller = new UserController();
 
         // signup_process - use the real FormRequest so type hints match
-        $signupRequest = new \App\Http\Requests\UserSignupRequest();
+        $signupRequest = new UserSignupRequest();
         // ensure the FormRequest has the POST data available
         $signupRequest->replace(['nickname' => 'nick', 'name' => 'Full Name']);
         $signupRequest->setUserResolver(function () use ($user) {
@@ -107,7 +114,7 @@ class UserControllerTest extends TestCase
         $this->assertEquals('nick', $user->fresh()->nickname);
 
         // update - use the real ProfileUpdateRequest
-        $updateRequest = new \App\Http\Requests\ProfileUpdateRequest();
+        $updateRequest = new ProfileUpdateRequest();
         // ensure the FormRequest has the POST data available
         $updateRequest->replace(['nickname' => 'newnick', 'name' => 'New Name']);
         $updateRequest->setUserResolver(function () use ($user) {
@@ -128,11 +135,11 @@ class UserControllerTest extends TestCase
         Setting::create(['code' => 'privacypolicy', 'name' => 'Privacy', 'value' => 'privacy text']);
 
         $controller = new UserController();
-        $request = \Illuminate\Http\Request::create('/signup', 'GET');
+        $request = Request::create('/signup', 'GET');
         $request->setUserResolver(fn() => $user);
 
         $resp = $controller->signup($request);
-        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $this->assertInstanceOf(View::class, $resp);
         $data = $resp->getData();
         $this->assertArrayHasKey('terms', $data);
         $this->assertArrayHasKey('privacy', $data);
@@ -142,11 +149,11 @@ class UserControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $controller = new UserController();
-        $request = \Illuminate\Http\Request::create('/edit', 'GET');
+        $request = Request::create('/edit', 'GET');
         $request->setUserResolver(fn() => $user);
 
         $resp = $controller->edit($request);
-        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $this->assertInstanceOf(View::class, $resp);
         $this->assertArrayHasKey('user', $resp->getData());
     }
 
@@ -157,7 +164,7 @@ class UserControllerTest extends TestCase
 
         $controller = new UserController();
         $resp = $controller->login();
-        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $this->assertInstanceOf(View::class, $resp);
         $data = $resp->getData();
         $this->assertArrayHasKey('providers', $data);
         $codes = $data['providers']->pluck('code')->all();
@@ -180,10 +187,10 @@ class UserControllerTest extends TestCase
     public function testLoginReturnLogsInProviderUser()
     {
         $user = User::factory()->create(['suspended' => 0]);
-        $provider = new class extends \App\Models\SocialProvider {
+        $provider = new class extends SocialProvider {
             public function user(?string $redirectUrl = null)
             {
-                return \App\Models\User::first();
+                return User::first();
             }
         };
         $provider->enabled = true;
@@ -196,14 +203,15 @@ class UserControllerTest extends TestCase
         $resp = $controller->loginReturn($provider);
 
         $this->assertStringContainsString(route('home'), $resp->getTargetUrl());
-        $this->assertTrue(\Illuminate\Support\Facades\Auth::check());
+        $this->assertTrue(Auth::check());
         $this->assertNotNull($user->fresh()->last_login);
     }
 
     public function testLoginReturnWithDisabledProviderRedirectsToLogin()
     {
         $controller = new UserController();
-        $disabledProvider = new class extends \App\Models\SocialProvider {};
+        $disabledProvider = new class extends SocialProvider {
+        };
         $disabledProvider->enabled = false;
         $disabledProvider->auth_enabled = false;
 
@@ -215,10 +223,10 @@ class UserControllerTest extends TestCase
     {
         $suspended = User::factory()->create(['suspended' => 1]);
 
-        $provider = new class extends \App\Models\SocialProvider {
+        $provider = new class extends SocialProvider {
             public function user(?string $redirectUrl = null)
             {
-                return \App\Models\User::first();
+                return User::first();
             }
         };
         $provider->enabled = true;
@@ -236,10 +244,10 @@ class UserControllerTest extends TestCase
 
     public function testLoginReturnHandlesSocialProviderException()
     {
-        $provider = new class extends \App\Models\SocialProvider {
+        $provider = new class extends SocialProvider {
             public function user(?string $redirectUrl = null)
             {
-                throw new \App\Exceptions\SocialProviderException('provider fail');
+                throw new SocialProviderException('provider fail');
             }
         };
         $provider->enabled = true;
@@ -254,10 +262,10 @@ class UserControllerTest extends TestCase
 
     public function testLoginReturnHandlesGenericExceptionAndFallsBack()
     {
-        $provider = new class extends \App\Models\SocialProvider {
+        $provider = new class extends SocialProvider {
             public function user(?string $redirectUrl = null)
             {
-                throw new \Exception('boom');
+                throw new Exception('boom');
             }
         };
         $provider->enabled = true;

@@ -2,13 +2,8 @@
 
 namespace Tests\Unit\app\Http\Requests\Admin;
 
-use Tests\TestCase;
 use App\Http\Requests\Admin\TicketProviderUpdateRequest;
-
-class TicketProviderUpdateRequestStub extends TicketProviderUpdateRequest
-{
-    public $provider;
-}
+use Tests\TestCase;
 
 class TicketProviderUpdateRequestTest extends TestCase
 {
@@ -20,7 +15,7 @@ class TicketProviderUpdateRequestTest extends TestCase
 
     public function testRulesIsArray()
     {
-        $request = new TicketProviderUpdateRequestStub();
+        $request = new HelperClasses\TicketProviderUpdateRequestStub();
         $request->provider = (object)['settings' => []];
         $rules = $request->rules();
         $this->assertIsArray($rules);
@@ -28,7 +23,7 @@ class TicketProviderUpdateRequestTest extends TestCase
 
     public function testRulesContainExpectedKeys()
     {
-        $request = new TicketProviderUpdateRequestStub();
+        $request = new HelperClasses\TicketProviderUpdateRequestStub();
         $request->provider = (object)['settings' => [
             (object)['code' => 'name', 'validation' => 'required|string'],
             (object)['code' => 'provider', 'validation' => 'required|string']
@@ -42,7 +37,7 @@ class TicketProviderUpdateRequestTest extends TestCase
 
     public function testRulesContainValidationStrings()
     {
-        $request = new TicketProviderUpdateRequestStub();
+        $request = new HelperClasses\TicketProviderUpdateRequestStub();
         $request->provider = (object)['settings' => [
             (object)['code' => 'name', 'validation' => 'required|string'],
             (object)['code' => 'provider', 'validation' => 'required|string']
@@ -56,7 +51,7 @@ class TicketProviderUpdateRequestTest extends TestCase
 
     public function testRulesDoesNotContainUnexpectedFields()
     {
-        $request = new TicketProviderUpdateRequestStub();
+        $request = new HelperClasses\TicketProviderUpdateRequestStub();
         $request->provider = (object)['settings' => [
             (object)['code' => 'name', 'validation' => 'required|string'],
             (object)['code' => 'provider', 'validation' => 'required|string']
@@ -70,7 +65,7 @@ class TicketProviderUpdateRequestTest extends TestCase
 
     public function testAuthorizeAlwaysTrue()
     {
-        $request = new TicketProviderUpdateRequestStub();
+        $request = new HelperClasses\TicketProviderUpdateRequestStub();
         $this->assertTrue($request->authorize());
     }
 }

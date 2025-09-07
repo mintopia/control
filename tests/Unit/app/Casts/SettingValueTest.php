@@ -2,21 +2,19 @@
 
 namespace Tests\Unit\app\Casts;
 
-use Tests\TestCase;
-
 use App\Casts\SettingValue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
+use Tests\TestCase;
 
 class SettingValueTest extends TestCase
 {
-
     protected function setUp(): void
     {
         parent::setUp();
         // Ensure the app key is set for Crypt facade
         if (empty(config('app.key'))) {
-            config(['app.key' => 'base64:'.base64_encode(random_bytes(32))]);
+            config(['app.key' => 'base64:' . base64_encode(random_bytes(32))]);
         }
     }
 
@@ -37,6 +35,7 @@ class SettingValueTest extends TestCase
     {
         $model = new class extends Model {
             public $encrypted = true;
+
             public function getAttribute($key)
             {
                 if ($key === 'encrypted') {
@@ -55,6 +54,7 @@ class SettingValueTest extends TestCase
     {
         $model = new class extends Model {
             public $encrypted = true;
+
             public function getAttribute($key)
             {
                 if ($key === 'encrypted') {

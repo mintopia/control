@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Models\Helpers\TicketImport;
 use App\Models\Traits\ToString;
 use Carbon\Carbon;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,28 +32,28 @@ use function App\makeCode;
  * @property string|null $transfer_code
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Event $event
- * @property-read \App\Models\TicketProvider $provider
- * @property-read \App\Models\Seat|null $seat
- * @property-read \App\Models\TicketType $type
- * @property-read \App\Models\User|null $user
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket query()
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereEventId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereExternalId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereOriginalEmail($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereQrcode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereReference($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereTicketProviderId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereTicketTypeId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereTransferCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Ticket whereUserId($value)
- * @mixin \Eloquent
+ * @property-read Event $event
+ * @property-read TicketProvider $provider
+ * @property-read Seat|null $seat
+ * @property-read TicketType $type
+ * @property-read User|null $user
+ * @method static Builder|Ticket newModelQuery()
+ * @method static Builder|Ticket newQuery()
+ * @method static Builder|Ticket query()
+ * @method static Builder|Ticket whereCreatedAt($value)
+ * @method static Builder|Ticket whereEventId($value)
+ * @method static Builder|Ticket whereExternalId($value)
+ * @method static Builder|Ticket whereId($value)
+ * @method static Builder|Ticket whereName($value)
+ * @method static Builder|Ticket whereOriginalEmail($value)
+ * @method static Builder|Ticket whereQrcode($value)
+ * @method static Builder|Ticket whereReference($value)
+ * @method static Builder|Ticket whereTicketProviderId($value)
+ * @method static Builder|Ticket whereTicketTypeId($value)
+ * @method static Builder|Ticket whereTransferCode($value)
+ * @method static Builder|Ticket whereUpdatedAt($value)
+ * @method static Builder|Ticket whereUserId($value)
+ * @mixin Eloquent
  */
 class Ticket extends Model
 {
@@ -72,78 +74,6 @@ class Ticket extends Model
         'created_at',
         'updated_at'
     ];
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function provider(): BelongsTo
-    {
-        return $this->belongsTo(TicketProvider::class, 'ticket_provider_id');
-    }
-
-    public function type(): BelongsTo
-    {
-        return $this->belongsTo(TicketType::class, 'ticket_type_id');
-    }
-
-    public function event(): BelongsTo
-    {
-        return $this->belongsTo(Event::class);
-    }
-
-    public function seat(): HasOne
-    {
-        return $this->hasOne(Seat::class);
-    }
-
-    public function generateTransferCode(): void
-    {
-        $codes = [];
-        for ($i = 0; $i < 4; $i++) {
-            $codes[] = makeCode(4);
-        }
-        $this->transfer_code = implode('-', $codes);
-        $this->save();
-    }
-
-    public function canTransfer(): bool
-    {
-        if ($this->event->ends_at < Carbon::now()) {
-            return false;
-        }
-        // TODO: Check Ticket Type
-        return true;
-    }
-
-    public function canPickSeat(): bool
-    {
-        if (!$this->type->has_seat) {
-            return false;
-        }
-        if ($this->event->ends_at < Carbon::now()) {
-            return false;
-        }
-        if ($this->event->seating_locked) {
-            return false;
-        }
-        return true;
-    }
-
-    public function canBeManagedBy(User $user): bool
-    {
-        if ($user->id === $this->user_id) {
-            return true;
-        }
-
-        $thisTicketClans = $this->user->clanMemberships()->pluck('clan_id');
-        $userClans = $user->clanMemberships()->whereHas('role', function ($query) {
-            $query->whereIn('code', ['leader', 'seatmanager']);
-        })->pluck('clan_id');
-        $common = $thisTicketClans->intersect($userClans);
-        return $common->count() > 0;
-    }
 
     public static function import(string $csv): array
     {
@@ -199,5 +129,77 @@ class Ticket extends Model
             }
         });
         return $ticket;
+    }
+
+    public function event(): BelongsTo
+    {
+        return $this->belongsTo(Event::class);
+    }
+
+    public function provider(): BelongsTo
+    {
+        return $this->belongsTo(TicketProvider::class, 'ticket_provider_id');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(TicketType::class, 'ticket_type_id');
+    }
+
+    public function seat(): HasOne
+    {
+        return $this->hasOne(Seat::class);
+    }
+
+    public function generateTransferCode(): void
+    {
+        $codes = [];
+        for ($i = 0; $i < 4; $i++) {
+            $codes[] = makeCode(4);
+        }
+        $this->transfer_code = implode('-', $codes);
+        $this->save();
+    }
+
+    public function canTransfer(): bool
+    {
+        if ($this->event->ends_at < Carbon::now()) {
+            return false;
+        }
+        // TODO: Check Ticket Type
+        return true;
+    }
+
+    public function canPickSeat(): bool
+    {
+        if (!$this->type->has_seat) {
+            return false;
+        }
+        if ($this->event->ends_at < Carbon::now()) {
+            return false;
+        }
+        if ($this->event->seating_locked) {
+            return false;
+        }
+        return true;
+    }
+
+    public function canBeManagedBy(User $user): bool
+    {
+        if ($user->id === $this->user_id) {
+            return true;
+        }
+
+        $thisTicketClans = $this->user->clanMemberships()->pluck('clan_id');
+        $userClans = $user->clanMemberships()->whereHas('role', function ($query) {
+            $query->whereIn('code', ['leader', 'seatmanager']);
+        })->pluck('clan_id');
+        $common = $thisTicketClans->intersect($userClans);
+        return $common->count() > 0;
     }
 }

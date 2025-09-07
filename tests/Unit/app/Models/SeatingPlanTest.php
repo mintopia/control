@@ -2,9 +2,18 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
+use App\Models\Seat;
 use App\Models\SeatingPlan;
+use Database\Factories\SeatFactory;
+use Database\Factories\SeatingPlanFactory;
+use Database\Factories\TicketFactory;
+use Database\Factories\TicketTypeFactory;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use ReflectionClass;
+use Tests\TestCase;
 
 class SeatingPlanTest extends TestCase
 {
@@ -19,13 +28,13 @@ class SeatingPlanTest extends TestCase
     public function testEventRelationship()
     {
         $plan = new SeatingPlan();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $plan->event());
+        $this->assertInstanceOf(BelongsTo::class, $plan->event());
     }
 
     public function testSeatsRelationship()
     {
         $plan = new SeatingPlan();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $plan->seats());
+        $this->assertInstanceOf(HasMany::class, $plan->seats());
     }
 
     public function testBuildSortQueryReturnsBuilder()
@@ -33,13 +42,13 @@ class SeatingPlanTest extends TestCase
         $plan = new SeatingPlan();
         $plan->event_id = 1;
         $query = $plan->buildSortQuery();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Builder::class, $query);
+        $this->assertInstanceOf(Builder::class, $query);
     }
 
     public function testUpdateRevisionIncrementsRevision()
     {
         // Use a real model persisted to the test database so we can assert the revision
-        $plan = \Database\Factories\SeatingPlanFactory::new()->create(['revision' => 1]);
+        $plan = SeatingPlanFactory::new()->create(['revision' => 1]);
 
         $plan->updateRevision();
 
@@ -53,7 +62,7 @@ class SeatingPlanTest extends TestCase
     {
         $plan = new SeatingPlan();
         $plan->code = 'test_code';
-        $reflection = new \ReflectionClass($plan);
+        $reflection = new ReflectionClass($plan);
         $method = $reflection->getMethod('toStringName');
         $method->setAccessible(true);
         $this->assertEquals('test_code', $method->invoke($plan));
@@ -63,7 +72,7 @@ class SeatingPlanTest extends TestCase
     public function testImportUpdatesRevision()
     {
         // Create a plan and ensure we start with revision 1
-        $plan = \Database\Factories\SeatingPlanFactory::new()->create(['revision' => 1]);
+        $plan = SeatingPlanFactory::new()->create(['revision' => 1]);
 
         // CSV: ID,x,y,row,number,label,description,class,group,disabled
         $csv = "ID,x,y,row,number,label,description,class,group,disabled\n";
@@ -79,7 +88,7 @@ class SeatingPlanTest extends TestCase
     public function testImportCreatesSeatsAndIncrementsRevision()
     {
         // Create a plan and ensure we start with revision 1
-        $plan = \Database\Factories\SeatingPlanFactory::new()->create(['revision' => 1]);
+        $plan = SeatingPlanFactory::new()->create(['revision' => 1]);
 
         // CSV: ID,x,y,row,number,label,description,class,group,disabled
         $csv = "ID,x,y,row,number,label,description,class,group,disabled\n";
@@ -97,16 +106,16 @@ class SeatingPlanTest extends TestCase
     public function testRandomiseAssignsTicketsToSeats()
     {
         // Create an event with a seating plan and seats
-        $plan = \Database\Factories\SeatingPlanFactory::new()->create();
-        $seats = \Database\Factories\SeatFactory::new()->count(3)->create(['seating_plan_id' => $plan->id]);
+        $plan = SeatingPlanFactory::new()->create();
+        $seats = SeatFactory::new()->count(3)->create(['seating_plan_id' => $plan->id]);
 
         // Create a ticket type with has_seat true and three tickets for the event
-        $type = \Database\Factories\TicketTypeFactory::new()->create(['event_id' => $plan->event_id]);
+        $type = TicketTypeFactory::new()->create(['event_id' => $plan->event_id]);
         // Ensure the type has has_seat true
         $type->has_seat = true;
         $type->save();
 
-        $tickets = \Database\Factories\TicketFactory::new()->count(3)->create([
+        $tickets = TicketFactory::new()->count(3)->create([
             'event_id' => $plan->event_id,
             'ticket_type_id' => $type->id,
         ]);
@@ -114,7 +123,7 @@ class SeatingPlanTest extends TestCase
         // Call randomise and assert tickets are assigned to seats
         $plan->randomise();
 
-        $assigned = \App\Models\Seat::whereNotNull('ticket_id')->count();
+        $assigned = Seat::whereNotNull('ticket_id')->count();
         $this->assertEquals(3, $assigned);
         // Each ticket should be assigned to a seat
         foreach ($tickets as $ticket) {
@@ -125,7 +134,7 @@ class SeatingPlanTest extends TestCase
     public function testImportSkipsRowsWithEmptyLabel()
     {
         // Create a plan and ensure we start with revision 1
-        $plan = \Database\Factories\SeatingPlanFactory::new()->create(['revision' => 1]);
+        $plan = SeatingPlanFactory::new()->create(['revision' => 1]);
 
         // CSV: ID,x,y,row,number,label,description,class,group,disabled
         $csv = "ID,x,y,row,number,label,description,class,group,disabled\n";
@@ -146,7 +155,7 @@ class SeatingPlanTest extends TestCase
     public function testImportWithNonNumericIdCreatesSeat()
     {
         // Create a plan and ensure we start with revision 1
-        $plan = \Database\Factories\SeatingPlanFactory::new()->create(['revision' => 1]);
+        $plan = SeatingPlanFactory::new()->create(['revision' => 1]);
 
         // CSV: ID,x,y,row,number,label,description,class,group,disabled
         $csv = "ID,x,y,row,number,label,description,class,group,disabled\n";
@@ -166,8 +175,8 @@ class SeatingPlanTest extends TestCase
     public function testImportUpdatesExistingSeatWhenValidIdProvided()
     {
         // Create a plan and an existing seat under that plan
-        $plan = \Database\Factories\SeatingPlanFactory::new()->create(['revision' => 1]);
-        $seat = \Database\Factories\SeatFactory::new()->create([
+        $plan = SeatingPlanFactory::new()->create(['revision' => 1]);
+        $seat = SeatFactory::new()->create([
             'seating_plan_id' => $plan->id,
             'label' => 'OLD_LABEL',
             'x' => 1,

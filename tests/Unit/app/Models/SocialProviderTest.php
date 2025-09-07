@@ -2,15 +2,23 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
-use App\Models\SocialProvider;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Services\Contracts\SocialProviderContract;
 use App\Models\ProviderSetting;
+use App\Models\SocialProvider;
+use App\Models\User;
+use App\Services\Contracts\SocialProviderContract;
+use Exception;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\RedirectResponse;
+use ReflectionClass;
+use ReflectionObject;
+use Tests\TestCase;
 
 class SocialProviderTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testCanInstantiateSocialProvider()
     {
         $provider = new SocialProvider();
@@ -20,19 +28,19 @@ class SocialProviderTest extends TestCase
     public function testAccountsRelationship()
     {
         $provider = new SocialProvider();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $provider->accounts());
+        $this->assertInstanceOf(HasMany::class, $provider->accounts());
     }
 
     public function testSettingsRelationship()
     {
         $provider = new SocialProvider();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\MorphMany::class, $provider->settings());
+        $this->assertInstanceOf(MorphMany::class, $provider->settings());
     }
 
     public function testGetProviderReturnsContract()
     {
         // Use a simple concrete stub that satisfies the contract
-        $stubClass = TestSocialProviderStub::class;
+        $stubClass = HelperClasses\TestSocialProviderStub::class;
         $provider = new SocialProvider();
         $provider->provider_class = $stubClass;
         $result = $provider->getProvider();
@@ -43,37 +51,43 @@ class SocialProviderTest extends TestCase
     {
         // Create a provider and bind a custom stub into the container under its class name
         $provider = new SocialProvider();
-        $provider->provider_class = TestSocialProviderStub::class;
+        $provider->provider_class = HelperClasses\TestSocialProviderStub::class;
 
         // Create a distinct stub instance and bind it so app()->bound(...) returns true
         $boundStub = new class implements SocialProviderContract {
-            public function __construct(?\App\Models\SocialProvider $provider = null, ?string $redirectUrl = null) {}
+            public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null)
+            {
+            }
+
             public function configMapping(): array
             {
                 return [];
             }
-            public function install(): \App\Models\SocialProvider
+
+            public function install(): SocialProvider
             {
-                throw new \Exception('not used');
+                throw new Exception('not used');
             }
-            public function redirect(): \Illuminate\Http\RedirectResponse
+
+            public function redirect(): RedirectResponse
             {
-                return new \Illuminate\Http\RedirectResponse('/bound');
+                return new RedirectResponse('/bound');
             }
-            public function user(?\App\Models\User $localUser = null)
+
+            public function user(?User $localUser = null)
             {
                 return 'bound-user';
             }
         };
 
         // bind a factory so app()->make(...) returns our stub instance
-        app()->bind(TestSocialProviderStub::class, function () use ($boundStub) {
+        app()->bind(HelperClasses\TestSocialProviderStub::class, function () use ($boundStub) {
             return $boundStub;
         });
 
         $result = $provider->getProvider();
         // ensure the container binding exists and the returned object implements the contract
-        $this->assertTrue(app()->bound(TestSocialProviderStub::class));
+        $this->assertTrue(app()->bound(HelperClasses\TestSocialProviderStub::class));
         $this->assertInstanceOf(SocialProviderContract::class, $result);
         // verify behavior delegated to the bound instance (user returns our sentinel)
         $this->assertEquals('bound-user', $result->user());
@@ -82,20 +96,26 @@ class SocialProviderTest extends TestCase
     public function testRedirectDelegatesToProvider()
     {
         $stub = new class implements SocialProviderContract {
-            public function __construct(?\App\Models\SocialProvider $provider = null, ?string $redirectUrl = null) {}
+            public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null)
+            {
+            }
+
             public function configMapping(): array
             {
                 return [];
             }
-            public function install(): \App\Models\SocialProvider
+
+            public function install(): SocialProvider
             {
-                throw new \Exception('not used');
+                throw new Exception('not used');
             }
-            public function redirect(): \Illuminate\Http\RedirectResponse
+
+            public function redirect(): RedirectResponse
             {
-                return new \Illuminate\Http\RedirectResponse('/stub-redirect');
+                return new RedirectResponse('/stub-redirect');
             }
-            public function user(?\App\Models\User $localUser = null)
+
+            public function user(?User $localUser = null)
             {
                 return null;
             }
@@ -105,27 +125,33 @@ class SocialProviderTest extends TestCase
             ->getMock();
         $provider->method('getProvider')->willReturn($stub);
         $response = $provider->redirect();
-        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
+        $this->assertInstanceOf(RedirectResponse::class, $response);
         $this->assertEquals('/stub-redirect', $response->getTargetUrl());
     }
 
     public function testUserDelegatesToProvider()
     {
         $stub = new class implements SocialProviderContract {
-            public function __construct(?\App\Models\SocialProvider $provider = null, ?string $redirectUrl = null) {}
+            public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null)
+            {
+            }
+
             public function configMapping(): array
             {
                 return [];
             }
-            public function install(): \App\Models\SocialProvider
+
+            public function install(): SocialProvider
             {
-                throw new \Exception('not used');
+                throw new Exception('not used');
             }
-            public function redirect(): \Illuminate\Http\RedirectResponse
+
+            public function redirect(): RedirectResponse
             {
-                return new \Illuminate\Http\RedirectResponse('/stub-redirect');
+                return new RedirectResponse('/stub-redirect');
             }
-            public function user(?\App\Models\User $localUser = null)
+
+            public function user(?User $localUser = null)
             {
                 return 'user-object';
             }
@@ -140,20 +166,26 @@ class SocialProviderTest extends TestCase
     public function testConfigMappingDelegatesToProvider()
     {
         $stub = new class implements SocialProviderContract {
-            public function __construct(?\App\Models\SocialProvider $provider = null, ?string $redirectUrl = null) {}
+            public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null)
+            {
+            }
+
             public function configMapping(): array
             {
                 return ['foo' => 'bar'];
             }
-            public function install(): \App\Models\SocialProvider
+
+            public function install(): SocialProvider
             {
-                throw new \Exception('not used');
+                throw new Exception('not used');
             }
-            public function redirect(): \Illuminate\Http\RedirectResponse
+
+            public function redirect(): RedirectResponse
             {
-                return new \Illuminate\Http\RedirectResponse('/stub-redirect');
+                return new RedirectResponse('/stub-redirect');
             }
-            public function user(?\App\Models\User $localUser = null)
+
+            public function user(?User $localUser = null)
             {
                 return null;
             }
@@ -170,7 +202,7 @@ class SocialProviderTest extends TestCase
         $provider = new SocialProvider();
         // $_settings is a protected property on the model; set it via reflection so
         // getSetting() reads the cached value instead of a newly created public prop.
-        $ref = new \ReflectionObject($provider);
+        $ref = new ReflectionObject($provider);
         $prop = $ref->getProperty('_settings');
         $prop->setAccessible(true);
         $prop->setValue($provider, ['foo' => 'bar']);
@@ -200,7 +232,7 @@ class SocialProviderTest extends TestCase
     {
         $provider = new SocialProvider();
         $provider->code = 'test_code';
-        $reflection = new \ReflectionClass($provider);
+        $reflection = new ReflectionClass($provider);
         $method = $reflection->getMethod('toStringName');
         $method->setAccessible(true);
         $this->assertEquals('test_code', $method->invoke($provider));
@@ -208,30 +240,3 @@ class SocialProviderTest extends TestCase
 }
 
 // Small concrete stub implementing the SocialProviderContract for tests.
-class TestSocialProviderStub implements SocialProviderContract
-{
-    public function __construct(?\App\Models\SocialProvider $provider = null, ?string $redirectUrl = null)
-    {
-        // no-op
-    }
-
-    public function configMapping(): array
-    {
-        return [];
-    }
-
-    public function install(): \App\Models\SocialProvider
-    {
-        throw new \Exception('Not implemented in test stub');
-    }
-
-    public function redirect(): \Illuminate\Http\RedirectResponse
-    {
-        return new \Illuminate\Http\RedirectResponse('/stub-redirect');
-    }
-
-    public function user(?\App\Models\User $localUser = null)
-    {
-        return null;
-    }
-}

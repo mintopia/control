@@ -2,20 +2,19 @@
 
 namespace Tests\Unit\app\Providers;
 
-use Illuminate\View\Factory;
-use Mockery\MockInterface;
-use Tests\TestCase;
-
 use App\Models\Theme;
+use App\Providers\AppServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\ServiceProvider;
-
+use Illuminate\View\Factory;
+use Mockery\MockInterface;
+use ReflectionClass;
+use Tests\TestCase;
 
 class AppServiceProviderTest extends TestCase
 {
     use RefreshDatabase;
+
     public function tearDown(): void
     {
         parent::tearDown();
@@ -23,8 +22,8 @@ class AppServiceProviderTest extends TestCase
 
     protected function clearBladeDirectives()
     {
-        $compiler = \Illuminate\Support\Facades\Blade::getFacadeRoot();
-        $ref = new \ReflectionClass($compiler);
+        $compiler = Blade::getFacadeRoot();
+        $ref = new ReflectionClass($compiler);
         if ($ref->hasProperty('customDirectives')) {
             $prop = $ref->getProperty('customDirectives');
             $prop->setAccessible(true);
@@ -37,7 +36,7 @@ class AppServiceProviderTest extends TestCase
         // Ensure no existing directive conflicts
         $this->clearBladeDirectives();
 
-        $provider = new \App\Providers\AppServiceProvider(app());
+        $provider = new AppServiceProvider(app());
         $provider->boot();
 
         $directives = Blade::getCustomDirectives();
@@ -54,7 +53,7 @@ class AppServiceProviderTest extends TestCase
         // Ensure no existing directive conflicts
         $this->clearBladeDirectives();
 
-        $provider = new \App\Providers\AppServiceProvider(app());
+        $provider = new AppServiceProvider(app());
         $provider->boot();
 
         $directives = Blade::getCustomDirectives();
@@ -88,7 +87,7 @@ class AppServiceProviderTest extends TestCase
         // Bind our fake view factory into the container so the provider will call ->composer()
         app()->instance('view', $mockView);
 
-        $provider = new \App\Providers\AppServiceProvider(app());
+        $provider = new AppServiceProvider(app());
         $provider->boot();
 
         // Ensure a closure was registered
@@ -97,6 +96,7 @@ class AppServiceProviderTest extends TestCase
         // Simulate a view instance that has ->with()
         $view = new class {
             public $data = [];
+
             public function with($key, $value)
             {
                 $this->data[$key] = $value;

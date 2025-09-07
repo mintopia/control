@@ -2,15 +2,15 @@
 
 namespace Tests\Unit\app\Providers;
 
-use Tests\TestCase;
 use App\Models\Setting;
 use App\Models\SocialProvider;
+use App\Providers\DiscordApiServiceProvider;
 use App\Services\DiscordApi;
-use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\App;
+use Mockery;
 use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use ReflectionClass;
+use Tests\TestCase;
 
 #[RunTestsInSeparateProcesses]
 class DiscordApiServiceProviderTest extends TestCase
@@ -19,7 +19,7 @@ class DiscordApiServiceProviderTest extends TestCase
 
     public function testProvidesReturnsDiscordApiClass()
     {
-        $provider = new \App\Providers\DiscordApiServiceProvider(app());
+        $provider = new DiscordApiServiceProvider(app());
         $this->assertContains(DiscordApi::class, $provider->provides());
         // defer should include the same class
         $this->assertContains(DiscordApi::class, $provider->defer());
@@ -35,13 +35,13 @@ class DiscordApiServiceProviderTest extends TestCase
         Setting::factory()->create(['code' => 'discord.server.id', 'value' => '123456', 'name' => 'Discord Server ID']);
 
         $app = app();
-        $serviceProvider = new \App\Providers\DiscordApiServiceProvider($app);
+        $serviceProvider = new DiscordApiServiceProvider($app);
         $serviceProvider->register();
 
         $resolved = $app->make(DiscordApi::class);
         $this->assertInstanceOf(DiscordApi::class, $resolved);
         // Use reflection to check private/protected properties
-        $ref = new \ReflectionClass($resolved);
+        $ref = new ReflectionClass($resolved);
         $providerProp = $ref->getProperty('provider');
         $providerProp->setAccessible(true);
         $idProp = $ref->getProperty('serverId');
@@ -56,7 +56,7 @@ class DiscordApiServiceProviderTest extends TestCase
         Setting::factory()->create(['code' => 'discord.server.id', 'value' => '123456', 'name' => 'Discord Server ID']);
 
         $app = app();
-        $serviceProvider = new \App\Providers\DiscordApiServiceProvider($app);
+        $serviceProvider = new DiscordApiServiceProvider($app);
         $serviceProvider->register();
 
         $resolved = $app->make(DiscordApi::class);
@@ -69,7 +69,7 @@ class DiscordApiServiceProviderTest extends TestCase
         SocialProvider::factory()->create();
 
         $app = app();
-        $serviceProvider = new \App\Providers\DiscordApiServiceProvider($app);
+        $serviceProvider = new DiscordApiServiceProvider($app);
         $serviceProvider->register();
 
         $resolved = $app->make(DiscordApi::class);
@@ -78,7 +78,7 @@ class DiscordApiServiceProviderTest extends TestCase
 
     protected function tearDown(): void
     {
-        \Mockery::close();
+        Mockery::close();
         parent::tearDown();
     }
 
@@ -88,12 +88,12 @@ class DiscordApiServiceProviderTest extends TestCase
         Setting::factory()->create(['code' => 'discord.server.id', 'value' => '123456', 'name' => 'Discord Server ID']);
 
         $app = app();
-        $serviceProvider = new \App\Providers\DiscordApiServiceProvider($app);
+        $serviceProvider = new DiscordApiServiceProvider($app);
         $serviceProvider->register();
 
         $resolved = $app->make(DiscordApi::class);
         $this->assertInstanceOf(DiscordApi::class, $resolved);
-        $ref = new \ReflectionClass($resolved);
+        $ref = new ReflectionClass($resolved);
         $providerProp = $ref->getProperty('provider');
         $providerProp->setAccessible(true);
         $idProp = $ref->getProperty('serverId');

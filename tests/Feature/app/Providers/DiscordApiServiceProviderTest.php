@@ -2,20 +2,20 @@
 
 namespace Tests\Feature\app\Providers;
 
-use Tests\TestCase;
 use App\Models\Setting;
 use App\Models\SocialProvider;
+use App\Providers\DiscordApiServiceProvider;
 use App\Services\DiscordApi;
-use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\App;
+use Tests\TestCase;
 
 class DiscordApiServiceProviderTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testProvidesReturnsDiscordApiClass()
     {
-        $provider = new \app\Providers\DiscordApiServiceProvider(app());
+        $provider = new DiscordApiServiceProvider(app());
         $this->assertContains(DiscordApi::class, $provider->provides());
     }
 
@@ -25,7 +25,7 @@ class DiscordApiServiceProviderTest extends TestCase
         $providerInstance = SocialProvider::factory()->create();
         Setting::factory()->create(['code' => 'discord.server.id', 'value' => '123']);
 
-        $provider = new \App\Providers\DiscordApiServiceProvider(app());
+        $provider = new DiscordApiServiceProvider(app());
         $provider->register();
         $instance = app(DiscordApi::class);
         $this->assertInstanceOf(DiscordApi::class, $instance);

@@ -2,10 +2,12 @@
 
 namespace App\Services\TicketProviders;
 
+use App\Models\EmailAddress;
 use App\Models\TicketProvider;
 use App\Services\Contracts\TicketProviderContract;
 use Illuminate\Console\OutputStyle;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 class FakeProvider implements TicketProviderContract
 {
@@ -24,7 +26,7 @@ class FakeProvider implements TicketProviderContract
     public function install(): TicketProvider
     {
         // return existing provider or throw if not available; tests shouldn't call this
-        return $this->provider ?? throw new \RuntimeException('No provider');
+        return $this->provider ?? throw new RuntimeException('No provider');
     }
 
     public function processWebhook(Request $request): bool
@@ -32,7 +34,7 @@ class FakeProvider implements TicketProviderContract
         return true;
     }
 
-    public function syncTickets(string|\App\Models\EmailAddress $email): void
+    public function syncTickets(string|EmailAddress $email): void
     {
         // noop for tests
     }

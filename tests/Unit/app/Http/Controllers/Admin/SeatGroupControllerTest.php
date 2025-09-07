@@ -2,15 +2,16 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Http\Controllers\Admin\SeatGroupController;
+use App\Http\Requests\Admin\DeleteRequest;
+use App\Http\Requests\Admin\SeatGroupUpdateRequest;
 use App\Models\Event;
 use App\Models\SeatGroup;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Exceptions\UrlGenerationException;
-use App\Http\Requests\Admin\SeatGroupUpdateRequest;
-use App\Http\Requests\Admin\DeleteRequest;
+use ReflectionClass;
+use Tests\TestCase;
 
 class SeatGroupControllerTest extends TestCase
 {
@@ -26,7 +27,7 @@ class SeatGroupControllerTest extends TestCase
     {
         $event = Event::factory()->create();
         // Some projects don't provide a factory for SeatGroup; create directly
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $group->event()->associate($event);
         $group->name = 'Test Group';
         $group->class = 'default';
@@ -42,7 +43,7 @@ class SeatGroupControllerTest extends TestCase
     public function testUpdateObjectPersists()
     {
         $event = Event::factory()->create();
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $group->event()->associate($event);
         $group->name = 'Before';
         $group->class = 'old';
@@ -50,7 +51,7 @@ class SeatGroupControllerTest extends TestCase
 
         $req = SeatGroupUpdateRequest::create('/admin', 'POST', ['name' => 'After', 'class' => 'new']);
         $controller = new SeatGroupController();
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $group, $req);
@@ -77,7 +78,7 @@ class SeatGroupControllerTest extends TestCase
     public function testUpdatePersists()
     {
         $event = Event::factory()->create();
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $group->event()->associate($event);
         $group->name = 'Old';
         $group->class = 'c';
@@ -97,7 +98,7 @@ class SeatGroupControllerTest extends TestCase
     public function testDestroyDeletes()
     {
         $event = Event::factory()->create();
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $group->event()->associate($event);
         $group->name = 'ToDelete';
         $group->class = 'x';

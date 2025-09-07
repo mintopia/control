@@ -2,17 +2,20 @@
 
 namespace Tests\Unit\app\Http\Requests;
 
-use Tests\TestCase;
 use App\Http\Requests\TicketTransferRequest;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Models\Ticket;
 use App\Models\Event;
+use App\Models\Role;
+use App\Models\Ticket;
 use App\Models\User;
 use Carbon\Carbon;
+use Closure;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class TicketTransferRequestTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testAuthorizeReturnsTrue()
     {
         $request = new TicketTransferRequest();
@@ -37,7 +40,7 @@ class TicketTransferRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['code'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -47,7 +50,7 @@ class TicketTransferRequestTest extends TestCase
             $called = true;
             $this->assertEquals('The transfer code is invalid', $message);
         };
-        $bound = \Closure::bind($closure, $request, get_class($request));
+        $bound = Closure::bind($closure, $request, get_class($request));
         $bound('code', 'NOPE', $fail);
         $this->assertTrue($called, 'Fail closure was not called for invalid transfer code');
     }
@@ -73,7 +76,7 @@ class TicketTransferRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['code'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -83,7 +86,7 @@ class TicketTransferRequestTest extends TestCase
             $called = true;
             $this->assertEquals('It is not possible to transfer this ticket', $message);
         };
-        $bound = \Closure::bind($closure, $request, get_class($request));
+        $bound = Closure::bind($closure, $request, get_class($request));
         $bound('code', $ticket->transfer_code, $fail);
         $this->assertTrue($called, 'Fail closure was not called for non-transferable ticket');
     }
@@ -107,7 +110,7 @@ class TicketTransferRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['code'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -117,7 +120,7 @@ class TicketTransferRequestTest extends TestCase
             $called = true;
             $this->assertEquals('You already have the ticket in your account', $message);
         };
-        $bound = \Closure::bind($closure, $request, get_class($request));
+        $bound = Closure::bind($closure, $request, get_class($request));
         $bound('code', $ticket->transfer_code, $fail);
         $this->assertTrue($called, 'Fail closure was not called when user already owns ticket');
     }
@@ -127,8 +130,8 @@ class TicketTransferRequestTest extends TestCase
         $admin = User::factory()->create();
         // give admin role via roles relation if roles exist; for simplicity, mock hasRole via attaching a Role model
         // If Role setup isn't available, set a flag on user and rely on hasRole checking roles() relation; to keep test stable, attach a role named 'admin' if possible
-        if (class_exists(\App\Models\Role::class)) {
-            $role = \App\Models\Role::firstOrCreate(['code' => 'admin'], ['name' => 'Administrator']);
+        if (class_exists(Role::class)) {
+            $role = Role::firstOrCreate(['code' => 'admin'], ['name' => 'Administrator']);
             $admin->roles()->attach($role);
         }
         $this->actingAs($admin);
@@ -149,7 +152,7 @@ class TicketTransferRequestTest extends TestCase
         $rules = $request->rules();
         $closure = null;
         foreach ($rules['code'] as $rule) {
-            if ($rule instanceof \Closure) {
+            if ($rule instanceof Closure) {
                 $closure = $rule;
                 break;
             }
@@ -158,7 +161,7 @@ class TicketTransferRequestTest extends TestCase
         $fail = function ($message) use (&$called) {
             $called = true;
         };
-        $bound = \Closure::bind($closure, $request, get_class($request));
+        $bound = Closure::bind($closure, $request, get_class($request));
         $bound('code', $ticket->transfer_code, $fail);
         $this->assertFalse($called, 'Fail closure was called for a valid transfer when admin should bypass draft filter');
     }

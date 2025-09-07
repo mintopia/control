@@ -2,10 +2,10 @@
 
 namespace Tests\Unit\app\Policies;
 
-use Tests\TestCase;
-use App\Policies\EmailAddressPolicy;
 use App\Models\EmailAddress;
 use App\Models\User;
+use App\Policies\EmailAddressPolicy;
+use Tests\TestCase;
 
 class EmailAddressPolicyTest extends TestCase
 {

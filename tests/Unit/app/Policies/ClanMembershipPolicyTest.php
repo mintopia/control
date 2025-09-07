@@ -2,16 +2,18 @@
 
 namespace Tests\Unit\app\Policies;
 
-use Tests\TestCase;
-use App\Policies\ClanMembershipPolicy;
+use App\Models\Clan;
 use App\Models\ClanMembership;
-use App\Models\User;
 use App\Models\ClanRole;
+use App\Models\User;
+use App\Policies\ClanMembershipPolicy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class ClanMembershipPolicyTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testDeleteReturnsTrueWhenUserIsMemberAndNotLeader()
     {
         // Ensure a leader role exists because the policy/methods query it
@@ -49,7 +51,7 @@ class ClanMembershipPolicyTest extends TestCase
         ClanRole::factory()->create(['code' => 'leader']);
         $memberRole = ClanRole::factory()->create(['code' => 'member']);
 
-        $clan = \App\Models\Clan::factory()->create();
+        $clan = Clan::factory()->create();
 
         $owner = User::factory()->create();
         $leader = User::factory()->create();
@@ -76,7 +78,7 @@ class ClanMembershipPolicyTest extends TestCase
     {
         ClanRole::factory()->create(['code' => 'leader']);
 
-        $clan = \App\Models\Clan::factory()->create();
+        $clan = Clan::factory()->create();
 
         // single leader case
         $leader1 = User::factory()->create();

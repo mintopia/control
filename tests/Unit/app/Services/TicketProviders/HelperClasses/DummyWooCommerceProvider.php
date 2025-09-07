@@ -1,13 +1,18 @@
 <?php
 
-namespace Tests\Unit\app\Services\TicketProviders;
+namespace Tests\Unit\app\Services\TicketProviders\HelperClasses;
 
-use App\Models\User;
+use App\Models\Event;
+use App\Models\EventMapping;
 use App\Models\Ticket;
+use App\Models\TicketProvider;
+use App\Models\TicketType;
+use App\Models\TicketTypeMapping;
+use App\Models\User;
+use App\Services\TicketProviders\WooCommerceProvider;
+use Closure;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
-use App\Services\TicketProviders\WooCommerceProvider;
-use App\Models\TicketProvider;
 
 /**
  * Lightweight test helper that exposes protected WooCommerceProvider methods as public
@@ -97,9 +102,9 @@ class DummyWooCommerceProvider extends WooCommerceProvider
         if ($type) {
             return $type;
         }
-        $event = \App\Models\Event::factory()->create();
-        $type = \App\Models\TicketType::factory()->for($event)->create();
-        $tm = new \App\Models\TicketTypeMapping();
+        $event = Event::factory()->create();
+        $type = TicketType::factory()->for($event)->create();
+        $tm = new TicketTypeMapping();
         $tm->provider()->associate($this->provider);
         $tm->type()->associate($type);
         $tm->external_id = $externalId;
@@ -125,23 +130,23 @@ class DummyWooCommerceProvider extends WooCommerceProvider
         if ($id === '' || (strpos($id, 'evt') === false && strpos($id, 'EVT') === false && !is_numeric($id))) {
             return;
         }
-        $event = \App\Models\Event::whereHas('mappings', function ($q) use ($data) {
+        $event = Event::whereHas('mappings', function ($q) use ($data) {
             $q->whereTicketProviderId($this->provider->id)->whereExternalId($data->event_id);
         })->first();
         if (!$event) {
-            $event = \App\Models\Event::factory()->create();
-            $em = new \App\Models\EventMapping();
+            $event = Event::factory()->create();
+            $em = new EventMapping();
             $em->provider()->associate($this->provider);
             $em->event()->associate($event);
             $em->external_id = $data->event_id;
             $em->save();
         }
-        $type = \App\Models\TicketType::whereHas('mappings', function ($q) use ($data) {
+        $type = TicketType::whereHas('mappings', function ($q) use ($data) {
             $q->whereTicketProviderId($this->provider->id)->whereExternalId($data->ticket_type_id);
         })->first();
         if (!$type) {
-            $type = \App\Models\TicketType::factory()->for($event)->create();
-            $tm = new \App\Models\TicketTypeMapping();
+            $type = TicketType::factory()->for($event)->create();
+            $tm = new TicketTypeMapping();
             $tm->provider()->associate($this->provider);
             $tm->type()->associate($type);
             $tm->external_id = $data->ticket_type_id;
@@ -150,6 +155,7 @@ class DummyWooCommerceProvider extends WooCommerceProvider
     }
 
     // --- Test override hooks ---
+
     /** @var bool|null If set, used as the return for verifyWebhook */
     public ?bool $forceVerify = null;
 
@@ -159,7 +165,7 @@ class DummyWooCommerceProvider extends WooCommerceProvider
     /** @var bool Flag set when processTickets is invoked */
     public bool $processCalled = false;
 
-    /** @var \Closure|null Optional override for processTickets behaviour */
+    /** @var Closure|null Optional override for processTickets behaviour */
     public $processOverride = null;
 
     protected function verifyWebhook(Request $request): bool
@@ -181,7 +187,7 @@ class DummyWooCommerceProvider extends WooCommerceProvider
     protected function processTickets(array $ticketData, string $address, ?User $user = null): void
     {
         $this->processCalled = true;
-        if ($this->processOverride instanceof \Closure) {
+        if ($this->processOverride instanceof Closure) {
             ($this->processOverride)($ticketData, $address, $user);
             return;
         }

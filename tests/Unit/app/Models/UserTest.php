@@ -2,14 +2,29 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Models\User;
+use App\Models\EmailAddress;
+use App\Models\Event;
+use App\Models\LinkedAccount;
+use App\Models\Role;
+use App\Models\SeatGroup;
+use App\Models\SocialProvider;
 use App\Models\Ticket;
+use App\Models\TicketType;
+use App\Models\User;
+use App\Services\DiscordApi;
+use Exception;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
+use ReflectionClass;
+use Tests\TestCase;
 
 class UserTest extends TestCase
 {
     use RefreshDatabase;
+
     public function testCanInstantiateUser()
     {
         $user = new User();
@@ -19,37 +34,37 @@ class UserTest extends TestCase
     public function testEmailsRelationship()
     {
         $user = new User();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $user->emails());
+        $this->assertInstanceOf(HasMany::class, $user->emails());
     }
 
     public function testPrimaryEmailRelationship()
     {
         $user = new User();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsTo::class, $user->primaryEmail());
+        $this->assertInstanceOf(BelongsTo::class, $user->primaryEmail());
     }
 
     public function testAccountsRelationship()
     {
         $user = new User();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $user->accounts());
+        $this->assertInstanceOf(HasMany::class, $user->accounts());
     }
 
     public function testTicketsRelationship()
     {
         $user = new User();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $user->tickets());
+        $this->assertInstanceOf(HasMany::class, $user->tickets());
     }
 
     public function testRolesRelationship()
     {
         $user = new User();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class, $user->roles());
+        $this->assertInstanceOf(BelongsToMany::class, $user->roles());
     }
 
     public function testClanMembershipsRelationship()
     {
         $user = new User();
-        $this->assertInstanceOf(\Illuminate\Database\Eloquent\Relations\HasMany::class, $user->clanMemberships());
+        $this->assertInstanceOf(HasMany::class, $user->clanMemberships());
     }
 
     public function testHasRoleReturnsTrueIfRoleExists()
@@ -58,7 +73,7 @@ class UserTest extends TestCase
             ->onlyMethods(['roles'])
             ->getMock();
 
-        $mockRoles = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class);
+        $mockRoles = Mockery::mock(BelongsToMany::class);
         $mockRoles->shouldReceive('whereCode')->with('admin')->andReturnSelf();
         $mockRoles->shouldReceive('count')->andReturn(1);
 
@@ -73,7 +88,7 @@ class UserTest extends TestCase
             ->onlyMethods(['roles'])
             ->getMock();
 
-        $mockRoles = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class);
+        $mockRoles = Mockery::mock(BelongsToMany::class);
         $mockRoles->shouldReceive('whereCode')->with('user')->andReturnSelf();
         $mockRoles->shouldReceive('count')->andReturn(0);
 
@@ -88,7 +103,7 @@ class UserTest extends TestCase
             ->onlyMethods(['roles'])
             ->getMock();
 
-        $mockRoles = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class);
+        $mockRoles = Mockery::mock(BelongsToMany::class);
 
         // Simulate: first role ('admin') exists, so should return true and not check further
         $mockRoles->shouldReceive('whereCode')->with('admin')->once()->andReturnSelf();
@@ -106,7 +121,7 @@ class UserTest extends TestCase
             ->onlyMethods(['roles'])
             ->getMock();
 
-        $mockRoles = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class);
+        $mockRoles = Mockery::mock(BelongsToMany::class);
         $mockRoles->shouldReceive('whereCode')->with('editor')->andReturnSelf();
         $mockRoles->shouldReceive('count')->andReturn(0);
         $mockRoles->shouldReceive('whereCode')->with('user')->andReturnSelf();
@@ -141,7 +156,7 @@ class UserTest extends TestCase
     {
         $user = new User();
         $user->nickname = 'nick';
-        $reflection = new \ReflectionClass($user);
+        $reflection = new ReflectionClass($user);
         $method = $reflection->getMethod('toStringName');
         $method->setAccessible(true);
         $this->assertEquals('nick', $method->invoke($user));
@@ -166,12 +181,12 @@ class UserTest extends TestCase
         // Arrange: persisted user and an event
         $user = User::factory()->create();
         // Create an event with seating opened/unlocked and an end date in the future
-        $event = \App\Models\Event::factory()->opened()->create([
+        $event = Event::factory()->opened()->create([
             'ends_at' => now()->addDay(),
         ]);
 
         // Create a ticket type that allows seating and tickets belonging to this user and event
-        $ticketType = \App\Models\TicketType::factory()->create([
+        $ticketType = TicketType::factory()->create([
             'event_id' => $event->id,
             'has_seat' => true,
         ]);
@@ -193,7 +208,7 @@ class UserTest extends TestCase
     {
         // Create a user and attach a primary EmailAddress so the email accessor returns it
         $user = User::factory()->create();
-        $email = \App\Models\EmailAddress::factory()->make(['email' => 'test@example.com']);
+        $email = EmailAddress::factory()->make(['email' => 'test@example.com']);
         $user->setRelation('primaryEmail', $email);
         $this->assertEquals('test@example.com', $user->email);
     }
@@ -237,13 +252,13 @@ class UserTest extends TestCase
             ->onlyMethods(['roles'])
             ->getMock();
 
-        $mockRoles = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class);
+        $mockRoles = Mockery::mock(BelongsToMany::class);
         $mockRoles->shouldReceive('whereCode')->with('admin')->andReturnSelf();
         $mockRoles->shouldReceive('count')->andReturn(1);
 
         $user->method('roles')->willReturn($mockRoles);
 
-        $roleObj = new \App\Models\Role();
+        $roleObj = new Role();
         $roleObj->code = 'admin';
         $this->assertTrue($user->hasRole($roleObj));
     }
@@ -254,13 +269,13 @@ class UserTest extends TestCase
             ->onlyMethods(['roles'])
             ->getMock();
 
-        $mockRoles = \Mockery::mock(\Illuminate\Database\Eloquent\Relations\BelongsToMany::class);
+        $mockRoles = Mockery::mock(BelongsToMany::class);
         $mockRoles->shouldReceive('whereCode')->with('admin')->andReturnSelf();
         $mockRoles->shouldReceive('count')->andReturn(1);
 
         $user->method('roles')->willReturn($mockRoles);
 
-        $roleObj = new \App\Models\Role();
+        $roleObj = new Role();
         $roleObj->code = 'admin';
 
         $this->assertTrue($user->hasAnyRole([$roleObj]));
@@ -269,7 +284,7 @@ class UserTest extends TestCase
     public function testAvatarUrlUsesPrimaryEmailIfPresent()
     {
         $user = new User();
-        $email = new \App\Models\EmailAddress();
+        $email = new EmailAddress();
         $email->email = 'me@example.com';
         $user->setRelation('accounts', collect([]));
         $user->setRelation('primaryEmail', $email);
@@ -298,9 +313,9 @@ class UserTest extends TestCase
             }
         };
 
-        $mockApi = \Mockery::mock(\App\Services\DiscordApi::class);
+        $mockApi = Mockery::mock(DiscordApi::class);
         $mockApi->shouldReceive('addRoleToMember')->with('role-1', 'ext-123')->andReturnTrue();
-        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+        $this->app->instance(DiscordApi::class, $mockApi);
 
         $this->assertTrue($user->addDiscordRole('role-1'));
     }
@@ -314,9 +329,9 @@ class UserTest extends TestCase
             }
         };
 
-        $mockApi = \Mockery::mock(\App\Services\DiscordApi::class);
+        $mockApi = Mockery::mock(DiscordApi::class);
         $mockApi->shouldReceive('removeRoleFromMember')->with('role-2', 'ext-456')->andReturnTrue();
-        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+        $this->app->instance(DiscordApi::class, $mockApi);
 
         $this->assertTrue($user->removeDiscordRole('role-2'));
     }
@@ -337,12 +352,12 @@ class UserTest extends TestCase
     {
         // Create a user with a discord linked account
         $user = User::factory()->create();
-        $provider = \App\Models\SocialProvider::factory()->create(['code' => 'discord', 'auth_enabled' => 1]);
-        \App\Models\LinkedAccount::factory()->create(['user_id' => $user->id, 'social_provider_id' => $provider->id, 'external_id' => 'ext-999']);
+        $provider = SocialProvider::factory()->create(['code' => 'discord', 'auth_enabled' => 1]);
+        LinkedAccount::factory()->create(['user_id' => $user->id, 'social_provider_id' => $provider->id, 'external_id' => 'ext-999']);
 
-        $mockApi = \Mockery::mock(\App\Services\DiscordApi::class);
-        $mockApi->shouldReceive('addRoleToMember')->andThrow(new \Exception('api error'));
-        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+        $mockApi = Mockery::mock(DiscordApi::class);
+        $mockApi->shouldReceive('addRoleToMember')->andThrow(new Exception('api error'));
+        $this->app->instance(DiscordApi::class, $mockApi);
 
         $this->assertFalse($user->addDiscordRole('role-err'));
     }
@@ -351,7 +366,7 @@ class UserTest extends TestCase
     {
         $user = User::factory()->create();
         // create an email address related to the user that will be persisted
-        $email = \App\Models\EmailAddress::factory()->create(['user_id' => $user->id, 'verified_at' => now()]);
+        $email = EmailAddress::factory()->create(['user_id' => $user->id, 'verified_at' => now()]);
 
         // Call syncTickets with force=true to ensure it runs even if recently synced
         $user->syncTickets(true, true);
@@ -364,7 +379,7 @@ class UserTest extends TestCase
     {
         $user = new User();
         $user->id = 123;
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $assignment = (object)['assignment_type' => 'user', 'assignment_type_id' => 999];
         $group->setRelation('assignments', collect([$assignment]));
         $this->assertFalse($user->allowedSeatGroup($group));
@@ -376,7 +391,7 @@ class UserTest extends TestCase
         $user->id = 99;
 
         // User assignment
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $assignment = (object)['assignment_type' => 'user', 'assignment_type_id' => 99];
         $group->setRelation('assignments', collect([$assignment]));
         $this->assertTrue($user->allowedSeatGroup($group));
@@ -384,7 +399,7 @@ class UserTest extends TestCase
         // Clan assignment
         $clan = (object)['id' => 5];
         $user->setRelation('clanMemberships', collect([(object)['clan' => $clan]]));
-        $group2 = new \App\Models\SeatGroup();
+        $group2 = new SeatGroup();
         $assignment2 = (object)['assignment_type' => 'clan', 'assignment_type_id' => 5];
         $group2->setRelation('assignments', collect([$assignment2]));
         $this->assertTrue($user->allowedSeatGroup($group2));
@@ -392,7 +407,7 @@ class UserTest extends TestCase
         // Ticket type assignment
         $ticketType = (object)['id' => 7];
         $user->setRelation('tickets', collect([(object)['type' => $ticketType]]));
-        $group3 = new \App\Models\SeatGroup();
+        $group3 = new SeatGroup();
         $assignment3 = (object)['assignment_type' => 'ticket_type', 'assignment_type_id' => 7];
         $group3->setRelation('assignments', collect([$assignment3]));
         $this->assertTrue($user->allowedSeatGroup($group3));
@@ -404,7 +419,7 @@ class UserTest extends TestCase
         $user->id = 77;
 
         // Clan assignment but user has no clanMemberships relation
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $assignment = (object)['assignment_type' => 'clan', 'assignment_type_id' => 5];
         $group->setRelation('assignments', collect([$assignment]));
 
@@ -420,7 +435,7 @@ class UserTest extends TestCase
         $user->id = 88;
 
         // Ticket type assignment but user has no tickets
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $assignment = (object)['assignment_type' => 'ticket_type', 'assignment_type_id' => 9];
         $group->setRelation('assignments', collect([$assignment]));
 
@@ -457,7 +472,7 @@ class UserTest extends TestCase
         $user->setRelation('tickets', collect([$ticket]));
         $assignment2 = (object)['assignment_type' => 'ticket_type', 'assignment_type_id' => 7];
 
-        $group = new \App\Models\SeatGroup();
+        $group = new SeatGroup();
         $group->setRelation('assignments', collect([$assignment1, $assignment2]));
 
         // Should return true because second assignment matches; ensures the break didn't exit outer loop
@@ -467,11 +482,11 @@ class UserTest extends TestCase
     public function testAddDiscordRoleReturnsFalseWhenApiMissing()
     {
         $user = User::factory()->create();
-        $provider = \App\Models\SocialProvider::factory()->create(['code' => 'discord', 'auth_enabled' => 1]);
-        \App\Models\LinkedAccount::factory()->create(['user_id' => $user->id, 'social_provider_id' => $provider->id, 'external_id' => 'ext-api-missing']);
+        $provider = SocialProvider::factory()->create(['code' => 'discord', 'auth_enabled' => 1]);
+        LinkedAccount::factory()->create(['user_id' => $user->id, 'social_provider_id' => $provider->id, 'external_id' => 'ext-api-missing']);
 
         // Bind null so resolve() returns falsy
-        $this->app->instance(\App\Services\DiscordApi::class, null);
+        $this->app->instance(DiscordApi::class, null);
 
         $this->assertFalse($user->addDiscordRole('role-zzz'));
     }
@@ -479,10 +494,10 @@ class UserTest extends TestCase
     public function testRemoveDiscordRoleReturnsFalseWhenApiMissing()
     {
         $user = User::factory()->create();
-        $provider = \App\Models\SocialProvider::factory()->create(['code' => 'discord', 'auth_enabled' => 1]);
-        \App\Models\LinkedAccount::factory()->create(['user_id' => $user->id, 'social_provider_id' => $provider->id, 'external_id' => 'ext-api-missing']);
+        $provider = SocialProvider::factory()->create(['code' => 'discord', 'auth_enabled' => 1]);
+        LinkedAccount::factory()->create(['user_id' => $user->id, 'social_provider_id' => $provider->id, 'external_id' => 'ext-api-missing']);
 
-        $this->app->instance(\App\Services\DiscordApi::class, null);
+        $this->app->instance(DiscordApi::class, null);
 
         $this->assertFalse($user->removeDiscordRole('role-yyy'));
     }
@@ -490,12 +505,12 @@ class UserTest extends TestCase
     public function testRemoveDiscordRoleHandlesApiException()
     {
         $user = User::factory()->create();
-        $provider = \App\Models\SocialProvider::factory()->create(['code' => 'discord', 'auth_enabled' => 1]);
-        \App\Models\LinkedAccount::factory()->create(['user_id' => $user->id, 'social_provider_id' => $provider->id, 'external_id' => 'ext-exc']);
+        $provider = SocialProvider::factory()->create(['code' => 'discord', 'auth_enabled' => 1]);
+        LinkedAccount::factory()->create(['user_id' => $user->id, 'social_provider_id' => $provider->id, 'external_id' => 'ext-exc']);
 
-        $mockApi = \Mockery::mock(\App\Services\DiscordApi::class);
-        $mockApi->shouldReceive('removeRoleFromMember')->andThrow(new \Exception('boom'));
-        $this->app->instance(\App\Services\DiscordApi::class, $mockApi);
+        $mockApi = Mockery::mock(DiscordApi::class);
+        $mockApi->shouldReceive('removeRoleFromMember')->andThrow(new Exception('boom'));
+        $this->app->instance(DiscordApi::class, $mockApi);
 
         $this->assertFalse($user->removeDiscordRole('role-exc'));
     }
@@ -506,12 +521,12 @@ class UserTest extends TestCase
         // create a dummy cached collection
         $cached = collect([(object)['id' => 1]]);
 
-        $ref = new \ReflectionClass($user);
+        $ref = new ReflectionClass($user);
         $prop = $ref->getProperty('pickableTickets');
         $prop->setAccessible(true);
         $prop->setValue($user, $cached);
 
-        $event = \App\Models\Event::factory()->create();
+        $event = Event::factory()->create();
         $result = $user->getPickableTickets($event);
         $this->assertSame($cached, $result);
     }

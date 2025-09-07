@@ -2,11 +2,13 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Models\Clan;
-use App\Models\User;
+use App\Models\ClanMembership;
 use App\Models\ClanRole;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use InvalidArgumentException;
+use Tests\TestCase;
 
 class ClanTest extends TestCase
 {
@@ -25,7 +27,7 @@ class ClanTest extends TestCase
         $this->assertFalse($clan->isMember($user));
 
         // add membership via factory
-        \App\Models\ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id, 'clan_role_id' => ClanRole::factory()->create()->id]);
+        ClanMembership::factory()->create(['clan_id' => $clan->id, 'user_id' => $user->id, 'clan_role_id' => ClanRole::factory()->create()->id]);
         $this->assertTrue($clan->isMember($user));
     }
 
@@ -41,7 +43,7 @@ class ClanTest extends TestCase
         $this->assertEquals($user->id, $membership->user_id);
 
         // invalid role should throw
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $clan->addUser(User::factory()->create(), 'does-not-exist');
     }
 
@@ -70,17 +72,10 @@ class ClanTest extends TestCase
     public function test_to_string_name_via_dummy_exposes_name()
     {
         // Use a tiny dummy subclass to expose the protected toStringName method
-        $dummy = new DummyClan();
+        $dummy = new HelperClasses\DummyClan();
         $dummy->name = 'My Clan Name';
         $this->assertEquals('My Clan Name', $dummy->exposeToString());
     }
 }
 
 // Small helper class inside this test file to expose protected toStringName()
-class DummyClan extends \App\Models\Clan
-{
-    public function exposeToString(): string
-    {
-        return $this->toStringName();
-    }
-}

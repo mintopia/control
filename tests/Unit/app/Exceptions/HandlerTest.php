@@ -2,8 +2,9 @@
 
 namespace Tests\Unit\app\Exceptions;
 
-use Tests\TestCase;
 use App\Exceptions\Handler;
+use ReflectionClass;
+use Tests\TestCase;
 
 class HandlerTest extends TestCase
 {
@@ -16,7 +17,7 @@ class HandlerTest extends TestCase
     public function testDontFlashProperty()
     {
         $handler = new Handler(app());
-        $reflection = new \ReflectionClass($handler);
+        $reflection = new ReflectionClass($handler);
         $property = $reflection->getProperty('dontFlash');
         $property->setAccessible(true);
         $dontFlash = $property->getValue($handler);

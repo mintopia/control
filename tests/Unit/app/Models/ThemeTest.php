@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\app\Models;
 
-use Tests\TestCase;
 use App\Models\Theme;
+use Tests\TestCase;
 
 class ThemeTest extends TestCase
 {

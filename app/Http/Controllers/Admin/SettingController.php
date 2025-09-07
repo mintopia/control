@@ -9,6 +9,7 @@ use App\Models\Setting;
 use App\Models\SocialProvider;
 use App\Models\Theme;
 use App\Models\TicketProvider;
+use Exception;
 
 class SettingController extends Controller
 {
@@ -51,6 +52,16 @@ class SettingController extends Controller
         return $provider->addBotToServer();
     }
 
+    /**
+     * Return an instance of the configured Discord provider.
+     * Extracted so tests can override or call provider retrieval directly.
+     */
+    protected function getDiscordProvider(?string $redirectUrl = null)
+    {
+        $redirect = $redirectUrl ?? route('admin.settings.discord_return');
+        return SocialProvider::whereCode('discord')->first()->getProvider($redirect);
+    }
+
     public function addDiscordReturn()
     {
         $serverName = Setting::whereCode('discord.server.name')->first();
@@ -60,7 +71,7 @@ class SettingController extends Controller
             $serverName->value = $response->accessTokenResponseBody['guild']['name'];
             $serverId->value = $response->accessTokenResponseBody['guild']['id'];
             return response()->redirectToRoute('admin.settings.index')->with('successMessage', "Link to {{ $serverName->value }} has been successful");
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             $serverName->value = null;
             $serverId->value = null;
             return response()->redirectToRoute('admin.settings.index')->with('errorMessage', "Unable to link to Discord server");
@@ -68,16 +79,6 @@ class SettingController extends Controller
             $serverName->save();
             $serverId->save();
         }
-    }
-
-    /**
-     * Return an instance of the configured Discord provider.
-     * Extracted so tests can override or call provider retrieval directly.
-     */
-    protected function getDiscordProvider(?string $redirectUrl = null)
-    {
-        $redirect = $redirectUrl ?? route('admin.settings.discord_return');
-        return SocialProvider::whereCode('discord')->first()->getProvider($redirect);
     }
 
     /**

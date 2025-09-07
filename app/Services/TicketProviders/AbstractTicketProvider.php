@@ -29,20 +29,6 @@ abstract class AbstractTicketProvider implements TicketProviderContract
         $this->provider = $provider;
     }
 
-    public function configMapping(): array
-    {
-        return [
-            'apikey' => (object)[
-                'name' => 'API Key',
-                'validation' => 'required|string',
-            ],
-            'webhook_secret' => (object)[
-                'name' => 'Webhook Secret',
-                'validation' => 'required|string',
-            ],
-        ];
-    }
-
     public function install(): TicketProvider
     {
         $this->provider = TicketProvider::whereCode($this->code)->first();
@@ -82,6 +68,20 @@ abstract class AbstractTicketProvider implements TicketProviderContract
                 $setting->save();
             }
         }
+    }
+
+    public function configMapping(): array
+    {
+        return [
+            'apikey' => (object)[
+                'name' => 'API Key',
+                'validation' => 'required|string',
+            ],
+            'webhook_secret' => (object)[
+                'name' => 'Webhook Secret',
+                'validation' => 'required|string',
+            ],
+        ];
     }
 
     public function processWebhook(Request $request): bool

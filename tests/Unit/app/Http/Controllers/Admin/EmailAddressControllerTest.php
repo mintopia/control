@@ -2,14 +2,19 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
 use App\Http\Controllers\Admin\EmailAddressController;
-use Illuminate\Http\Request;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Models\User;
-use App\Models\EmailAddress;
 use App\Http\Requests\Admin\EmailAddressUpdateRequest;
+use App\Models\EmailAddress;
+use App\Models\User;
+use Database\Factories\LinkedAccountFactory;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Exceptions\UrlGenerationException;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\View;
+use ReflectionClass;
+use Tests\TestCase;
 
 class EmailAddressControllerTest extends TestCase
 {
@@ -63,7 +68,7 @@ class EmailAddressControllerTest extends TestCase
         $response = $controller->destroy($user, $email2);
 
         // controller should redirect back to users.show
-        $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
+        $this->assertInstanceOf(RedirectResponse::class, $response);
         $this->assertDatabaseMissing('email_addresses', ['id' => $email2->id]);
     }
 
@@ -72,7 +77,7 @@ class EmailAddressControllerTest extends TestCase
         $user = User::factory()->create();
         $controller = new EmailAddressController();
         $resp = $controller->create($user);
-        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $this->assertInstanceOf(View::class, $resp);
         $this->assertArrayHasKey('email', $resp->getData());
     }
 
@@ -93,7 +98,7 @@ class EmailAddressControllerTest extends TestCase
         $email = EmailAddress::factory()->create(['user_id' => $user->id]);
         $controller = new EmailAddressController();
         $resp = $controller->edit($user, $email);
-        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $this->assertInstanceOf(View::class, $resp);
         $this->assertArrayHasKey('email', $resp->getData());
     }
 
@@ -107,7 +112,7 @@ class EmailAddressControllerTest extends TestCase
 
         $controller = new EmailAddressController();
         // Call protected updateObject via reflection
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $email, $request);
@@ -126,7 +131,7 @@ class EmailAddressControllerTest extends TestCase
         $request = Request::create('/admin', 'POST', ['address' => 'set2@example.com', 'verified' => false]);
 
         $controller = new EmailAddressController();
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $email, $request);
@@ -146,7 +151,7 @@ class EmailAddressControllerTest extends TestCase
         $request = Request::create('/admin', 'POST', ['address' => 'keep@example.com', 'verified' => true]);
 
         $controller = new EmailAddressController();
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $email, $request);
@@ -187,7 +192,7 @@ class EmailAddressControllerTest extends TestCase
             $resp = $controller->destroy($user, $email);
             $this->assertEquals(302, $resp->getStatusCode());
             $this->assertNotEmpty($resp->getSession()->get('errorMessage'));
-        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+        } catch (UrlGenerationException $ex) {
             $this->assertStringContainsString('Missing required parameter', $ex->getMessage());
         }
     }
@@ -198,7 +203,7 @@ class EmailAddressControllerTest extends TestCase
         $email = EmailAddress::factory()->create(['user_id' => $user->id]);
 
         // create a linked account tied to this email
-        $linked = \Database\Factories\LinkedAccountFactory::new()->create(['user_id' => $user->id]);
+        $linked = LinkedAccountFactory::new()->create(['user_id' => $user->id]);
         $linked->email_address_id = $email->id;
         $linked->save();
 
@@ -212,7 +217,7 @@ class EmailAddressControllerTest extends TestCase
             $resp = $controller->destroy($user, $email);
             $this->assertEquals(302, $resp->getStatusCode());
             $this->assertNotEmpty($resp->getSession()->get('errorMessage'));
-        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+        } catch (UrlGenerationException $ex) {
             $this->assertStringContainsString('Missing required parameter', $ex->getMessage());
         }
     }
@@ -236,7 +241,7 @@ class EmailAddressControllerTest extends TestCase
         try {
             $controller->delete($user, $email);
             $this->fail('Expected UrlGenerationException or redirect when deleting non-deletable email');
-        } catch (\Illuminate\Routing\Exceptions\UrlGenerationException $ex) {
+        } catch (UrlGenerationException $ex) {
             $this->assertStringContainsString('Missing required parameter', $ex->getMessage());
         }
     }
@@ -258,7 +263,7 @@ class EmailAddressControllerTest extends TestCase
         $controller = new EmailAddressController();
         $resp = $controller->delete($user, $email);
 
-        $this->assertInstanceOf(\Illuminate\View\View::class, $resp);
+        $this->assertInstanceOf(View::class, $resp);
         $this->assertArrayHasKey('email', $resp->getData());
     }
 }

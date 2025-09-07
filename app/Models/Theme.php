@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * App\Models\Theme
@@ -23,28 +26,28 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $seat_clan
  * @property string $seat_selected
  * @property string|null $css
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @method static \Illuminate\Database\Eloquent\Builder|Theme newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Theme newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Theme query()
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereActive($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereCss($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereDarkMode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereNavBackground($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme wherePrimary($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereReadonly($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereSeatAvailable($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereSeatClan($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereSeatDisabled($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereSeatSelected($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereSeatTaken($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Theme whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @method static Builder|Theme newModelQuery()
+ * @method static Builder|Theme newQuery()
+ * @method static Builder|Theme query()
+ * @method static Builder|Theme whereActive($value)
+ * @method static Builder|Theme whereCode($value)
+ * @method static Builder|Theme whereCreatedAt($value)
+ * @method static Builder|Theme whereCss($value)
+ * @method static Builder|Theme whereDarkMode($value)
+ * @method static Builder|Theme whereId($value)
+ * @method static Builder|Theme whereName($value)
+ * @method static Builder|Theme whereNavBackground($value)
+ * @method static Builder|Theme wherePrimary($value)
+ * @method static Builder|Theme whereReadonly($value)
+ * @method static Builder|Theme whereSeatAvailable($value)
+ * @method static Builder|Theme whereSeatClan($value)
+ * @method static Builder|Theme whereSeatDisabled($value)
+ * @method static Builder|Theme whereSeatSelected($value)
+ * @method static Builder|Theme whereSeatTaken($value)
+ * @method static Builder|Theme whereUpdatedAt($value)
+ * @mixin Eloquent
  */
 class Theme extends Model
 {

@@ -1,32 +1,13 @@
 <?php
 
-namespace Tests\Unit\app\Transformers\V1;
-
-use Tests\TestCase;
+namespace Tests\Feature\app\Transformers\V1;
 
 use App\Models\User;
-use App\Transformers\V1\AbstractTransformer;
+use Tests\Feature\app\Transformers\V1\HelperClasses\NoopTransformer;
+use Tests\Feature\app\Transformers\V1\HelperClasses\PrecedenceTransformer;
 use Illuminate\Support\Carbon;
-
-class PrecedenceTransformer extends AbstractTransformer
-{
-    protected function getAdminProperties(object $object): array
-    {
-        return [
-            // Intentionally override 'foo' from the original data
-            'foo' => 'baz',
-            'extra' => 'value_from_admin',
-        ];
-    }
-}
-
-class NoopTransformer extends AbstractTransformer
-{
-    protected function getAdminProperties(object $object): array
-    {
-        return ['admin' => true];
-    }
-}
+use ReflectionClass;
+use Tests\TestCase;
 
 class AbstractTransformerExtraTest extends TestCase
 {
@@ -41,6 +22,7 @@ class AbstractTransformerExtraTest extends TestCase
             public $id = 2;
             public $created_at;
             public $updated_at;
+
             public function __construct()
             {
                 $this->created_at = Carbon::parse('2022-01-03T00:00:00Z');
@@ -74,6 +56,7 @@ class AbstractTransformerExtraTest extends TestCase
             public $id = 5;
             public $created_at;
             public $updated_at;
+
             public function __construct()
             {
                 $this->created_at = Carbon::parse('2022-02-01T00:00:00Z');
@@ -89,7 +72,7 @@ class AbstractTransformerExtraTest extends TestCase
 
     protected function invokeMethod($object, $method, array $parameters = [])
     {
-        $reflection = new \ReflectionClass($object);
+        $reflection = new ReflectionClass($object);
         $method = $reflection->getMethod($method);
         $method->setAccessible(true);
         return $method->invokeArgs($object, $parameters);

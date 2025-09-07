@@ -4,13 +4,14 @@ namespace App\Models;
 
 use App\Jobs\UpdateSeatingPlanJob;
 use App\Models\Traits\ToString;
+use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -31,10 +32,10 @@ use Spatie\EloquentSortable\SortableTrait;
  * @property string|null $image_url
  * @property int|null $image_height
  * @property int|null $image_width
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \App\Models\Event $event
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Seat> $seats
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Event $event
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Seat> $seats
  * @property-read int|null $seats_count
  * @method static Builder|SeatingPlan newModelQuery()
  * @method static Builder|SeatingPlan newQuery()
@@ -52,7 +53,7 @@ use Spatie\EloquentSortable\SortableTrait;
  * @method static Builder|SeatingPlan whereRevision($value)
  * @method static Builder|SeatingPlan whereScale($value)
  * @method static Builder|SeatingPlan whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @mixin Eloquent
  */
 class SeatingPlan extends Model implements Sortable
 {
@@ -173,7 +174,7 @@ class SeatingPlan extends Model implements Sortable
                 }
 
                 if (isset($row[0]) && is_numeric($row[0])) {
-                    $id = (int) $row[0];
+                    $id = (int)$row[0];
                     if ($id > 0) {
                         $seat = $this->seats->firstWhere('id', $id);
                     }
@@ -206,11 +207,6 @@ class SeatingPlan extends Model implements Sortable
         $this->save();
     }
 
-    protected function toStringName(): string
-    {
-        return $this->code ?? '';
-    }
-
     /**
      * Randomise seat allocation - CHANGE PLACES!
      * @return void
@@ -235,5 +231,10 @@ class SeatingPlan extends Model implements Sortable
             $seat->saveQuietly();
         }
         $this->updateRevision();
+    }
+
+    protected function toStringName(): string
+    {
+        return $this->code ?? '';
     }
 }

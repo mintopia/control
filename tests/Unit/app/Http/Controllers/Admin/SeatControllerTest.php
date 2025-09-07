@@ -2,13 +2,16 @@
 
 namespace Tests\Unit\app\Http\Controllers\Admin;
 
-use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use App\Http\Controllers\Admin\SeatController;
+use App\Http\Requests\Admin\SeatUpdateRequest;
 use App\Models\Event;
-use App\Models\SeatingPlan;
 use App\Models\Seat;
+use App\Models\SeatingPlan;
+use App\Models\Ticket;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use ReflectionClass;
+use Tests\TestCase;
 
 class SeatControllerTest extends TestCase
 {
@@ -47,7 +50,7 @@ class SeatControllerTest extends TestCase
         $event = Event::factory()->create();
         $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
 
-        $request = \App\Http\Requests\Admin\SeatUpdateRequest::create('/admin', 'POST', [
+        $request = SeatUpdateRequest::create('/admin', 'POST', [
             'x' => 10,
             'y' => 20,
             'row' => 'A',
@@ -83,7 +86,7 @@ class SeatControllerTest extends TestCase
             'disabled' => true,
         ]);
 
-        $ref = new \ReflectionClass($controller);
+        $ref = new ReflectionClass($controller);
         $method = $ref->getMethod('updateObject');
         $method->setAccessible(true);
         $method->invoke($controller, $seat, $request);
@@ -99,7 +102,7 @@ class SeatControllerTest extends TestCase
         $plan = SeatingPlan::factory()->create(['event_id' => $event->id]);
         $seat = Seat::factory()->for($plan, 'plan')->create(['label' => 'Old']);
 
-        $request = \App\Http\Requests\Admin\SeatUpdateRequest::create('/admin', 'POST', [
+        $request = SeatUpdateRequest::create('/admin', 'POST', [
             'x' => 1,
             'y' => 1,
             'row' => 'C',
@@ -138,7 +141,7 @@ class SeatControllerTest extends TestCase
         $seat = Seat::factory()->for($plan, 'plan')->create();
 
         // create a ticket and associate
-        $ticket = \App\Models\Ticket::factory()->create();
+        $ticket = Ticket::factory()->create();
         $seat->ticket()->associate($ticket);
         $seat->save();
 

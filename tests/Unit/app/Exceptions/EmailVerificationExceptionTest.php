@@ -2,8 +2,9 @@
 
 namespace Tests\Unit\app\Exceptions;
 
-use Tests\TestCase;
 use App\Exceptions\EmailVerificationException;
+use Exception;
+use Tests\TestCase;
 
 class EmailVerificationExceptionTest extends TestCase
 {
@@ -22,7 +23,7 @@ class EmailVerificationExceptionTest extends TestCase
 
     public function testCanSetPreviousException()
     {
-        $previous = new \Exception('Previous');
+        $previous = new Exception('Previous');
         $exception = new EmailVerificationException('Test message', 0, $previous);
         $this->assertSame($previous, $exception->getPrevious());
     }
