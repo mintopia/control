@@ -1,15 +1,7 @@
 name: Publish Docker Images
 
 on:
-  push:
-    paths-ignore:
-      - README.md
-      - LICENSE
-      - .env.example
-    branches:
-      - master
-      - develop
-    tags: [ 'v*.*.*' ]
+  workflow_call:
   workflow_dispatch:
 
 env:
