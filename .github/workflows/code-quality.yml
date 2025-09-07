@@ -60,6 +60,11 @@ jobs:
 
       - name: Install dependencies
         run: composer install --prefer-dist --dev
+        if: matrix-php-versions != 8.5
+
+      - name: Update dependencies (PHP 8.5 RC)
+        run: composer update --dev
+        if: matrix-php-versions == 8.5
 
       - name: Build Vite manifest
         run: |
