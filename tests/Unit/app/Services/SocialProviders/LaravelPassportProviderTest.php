@@ -33,7 +33,7 @@ class LaravelPassportProviderTest extends TestCase
         return new LaravelPassportProvider($socialProvider, $redirectUrl);
     }
 
-    public function test_config_mapping_includes_host()
+    public function testConfigMappingIncludesHost()
     {
         $provider = $this->getProvider();
         $mapping = $provider->configMapping();
@@ -45,7 +45,7 @@ class LaravelPassportProviderTest extends TestCase
         $this->assertEquals('required|string', $mapping['host']->validation);
     }
 
-    public function test_name_can_be_renamed_from_provider()
+    public function testNameCanBeRenamedFromProvider()
     {
         $socialProvider = SocialProvider::factory()->create([
             'name' => 'Custom Passport',
@@ -59,7 +59,7 @@ class LaravelPassportProviderTest extends TestCase
         $this->assertEquals('Custom Passport', $nameProperty->getValue($provider));
     }
 
-    public function test_get_socialite_provider_builds_provider_with_config()
+    public function testGetSocialiteProviderBuildsProviderWithConfig()
     {
         $provider = $this->getProvider([
             'client_id' => 'id',
@@ -92,7 +92,7 @@ class LaravelPassportProviderTest extends TestCase
         $this->assertSame($mockSocialiteProvider, $result);
     }
 
-    public function test_update_account_sets_fields()
+    public function testUpdateAccountSetsFields()
     {
         $provider = $this->getProvider();
         $account = new LinkedAccount();

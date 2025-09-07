@@ -12,7 +12,7 @@ class AbstractSocialProviderInstallTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_install_creates_provider_and_settings()
+    public function testInstallCreatesProviderAndSettings()
     {
         $providerSvc = new InstallDummyProvider();
 
@@ -31,7 +31,7 @@ class AbstractSocialProviderInstallTest extends TestCase
         $this->assertTrue((bool)$secret->encrypted);
     }
 
-    public function test_install_idempotent_on_existing_provider()
+    public function testInstallIdempotentOnExistingProvider()
     {
         $svc = new InstallDummyProvider();
         $code = 'install_dummy_test_fixed';

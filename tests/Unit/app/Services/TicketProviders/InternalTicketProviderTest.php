@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class InternalTicketProviderTest extends TestCase
 {
-    public function test_config_mapping_returns_empty_array()
+    public function testConfigMappingReturnsEmptyArray()
     {
         $provider = new InternalTicketProvider();
         $this->assertEquals([], $provider->configMapping());

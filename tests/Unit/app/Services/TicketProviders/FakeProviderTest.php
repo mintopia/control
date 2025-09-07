@@ -16,7 +16,7 @@ class FakeProviderTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_config_mapping_returns_array()
+    public function testConfigMappingReturnsArray()
     {
         $provider = new FakeProvider();
         $mapping = $provider->configMapping();
@@ -25,7 +25,7 @@ class FakeProviderTest extends TestCase
         $this->assertEmpty($mapping);
     }
 
-    public function test_install_returns_given_provider()
+    public function testInstallReturnsGivenProvider()
     {
         $tp = TicketProvider::factory()->create();
         $provider = new FakeProvider($tp);
@@ -35,7 +35,7 @@ class FakeProviderTest extends TestCase
         $this->assertEquals($tp->id, $result->id);
     }
 
-    public function test_install_throws_when_no_provider()
+    public function testInstallThrowsWhenNoProvider()
     {
         $this->expectException(RuntimeException::class);
 
@@ -43,7 +43,7 @@ class FakeProviderTest extends TestCase
         $provider->install();
     }
 
-    public function test_process_webhook_returns_true()
+    public function testProcessWebhookReturnsTrue()
     {
         $provider = new FakeProvider();
         $request = Request::create('/webhook', 'POST');
@@ -51,13 +51,13 @@ class FakeProviderTest extends TestCase
         $this->assertTrue($provider->processWebhook($request));
     }
 
-    public function test_sync_tickets_is_noop_and_returns_null()
+    public function testSyncTicketsIsNoopAndReturnsNull()
     {
         $provider = new FakeProvider();
         $this->assertNull($provider->syncTickets('user@example.com'));
     }
 
-    public function test_get_events_and_ticket_types_return_empty_arrays()
+    public function testGetEventsAndTicketTypesReturnEmptyArrays()
     {
         $provider = new FakeProvider();
 
@@ -65,7 +65,7 @@ class FakeProviderTest extends TestCase
         $this->assertEquals([], $provider->getTicketTypes('event-id'));
     }
 
-    public function test_sync_all_tickets_writes_to_output_when_outputstyle_provided()
+    public function testSyncAllTicketsWritesToOutputWhenOutputstyleProvided()
     {
         $provider = new FakeProvider();
 

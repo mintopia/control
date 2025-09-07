@@ -13,7 +13,7 @@ class AbstractSocialProviderResolveTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_constructor_keeps_explicit_redirect_url()
+    public function testConstructorKeepsExplicitRedirectUrl()
     {
         $prov = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'rd_x']);
         $svc = new ResolveDummyProvider($prov, 'https://example.test/custom');
@@ -24,7 +24,7 @@ class AbstractSocialProviderResolveTest extends TestCase
         $this->assertEquals('https://example.test/custom', $p->getValue($svc));
     }
 
-    public function test_resolve_sets_login_return_when_guest_and_auth_enabled()
+    public function testResolveSetsLoginReturnWhenGuestAndAuthEnabled()
     {
         Auth::shouldReceive('guest')->andReturn(true);
         $prov = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'rd_guest']);
@@ -39,7 +39,7 @@ class AbstractSocialProviderResolveTest extends TestCase
         $this->assertStringContainsString('resolve_dummy_test', $val);
     }
 
-    public function test_resolve_sets_linkedaccounts_when_not_guest()
+    public function testResolveSetsLinkedaccountsWhenNotGuest()
     {
         Auth::shouldReceive('guest')->andReturn(false);
         $prov = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'rd_not_guest']);

@@ -70,7 +70,7 @@ class GenericTicketProviderTest extends TestCase
 
     // --- Extra tests merged from GenericTicketProviderExtraTest.php ---
 
-    public function test_make_ticket_returns_null_when_event_missing()
+    public function testMakeTicketReturnsNullWhenEventMissing()
     {
         $provider = $this->createProvider();
         $data = (object)[
@@ -85,7 +85,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertNull($provider->makeTicketPublic(null, $data));
     }
 
-    public function test_make_ticket_returns_null_when_type_missing()
+    public function testMakeTicketReturnsNullWhenTypeMissing()
     {
         $provider = $this->createProvider();
         $event = Event::factory()->create();
@@ -103,7 +103,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertNull($provider->makeTicketPublic(null, $data));
     }
 
-    public function test_make_ticket_creates_ticket_when_event_and_type_exist_and_links_user()
+    public function testMakeTicketCreatesTicketWhenEventAndTypeExistAndLinksUser()
     {
         $provider = $this->createProvider();
         $user = User::factory()->create();
@@ -140,7 +140,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals($user->id, $ticket->user->id);
     }
 
-    public function test_get_tickets_pages_until_hasMore_is_false()
+    public function testGetTicketsPagesUntilHasMoreIsFalse()
     {
         $provider = $this->createProvider([
             'endpoint' => 'https://api.example.test',
@@ -172,7 +172,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertArrayHasKey('2', $tickets);
     }
 
-    public function test_sync_tickets_removes_voided_and_adds_missing()
+    public function testGetTicketsFetchesFromApiAndPages()
     {
         $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
 
@@ -214,7 +214,7 @@ class GenericTicketProviderTest extends TestCase
     }
 
 
-    public function test_config_mapping_returns_expected_array()
+    public function testConfigMappingReturnsExpectedArray()
     {
         $provider = $this->provider;
         $mapping = $provider->configMapping();
@@ -226,10 +226,10 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals('Base URL', $mapping['endpoint']->name);
     }
 
-    public function test_process_webhook_calls_process_ticket_and_returns_true()
+    public function testProcessWebhookCallsProcessTicketAndReturnsTrue()
     {
         $provider = $this->provider;
-        $mock = new class ($provider->provider) extends GenericTicketProvider {
+        $mock = new class($provider->provider) extends GenericTicketProvider {
             public function __construct(?TicketProvider $p = null)
             {
                 parent::__construct($p);
@@ -245,7 +245,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertTrue($mock->processWebhook($request));
     }
 
-    public function test_get_events_returns_cached_data()
+    public function testGetEventsReturnsCachedData()
     {
         $provider = $this->provider;
         $key = "ticketproviders.{$provider->provider->id}.{$provider->provider->cache_prefix}.events";
@@ -254,7 +254,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals(['evt1' => 'Event 1'], $events);
     }
 
-    public function test_get_events_fetches_from_api_and_caches()
+    public function testGetEventsFetchesFromApiAndCaches()
     {
         $provider = $this->createProvider([
             'apikey' => 'key',
@@ -288,7 +288,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals($events, $cached);
     }
 
-    public function test_get_ticket_types_returns_cached_data()
+    public function testGetTicketTypesReturnsCachedData()
     {
         $provider = $this->provider;
         $eventId = 'evt-1';
@@ -298,7 +298,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals(['type1' => 'VIP'], $types);
     }
 
-    public function test_get_ticket_types_fetches_from_api_and_caches()
+    public function testGetTicketTypesFetchesFromApiAndCaches()
     {
         $provider = $this->createProvider([
             'apikey' => 'key',
@@ -332,7 +332,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals($types, $cached);
     }
 
-    public function test_process_ticket()
+    public function testProcessTicket()
     {
         $provider = $this->createProvider();
 
@@ -368,7 +368,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertDatabaseHas('tickets', ['external_id' => 't1']);
     }
 
-    public function test_process_ticket_deletes_existing_when_voided()
+    public function testProcessTicketDeletesExistingWhenVoided()
     {
         $provider = $this->createProvider();
 
@@ -392,7 +392,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertDatabaseMissing('tickets', ['external_id' => 'del-me']);
     }
 
-    public function test_process_ticket_returns_null_when_event_missing()
+    public function testProcessTicketReturnsNullWhenEventMissing()
     {
         $provider = $this->createProvider();
 
@@ -409,7 +409,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertNull($result, 'processTicket should return null when the event mapping is missing');
     }
 
-    public function test_sync_tickets_deletes_voided_ticket()
+    public function testSyncTicketsDeletesVoidedTicket()
     {
         $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
 
@@ -436,7 +436,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertDatabaseMissing('tickets', ['external_id' => 'voided1']);
     }
 
-    public function test_process_ticket_returns_existing_when_not_voided()
+    public function testProcessTicketReturnsExistingWhenNotVoided()
     {
         $provider = $this->createProvider();
 
@@ -458,7 +458,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertDatabaseHas('tickets', ['external_id' => 'keep-me']);
     }
 
-    public function test_sync_tickets_assigns_user_when_emailaddress_provided()
+    public function testSyncTicketsAssignsUserWhenEmailaddressProvided()
     {
         $provider = $this->createProvider(['endpoint' => 'https://api.example.test', 'apikey' => 'key']);
 
@@ -497,7 +497,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals($user->id, $existing->user_id);
     }
 
-    public function test_get_client()
+    public function testGetClient()
     {
         $provider = $this->createProvider();
         $this->assertInstanceOf(Client::class, $provider->getClientPublic());

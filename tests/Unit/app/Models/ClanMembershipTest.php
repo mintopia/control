@@ -13,7 +13,7 @@ class ClanMembershipTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_can_delete_when_not_leader_and_when_leader_with_other_leader()
+    public function testCanDeleteWhenNotLeaderAndWhenLeaderWithOtherLeader()
     {
         $clan = Clan::factory()->create();
         $leaderRole = ClanRole::factory()->create(['code' => 'leader']);
@@ -38,7 +38,7 @@ class ClanMembershipTest extends TestCase
         $this->assertTrue($member->canDelete($member->user));
     }
 
-    public function test_can_delete_when_called_by_other_leader()
+    public function testCanDeleteWhenCalledByOtherLeader()
     {
         $clan = Clan::factory()->create();
         $leaderRole = ClanRole::factory()->create(['code' => 'leader']);

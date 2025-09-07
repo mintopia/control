@@ -16,7 +16,7 @@ class EmailAddressTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_send_verification_code_saves_and_sends()
+    public function testSendVerificationCodeSavesAndSends()
     {
         Mail::fake();
         $user = User::factory()->create();
@@ -29,7 +29,7 @@ class EmailAddressTest extends TestCase
         Mail::assertSent(VerifyEmail::class);
     }
 
-    public function test_can_delete_false_when_linked_accounts_or_primary()
+    public function testCanDeleteFalseWhenLinkedAccountsOrPrimary()
     {
         $user = User::factory()->create();
         $email = EmailAddress::factory()->create(['user_id' => $user->id]);
@@ -48,28 +48,28 @@ class EmailAddressTest extends TestCase
         $this->assertFalse($email->canDelete());
     }
 
-    public function test_check_code_throws_on_expired_or_wrong()
+    public function testCheckCodeThrowsOnExpiredOrWrong()
     {
         $email = EmailAddress::factory()->create(['verification_sent_at' => now()->subDays(3), 'verification_code' => 'ABC123']);
         $this->expectException(EmailVerificationException::class);
         $email->checkCode('ABC123');
     }
 
-    public function test_check_code_throws_on_incorrect_code()
+    public function testCheckCodeThrowsOnIncorrectCode()
     {
         $email = EmailAddress::factory()->create(['verification_sent_at' => now(), 'verification_code' => 'ABC123']);
         $this->expectException(EmailVerificationException::class);
         $email->checkCode('WRONG');
     }
 
-    public function test_verify_calls_sync_and_returns_true()
+    public function testVerifyCallsSyncAndReturnsTrue()
     {
         $email = EmailAddress::factory()->create(['verification_sent_at' => now(), 'verification_code' => 'XYZ789', 'verified_at' => null]);
         // calling verify should not throw
         $this->assertTrue($email->verify('XYZ789'));
     }
 
-    public function test_sync_tickets_does_nothing_when_not_verified()
+    public function testSyncTicketsDoesNothingWhenNotVerified()
     {
         Bus::fake();
         $email = EmailAddress::factory()->create(['verified_at' => null]);
@@ -77,7 +77,7 @@ class EmailAddressTest extends TestCase
         Bus::assertNotDispatched(SyncTicketsForEmailJob::class);
     }
 
-    public function test_sync_tickets_dispatches_job_when_verified()
+    public function testSyncTicketsDispatchesJobWhenVerified()
     {
         Bus::fake();
         $email = EmailAddress::factory()->create(['verified_at' => now()]);
@@ -85,7 +85,7 @@ class EmailAddressTest extends TestCase
         Bus::assertDispatched(SyncTicketsForEmailJob::class);
     }
 
-    public function test_sync_tickets_dispatches_sync_when_requested()
+    public function testSyncTicketsDispatchesSyncWhenRequested()
     {
         Bus::fake();
         $email = EmailAddress::factory()->create(['verified_at' => now()]);

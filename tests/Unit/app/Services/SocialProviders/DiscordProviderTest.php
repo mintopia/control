@@ -34,7 +34,7 @@ class DiscordProviderTest extends TestCase
         return new DiscordProvider($socialProvider);
     }
 
-    public function test_config_mapping_includes_token()
+    public function testConfigMappingIncludesToken()
     {
         $provider = $this->getProvider();
         $mapping = $provider->configMapping();
@@ -46,7 +46,7 @@ class DiscordProviderTest extends TestCase
         $this->assertTrue($mapping['token']->encrypted);
     }
 
-    public function test_get_socialite_provider_returns_provider_instance()
+    public function testGetSocialiteProviderReturnsProviderInstance()
     {
         $provider = $this->getProvider([
             'client_id' => 'id',
@@ -59,7 +59,7 @@ class DiscordProviderTest extends TestCase
         $this->assertSame($mockSocialite, $method->invoke($provider));
     }
 
-    public function test_update_account_sets_fields()
+    public function testUpdateAccountSetsFields()
     {
         $provider = $this->getProvider();
         $account = new LinkedAccount();
@@ -94,7 +94,7 @@ class DiscordProviderTest extends TestCase
         $this->assertEquals('nickname', $account->name);
     }
 
-    public function test_get_bot_provider_calls_socialite_with_scopes_and_permissions()
+    public function testGetBotProviderCallsSocialiteWithScopesAndPermissions()
     {
         $provider = $this->getProvider([
             'client_id' => 'id',
@@ -110,7 +110,7 @@ class DiscordProviderTest extends TestCase
         $this->assertSame($mockSocialite, $method->invoke($provider));
     }
 
-    public function test_add_bot_to_server_redirects()
+    public function testAddBotToServerRedirects()
     {
         $provider = $this->getProvider([
             'client_id' => 'id',
@@ -127,7 +127,7 @@ class DiscordProviderTest extends TestCase
         $this->assertEquals('/discord-bot-redirect', $response->getTargetUrl());
     }
 
-    public function test_bot_returns_user()
+    public function testBotReturnsUser()
     {
         $provider = $this->getProvider([
             'client_id' => 'id',

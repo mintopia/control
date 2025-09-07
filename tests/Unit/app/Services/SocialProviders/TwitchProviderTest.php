@@ -34,7 +34,7 @@ class TwitchProviderTest extends TestCase
         return new TwitchProvider($socialProvider, $redirectUrl);
     }
 
-    public function test_config_mapping_returns_expected_array()
+    public function testConfigMappingReturnsExpectedArray()
     {
         $provider = $this->getProvider();
         $mapping = $provider->configMapping();
@@ -46,7 +46,7 @@ class TwitchProviderTest extends TestCase
         $this->assertTrue($mapping['client_secret']->encrypted);
     }
 
-    public function test_get_socialite_provider_builds_provider_with_config()
+    public function testGetSocialiteProviderBuildsProviderWithConfig()
     {
         $provider = $this->getProvider([
             'client_id' => 'id',
@@ -64,7 +64,7 @@ class TwitchProviderTest extends TestCase
         $this->assertSame($mockSocialiteProvider, $result);
     }
 
-    public function test_update_account_sets_fields()
+    public function testUpdateAccountSetsFields()
     {
         $provider = $this->getProvider();
         $account = new LinkedAccount();

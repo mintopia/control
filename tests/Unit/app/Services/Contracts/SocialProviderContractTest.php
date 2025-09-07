@@ -9,7 +9,7 @@ use Tests\TestCase;
 
 class SocialProviderContractTest extends TestCase
 {
-    public function test_config_mapping_returns_expected_array()
+    public function testConfigMappingReturnsExpectedArray()
     {
         $provider = new HelperClasses\DummySocialProvider();
         $mapping = $provider->configMapping();
@@ -18,7 +18,7 @@ class SocialProviderContractTest extends TestCase
         $this->assertEquals('dummy-client-id', $mapping['client_id']['value']);
     }
 
-    public function test_install_returns_social_provider_instance()
+    public function testInstallReturnsSocialProviderInstance()
     {
         $provider = new HelperClasses\DummySocialProvider();
         $socialProvider = $provider->install();
@@ -27,7 +27,7 @@ class SocialProviderContractTest extends TestCase
         $this->assertEquals('dummy', $socialProvider->code);
     }
 
-    public function test_redirect_returns_redirect_response()
+    public function testRedirectReturnsRedirectResponse()
     {
         $provider = new HelperClasses\DummySocialProvider();
         $response = $provider->redirect();
@@ -35,7 +35,7 @@ class SocialProviderContractTest extends TestCase
         $this->assertEquals('/dummy-redirect', $response->getTargetUrl());
     }
 
-    public function test_user_returns_user_instance()
+    public function testUserReturnsUserInstance()
     {
         $provider = new HelperClasses\DummySocialProvider();
         $user = $provider->user();

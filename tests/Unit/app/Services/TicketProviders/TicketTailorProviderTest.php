@@ -54,7 +54,7 @@ class TicketTailorProviderTest extends TestCase
         return $this->getProvider($settings);
     }
 
-    public function test_config_mapping_returns_expected_array()
+    public function testConfigMappingReturnsExpectedArray()
     {
         $provider = $this->getProvider();
         $mapping = $provider->configMapping();
@@ -65,7 +65,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertEquals('Webhook Signing Secret', $mapping['webhook_secret']->name);
     }
 
-    public function test_verify_webhook_returns_true_if_no_secret()
+    public function testVerifyWebhookReturnsTrueIfNoSecret()
     {
         $provider = $this->getProvider();
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['payload' => []]));
@@ -75,7 +75,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertTrue($verifyWebhook($request));
     }
 
-    public function test_verify_webhook_throws_if_header_missing()
+    public function testVerifyWebhookThrowsIfHeaderMissing()
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['payload' => []]));
@@ -90,7 +90,7 @@ class TicketTailorProviderTest extends TestCase
         }
     }
 
-    public function test_verify_webhook_throws_if_signature_invalid()
+    public function testVerifyWebhookThrowsIfSignatureInvalid()
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $timestamp = now()->timestamp;
@@ -107,7 +107,7 @@ class TicketTailorProviderTest extends TestCase
         }
     }
 
-    public function test_verify_webhook_throws_if_timestamp_too_old()
+    public function testVerifyWebhookThrowsIfTimestampTooOld()
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $timestamp = now()->subMinutes(10)->timestamp;
@@ -126,7 +126,7 @@ class TicketTailorProviderTest extends TestCase
         }
     }
 
-    public function test_verify_webhook_returns_true_on_valid_signature()
+    public function testVerifyWebhookReturnsTrueOnValidSignature()
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $timestamp = now()->timestamp;
@@ -140,7 +140,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertTrue($verifyWebhook($request));
     }
 
-    public function test_process_webhook_calls_verify_and_process_ticket()
+    public function testProcessWebhookCallsVerifyAndProcessTicket()
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $prov = $provider->getProvider();
@@ -151,7 +151,7 @@ class TicketTailorProviderTest extends TestCase
         $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], $body);
 
         // Create an anonymous subclass that overrides processTicket to record invocation
-        $mock = new class ($prov) extends TicketTailorProvider {
+        $mock = new class($prov) extends TicketTailorProvider {
             public bool $wasCalled = false;
 
             public function __construct(?TicketProvider $provider = null)
@@ -177,7 +177,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertTrue($mock->wasCalled, 'processTicket was not called');
     }
 
-    public function test_get_qr_code_returns_expected_url()
+    public function testGetQrCodeReturnsExpectedUrl()
     {
         $provider = $this->getProvider();
         $data = (object)['barcode' => 'abc123'];
@@ -189,7 +189,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertStringStartsWith('https://api.qrserver.com/v1/create-qr-code/', $url);
     }
 
-    public function test_dummy_verify_webhook_and_qrcode_via_helper()
+    public function testDummyVerifyWebhookAndQrcodeViaHelper()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -204,7 +204,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertStringContainsString('zz', $dummy->getQrCodePublic($data));
     }
 
-    public function test_make_ticket_returns_null_when_event_missing()
+    public function testMakeTicketReturnsNullWhenEventMissing()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -221,7 +221,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertNull($dummy->makeTicketPublic(null, $data));
     }
 
-    public function test_get_events_returns_cached_data()
+    public function testGetEventsReturnsCachedData()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -231,7 +231,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertEquals(['evt1' => 'Event 1'], $events);
     }
 
-    public function test_get_ticket_types_returns_cached_data()
+    public function testGetTicketTypesReturnsCachedData()
     {
         $provider = $this->getProvider();
         $eventId = 'evt-1';
@@ -242,7 +242,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertEquals(['type1' => 'VIP'], $types);
     }
 
-    public function test_sync_tickets_removes_voided_and_adds_missing()
+    public function testSyncTicketsRemovesVoidedAndAddsMissing()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -274,7 +274,7 @@ class TicketTailorProviderTest extends TestCase
         ];
 
         // Use an anonymous provider subclass to override protected methods instead of mocking them
-        $mock = new class ($prov) extends TicketTailorProvider {
+        $mock = new class($prov) extends TicketTailorProvider {
             public array $stubTickets = [];
 
             public function __construct(?TicketProvider $provider = null)
@@ -307,7 +307,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertDatabaseHas('tickets', ['external_id' => 't1']);
     }
 
-    public function test_sync_tickets_associates_user_when_emailaddress_passed()
+    public function testSyncTicketsAssociatesUserWhenEmailaddressPassed()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -338,7 +338,7 @@ class TicketTailorProviderTest extends TestCase
         ];
 
         // @var TicketTailorProvider $mock
-        $mock = new class ($prov) extends TicketTailorProvider {
+        $mock = new class($prov) extends TicketTailorProvider {
             public array $stubTickets = [];
 
             public function __construct(?TicketProvider $provider = null)
@@ -361,7 +361,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertEquals($user->id, $ticket->user_id);
     }
 
-    public function test_get_client()
+    public function testGetClient()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
@@ -369,7 +369,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertInstanceOf(Client::class, $dummy->getClientPublic());
     }
 
-    public function test_get_type()
+    public function testGetType()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
@@ -377,7 +377,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertInstanceOf(TicketType::class, $dummy->getTypePublic('type1'));
     }
 
-    public function test_get_events()
+    public function testGetEvents()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
@@ -385,7 +385,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertIsArray($dummy->getEventsPublic());
     }
 
-    public function test_get_tickets()
+    public function testGetTickets()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
@@ -393,7 +393,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertIsArray($dummy->getTicketsPublic());
     }
 
-    public function test_get_ticket_types()
+    public function testGetTicketTypes()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
@@ -401,7 +401,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertIsArray($dummy->getTicketTypesPublic('evt-1'));
     }
 
-    public function test_process_ticket()
+    public function testProcessTicket()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
@@ -418,7 +418,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertNotNull($dummy->processTicketPublic($data));
     }
 
-    public function test_make_ticket()
+    public function testMakeTicket()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
@@ -439,7 +439,7 @@ class TicketTailorProviderTest extends TestCase
 
     // --- Additional branch tests added below ---
 
-    public function test_get_tickets_fetches_from_api_and_pages()
+    public function testGetTicketsFetchesFromApiAndPages()
     {
         $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
         // prepare two paged responses
@@ -471,7 +471,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertArrayHasKey('2', $tickets);
     }
 
-    public function test_get_tickets_with_address_fetches_from_api_and_pages()
+    public function testGetTicketsWithAddressFetchesFromApiAndPages()
     {
         $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
         // prepare two paged responses
@@ -503,7 +503,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertArrayHasKey('2', $tickets);
     }
 
-    public function test_get_events_fetches_from_api_and_caches()
+    public function testGetEventsFetchesFromApiAndCaches()
     {
         $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
         $key = "ticketproviders.{$provider->getProvider()->id}.{$provider->getProvider()->cache_prefix}.events";
@@ -530,7 +530,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertEquals($events, Cache::get($key));
     }
 
-    public function test_get_ticket_types_fetches_from_api_and_caches()
+    public function testGetTicketTypesFetchesFromApiAndCaches()
     {
         $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
         $prov = $provider->getProvider();
@@ -558,7 +558,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertEquals($types, Cache::get($key));
     }
 
-    public function test_process_ticket_deletes_existing_when_voided()
+    public function testProcessTicketDeletesExistingWhenVoided()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -583,7 +583,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertDatabaseMissing('tickets', ['external_id' => 'del-tt']);
     }
 
-    public function test_process_ticket_returns_null_when_event_missing()
+    public function testProcessTicketReturnsNullWhenEventMissing()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -602,7 +602,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertNull($dummy->processTicketPublic($data));
     }
 
-    public function test_process_ticket_links_user_when_email_exists()
+    public function testProcessTicketLinksUserWhenEmailExists()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -631,7 +631,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertEquals($user->id, $ticket->user_id);
     }
 
-    public function test_make_ticket_returns_null_when_type_missing()
+    public function testMakeTicketReturnsNullWhenTypeMissing()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -656,7 +656,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertNull($makeTicket(null, $data));
     }
 
-    public function test_make_ticket_uses_email_to_find_user()
+    public function testMakeTicketUsesEmailToFindUser()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -684,7 +684,7 @@ class TicketTailorProviderTest extends TestCase
         $this->assertEquals($user->id, $ticket->user_id);
     }
 
-    public function test_make_ticket_respects_supplied_user()
+    public function testMakeTicketRespectsSuppliedUser()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();

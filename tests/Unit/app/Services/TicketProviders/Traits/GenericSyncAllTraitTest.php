@@ -50,7 +50,7 @@ class GenericSyncAllTraitTest extends TestCase
         return $provider;
     }
 
-    public function test_sync_all_tickets_removes_voided_tickets()
+    public function testSyncAllTicketsRemovesVoidedTickets()
     {
         $remoteTicket = (object)[
             'id' => 1,
@@ -80,7 +80,7 @@ class GenericSyncAllTraitTest extends TestCase
         $this->assertStringContainsString('has been voided, removing', $buffer->fetch());
     }
 
-    public function test_sync_all_tickets_associates_user_if_missing()
+    public function testSyncAllTicketsAssociatesUserIfMissing()
     {
         $remoteTicket = (object)[
             'id' => 2,
@@ -112,7 +112,7 @@ class GenericSyncAllTraitTest extends TestCase
         $this->assertStringContainsString('Associating', $buffer->fetch());
     }
 
-    public function test_sync_all_tickets_creates_new_ticket_for_missing()
+    public function testSyncAllTicketsCreatesNewTicketForMissing()
     {
         $remoteTicket = (object)[
             'id' => 3,
@@ -135,7 +135,7 @@ class GenericSyncAllTraitTest extends TestCase
         $this->assertStringContainsString('Creating ticket for 3 - new@example.com', $buffer->fetch());
     }
 
-    public function test_sync_all_tickets_skips_voided_missing_tickets()
+    public function testSyncAllTicketsSkipsVoidedMissingTickets()
     {
         $remoteTicket = (object)[
             'id' => 4,

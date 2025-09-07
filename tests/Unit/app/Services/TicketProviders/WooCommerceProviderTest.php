@@ -55,7 +55,7 @@ class WooCommerceProviderTest extends TestCase
         return $this->getProvider($settings);
     }
 
-    public function test_config_mapping_returns_expected_array()
+    public function testConfigMappingReturnsExpectedArray()
     {
         $provider = $this->getProvider();
         $mapping = $provider->configMapping();
@@ -70,7 +70,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertEquals('Webhook Secret', $mapping['webhook_secret']->name);
     }
 
-    public function test_verify_webhook_throws_if_no_secret()
+    public function testVerifyWebhookThrowsIfNoSecret()
     {
         $provider = $this->getProvider();
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['foo' => 'bar']));
@@ -81,7 +81,7 @@ class WooCommerceProviderTest extends TestCase
         $verifyWebhook($request);
     }
 
-    public function test_verify_webhook_throws_if_no_signature()
+    public function testVerifyWebhookThrowsIfNoSignature()
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['foo' => 'bar']));
@@ -92,7 +92,7 @@ class WooCommerceProviderTest extends TestCase
         $verifyWebhook($request);
     }
 
-    public function test_verify_webhook_throws_if_hash_mismatch()
+    public function testVerifyWebhookThrowsIfHashMismatch()
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $request = Request::create('/webhook', 'POST', [], [], [], [
@@ -105,7 +105,7 @@ class WooCommerceProviderTest extends TestCase
         $verifyWebhook($request);
     }
 
-    public function test_verify_webhook_returns_true_on_valid_signature()
+    public function testVerifyWebhookReturnsTrueOnValidSignature()
     {
         $secret = 'secret';
         $provider = $this->getProvider(['webhook_secret' => $secret]);
@@ -121,7 +121,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertTrue($verifyWebhook($request));
     }
 
-    public function test_process_webhook_returns_true()
+    public function testProcessWebhookReturnsTrue()
     {
         $secret = 'secret';
         $provider = $this->getProvider(['webhook_secret' => $secret]);
@@ -171,7 +171,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertTrue($dummy->processCalled);
     }
 
-    public function test_get_qr_code_returns_expected_url()
+    public function testGetQrCodeReturnsExpectedUrl()
     {
         $provider = $this->getProvider();
         $data = (object)['id' => 'abc123'];
@@ -183,7 +183,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertStringStartsWith('https://api.qrserver.com/v1/create-qr-code/', $url);
     }
 
-    public function test_parse_order_returns_tickets()
+    public function testParseOrderReturnsTickets()
     {
         $provider = $this->getProvider();
         $order = (object)[
@@ -209,7 +209,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertEquals('valid', $tickets['1-10-1']->status);
     }
 
-    public function test_get_events_returns_expected_array()
+    public function testGetEventsReturnsExpectedArray()
     {
         $provider = $this->getProvider();
         $provider->getProvider()->events = collect([
@@ -228,7 +228,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertContains('New Event', $events);
     }
 
-    public function test_get_ticket_types_returns_cached_data()
+    public function testGetTicketTypesReturnsCachedData()
     {
         $provider = $this->getProvider();
         $eventId = 'evt-1';
@@ -238,7 +238,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertEquals(['type1' => 'VIP'], $types);
     }
 
-    public function test_get_client()
+    public function testGetClient()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
@@ -246,7 +246,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertInstanceOf(Client::class, $dummy->getClientPublic());
     }
 
-    public function test_get_events()
+    public function testGetEvents()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
@@ -254,7 +254,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertIsArray($dummy->getEventsPublic());
     }
 
-    public function test_get_type()
+    public function testGetType()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
@@ -262,7 +262,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertInstanceOf(TicketType::class, $dummy->getTypePublic('type1'));
     }
 
-    public function test_get_tickets()
+    public function testGetTickets()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
@@ -270,7 +270,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertIsArray($dummy->getTicketsPublic());
     }
 
-    public function test_get_ticket_types()
+    public function testGetTicketTypes()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
@@ -278,7 +278,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertIsArray($dummy->getTicketTypesPublic('evt-1'));
     }
 
-    public function test_process_ticket()
+    public function testProcessTicket()
     {
         $provider = $this->createProvider();
         $data = (object)[
@@ -295,7 +295,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertNotNull($dummy->processTicketPublic($data));
     }
 
-    public function test_make_ticket()
+    public function testMakeTicket()
     {
         $provider = $this->createProvider();
         $data = (object)[
@@ -314,7 +314,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertEquals('t1', $ticket->external_id);
     }
 
-    public function test_get_tickets_fetches_from_api_and_pages()
+    public function testGetTicketsFetchesFromApiAndPages()
     {
         $provider = $this->getProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
 
@@ -344,7 +344,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertArrayHasKey('1-10-1', $tickets);
     }
 
-    public function test_get_tickets_filters_by_address()
+    public function testGetTicketsFiltersByAddress()
     {
         $provider = $this->getProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
 
@@ -382,13 +382,13 @@ class WooCommerceProviderTest extends TestCase
         $this->assertArrayNotHasKey('2-11-1', $tickets);
     }
 
-    public function test_sync_tickets_deletes_voided_ticket()
+    public function testSyncTicketsDeletesVoidedTicket()
     {
         $prov = $this->getProvider()->getProvider();
 
         $existing = Ticket::factory()->create(['ticket_provider_id' => $prov->id, 'external_id' => '1-10-1']);
 
-        $mock = new class ($prov) extends WooCommerceProvider {
+        $mock = new class($prov) extends WooCommerceProvider {
             public function __construct(?TicketProvider $provider = null)
             {
                 parent::__construct($provider);
@@ -404,7 +404,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertDatabaseMissing('tickets', ['external_id' => '1-10-1']);
     }
 
-    public function test_sync_tickets_associates_user_when_emailaddress_passed()
+    public function testSyncTicketsAssociatesUserWhenEmailaddressPassed()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -417,7 +417,7 @@ class WooCommerceProviderTest extends TestCase
         $ticket = Ticket::factory()->create(['ticket_provider_id' => $prov->id, 'external_id' => '1-10-1', 'user_id' => null]);
 
         // Create a provider subclass that returns the parsed ticket for the email
-        $mock = new class ($prov) extends WooCommerceProvider {
+        $mock = new class($prov) extends WooCommerceProvider {
             public function __construct(?TicketProvider $provider = null)
             {
                 parent::__construct($provider);
@@ -436,7 +436,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertEquals($user->id, $ticket->user_id);
     }
 
-    public function test_process_tickets_invoked_by_dummy()
+    public function testProcessTicketsInvokedByDummy()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
@@ -446,7 +446,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertTrue($dummy->processCalled);
     }
 
-    public function test_process_tickets_adds_missing_when_order_completed()
+    public function testProcessTicketsAddsMissingWhenOrderCompleted()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -477,7 +477,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertDatabaseHas('tickets', ['external_id' => '5-50-1']);
     }
 
-    public function test_get_ticket_types_fetches_from_api_and_caches()
+    public function testGetTicketTypesFetchesFromApiAndCaches()
     {
         $provider = $this->getProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
         $prov = $provider->getProvider();
@@ -501,7 +501,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertEquals($types, Cache::get($key));
     }
 
-    public function test_make_ticket_returns_null_when_type_missing()
+    public function testMakeTicketReturnsNullWhenTypeMissing()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -516,7 +516,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertNull($makeTicket(null, $data));
     }
 
-    public function test_make_ticket_uses_email_to_find_user()
+    public function testMakeTicketUsesEmailToFindUser()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
@@ -531,7 +531,7 @@ class WooCommerceProviderTest extends TestCase
         $this->assertEquals($user->id, $ticket->user_id);
     }
 
-    public function test_make_ticket_respects_supplied_user()
+    public function testMakeTicketRespectsSuppliedUser()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();

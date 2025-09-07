@@ -17,7 +17,7 @@ class AbstractSocialProviderTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_config_mapping_returns_expected_array()
+    public function testConfigMappingReturnsExpectedArray()
     {
         $provider = new DummySocialProvider();
         $mapping = $provider->configMapping();
@@ -30,7 +30,7 @@ class AbstractSocialProviderTest extends TestCase
     }
 
 
-    public function test_user_deletes_unverified_email_and_links_account()
+    public function testUserDeletesUnverifiedEmailAndLinksAccount()
     {
         $prov = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'sp_' . uniqid()]);
         $other = User::factory()->create();
@@ -55,7 +55,7 @@ class AbstractSocialProviderTest extends TestCase
             }
         };
 
-        $driverStub = new class ($remoteUser) {
+        $driverStub = new class($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -68,7 +68,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class ($driverStub) {
+        $factoryStub = new class($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -93,7 +93,7 @@ class AbstractSocialProviderTest extends TestCase
         $this->assertDatabaseHas('linked_accounts', ['external_id' => 'rid-3', 'user_id' => $localUser->id]);
     }
 
-    public function test_user_returns_account_user_when_account_exists_and_no_local_user()
+    public function testUserReturnsAccountUserWhenAccountExistsAndNoLocalUser()
     {
         $prov = SocialProvider::factory()->create(['code' => 'sp_' . uniqid()]);
         $user = User::factory()->create();
@@ -119,7 +119,7 @@ class AbstractSocialProviderTest extends TestCase
                 return null;
             }
         };
-        $driverStub = new class ($remoteUser) {
+        $driverStub = new class($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -132,7 +132,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class ($driverStub) {
+        $factoryStub = new class($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -152,7 +152,7 @@ class AbstractSocialProviderTest extends TestCase
         $this->assertEquals($user->id, $result->id);
     }
 
-    public function test_user_creates_new_user_and_email_and_account_when_auth_enabled()
+    public function testUserCreatesNewUserAndEmailAndAccountWhenAuthEnabled()
     {
         $prov = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'sp_' . uniqid()]);
 
@@ -172,7 +172,7 @@ class AbstractSocialProviderTest extends TestCase
                 return 'newnick';
             }
         };
-        $driverStub = new class ($remoteUser) {
+        $driverStub = new class($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -185,7 +185,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class ($driverStub) {
+        $factoryStub = new class($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -207,7 +207,7 @@ class AbstractSocialProviderTest extends TestCase
         $this->assertDatabaseHas('email_addresses', ['email' => 'newuser@example.com', 'user_id' => $result->id]);
     }
 
-    public function test_redirect_calls_socialite_and_returns_redirect_response()
+    public function testRedirectCallsSocialiteAndReturnsRedirectResponse()
     {
         $driverStub = new class {
             public function redirect()
@@ -215,7 +215,7 @@ class AbstractSocialProviderTest extends TestCase
                 return new RedirectResponse('https://example.test/redirect');
             }
         };
-        $factoryStub = new class ($driverStub) {
+        $factoryStub = new class($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -236,7 +236,7 @@ class AbstractSocialProviderTest extends TestCase
         $this->assertInstanceOf(RedirectResponse::class, $resp);
     }
 
-    public function test_user_returns_local_user_when_account_belongs_to_local_user()
+    public function testUserReturnsLocalUserWhenAccountBelongsToLocalUser()
     {
         $prov = SocialProvider::factory()->create(['code' => 'sp_' . uniqid()]);
         $user = User::factory()->create();
@@ -263,7 +263,7 @@ class AbstractSocialProviderTest extends TestCase
                 return null;
             }
         };
-        $driverStub = new class ($remoteUser) {
+        $driverStub = new class($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -276,7 +276,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class ($driverStub) {
+        $factoryStub = new class($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -296,7 +296,7 @@ class AbstractSocialProviderTest extends TestCase
         $this->assertEquals($user->id, $result->id);
     }
 
-    public function test_user_handles_email_present()
+    public function testUserHandlesEmailPresent()
     {
         $provider = new DummySocialProvider();
         $email = EmailAddress::factory()->create(['email' => 'test@example.com']);
@@ -326,7 +326,7 @@ class AbstractSocialProviderTest extends TestCase
                 };
             }
         };
-        $factoryStub = new class ($driverStub) {
+        $factoryStub = new class($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -345,7 +345,7 @@ class AbstractSocialProviderTest extends TestCase
         $this->assertEquals($user->id, $result->id);
     }
 
-    public function test_user_handles_missing_primary_email()
+    public function testUserHandlesMissingPrimaryEmail()
     {
         $provider = new DummySocialProvider();
         $user = User::factory()->create();
@@ -381,7 +381,7 @@ class AbstractSocialProviderTest extends TestCase
                 };
             }
         };
-        $factoryStub = new class ($driverStub) {
+        $factoryStub = new class($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -401,7 +401,7 @@ class AbstractSocialProviderTest extends TestCase
     }
 
     // Testing Exceptions
-    public function test_user_throws_if_account_exists_and_localUser_id_mismatch()
+    public function testUserThrowsIfAccountExistsAndLocalUserIdMismatch()
     {
         $provider = new DummySocialProvider();
         $localUser = User::factory()->create();
@@ -413,7 +413,7 @@ class AbstractSocialProviderTest extends TestCase
         $account->provider()->associate($prov);
         $account->save();
         // Patch Socialite driver so the provider->user() call doesn't fail due to unsupported driver
-        $remoteUser = new class ($account->external_id) {
+        $remoteUser = new class($account->external_id) {
             private $id;
 
             public function __construct($id)
@@ -436,7 +436,7 @@ class AbstractSocialProviderTest extends TestCase
                 return null;
             }
         };
-        $driverStub = new class ($remoteUser) {
+        $driverStub = new class($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -449,7 +449,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class ($driverStub) {
+        $factoryStub = new class($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -469,7 +469,7 @@ class AbstractSocialProviderTest extends TestCase
         $provider->user($localUser);
     }
 
-    public function test_user_throws_if_email_verified_and_associated_with_other_user()
+    public function testUserThrowsIfEmailVerifiedAndAssociatedWithOtherUser()
     {
         $prov = SocialProvider::factory()->create(['code' => 'sp_' . uniqid()]);
         $emailOwner = User::factory()->create();
@@ -494,7 +494,7 @@ class AbstractSocialProviderTest extends TestCase
             }
         };
 
-        $driverStub = new class ($remoteUser) {
+        $driverStub = new class($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -507,7 +507,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class ($driverStub) {
+        $factoryStub = new class($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -528,7 +528,7 @@ class AbstractSocialProviderTest extends TestCase
         $provider->user($localUser);
     }
 
-    public function test_user_throws_when_no_account_and_auth_disabled()
+    public function testUserThrowsWhenNoAccountAndAuthDisabled()
     {
         $prov = SocialProvider::factory()->create(['auth_enabled' => false, 'code' => 'sp_' . uniqid()]);
 
@@ -548,7 +548,7 @@ class AbstractSocialProviderTest extends TestCase
                 return null;
             }
         };
-        $driverStub = new class ($remoteUser) {
+        $driverStub = new class($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -561,7 +561,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class ($driverStub) {
+        $factoryStub = new class($driverStub) {
             private $d;
 
             public function __construct($d)

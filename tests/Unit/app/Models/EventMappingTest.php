@@ -10,7 +10,7 @@ class EventMappingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_can_instantiate_and_relations()
+    public function testCanInstantiateAndRelations()
     {
         $m = new EventMapping();
         $this->assertInstanceOf(EventMapping::class, $m);
