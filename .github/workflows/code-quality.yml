@@ -29,6 +29,7 @@ jobs:
         include:
           - php-versions: 8.5
             pre-release: true
+            operating-system: ubuntu-latest
     steps:
       - name: Force linux line endings
         run: |
