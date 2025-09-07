@@ -76,13 +76,17 @@ jobs:
         # We only care about PHP 8.4 (latest stable) for our code coverage report
         if: matrix.php-versions == 8.4
         uses: codecov/codecov-action@v5
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   build-and-push-docker:
     needs: code-quality
     uses: ./.github/workflows/build-and-push-docker.yml
     secrets: inherit
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
     # Only build docker images on pushes to master, develop and tags
     if:
       (
