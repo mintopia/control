@@ -24,7 +24,13 @@ jobs:
       matrix:
         operating-system: ['ubuntu-latest', 'macos-latest']
         # Run on current stable and next RC if available
-        php-versions: ['8.4', '8.5']
+        pre-release: [false]
+        stable: [false]
+        include:
+          - php-versions: 8.5
+            pre-release: true
+          - php-versions: 8.4
+            stable: true
     steps:
       - name: Force linux line endings
         run: |
@@ -60,11 +66,11 @@ jobs:
 
       - name: Install dependencies
         run: composer install --prefer-dist --dev
-        if: matrix.php-versions != 8.5
+        if: matrix.pre-release == false
 
       - name: Update dependencies (PHP 8.5 RC)
         run: composer update --dev
-        if: matrix.php-versions == 8.5
+        if: matrix.pre-release == true
 
       - name: Build Vite manifest
         run: |
@@ -79,7 +85,7 @@ jobs:
 
       - name: Upload coverage to Codecov
         # We only care about PHP 8.4 (latest stable) for our code coverage report
-        if: matrix.php-versions == 8.4
+        if: matrix.stable == true
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
