@@ -76,21 +76,15 @@ class WooCommerceProviderTest extends TestCase
         $provider = $this->getProvider();
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['foo' => 'bar']));
         $this->expectException(TicketProviderWebhookException::class);
-        $verifyWebhook = Closure::bind(function ($request) {
-            return $this->verifyWebhook($request);
-        }, $provider, get_class($provider));
-        $verifyWebhook($request);
+        $this->callProtected($provider, 'verifyWebhook', [$request]);
     }
 
     public function testVerifyWebhookThrowsIfNoSignature()
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['foo' => 'bar']));
-        $verifyWebhook = Closure::bind(function ($request) {
-            return $this->verifyWebhook($request);
-        }, $provider, get_class($provider));
         $this->expectException(TicketProviderWebhookException::class);
-        $verifyWebhook($request);
+        $this->callProtected($provider, 'verifyWebhook', [$request]);
     }
 
     public function testVerifyWebhookThrowsIfHashMismatch()
@@ -99,11 +93,8 @@ class WooCommerceProviderTest extends TestCase
         $request = Request::create('/webhook', 'POST', [], [], [], [
             'HTTP_X_WC_WEBHOOK_SIGNATURE' => base64_encode('invalid'),
         ], json_encode(['foo' => 'bar']));
-        $verifyWebhook = Closure::bind(function ($request) {
-            return $this->verifyWebhook($request);
-        }, $provider, get_class($provider));
         $this->expectException(TicketProviderWebhookException::class);
-        $verifyWebhook($request);
+        $this->callProtected($provider, 'verifyWebhook', [$request]);
     }
 
     public function testVerifyWebhookReturnsTrueOnValidSignature()
@@ -116,10 +107,7 @@ class WooCommerceProviderTest extends TestCase
         $request = Request::create('/webhook', 'POST', [], [], [], [
             'HTTP_X_WC_WEBHOOK_SIGNATURE' => $signature,
         ], $content);
-        $verifyWebhook = Closure::bind(function ($request) {
-            return $this->verifyWebhook($request);
-        }, $provider, get_class($provider));
-        $this->assertTrue($verifyWebhook($request));
+        $this->assertTrue($this->callProtected($provider, 'verifyWebhook', [$request]));
     }
 
     public function testProcessWebhookReturnsTrue()
@@ -176,10 +164,7 @@ class WooCommerceProviderTest extends TestCase
     {
         $provider = $this->getProvider();
         $data = (object)['id' => 'abc123'];
-        $getQrCode = Closure::bind(function ($data) {
-            return $this->getQrCode($data);
-        }, $provider, get_class($provider));
-        $url = $getQrCode($data);
+        $url = $this->callProtected($provider, 'getQrCode', [$data]);
         $this->assertStringContainsString('abc123', $url);
         $this->assertStringStartsWith('https://api.qrserver.com/v1/create-qr-code/', $url);
     }
@@ -200,10 +185,7 @@ class WooCommerceProviderTest extends TestCase
                 ]
             ]
         ];
-        $parseOrder = Closure::bind(function ($order) {
-            return $this->parseOrder($order);
-        }, $provider, get_class($provider));
-        $tickets = $parseOrder($order);
+        $tickets = $this->callProtected($provider, 'parseOrder', [$order]);
         $this->assertCount(2, $tickets);
         $this->assertArrayHasKey('1-10-1', $tickets);
         $this->assertArrayHasKey('1-10-2', $tickets);
@@ -213,7 +195,7 @@ class WooCommerceProviderTest extends TestCase
     public function testGetEventsReturnsExpectedArray()
     {
         $provider = $this->getProvider();
-        $provider->getProvider()->events = collect([
+        $provider->getProvider()->setRelation('events', collect([
             (object)[
                 'external_id' => 1,
                 'event' => (object)['name' => 'Event 1'],
@@ -222,7 +204,7 @@ class WooCommerceProviderTest extends TestCase
                 'external_id' => 2,
                 'event' => (object)['name' => 'Event 2'],
             ],
-        ]);
+        ]));
         $events = $provider->getEvents();
         $this->assertArrayHasKey(1, $events);
         $this->assertArrayHasKey(2, $events);
@@ -244,7 +226,7 @@ class WooCommerceProviderTest extends TestCase
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
         $dummy = $this->makeWooCommerceProvider($prov);
-        $this->assertInstanceOf(Client::class, $dummy->getClientPublic());
+        $this->assertInstanceOf(Client::class, $this->callProtected($dummy, 'getClient'));
     }
 
     public function testGetEvents()
@@ -252,7 +234,7 @@ class WooCommerceProviderTest extends TestCase
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
         $dummy = $this->makeWooCommerceProvider($prov);
-        $this->assertIsArray($dummy->getEventsPublic());
+        $this->assertIsArray($this->callProtected($dummy, 'getEvents'));
     }
 
     public function testGetType()
@@ -260,7 +242,7 @@ class WooCommerceProviderTest extends TestCase
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
         $dummy = $this->makeWooCommerceProvider($prov);
-        $this->assertInstanceOf(TicketType::class, $dummy->getTypePublic('type1'));
+        $this->assertInstanceOf(TicketType::class, $this->callProtected($dummy, 'getType', ['type1']));
     }
 
     public function testGetTickets()
@@ -268,7 +250,7 @@ class WooCommerceProviderTest extends TestCase
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
         $dummy = $this->makeWooCommerceProvider($prov);
-        $this->assertIsArray($dummy->getTicketsPublic());
+        $this->assertIsArray($this->callProtected($dummy, 'getTickets'));
     }
 
     public function testGetTicketTypes()
@@ -276,7 +258,7 @@ class WooCommerceProviderTest extends TestCase
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
         $dummy = $this->makeWooCommerceProvider($prov);
-        $this->assertIsArray($dummy->getTicketTypesPublic('evt-1'));
+        $this->assertIsArray($this->callProtected($dummy, 'getTicketTypes', ['evt-1']));
     }
 
     public function testProcessTicket()
@@ -293,7 +275,7 @@ class WooCommerceProviderTest extends TestCase
 
         $prov = $provider->getProvider();
         $dummy = $this->makeWooCommerceProvider($prov);
-        $this->assertNotNull($dummy->processTicketPublic($data));
+        $this->assertNotNull($this->callProtected($dummy, 'processTicket', [$data]));
     }
 
     public function testMakeTicket()
@@ -309,8 +291,8 @@ class WooCommerceProviderTest extends TestCase
         ];
 
         $prov = $provider->getProvider();
-        $dummy = new DummyWooCommerceProvider($prov);
-        $ticket = $dummy->makeTicketPublic(null, $data);
+        $dummy = $this->makeWooCommerceProvider($prov);
+        $ticket = $this->callProtected($dummy, 'makeTicket', [null, $data]);
         $this->assertInstanceOf(Ticket::class, $ticket);
         $this->assertEquals('t1', $ticket->external_id);
     }
@@ -337,11 +319,7 @@ class WooCommerceProviderTest extends TestCase
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
 
-        $getTickets = Closure::bind(function ($address = null) {
-            return $this->getTickets($address);
-        }, $provider, get_class($provider));
-
-        $tickets = $getTickets(null);
+        $tickets = $this->callProtected($provider, 'getTickets', [null]);
         $this->assertArrayHasKey('1-10-1', $tickets);
     }
 
@@ -374,11 +352,7 @@ class WooCommerceProviderTest extends TestCase
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
 
-        $getTickets = Closure::bind(function ($address = null) {
-            return $this->getTickets($address);
-        }, $provider, get_class($provider));
-
-        $tickets = $getTickets('match@example.test');
+        $tickets = $this->callProtected($provider, 'getTickets', ['match@example.test']);
         $this->assertArrayHasKey('1-10-1', $tickets);
         $this->assertArrayNotHasKey('2-11-1', $tickets);
     }
@@ -441,9 +415,9 @@ class WooCommerceProviderTest extends TestCase
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyWooCommerceProvider($prov);
+        $dummy = $this->makeWooCommerceProvider($prov);
         $tickets = [(object)['id' => 'w1', 'ticket_type_id' => 'type1', 'event_id' => 'evt1', 'email' => 'a@b.test', 'description' => 'd']];
-        $dummy->processTicketsPublic($tickets, 'a@b.test');
+        $this->callProtected($dummy, 'processTickets', [$tickets, 'a@b.test']);
         $this->assertTrue($dummy->processCalled);
     }
 
@@ -469,11 +443,7 @@ class WooCommerceProviderTest extends TestCase
         ];
 
         // Call protected processTickets on real provider via bound closure so we exercise parent logic
-        $processTickets = Closure::bind(function ($ticketData, $address, $user = null) {
-            return $this->processTickets($ticketData, $address, $user);
-        }, $provider, get_class($provider));
-
-        $processTickets(['5-50-1' => $parsed], 'a@b.test', null);
+        $this->callProtected($provider, 'processTickets', [['5-50-1' => $parsed], 'a@b.test', null]);
 
         $this->assertDatabaseHas('tickets', ['external_id' => '5-50-1']);
     }
@@ -511,23 +481,20 @@ class WooCommerceProviderTest extends TestCase
         $item = (object)['id' => 10, 'product_id' => 9999, 'name' => 'X'];
         $data = (object)['id' => '1-10-1', 'order' => $order, 'item' => $item, 'ticket_type_id' => 'no-type', 'event_id' => 'evtX', 'email' => 'a@b.com', 'description' => 'd'];
 
-        $makeTicket = Closure::bind(function ($user, $data) {
-            return $this->makeTicket($user, $data);
-        }, $provider, get_class($provider));
-        $this->assertNull($makeTicket(null, $data));
+        $this->assertNull($this->callProtected($provider, 'makeTicket', [null, $data]));
     }
 
     public function testMakeTicketUsesEmailToFindUser()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyWooCommerceProvider($prov);
+        $dummy = $this->makeWooCommerceProvider($prov);
 
         $user = User::factory()->create();
         EmailAddress::factory()->create(['email' => 'email-user@example.com', 'verified_at' => now(), 'user_id' => $user->id]);
 
         $data = (object)['id' => '2-20-1', 'ticket_type_id' => 'typeY', 'event_id' => 'evtY', 'email' => 'email-user@example.com', 'description' => 'd'];
-        $ticket = $dummy->makeTicketPublic(null, $data);
+        $ticket = $this->callProtected($dummy, 'makeTicket', [null, $data]);
         $this->assertInstanceOf(Ticket::class, $ticket);
         $this->assertEquals($user->id, $ticket->user_id);
     }
@@ -536,14 +503,14 @@ class WooCommerceProviderTest extends TestCase
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyWooCommerceProvider($prov);
+        $dummy = $this->makeWooCommerceProvider($prov);
 
         $userA = User::factory()->create();
         $userB = User::factory()->create();
         EmailAddress::factory()->create(['email' => 'userb@example.com', 'verified_at' => now(), 'user_id' => $userB->id]);
 
         $data = (object)['id' => '3-30-1', 'ticket_type_id' => 'typeZ', 'event_id' => 'evtZ', 'email' => 'userb@example.com', 'description' => 'd'];
-        $ticket = $dummy->makeTicketPublic($userA, $data);
+        $ticket = $this->callProtected($dummy, 'makeTicket', [$userA, $data]);
         $this->assertInstanceOf(Ticket::class, $ticket);
         $this->assertEquals($userA->id, $ticket->user_id);
     }

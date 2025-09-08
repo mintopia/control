@@ -83,7 +83,7 @@ class GenericTicketProviderTest extends TestCase
             'reference' => 'ref1',
         ];
 
-        $this->assertNull($provider->makeTicketPublic(null, $data));
+        $this->assertNull($this->callProtected($provider, 'makeTicket', [null, $data]));
     }
 
     public function testMakeTicketReturnsNullWhenTypeMissing()
@@ -101,7 +101,7 @@ class GenericTicketProviderTest extends TestCase
             'reference' => 'ref1',
         ];
 
-        $this->assertNull($provider->makeTicketPublic(null, $data));
+        $this->assertNull($this->callProtected($provider, 'makeTicket', [null, $data]));
     }
 
     public function testMakeTicketCreatesTicketWhenEventAndTypeExistAndLinksUser()
@@ -127,7 +127,7 @@ class GenericTicketProviderTest extends TestCase
             'reference' => 'ref2',
         ];
 
-        $ticket = $provider->makeTicketPublic(null, $data);
+        $ticket = $this->callProtected($provider, 'makeTicket', [null, $data]);
         $this->assertInstanceOf(Ticket::class, $ticket);
         $this->assertEquals('t2', $ticket->external_id);
         // reload relations/columns from DB to be sure associations persisted
@@ -166,7 +166,7 @@ class GenericTicketProviderTest extends TestCase
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
 
-        $tickets = $provider->getTicketsPublic(null);
+        $tickets = $this->callProtected($provider, 'getTickets', [null]);
         // Current implementation resets the page buffer each loop and returns the last page only
         $this->assertCount(1, $tickets);
         $this->assertArrayNotHasKey('1', $tickets);
@@ -364,7 +364,7 @@ class GenericTicketProviderTest extends TestCase
             'reference' => 'ref1',
         ];
 
-        $result = $provider->processTicketPublic($data);
+        $result = $this->callProtected($provider, 'processTicket', [$data]);
         $this->assertInstanceOf(Ticket::class, $result);
         $this->assertDatabaseHas('tickets', ['external_id' => 't1']);
     }
@@ -387,7 +387,7 @@ class GenericTicketProviderTest extends TestCase
             'email' => 'nobody@example.com',
         ];
 
-        $result = $provider->processTicketPublic($data);
+        $result = $this->callProtected($provider, 'processTicket', [$data]);
 
         // The DB row should have been deleted
         $this->assertDatabaseMissing('tickets', ['external_id' => 'del-me']);
@@ -406,7 +406,7 @@ class GenericTicketProviderTest extends TestCase
             'email' => 'foo@example.com',
         ];
 
-        $result = $provider->processTicketPublic($data);
+        $result = $this->callProtected($provider, 'processTicket', [$data]);
         $this->assertNull($result, 'processTicket should return null when the event mapping is missing');
     }
 
@@ -454,7 +454,7 @@ class GenericTicketProviderTest extends TestCase
             'email' => 'nobody@example.com',
         ];
 
-        $result = $provider->processTicketPublic($data);
+        $result = $this->callProtected($provider, 'processTicket', [$data]);
         $this->assertInstanceOf(Ticket::class, $result);
         $this->assertDatabaseHas('tickets', ['external_id' => 'keep-me']);
     }
@@ -501,6 +501,6 @@ class GenericTicketProviderTest extends TestCase
     public function testGetClient()
     {
         $provider = $this->createProvider();
-        $this->assertInstanceOf(Client::class, $provider->getClientPublic());
+        $this->assertInstanceOf(Client::class, $this->callProtected($provider, 'getClient'));
     }
 }

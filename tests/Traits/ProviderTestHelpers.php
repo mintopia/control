@@ -398,11 +398,29 @@ trait ProviderTestHelpers
         };
     }
 
+    /**
+     * Invoke a protected/private method on an object from tests.
+     *
+     * @param object $obj
+     * @param string $method
+     * @param array $args
+     * @return mixed
+     */
+    protected function callProtected(object $obj, string $method, array $args = [])
+    {
+        $ref = new ReflectionClass($obj);
+        $m = $ref->getMethod($method);
+        $m->setAccessible(true);
+        return $m->invokeArgs($obj, $args);
+    }
+
     protected function assertImplementsInterface(object $obj, string $interface)
     {
         $rc = new ReflectionClass($obj);
         \PHPUnit\Framework\Assert::assertTrue($rc->implementsInterface($interface));
     }
+
+
 
     /**
      * Return a dummy Discord provider compatible with the controller tests.

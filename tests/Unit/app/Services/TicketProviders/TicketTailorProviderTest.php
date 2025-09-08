@@ -71,21 +71,15 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->getProvider();
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['payload' => []]));
-        $verifyWebhook = Closure::bind(function ($request) {
-            return $this->verifyWebhook($request);
-        }, $provider, get_class($provider));
-        $this->assertTrue($verifyWebhook($request));
+        $this->assertTrue($this->callProtected($provider, 'verifyWebhook', [$request]));
     }
 
     public function testVerifyWebhookThrowsIfHeaderMissing()
     {
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['payload' => []]));
-        $verifyWebhook = Closure::bind(function ($request) {
-            return $this->verifyWebhook($request);
-        }, $provider, get_class($provider));
         try {
-            $verifyWebhook($request);
+            $this->callProtected($provider, 'verifyWebhook', [$request]);
             $this->fail('Expected TicketProviderWebhookException was not thrown');
         } catch (TicketProviderWebhookException $e) {
             $this->assertStringContainsString('Unable to retrieve', $e->getMessage());
@@ -98,11 +92,8 @@ class TicketTailorProviderTest extends TestCase
         $timestamp = now()->timestamp;
         $header = "t={$timestamp},v1=invalidsignature";
         $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], 'body');
-        $verifyWebhook = Closure::bind(function ($request) {
-            return $this->verifyWebhook($request);
-        }, $provider, get_class($provider));
         try {
-            $verifyWebhook($request);
+            $this->callProtected($provider, 'verifyWebhook', [$request]);
             $this->fail('Expected TicketProviderWebhookException was not thrown');
         } catch (TicketProviderWebhookException $e) {
             $this->assertStringContainsString('Hash does not match', $e->getMessage());
@@ -117,11 +108,8 @@ class TicketTailorProviderTest extends TestCase
         $signature = hash_hmac('sha256', $timestamp . $body, 'secret');
         $header = "t={$timestamp},v1={$signature}";
         $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], $body);
-        $verifyWebhook = Closure::bind(function ($request) {
-            return $this->verifyWebhook($request);
-        }, $provider, get_class($provider));
         try {
-            $verifyWebhook($request);
+            $this->callProtected($provider, 'verifyWebhook', [$request]);
             $this->fail('Expected TicketProviderWebhookException was not thrown');
         } catch (TicketProviderWebhookException $e) {
             $this->assertStringContainsString('more than 5 minutes', $e->getMessage());
@@ -136,10 +124,7 @@ class TicketTailorProviderTest extends TestCase
         $signature = hash_hmac('sha256', $timestamp . $body, 'secret');
         $header = "t={$timestamp},v1={$signature}";
         $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], $body);
-        $verifyWebhook = Closure::bind(function ($request) {
-            return $this->verifyWebhook($request);
-        }, $provider, get_class($provider));
-        $this->assertTrue($verifyWebhook($request));
+        $this->assertTrue($this->callProtected($provider, 'verifyWebhook', [$request]));
     }
 
     public function testProcessWebhookCallsVerifyAndProcessTicket()
@@ -183,10 +168,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->getProvider();
         $data = (object)['barcode' => 'abc123'];
-        $getQrCode = Closure::bind(function ($data) {
-            return $this->getQrCode($data);
-        }, $provider, get_class($provider));
-        $url = $getQrCode($data);
+        $url = $this->callProtected($provider, 'getQrCode', [$data]);
         $this->assertStringContainsString('abc123', $url);
         $this->assertStringStartsWith('https://api.qrserver.com/v1/create-qr-code/', $url);
     }
@@ -199,11 +181,11 @@ class TicketTailorProviderTest extends TestCase
 
         // No secret configured -> verifyWebhook should return true
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['payload' => []]));
-        $this->assertTrue($dummy->verifyWebhookPublic($request));
+        $this->assertTrue($this->callProtected($dummy, 'verifyWebhook', [$request]));
 
         // getQrCode via helper
         $data = (object)['barcode' => 'zz'];
-        $this->assertStringContainsString('zz', $dummy->getQrCodePublic($data));
+        $this->assertStringContainsString('zz', $this->callProtected($dummy, 'getQrCode', [$data]));
     }
 
     public function testMakeTicketReturnsNullWhenEventMissing()
@@ -220,7 +202,7 @@ class TicketTailorProviderTest extends TestCase
             'barcode' => 'b',
             'description' => 'desc',
         ];
-        $this->assertNull($dummy->makeTicketPublic(null, $data));
+        $this->assertNull($this->callProtected($dummy, 'makeTicket', [null, $data]));
     }
 
     public function testGetEventsReturnsCachedData()
@@ -368,7 +350,7 @@ class TicketTailorProviderTest extends TestCase
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
         $dummy = $this->makeTicketTailorProvider($prov);
-        $this->assertInstanceOf(Client::class, $dummy->getClientPublic());
+        $this->assertInstanceOf(Client::class, $this->callProtected($dummy, 'getClient'));
     }
 
     public function testGetType()
@@ -376,7 +358,7 @@ class TicketTailorProviderTest extends TestCase
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
         $dummy = $this->makeTicketTailorProvider($prov);
-        $this->assertInstanceOf(TicketType::class, $dummy->getTypePublic('type1'));
+        $this->assertInstanceOf(TicketType::class, $this->callProtected($dummy, 'getType', ['type1']));
     }
 
     public function testGetEvents()
@@ -384,7 +366,7 @@ class TicketTailorProviderTest extends TestCase
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
         $dummy = $this->makeTicketTailorProvider($prov);
-        $this->assertIsArray($dummy->getEventsPublic());
+        $this->assertIsArray($this->callProtected($dummy, 'getEvents'));
     }
 
     public function testGetTickets()
@@ -392,7 +374,7 @@ class TicketTailorProviderTest extends TestCase
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
         $dummy = $this->makeTicketTailorProvider($prov);
-        $this->assertIsArray($dummy->getTicketsPublic());
+        $this->assertIsArray($this->callProtected($dummy, 'getTickets'));
     }
 
     public function testGetTicketTypes()
@@ -400,14 +382,14 @@ class TicketTailorProviderTest extends TestCase
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
         $dummy = $this->makeTicketTailorProvider($prov);
-        $this->assertIsArray($dummy->getTicketTypesPublic('evt-1'));
+        $this->assertIsArray($this->callProtected($dummy, 'getTicketTypes', ['evt-1']));
     }
 
     public function testProcessTicket()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
         $data = (object)[
             'id' => 't1',
             'event_id' => 'evt1',
@@ -417,14 +399,14 @@ class TicketTailorProviderTest extends TestCase
             'reference' => 'ref1',
         ];
 
-        $this->assertNotNull($dummy->processTicketPublic($data));
+        $this->assertNotNull($this->callProtected($dummy, 'processTicket', [$data]));
     }
 
     public function testMakeTicket()
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
         $data = (object)[
             'id' => 't1',
             'event_id' => 'evt1',
@@ -434,7 +416,7 @@ class TicketTailorProviderTest extends TestCase
             'reference' => 'ref1',
         ];
 
-        $ticket = $dummy->makeTicketPublic(null, $data);
+        $ticket = $this->callProtected($dummy, 'makeTicket', [null, $data]);
         $this->assertInstanceOf(Ticket::class, $ticket);
         $this->assertEquals('t1', $ticket->external_id);
     }
@@ -465,11 +447,7 @@ class TicketTailorProviderTest extends TestCase
         $prop->setValue($provider, $client);
 
         // call the protected getTickets via bound closure
-        $getTickets = Closure::bind(function ($address = null) {
-            return $this->getTickets($address);
-        }, $provider, get_class($provider));
-
-        $tickets = $getTickets(null);
+        $tickets = $this->callProtected($provider, 'getTickets', [null]);
         $this->assertArrayHasKey('2', $tickets);
     }
 
@@ -497,11 +475,7 @@ class TicketTailorProviderTest extends TestCase
         $prop->setValue($provider, $client);
 
         // call the protected getTickets via bound closure with an address
-        $getTickets = Closure::bind(function ($address = null) {
-            return $this->getTickets($address);
-        }, $provider, get_class($provider));
-
-        $tickets = $getTickets('filter@example.com');
+        $tickets = $this->callProtected($provider, 'getTickets', ['filter@example.com']);
         $this->assertArrayHasKey('2', $tickets);
     }
 
@@ -564,7 +538,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
 
         $existing = Ticket::factory()->create([
             'ticket_provider_id' => $prov->id,
@@ -581,7 +555,7 @@ class TicketTailorProviderTest extends TestCase
             'description' => 'd',
         ];
 
-        $dummy->processTicketPublic($data);
+        $this->callProtected($dummy, 'processTicket', [$data]);
         $this->assertDatabaseMissing('tickets', ['external_id' => 'del-tt']);
     }
 
@@ -589,7 +563,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
 
         $data = (object)[
             'id' => 'px1',
@@ -601,14 +575,14 @@ class TicketTailorProviderTest extends TestCase
             'description' => 'desc',
         ];
 
-        $this->assertNull($dummy->processTicketPublic($data));
+        $this->assertNull($this->callProtected($dummy, 'processTicket', [$data]));
     }
 
     public function testProcessTicketLinksUserWhenEmailExists()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
 
         $user = User::factory()->create();
         EmailAddress::factory()->create(['email' => 'u@example.com', 'verified_at' => now(), 'user_id' => $user->id]);
@@ -628,7 +602,7 @@ class TicketTailorProviderTest extends TestCase
             'description' => 'd',
         ];
 
-        $ticket = $dummy->processTicketPublic($data);
+        $ticket = $this->callProtected($dummy, 'processTicket', [$data]);
         $this->assertInstanceOf(Ticket::class, $ticket);
         $this->assertEquals($user->id, $ticket->user_id);
     }
@@ -651,18 +625,14 @@ class TicketTailorProviderTest extends TestCase
         ];
 
         // call protected makeTicket on real provider so Dummy's auto-creation isn't used
-        $makeTicket = Closure::bind(function ($user, $data) {
-            return $this->makeTicket($user, $data);
-        }, $provider, get_class($provider));
-
-        $this->assertNull($makeTicket(null, $data));
+        $this->assertNull($this->callProtected($provider, 'makeTicket', [null, $data]));
     }
 
     public function testMakeTicketUsesEmailToFindUser()
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
 
         $user = User::factory()->create();
         EmailAddress::factory()->create(['email' => 'email-user@example.com', 'verified_at' => now(), 'user_id' => $user->id]);
@@ -681,7 +651,7 @@ class TicketTailorProviderTest extends TestCase
             'description' => 'd',
         ];
 
-        $ticket = $dummy->makeTicketPublic(null, $data);
+        $ticket = $this->callProtected($dummy, 'makeTicket', [null, $data]);
         $this->assertInstanceOf(Ticket::class, $ticket);
         $this->assertEquals($user->id, $ticket->user_id);
     }
@@ -690,7 +660,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
 
         $userA = User::factory()->create();
         $userB = User::factory()->create();
@@ -710,7 +680,7 @@ class TicketTailorProviderTest extends TestCase
             'description' => 'd',
         ];
 
-        $ticket = $dummy->makeTicketPublic($userA, $data);
+        $ticket = $this->callProtected($dummy, 'makeTicket', [$userA, $data]);
         $this->assertInstanceOf(Ticket::class, $ticket);
         $this->assertEquals($userA->id, $ticket->user_id);
     }
