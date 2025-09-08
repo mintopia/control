@@ -69,8 +69,6 @@ class GenericTicketProviderTest extends TestCase
         return $this->makeTicketProvider($ticketProvider);
     }
 
-    // --- Extra tests merged from GenericTicketProviderExtraTest.php ---
-
     public function testMakeTicketReturnsNullWhenEventMissing()
     {
         $provider = $this->createProvider();
@@ -217,7 +215,8 @@ class GenericTicketProviderTest extends TestCase
 
     public function testConfigMappingReturnsExpectedArray()
     {
-        $provider = $this->provider;
+        // Instantiate the provider directly to test the public configMapping method
+        $provider = new GenericTicketProvider();
         $mapping = $provider->configMapping();
 
         $this->assertArrayHasKey('apikey', $mapping);
@@ -229,7 +228,7 @@ class GenericTicketProviderTest extends TestCase
 
     public function testConfigMappingStructureAndValidation()
     {
-        $provider = $this->provider;
+        $provider = new GenericTicketProvider();
         $mapping = $provider->configMapping();
 
         // mapping entries should be objects with expected keys
@@ -249,7 +248,7 @@ class GenericTicketProviderTest extends TestCase
     public function testProcessWebhookCallsProcessTicketAndReturnsTrue()
     {
         $provider = $this->provider;
-        $mock = new class ($provider->provider) extends GenericTicketProvider {
+        $mock = new class($provider->provider) extends GenericTicketProvider {
             public function __construct(?TicketProvider $p = null)
             {
                 parent::__construct($p);
