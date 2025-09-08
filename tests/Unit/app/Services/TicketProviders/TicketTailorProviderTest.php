@@ -138,7 +138,7 @@ class TicketTailorProviderTest extends TestCase
         $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], $body);
 
         // Create an anonymous subclass that overrides processTicket to record invocation
-        $mock = new class($prov) extends TicketTailorProvider {
+        $mock = new class ($prov) extends TicketTailorProvider {
             public bool $wasCalled = false;
 
             public function __construct(?TicketProvider $provider = null)
@@ -258,7 +258,7 @@ class TicketTailorProviderTest extends TestCase
         ];
 
         // Use an anonymous provider subclass to override protected methods instead of mocking them
-        $mock = new class($prov) extends TicketTailorProvider {
+        $mock = new class ($prov) extends TicketTailorProvider {
             public array $stubTickets = [];
 
             public function __construct(?TicketProvider $provider = null)
@@ -322,7 +322,7 @@ class TicketTailorProviderTest extends TestCase
         ];
 
         // @var TicketTailorProvider $mock
-        $mock = new class($prov) extends TicketTailorProvider {
+        $mock = new class ($prov) extends TicketTailorProvider {
             public array $stubTickets = [];
 
             public function __construct(?TicketProvider $provider = null)

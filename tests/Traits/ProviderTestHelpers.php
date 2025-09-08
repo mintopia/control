@@ -18,7 +18,9 @@ trait ProviderTestHelpers
     protected function makeSocialProvider(): SocialProviderContract
     {
         return new class implements SocialProviderContract {
-            public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null) {}
+            public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null)
+            {
+            }
             public function configMapping(): array
             {
                 return ['client_id' => ['name' => 'Client ID', 'validation' => 'required|string', 'value' => 'dummy-client-id']];
@@ -40,7 +42,7 @@ trait ProviderTestHelpers
 
     protected function makeSocialProviderVariant(?\App\Models\SocialProvider $provider = null): \App\Services\SocialProviders\AbstractSocialProvider
     {
-        return new class($provider) extends \App\Services\SocialProviders\AbstractSocialProvider {
+        return new class ($provider) extends \App\Services\SocialProviders\AbstractSocialProvider {
             protected string $name = 'Dummy Social';
             protected string $code = 'dummy';
             protected string $socialiteProviderCode = 'dummy';
@@ -59,7 +61,7 @@ trait ProviderTestHelpers
 
     protected function makeTicketProvider(?TicketProvider $model = null): TicketProviderContract
     {
-        return new class($model) extends \App\Services\TicketProviders\GenericTicketProvider {
+        return new class ($model) extends \App\Services\TicketProviders\GenericTicketProvider {
             // expose provider model publicly for tests that inspect $provider->provider
             public ?\App\Models\TicketProvider $provider = null;
 
@@ -101,7 +103,7 @@ trait ProviderTestHelpers
      */
     protected function makeTicketTailorProvider(?\App\Models\TicketProvider $provider = null)
     {
-        return new class($provider) extends \App\Services\TicketProviders\TicketTailorProvider {
+        return new class ($provider) extends \App\Services\TicketProviders\TicketTailorProvider {
             public ?\App\Models\TicketProvider $provider = null;
 
             public function __construct(?\App\Models\TicketProvider $provider = null)
@@ -211,7 +213,7 @@ trait ProviderTestHelpers
      */
     protected function makeWooCommerceProvider(?\App\Models\TicketProvider $provider = null)
     {
-        return new class($provider) extends \App\Services\TicketProviders\WooCommerceProvider {
+        return new class ($provider) extends \App\Services\TicketProviders\WooCommerceProvider {
             public ?\App\Models\TicketProvider $provider = null;
             public ?bool $forceVerify = null;
             public ?array $parseOverride = null;
@@ -313,7 +315,7 @@ trait ProviderTestHelpers
             {
                 return [];
             }
-            
+
             // No public wrapper methods here; tests should use callProtected when
             // they need to invoke protected provider methods.
 
