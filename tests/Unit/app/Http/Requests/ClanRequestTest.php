@@ -59,7 +59,7 @@ class ClanRequestTest extends TestCase
             $called = true;
             $this->assertEquals('The clan name is not valid', $message);
         };
-        $closure('name', '!!!', $fail);
+        $closure->call($request, 'name', '!!!', $fail);
         $this->assertTrue($called, 'Fail closure was not called for empty permalink');
     }
 
@@ -93,8 +93,7 @@ class ClanRequestTest extends TestCase
             $called = true;
             $this->assertEquals('That clan name is not available', $message);
         };
-        $bound = Closure::bind($closure, $request, get_class($request));
-        $bound('name', $name, $fail);
+        $closure->call($request, 'name', $name, $fail);
         $this->assertTrue($called, 'Fail closure was not called for existing permalink');
     }
 
@@ -122,8 +121,7 @@ class ClanRequestTest extends TestCase
         $fail = function ($message) use (&$called) {
             $called = true;
         };
-        $bound = Closure::bind($closure, $request, get_class($request));
-        $bound('name', $name, $fail);
+        $closure->call($request, 'name', $name, $fail);
         $this->assertFalse($called, 'Fail closure was called when editing own clan');
     }
 

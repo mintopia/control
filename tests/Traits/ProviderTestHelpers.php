@@ -9,9 +9,12 @@ use App\Services\Contracts\SocialProviderContract;
 use App\Services\Contracts\TicketProviderContract;
 use Illuminate\Http\RedirectResponse;
 use ReflectionClass;
+use Tests\Traits\ReflectionHelpers;
 
 trait ProviderTestHelpers
 {
+    use ReflectionHelpers;
+
     protected function makeSocialProvider(): SocialProviderContract
     {
         return new class implements SocialProviderContract {
@@ -398,27 +401,7 @@ trait ProviderTestHelpers
         };
     }
 
-    /**
-     * Invoke a protected/private method on an object from tests.
-     *
-     * @param object $obj
-     * @param string $method
-     * @param array $args
-     * @return mixed
-     */
-    protected function callProtected(object $obj, string $method, array $args = [])
-    {
-        $ref = new ReflectionClass($obj);
-        $m = $ref->getMethod($method);
-        $m->setAccessible(true);
-        return $m->invokeArgs($obj, $args);
-    }
-
-    protected function assertImplementsInterface(object $obj, string $interface)
-    {
-        $rc = new ReflectionClass($obj);
-        \PHPUnit\Framework\Assert::assertTrue($rc->implementsInterface($interface));
-    }
+    // Reflection helpers are provided by the ReflectionHelpers trait.
 
 
 
