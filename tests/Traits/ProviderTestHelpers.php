@@ -15,9 +15,7 @@ trait ProviderTestHelpers
     protected function makeSocialProvider(): SocialProviderContract
     {
         return new class implements SocialProviderContract {
-            public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null)
-            {
-            }
+            public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null) {}
             public function configMapping(): array
             {
                 return ['client_id' => ['name' => 'Client ID', 'validation' => 'required|string', 'value' => 'dummy-client-id']];
@@ -39,7 +37,7 @@ trait ProviderTestHelpers
 
     protected function makeSocialProviderVariant(?\App\Models\SocialProvider $provider = null): \App\Services\SocialProviders\AbstractSocialProvider
     {
-        return new class ($provider) extends \App\Services\SocialProviders\AbstractSocialProvider {
+        return new class($provider) extends \App\Services\SocialProviders\AbstractSocialProvider {
             protected string $name = 'Dummy Social';
             protected string $code = 'dummy';
             protected string $socialiteProviderCode = 'dummy';
@@ -58,46 +56,59 @@ trait ProviderTestHelpers
 
     protected function makeTicketProvider(?TicketProvider $model = null): TicketProviderContract
     {
-        return new class ($model) extends \App\Services\TicketProviders\AbstractTicketProvider {
+        return new class($model) extends \App\Services\TicketProviders\GenericTicketProvider {
+            // expose provider model publicly for tests that inspect $provider->provider
+            public ?\App\Models\TicketProvider $provider = null;
+
             protected string $name = 'Dummy Provider';
             protected string $code = 'dummy';
+
             public function __construct($provider = null)
             {
                 parent::__construct($provider);
+                $this->provider = $provider;
             }
+
+            // public wrappers to access protected functionality from tests
+            public function makeTicketPublic(?\App\Models\User $user, object $data): ?\App\Models\Ticket
+            {
+                return $this->makeTicket($user, $data);
+            }
+
+            public function processTicketPublic(object $data): ?\App\Models\Ticket
+            {
+                return $this->processTicket($data);
+            }
+
+            public function getTicketsPublic(?string $address = null): array
+            {
+                return $this->getTickets($address);
+            }
+
+            public function getClientPublic(): \GuzzleHttp\Client
+            {
+                return $this->getClient();
+            }
+
             public function configMapping(): array
             {
                 return [
-                    'apikey' => [
+                    'apikey' => (object)[
                         'name' => 'API Key',
                         'validation' => 'required|string',
                         'value' => 'dummy-key',
+                        'encrypted' => true,
+                    ],
+                    'endpoint' => (object)[
+                        'name' => 'Base URL',
+                        'validation' => 'required|string',
                     ],
                 ];
             }
+
             public function install(): TicketProvider
             {
                 return new TicketProvider(['name' => 'Dummy', 'code' => 'dummy']);
-            }
-            public function processWebhook(\Illuminate\Http\Request $request): bool
-            {
-                return true;
-            }
-            public function syncTickets(string|\App\Models\EmailAddress $email): void
-            {
-                // dummy
-            }
-            public function syncAllTickets(?\Illuminate\Console\OutputStyle $output): void
-            {
-                // dummy
-            }
-            public function getEvents(): array
-            {
-                return ['evt1' => 'Event 1', 'evt2' => 'Event 2'];
-            }
-            public function getTicketTypes(string $eventExternalId): array
-            {
-                return ['type1' => 'VIP', 'type2' => 'Standard'];
             }
         };
     }

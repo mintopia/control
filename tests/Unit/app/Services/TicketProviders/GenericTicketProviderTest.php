@@ -21,11 +21,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use ReflectionClass;
 use Tests\TestCase;
-use Tests\Unit\app\Services\TicketProviders\HelperClasses\DummyGenericTicketProvider;
+use Tests\Traits\ProviderTestHelpers;
 
 class GenericTicketProviderTest extends TestCase
 {
     use RefreshDatabase;
+    use ProviderTestHelpers;
 
     protected $provider;
 
@@ -65,7 +66,7 @@ class GenericTicketProviderTest extends TestCase
             ]);
         }
         // Return a test helper that exposes protected methods
-        return new DummyGenericTicketProvider($ticketProvider);
+        return $this->makeTicketProvider($ticketProvider);
     }
 
     // --- Extra tests merged from GenericTicketProviderExtraTest.php ---
@@ -229,7 +230,7 @@ class GenericTicketProviderTest extends TestCase
     public function testProcessWebhookCallsProcessTicketAndReturnsTrue()
     {
         $provider = $this->provider;
-        $mock = new class ($provider->provider) extends GenericTicketProvider {
+        $mock = new class($provider->provider) extends GenericTicketProvider {
             public function __construct(?TicketProvider $p = null)
             {
                 parent::__construct($p);
