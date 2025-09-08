@@ -312,7 +312,7 @@ class WooCommerceProviderTest extends TestCase
 
         $mock = new MockHandler([$resp1, $resp2]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
 
         $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
@@ -345,7 +345,7 @@ class WooCommerceProviderTest extends TestCase
 
         $mock = new MockHandler([$resp1, $resp2]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
 
         $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
@@ -363,7 +363,7 @@ class WooCommerceProviderTest extends TestCase
 
         $existing = Ticket::factory()->create(['ticket_provider_id' => $prov->id, 'external_id' => '1-10-1']);
 
-        $mock = new class ($prov) extends WooCommerceProvider {
+        $mock = new class($prov) extends WooCommerceProvider {
             public function __construct(?TicketProvider $provider = null)
             {
                 parent::__construct($provider);
@@ -392,7 +392,7 @@ class WooCommerceProviderTest extends TestCase
         $ticket = Ticket::factory()->create(['ticket_provider_id' => $prov->id, 'external_id' => '1-10-1', 'user_id' => null]);
 
         // Create a provider subclass that returns the parsed ticket for the email
-        $mock = new class ($prov) extends WooCommerceProvider {
+        $mock = new class($prov) extends WooCommerceProvider {
             public function __construct(?TicketProvider $provider = null)
             {
                 parent::__construct($provider);
@@ -460,7 +460,7 @@ class WooCommerceProviderTest extends TestCase
         $resp2 = new Response(200, [], json_encode([]));
         $mock = new MockHandler([$resp1, $resp2]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
 
         $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');

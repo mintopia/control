@@ -438,7 +438,7 @@ class TicketTailorProviderTest extends TestCase
 
         $mock = new MockHandler([$resp1, $resp2]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
 
         // set client onto provider instance
         $ref = new ReflectionClass($provider);
@@ -466,7 +466,7 @@ class TicketTailorProviderTest extends TestCase
 
         $mock = new MockHandler([$resp1, $resp2]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
 
         // set client onto provider instance
         $ref = new ReflectionClass($provider);
@@ -494,7 +494,7 @@ class TicketTailorProviderTest extends TestCase
         ]));
         $mock = new MockHandler([$resp]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
 
         $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
@@ -522,7 +522,7 @@ class TicketTailorProviderTest extends TestCase
         ]));
         $mock = new MockHandler([$resp]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
 
         $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');

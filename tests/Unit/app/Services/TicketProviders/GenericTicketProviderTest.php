@@ -159,7 +159,7 @@ class GenericTicketProviderTest extends TestCase
 
         $mock = new MockHandler([$resp1, $resp2]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
 
         $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
@@ -191,7 +191,7 @@ class GenericTicketProviderTest extends TestCase
 
         $mock = new MockHandler([$resp]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
         $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
@@ -230,7 +230,7 @@ class GenericTicketProviderTest extends TestCase
     public function testProcessWebhookCallsProcessTicketAndReturnsTrue()
     {
         $provider = $this->provider;
-        $mock = new class ($provider->provider) extends GenericTicketProvider {
+        $mock = new class($provider->provider) extends GenericTicketProvider {
             public function __construct(?TicketProvider $p = null)
             {
                 parent::__construct($p);
@@ -273,7 +273,7 @@ class GenericTicketProviderTest extends TestCase
         ]));
         $mock = new MockHandler([$mockResponse]);
         $handlerStack = HandlerStack::create($mock);
-        $guzzleClient = new Client(['handler' => $handlerStack]);
+        $guzzleClient = new Client(['handler' => $handlerStack, 'base_uri' => 'https://api.example.test']);
 
         // Set the Guzzle client onto the provider (bypass visibility via reflection)
         $providerReflection = new ReflectionClass($provider);
@@ -318,7 +318,7 @@ class GenericTicketProviderTest extends TestCase
         ]));
         $mock = new MockHandler([$mockResponse]);
         $handlerStack = HandlerStack::create($mock);
-        $guzzleClient = new Client(['handler' => $handlerStack]);
+        $guzzleClient = new Client(['handler' => $handlerStack, 'base_uri' => 'https://api.example.test']);
 
         $providerReflection = new ReflectionClass($provider);
         $clientProp = $providerReflection->getProperty('client');
@@ -426,7 +426,7 @@ class GenericTicketProviderTest extends TestCase
 
         $mock = new MockHandler([$resp]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
         $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
@@ -484,7 +484,7 @@ class GenericTicketProviderTest extends TestCase
 
         $mock = new MockHandler([$resp]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
         $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);

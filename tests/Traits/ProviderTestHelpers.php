@@ -153,6 +153,56 @@ trait ProviderTestHelpers
                     $tm->save();
                 }
             }
+
+            // Stub network-fetching methods so tests that invoke protected methods
+            // via reflection do not perform real HTTP calls.
+            public function getEvents(): array
+            {
+                return [];
+            }
+
+            protected function getTickets(?string $address = null): array
+            {
+                return [];
+            }
+
+            public function getTicketTypes(string $eventExternalId): array
+            {
+                return [];
+            }
+
+            protected function getType(string $externalId): ?\App\Models\TicketType
+            {
+                $type = parent::getType($externalId);
+                if ($type) {
+                    return $type;
+                }
+                // Create an Event and TicketType with mapping for the provider
+                $event = \App\Models\Event::factory()->create();
+                $type = \App\Models\TicketType::factory()->for($event)->create();
+                $tm = new \App\Models\TicketTypeMapping();
+                $tm->provider()->associate($this->provider);
+                $tm->type()->associate($type);
+                $tm->external_id = $externalId;
+                $tm->save();
+                return $type;
+            }
+
+            protected function makeTicket(?\App\Models\User $user, object $data): ?\App\Models\Ticket
+            {
+                $this->ensureEventAndTypeExist($data);
+                if (!isset($data->barcode)) {
+                    $data->barcode = $data->id ?? ($data->reference ?? null);
+                }
+                return parent::makeTicket($user, $data);
+            }
+
+            protected function processTicket(object $data): ?\App\Models\Ticket
+            {
+                // Ensure event/type exist so parent::processTicket can find them
+                $this->ensureEventAndTypeExist($data);
+                return parent::processTicket($data);
+            }
         };
     }
 
@@ -176,6 +226,88 @@ trait ProviderTestHelpers
 
             // Tests should use ReflectionHelpers::callProtected to invoke protected
             // provider methods (for example: $this->callProtected($dummy, 'getTickets', [$addr])).
+
+            // Provide protected overrides so tests that relied on public wrapper
+            // behaviour still work when invoking protected methods via
+            // ReflectionHelpers::callProtected.
+            protected function getTickets(?string $address = null): array
+            {
+                return [(object)['id' => 'w1', 'status' => 'valid', 'email' => $address ?? 'a@b.test', 'event_id' => 'evt-1', 'ticket_type_id' => 'type-1', 'barcode' => 'b1', 'description' => 'WC ticket']];
+            }
+
+            protected function processTickets(array $ticketData, string $address, ?\App\Models\User $user = null): void
+            {
+                foreach ($ticketData as $d) {
+                    $this->ensureEventAndTypeExist($d);
+                }
+                // mark for assertions in tests
+                $this->processCalled = true;
+            }
+
+            protected function makeTicket(?\App\Models\User $user, object $data): ?\App\Models\Ticket
+            {
+                $this->ensureEventAndTypeExist($data);
+                if (!isset($data->reference)) {
+                    $data->reference = $data->id ?? 'ref';
+                }
+                if (!isset($data->order)) {
+                    $data->order = (object)['billing' => (object)['email' => $data->email ?? 'a@b.test'], 'id' => explode('-', $data->id)[0] ?? 1, 'status' => 'completed'];
+                }
+                if (!isset($data->item)) {
+                    $data->item = (object)['id' => explode('-', $data->id)[1] ?? 10, 'name' => $data->description ?? 'Test ticket'];
+                }
+
+                // Ensure barcode exists for getQrCode
+                if (!isset($data->barcode)) {
+                    $data->barcode = $data->id ?? ($data->reference ?? null);
+                }
+                // Call parent so email lookup and associations run as in production
+                return parent::makeTicket($user, $data);
+            }
+
+            protected function processTicket(object $parsed): ?\App\Models\Ticket
+            {
+                if (!isset($parsed->order)) {
+                    $parsed->order = (object)['billing' => (object)['email' => $parsed->email ?? 'a@b.test'], 'id' => explode('-', $parsed->id)[0] ?? '1', 'status' => 'completed'];
+                }
+                if (!isset($parsed->item)) {
+                    $parsed->item = (object)['id' => explode('-', $parsed->id)[1] ?? '10', 'name' => $parsed->description ?? 'Item'];
+                }
+                $this->ensureEventAndTypeExist($parsed);
+                return $this->makeTicket(null, $parsed);
+            }
+
+            protected function parseOrder(object $order): array
+            {
+                if ($this->parseOverride !== null) {
+                    return $this->parseOverride;
+                }
+                return parent::parseOrder($order);
+            }
+
+            protected function verifyWebhook(\Illuminate\Http\Request $request): bool
+            {
+                if ($this->forceVerify !== null) {
+                    return $this->forceVerify;
+                }
+                return parent::verifyWebhook($request);
+            }
+
+            protected function getType(string $externalId): ?\App\Models\TicketType
+            {
+                $type = parent::getType($externalId);
+                if ($type) {
+                    return $type;
+                }
+                $event = \App\Models\Event::factory()->create();
+                $type = \App\Models\TicketType::factory()->for($event)->create();
+                $tm = new \App\Models\TicketTypeMapping();
+                $tm->provider()->associate($this->provider);
+                $tm->type()->associate($type);
+                $tm->external_id = $externalId;
+                $tm->save();
+                return $type;
+            }
 
             // No public wrapper methods here; tests should use callProtected when
             // they need to invoke protected provider methods.
