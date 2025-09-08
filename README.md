@@ -1,4 +1,5 @@
 # Control
+[![codecov](https://codecov.io/github/mintopia/control/graph/badge.svg?token=UH1Y6FBHQW)](https://codecov.io/github/mintopia/control)
 
 ## Introduction
 
@@ -158,6 +159,8 @@ service:
 It's an open source project and I'm happy to accept pull requests. I am terrible at UI and UX, which is why this is
 entirely using server-side rendering. If someone wants to use Vue/Laravel Livewire - please go ahead!
 
+We have 100% test coverage, and would like to remain that way.
+
 ## Roadmap
 
 The following features are on the roadmap:
@@ -165,8 +168,7 @@ The following features are on the roadmap:
  - Better UI/UX. I'm currently using [tabler.io](https://tabler.io) and entirely server-side rendering.
  - Full-featured API. There's a basic one to support seating plan refreshes. I need to refactor it and improve it.
  - UI Customisation from Admin Pages. Currently the UI colours, branding is all either in the `.env` or compiled into the CSS at build.
- - Unit Tests. This was very rapidly developed, I'm sorry!
- - PHPCS and PHPStan. Should be aiming for PSR-12 and level 8 PHPStan.
+ - Static Analysis - We should be aiming for level 8 in PHPStan.
 
 ## Thanks
 
