@@ -11,15 +11,16 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\RedirectResponse;
 use Laravel\Socialite\Contracts\Factory as SocialiteFactoryContract;
 use Tests\TestCase;
-use Tests\Unit\app\Services\SocialProviders\HelperClasses\DummySocialProvider;
+use Tests\Traits\ProviderTestHelpers;
 
 class AbstractSocialProviderTest extends TestCase
 {
     use RefreshDatabase;
+    use ProviderTestHelpers;
 
     public function testConfigMappingReturnsExpectedArray()
     {
-        $provider = new DummySocialProvider();
+        $provider = $this->makeSocialProviderVariant();
         $mapping = $provider->configMapping();
 
         $this->assertArrayHasKey('client_id', $mapping);
@@ -83,7 +84,7 @@ class AbstractSocialProviderTest extends TestCase
         };
         $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
-        $provider = new DummySocialProvider($prov);
+        $provider = $this->makeSocialProviderVariant($prov);
         $result = $provider->user($localUser);
         $this->assertInstanceOf(User::class, $result);
         $this->assertEquals($localUser->id, $result->id);
@@ -147,7 +148,7 @@ class AbstractSocialProviderTest extends TestCase
         };
         $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
-        $provider = new DummySocialProvider($prov);
+        $provider = $this->makeSocialProviderVariant($prov);
         $result = $provider->user(null);
         $this->assertEquals($user->id, $result->id);
     }
@@ -200,7 +201,7 @@ class AbstractSocialProviderTest extends TestCase
         };
         $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
-        $provider = new DummySocialProvider($prov);
+        $provider = $this->makeSocialProviderVariant($prov);
         $result = $provider->user(null);
         $this->assertInstanceOf(User::class, $result);
         $this->assertDatabaseHas('linked_accounts', ['external_id' => 'rid-6', 'user_id' => $result->id]);
@@ -231,7 +232,7 @@ class AbstractSocialProviderTest extends TestCase
         $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
         $prov = SocialProvider::factory()->create(['code' => 'sp_' . uniqid()]);
-        $provider = new DummySocialProvider($prov);
+        $provider = $this->makeSocialProviderVariant($prov);
         $resp = $provider->redirect();
         $this->assertInstanceOf(RedirectResponse::class, $resp);
     }
@@ -291,20 +292,20 @@ class AbstractSocialProviderTest extends TestCase
         };
         $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
-        $provider = new DummySocialProvider($prov);
+        $provider = $this->makeSocialProviderVariant($prov);
         $result = $provider->user($user);
         $this->assertEquals($user->id, $result->id);
     }
 
     public function testUserHandlesEmailPresent()
     {
-        $provider = new DummySocialProvider();
+        $provider = $this->makeSocialProviderVariant();
         $email = EmailAddress::factory()->create(['email' => 'test@example.com']);
         $user = User::factory()->create();
         $email->user()->associate($user);
         $email->save();
         $prov = SocialProvider::factory()->create(['code' => 'sp_' . uniqid()]);
-        $provider = new DummySocialProvider($prov);
+        $provider = $this->makeSocialProviderVariant($prov);
         $driverStub = new class {
             public function user()
             {
@@ -347,14 +348,14 @@ class AbstractSocialProviderTest extends TestCase
 
     public function testUserHandlesMissingPrimaryEmail()
     {
-        $provider = new DummySocialProvider();
+        $provider = $this->makeSocialProviderVariant();
         $user = User::factory()->create();
         // Remove primaryEmail association
         $user->primary_email_id = null;
         $user->save();
         $this->assertNull($user->primaryEmail);
         $prov = SocialProvider::factory()->create();
-        $provider = new DummySocialProvider($prov);
+        $provider = $this->makeSocialProviderVariant($prov);
         // Remove primaryEmail association
         $user->primary_email_id = null;
         $user->save();
@@ -403,13 +404,13 @@ class AbstractSocialProviderTest extends TestCase
     // Testing Exceptions
     public function testUserThrowsIfAccountExistsAndLocalUserIdMismatch()
     {
-        $provider = new DummySocialProvider();
+        $provider = $this->makeSocialProviderVariant();
         $localUser = User::factory()->create();
         $otherUser = User::factory()->create();
         $account = LinkedAccount::factory()->create(['user_id' => $otherUser->id, 'external_id' => 'dummy_' . uniqid(),]);
         // Set up provider and account directly
         $prov = SocialProvider::factory()->create(['code' => 'sp_' . uniqid()]);
-        $provider = new DummySocialProvider($prov);
+        $provider = $this->makeSocialProviderVariant($prov);
         $account->provider()->associate($prov);
         $account->save();
         // Patch Socialite driver so the provider->user() call doesn't fail due to unsupported driver
@@ -522,7 +523,7 @@ class AbstractSocialProviderTest extends TestCase
         };
         $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
-        $provider = new DummySocialProvider($prov);
+        $provider = $this->makeSocialProviderVariant($prov);
         $this->expectException(SocialProviderException::class);
         $this->expectExceptionMessage('Email is already associated with another user');
         $provider->user($localUser);
@@ -576,7 +577,7 @@ class AbstractSocialProviderTest extends TestCase
         };
         $this->app->instance(SocialiteFactoryContract::class, $factoryStub);
 
-        $provider = new DummySocialProvider($prov);
+        $provider = $this->makeSocialProviderVariant($prov);
         $this->expectException(SocialProviderException::class);
         $this->expectExceptionMessage('Unable to login with this account');
         $provider->user(null);

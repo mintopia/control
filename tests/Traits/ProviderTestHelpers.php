@@ -15,7 +15,9 @@ trait ProviderTestHelpers
     protected function makeSocialProvider(): SocialProviderContract
     {
         return new class implements SocialProviderContract {
-            public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null) {}
+            public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null)
+            {
+            }
             public function configMapping(): array
             {
                 return ['client_id' => ['name' => 'Client ID', 'validation' => 'required|string', 'value' => 'dummy-client-id']];
@@ -35,9 +37,28 @@ trait ProviderTestHelpers
         };
     }
 
+    protected function makeSocialProviderVariant(?\App\Models\SocialProvider $provider = null): \App\Services\SocialProviders\AbstractSocialProvider
+    {
+        return new class ($provider) extends \App\Services\SocialProviders\AbstractSocialProvider {
+            protected string $name = 'Dummy Social';
+            protected string $code = 'dummy';
+            protected string $socialiteProviderCode = 'dummy';
+
+            public function __construct(?\App\Models\SocialProvider $provider = null, ?string $redirectUrl = null)
+            {
+                parent::__construct($provider, $redirectUrl);
+            }
+
+            protected function updateAccount(\App\Models\LinkedAccount $account, $remoteUser): void
+            {
+                // intentionally empty for tests
+            }
+        };
+    }
+
     protected function makeTicketProvider(?TicketProvider $model = null): TicketProviderContract
     {
-        return new class($model) extends \App\Services\TicketProviders\AbstractTicketProvider {
+        return new class ($model) extends \App\Services\TicketProviders\AbstractTicketProvider {
             protected string $name = 'Dummy Provider';
             protected string $code = 'dummy';
             public function __construct($provider = null)

@@ -19,7 +19,7 @@ class AbstractTicketProviderTest extends TestCase
 
     protected function makeProviderInstance($providerModel = null, array $overrides = [])
     {
-        $class = new class($providerModel) extends AbstractTicketProvider {
+        $class = new class ($providerModel) extends AbstractTicketProvider {
             protected string $name = 'Dummy Provider';
             protected string $code = 'dummy';
 

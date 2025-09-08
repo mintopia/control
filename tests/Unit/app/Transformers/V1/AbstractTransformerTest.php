@@ -38,7 +38,8 @@ class AbstractTransformerTest extends TestCase
     {
         $user = $this->createMock(User::class);
         $user->method('hasRole')->willReturn(false);
-        $transformer = new class($user) extends AbstractTransformer {};
+        $transformer = new class ($user) extends AbstractTransformer {
+        };
         $object = ($this->makeObject)();
         $data = ['foo' => 'bar'];
         $result = $this->invokeMethod($transformer, 'modifyForUser', [$data, $object]);
@@ -49,7 +50,7 @@ class AbstractTransformerTest extends TestCase
     {
         $user = $this->createMock(User::class);
         $user->method('hasRole')->with('admin')->willReturn(true);
-        $transformer = new class($user) extends AbstractTransformer {
+        $transformer = new class ($user) extends AbstractTransformer {
             protected function getAdminProperties(object $object): array
             {
                 return ['admin' => true];
@@ -68,7 +69,7 @@ class AbstractTransformerTest extends TestCase
 
     public function testGetAdminPropertiesDirectly()
     {
-        $transformer = new class($this->createMock(User::class)) extends AbstractTransformer {
+        $transformer = new class ($this->createMock(User::class)) extends AbstractTransformer {
             protected function getAdminProperties(object $object): array
             {
                 return ['admin' => true];
@@ -86,7 +87,8 @@ class AbstractTransformerTest extends TestCase
     // Manually added test to check getAdminPropertiesPublic
     public function testGetAdminPropertiesReturnsEmptyList()
     {
-        $transformer = new class($this->createMock(User::class)) extends AbstractTransformer {};
+        $transformer = new class ($this->createMock(User::class)) extends AbstractTransformer {
+        };
         $object = ($this->makeObject)();
 
         $m = new ReflectionMethod(AbstractTransformer::class, 'getAdminProperties');
