@@ -4,14 +4,19 @@ namespace Tests\Unit\app\Services\Contracts;
 
 use App\Models\EmailAddress;
 use App\Models\TicketProvider;
+use App\Services\Contracts\TicketProviderContract;
 use Illuminate\Http\Request;
+use Tests\Traits\ProviderTestHelpers;
 use Tests\TestCase;
 
 class TicketProviderContractTest extends TestCase
 {
+    use ProviderTestHelpers;
+
     public function testConfigMappingReturnsExpectedArray()
     {
-        $provider = new HelperClasses\DummyTicketProvider();
+        $provider = $this->makeTicketProvider();
+        $this->assertImplementsInterface($provider, TicketProviderContract::class);
         $mapping = $provider->configMapping();
         $this->assertArrayHasKey('apikey', $mapping);
         $this->assertEquals('API Key', $mapping['apikey']['name']);
@@ -20,7 +25,7 @@ class TicketProviderContractTest extends TestCase
 
     public function testInstallReturnsTicketProviderInstance()
     {
-        $provider = new HelperClasses\DummyTicketProvider();
+        $provider = $this->makeTicketProvider();
         $ticketProvider = $provider->install();
         $this->assertInstanceOf(TicketProvider::class, $ticketProvider);
         $this->assertEquals('Dummy', $ticketProvider->name);
@@ -29,14 +34,14 @@ class TicketProviderContractTest extends TestCase
 
     public function testProcessWebhookReturnsTrue()
     {
-        $provider = new HelperClasses\DummyTicketProvider();
+        $provider = $this->makeTicketProvider();
         $request = Request::create('/webhook', 'POST');
         $this->assertTrue($provider->processWebhook($request));
     }
 
     public function testSyncTicketsAcceptsStringAndEmailaddress()
     {
-        $provider = new HelperClasses\DummyTicketProvider();
+        $provider = $this->makeTicketProvider();
         $email = 'test@example.com';
         $emailAddress = new EmailAddress(['email' => $email]);
         $this->assertNull($provider->syncTickets($email));
@@ -45,7 +50,7 @@ class TicketProviderContractTest extends TestCase
 
     public function testGetEventsReturnsExpectedArray()
     {
-        $provider = new HelperClasses\DummyTicketProvider();
+        $provider = $this->makeTicketProvider();
         $events = $provider->getEvents();
         $this->assertArrayHasKey('evt1', $events);
         $this->assertEquals('Event 1', $events['evt1']);
@@ -53,7 +58,7 @@ class TicketProviderContractTest extends TestCase
 
     public function testGetTicketTypesReturnsExpectedArray()
     {
-        $provider = new HelperClasses\DummyTicketProvider();
+        $provider = $this->makeTicketProvider();
         $types = $provider->getTicketTypes('evt1');
         $this->assertArrayHasKey('type1', $types);
         $this->assertEquals('VIP', $types['type1']);
@@ -61,7 +66,7 @@ class TicketProviderContractTest extends TestCase
 
     public function testSyncAllTicketsAcceptsNullOutput()
     {
-        $provider = new HelperClasses\DummyTicketProvider();
+        $provider = $this->makeTicketProvider();
         $this->assertNull($provider->syncAllTickets(null));
     }
 }

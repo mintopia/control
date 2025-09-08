@@ -4,14 +4,21 @@ namespace Tests\Unit\app\Services\Contracts;
 
 use App\Models\SocialProvider;
 use App\Models\User;
+use App\Services\Contracts\SocialProviderContract;
 use Illuminate\Http\RedirectResponse;
+use Tests\Traits\ProviderTestHelpers;
+use ReflectionClass;
 use Tests\TestCase;
 
 class SocialProviderContractTest extends TestCase
 {
+    use ProviderTestHelpers;
+
     public function testConfigMappingReturnsExpectedArray()
     {
-        $provider = new HelperClasses\DummySocialProvider();
+        $provider = $this->makeSocialProvider();
+        $rc = new ReflectionClass($provider);
+        $this->assertTrue($rc->implementsInterface(SocialProviderContract::class));
         $mapping = $provider->configMapping();
         $this->assertArrayHasKey('client_id', $mapping);
         $this->assertEquals('Client ID', $mapping['client_id']['name']);
@@ -20,7 +27,7 @@ class SocialProviderContractTest extends TestCase
 
     public function testInstallReturnsSocialProviderInstance()
     {
-        $provider = new HelperClasses\DummySocialProvider();
+        $provider = $this->makeSocialProvider();
         $socialProvider = $provider->install();
         $this->assertInstanceOf(SocialProvider::class, $socialProvider);
         $this->assertEquals('Dummy', $socialProvider->name);
@@ -29,7 +36,7 @@ class SocialProviderContractTest extends TestCase
 
     public function testRedirectReturnsRedirectResponse()
     {
-        $provider = new HelperClasses\DummySocialProvider();
+        $provider = $this->makeSocialProvider();
         $response = $provider->redirect();
         $this->assertInstanceOf(RedirectResponse::class, $response);
         $this->assertEquals('/dummy-redirect', $response->getTargetUrl());
@@ -37,7 +44,7 @@ class SocialProviderContractTest extends TestCase
 
     public function testUserReturnsUserInstance()
     {
-        $provider = new HelperClasses\DummySocialProvider();
+        $provider = $this->makeSocialProvider();
         $user = $provider->user();
         $this->assertInstanceOf(User::class, $user);
         $this->assertEquals('Dummy User', $user->name);
