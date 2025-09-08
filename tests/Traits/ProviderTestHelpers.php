@@ -309,6 +309,11 @@ trait ProviderTestHelpers
                 return $type;
             }
 
+            public function getTicketTypes(string $eventExternalId): array
+            {
+                return [];
+            }
+            
             // No public wrapper methods here; tests should use callProtected when
             // they need to invoke protected provider methods.
 
