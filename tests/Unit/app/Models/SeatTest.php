@@ -211,7 +211,7 @@ class SeatTest extends TestCase
         $this->assertTrue($seat->canPick($user));
     }
 
-    public function testCanPickWithMultipleTickets_firstNonMatchingReturnsFalse()
+    public function testCanPickWithMultipleTicketsFirstNonMatchingReturnsFalse()
     {
         $seat = new Seat();
         $seat->disabled = 0;
