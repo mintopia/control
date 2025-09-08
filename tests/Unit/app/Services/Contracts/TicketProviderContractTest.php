@@ -34,8 +34,10 @@ class TicketProviderContractTest extends TestCase
         parent::setUp();
 
         // Reusable lightweight stub provider used by multiple tests to avoid duplication.
-        $this->basicProviderStub = new class(null) implements TicketProviderContract {
-            public function __construct(?TicketProvider $provider = null) {}
+        $this->basicProviderStub = new class (null) implements TicketProviderContract {
+            public function __construct(?TicketProvider $provider = null)
+            {
+            }
             public function configMapping(): array
             {
                 return [];
@@ -96,8 +98,10 @@ class TicketProviderContractTest extends TestCase
     public function testGetEventsReturnsExpectedArray()
     {
         // Create a small stub provider that implements the contract and returns expected events
-        $provider = new class(null) implements TicketProviderContract {
-            public function __construct(?TicketProvider $provider = null) {}
+        $provider = new class (null) implements TicketProviderContract {
+            public function __construct(?TicketProvider $provider = null)
+            {
+            }
             public function configMapping(): array
             {
                 return [];
@@ -136,8 +140,10 @@ class TicketProviderContractTest extends TestCase
     public function testGetTicketTypesReturnsExpectedArray()
     {
         // Create a stub provider returning expected types
-        $provider = new class(null) implements TicketProviderContract {
-            public function __construct(?TicketProvider $provider = null) {}
+        $provider = new class (null) implements TicketProviderContract {
+            public function __construct(?TicketProvider $provider = null)
+            {
+            }
             public function configMapping(): array
             {
                 return [];
