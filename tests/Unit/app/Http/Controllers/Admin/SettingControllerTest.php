@@ -40,27 +40,75 @@ class SettingControllerTest extends TestCase
 
     public function testAddDiscordCallsProvider()
     {
-        $prov = SocialProvider::create(['code' => 'discord', 'name' => 'Discord', 'provider_class' => '\\Tests\\Unit\\app\\Http\\Controllers\\Admin\\HelperClasses\\DummyDiscordProvider', 'supports_auth' => 0, 'enabled' => 1, 'auth_enabled' => 0, 'can_be_renamed' => 0]);
-
         $c = new SettingController();
+
+        // ensure a provider row exists and bind a container entry so getProvider() will resolve our test double
+        $bindingKey = 'tests.discord.provider';
+        $prov = SocialProvider::firstOrCreate([
+            'code' => 'discord',
+        ], [
+            'name' => 'Discord',
+            'provider_class' => $bindingKey,
+            'supports_auth' => 0,
+            'enabled' => 1,
+            'auth_enabled' => 0,
+            'can_be_renamed' => 0
+        ]);
+
+        // Bind a key in the container so SocialProvider::getProvider will resolve our dummy provider
+        $this->app->bind($bindingKey, function ($app, $params) {
+            $inst = $this->makeDummyDiscordProvider();
+            // Container may pass constructor params as an array or positional; handle both
+            if (is_array($params)) {
+                $inst->provider = $params['provider'] ?? ($params[0] ?? null);
+                $inst->redirectUrl = $params['redirectUrl'] ?? ($params[1] ?? null);
+            }
+            return $inst;
+        });
+
+        // Call the real controller method which will resolve our bound provider
         $result = $c->addDiscord();
         $this->assertEquals('added', $result);
     }
 
     public function testGetDiscordProviderReturnsConfiguredProvider()
     {
-        // create the discord provider record and point it at our dummy provider
-        SocialProvider::create(['code' => 'discord', 'name' => 'Discord', 'provider_class' => '\\Tests\\Unit\\app\\Http\\Controllers\\Admin\\HelperClasses\\DummyDiscordProvider', 'supports_auth' => 0, 'enabled' => 1, 'auth_enabled' => 0, 'can_be_renamed' => 0]);
+        // create the discord provider record
+        SocialProvider::firstOrCreate([
+            'code' => 'discord',
+        ], [
+            'name' => 'Discord',
+            'provider_class' => '', // Not needed, provider will be stubbed
+            'supports_auth' => 0,
+            'enabled' => 1,
+            'auth_enabled' => 0,
+            'can_be_renamed' => 0
+        ]);
 
         // register the named route used by provider construction
         $this->app['router']->get('/discord-return', fn() => '')->name('admin.settings.discord_return');
 
+        $bindingKey = 'tests.discord.provider';
+        $this->app->bind($bindingKey, function ($app, $params) {
+            $inst = $this->makeDummyDiscordProvider();
+            if (is_array($params)) {
+                $inst->provider = $params['provider'] ?? ($params[0] ?? null);
+                $inst->redirectUrl = $params['redirectUrl'] ?? ($params[1] ?? null);
+            }
+            return $inst;
+        });
+
+        // Ensure the DB row contains the provider_class binding key we bound above
+        $row = SocialProvider::whereCode('discord')->first();
+        $row->provider_class = $bindingKey;
+        $row->save();
+
+        // Use TestableSettingController to call the protected getDiscordProvider()
         $controller = new \Tests\Unit\app\Http\Controllers\Admin\HelperClasses\TestableSettingController();
         $provider = $controller->callGetDiscordProvider();
 
         $this->assertIsObject($provider);
         $this->assertInstanceOf(SocialProviderContract::class, $provider);
-        // provider should have been constructed with the redirect URL we registered
         $this->assertEquals(route('admin.settings.discord_return'), $provider->redirectUrl ?? null);
     }
 
