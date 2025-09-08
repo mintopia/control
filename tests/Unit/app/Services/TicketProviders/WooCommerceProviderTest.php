@@ -388,7 +388,7 @@ class WooCommerceProviderTest extends TestCase
 
         $existing = Ticket::factory()->create(['ticket_provider_id' => $prov->id, 'external_id' => '1-10-1']);
 
-        $mock = new class($prov) extends WooCommerceProvider {
+        $mock = new class ($prov) extends WooCommerceProvider {
             public function __construct(?TicketProvider $provider = null)
             {
                 parent::__construct($provider);
@@ -417,7 +417,7 @@ class WooCommerceProviderTest extends TestCase
         $ticket = Ticket::factory()->create(['ticket_provider_id' => $prov->id, 'external_id' => '1-10-1', 'user_id' => null]);
 
         // Create a provider subclass that returns the parsed ticket for the email
-        $mock = new class($prov) extends WooCommerceProvider {
+        $mock = new class ($prov) extends WooCommerceProvider {
             public function __construct(?TicketProvider $provider = null)
             {
                 parent::__construct($provider);

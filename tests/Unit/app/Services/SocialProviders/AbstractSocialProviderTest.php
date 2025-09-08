@@ -55,7 +55,7 @@ class AbstractSocialProviderTest extends TestCase
             }
         };
 
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -68,7 +68,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -119,7 +119,7 @@ class AbstractSocialProviderTest extends TestCase
                 return null;
             }
         };
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -132,7 +132,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -172,7 +172,7 @@ class AbstractSocialProviderTest extends TestCase
                 return 'newnick';
             }
         };
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -185,7 +185,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -215,7 +215,7 @@ class AbstractSocialProviderTest extends TestCase
                 return new RedirectResponse('https://example.test/redirect');
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -263,7 +263,7 @@ class AbstractSocialProviderTest extends TestCase
                 return null;
             }
         };
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -276,7 +276,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -326,7 +326,7 @@ class AbstractSocialProviderTest extends TestCase
                 };
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -381,7 +381,7 @@ class AbstractSocialProviderTest extends TestCase
                 };
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -413,7 +413,7 @@ class AbstractSocialProviderTest extends TestCase
         $account->provider()->associate($prov);
         $account->save();
         // Patch Socialite driver so the provider->user() call doesn't fail due to unsupported driver
-        $remoteUser = new class($account->external_id) {
+        $remoteUser = new class ($account->external_id) {
             private $id;
 
             public function __construct($id)
@@ -436,7 +436,7 @@ class AbstractSocialProviderTest extends TestCase
                 return null;
             }
         };
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -449,7 +449,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -494,7 +494,7 @@ class AbstractSocialProviderTest extends TestCase
             }
         };
 
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -507,7 +507,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
 
             public function __construct($d)
@@ -548,7 +548,7 @@ class AbstractSocialProviderTest extends TestCase
                 return null;
             }
         };
-        $driverStub = new class($remoteUser) {
+        $driverStub = new class ($remoteUser) {
             public $remote;
 
             public function __construct($r)
@@ -561,7 +561,7 @@ class AbstractSocialProviderTest extends TestCase
                 return $this->remote;
             }
         };
-        $factoryStub = new class($driverStub) {
+        $factoryStub = new class ($driverStub) {
             private $d;
 
             public function __construct($d)
