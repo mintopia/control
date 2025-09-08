@@ -20,10 +20,16 @@ class RoleTest extends TestCase
         $this->assertInstanceOf(BelongsToMany::class, $role->users());
     }
 
-    public function testProtectedToStringNameReturnsCode()
+    public function testProtectedFunctionToStringName()
     {
-        $dummy = new HelperClasses\DummyRole();
-        $dummy->code = 'test-code';
-        $this->assertEquals('test-code', $dummy->toStringNamePublic());
+        $role = new Role();
+        $role->code = 'ROLE-1';
+
+        $reflection = new \ReflectionClass($role);
+        $method = $reflection->getMethod('toStringName');
+        $method->setAccessible(true);
+        $result = $method->invoke($role);
+
+        $this->assertEquals($role->code, $result);
     }
 }

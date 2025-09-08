@@ -69,13 +69,16 @@ class ClanTest extends TestCase
         $this->assertMatchesRegularExpression('/^[A-Z0-9]{4}-[A-Z0-9]{4}$/i', $code);
     }
 
-    public function testToStringNameViaDummyExposesName()
+    public function testProtectedFunctionToStringName()
     {
-        // Use a tiny dummy subclass to expose the protected toStringName method
-        $dummy = new HelperClasses\DummyClan();
-        $dummy->name = 'My Clan Name';
-        $this->assertEquals('My Clan Name', $dummy->exposeToString());
+        $clan = new Clan();
+        $clan->name = 'My Clan Name';
+
+        $reflection = new \ReflectionClass($clan);
+        $method = $reflection->getMethod('toStringName');
+        $method->setAccessible(true);
+        $result = $method->invoke($clan);
+
+        $this->assertEquals($clan->name, $result);
     }
 }
-
-// Small helper class inside this test file to expose protected toStringName()
