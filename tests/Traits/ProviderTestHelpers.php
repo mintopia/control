@@ -118,4 +118,84 @@ trait ProviderTestHelpers
         $rc = new ReflectionClass($obj);
         \PHPUnit\Framework\Assert::assertTrue($rc->implementsInterface($interface));
     }
+
+    /**
+     * Return a dummy Discord provider compatible with the controller tests.
+     */
+    protected function makeDummyDiscordProvider(): \App\Services\Contracts\SocialProviderContract
+    {
+        return new class implements \App\Services\Contracts\SocialProviderContract {
+            public $provider;
+            public $redirectUrl;
+            public function __construct($provider = null, $redirectUrl = null)
+            {
+                $this->provider = $provider;
+                $this->redirectUrl = $redirectUrl;
+            }
+            public function configMapping(): array
+            {
+                return [];
+            }
+            public function install(): \App\Models\SocialProvider
+            {
+                return $this->provider;
+            }
+            public function redirect(): \Illuminate\Http\RedirectResponse
+            {
+                return redirect()->to('/');
+            }
+            public function user(?\App\Models\User $localUser = null)
+            {
+                return null;
+            }
+            public function addBotToServer()
+            {
+                return 'added';
+            }
+            public function bot()
+            {
+                return (object)['accessTokenResponseBody' => ['guild' => ['name' => 'G1', 'id' => '123']]];
+            }
+        };
+    }
+
+    /**
+     * Return a provider that throws from bot() for failure testing.
+     */
+    protected function makeThrowingDiscordProvider(): \App\Services\Contracts\SocialProviderContract
+    {
+        return new class implements \App\Services\Contracts\SocialProviderContract {
+            public $provider;
+            public $redirectUrl;
+            public function __construct($provider = null, $redirectUrl = null)
+            {
+                $this->provider = $provider;
+                $this->redirectUrl = $redirectUrl;
+            }
+            public function configMapping(): array
+            {
+                return [];
+            }
+            public function install(): \App\Models\SocialProvider
+            {
+                return $this->provider;
+            }
+            public function redirect(): \Illuminate\Http\RedirectResponse
+            {
+                return redirect()->to('/');
+            }
+            public function user(?\App\Models\User $localUser = null)
+            {
+                return null;
+            }
+            public function bot()
+            {
+                throw new \Exception('fail');
+            }
+            public function addBotToServer()
+            {
+                return 'added';
+            }
+        };
+    }
 }

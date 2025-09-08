@@ -12,12 +12,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\RedirectResponse;
 use Tests\TestCase;
 use Throwable;
+use Tests\Traits\ProviderTestHelpers;
 
 // A small test-specific subclass to expose the protected getDiscordProvider for unit testing
 
 class SettingControllerTest extends TestCase
 {
     use RefreshDatabase;
+    use ProviderTestHelpers;
 
     public function testIndexReturnsView()
     {
@@ -38,7 +40,7 @@ class SettingControllerTest extends TestCase
 
     public function testAddDiscordCallsProvider()
     {
-        $prov = SocialProvider::create(['code' => 'discord', 'name' => 'Discord', 'provider_class' => HelperClasses\DummyDiscordProvider::class, 'supports_auth' => 0, 'enabled' => 1, 'auth_enabled' => 0, 'can_be_renamed' => 0]);
+        $prov = SocialProvider::create(['code' => 'discord', 'name' => 'Discord', 'provider_class' => '\\Tests\\Unit\\app\\Http\\Controllers\\Admin\\HelperClasses\\DummyDiscordProvider', 'supports_auth' => 0, 'enabled' => 1, 'auth_enabled' => 0, 'can_be_renamed' => 0]);
 
         $c = new SettingController();
         $result = $c->addDiscord();
@@ -48,12 +50,12 @@ class SettingControllerTest extends TestCase
     public function testGetDiscordProviderReturnsConfiguredProvider()
     {
         // create the discord provider record and point it at our dummy provider
-        SocialProvider::create(['code' => 'discord', 'name' => 'Discord', 'provider_class' => HelperClasses\DummyDiscordProvider::class, 'supports_auth' => 0, 'enabled' => 1, 'auth_enabled' => 0, 'can_be_renamed' => 0]);
+        SocialProvider::create(['code' => 'discord', 'name' => 'Discord', 'provider_class' => '\\Tests\\Unit\\app\\Http\\Controllers\\Admin\\HelperClasses\\DummyDiscordProvider', 'supports_auth' => 0, 'enabled' => 1, 'auth_enabled' => 0, 'can_be_renamed' => 0]);
 
         // register the named route used by provider construction
         $this->app['router']->get('/discord-return', fn() => '')->name('admin.settings.discord_return');
 
-        $controller = new HelperClasses\TestableSettingController();
+        $controller = new \Tests\Unit\app\Http\Controllers\Admin\HelperClasses\TestableSettingController();
         $provider = $controller->callGetDiscordProvider();
 
         $this->assertIsObject($provider);
@@ -73,7 +75,7 @@ class SettingControllerTest extends TestCase
         $this->app['router']->get('/settings', fn() => '')->name('admin.settings.index');
 
         // Create a controller partial mock that stubs getDiscordProvider() to return our dummy provider
-        $dummy = new HelperClasses\DummyDiscordProvider();
+        $dummy = $this->makeDummyDiscordProvider();
         $controllerMock = $this->getMockBuilder(SettingController::class)
             ->onlyMethods(['getDiscordProvider'])
             ->getMock();
@@ -90,7 +92,7 @@ class SettingControllerTest extends TestCase
         $this->assertEquals('123', Setting::whereCode('discord.server.id')->first()->value, 'discord.server.id should be set to guild id');
 
         // Now simulate failure by using a controller mock that returns a throwing provider
-        $throwing = new HelperClasses\ThrowingDiscordProvider();
+        $throwing = $this->makeThrowingDiscordProvider();
         $controllerMockFail = $this->getMockBuilder(SettingController::class)
             ->onlyMethods(['getDiscordProvider'])
             ->getMock();
