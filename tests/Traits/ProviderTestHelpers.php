@@ -256,6 +256,148 @@ trait ProviderTestHelpers
         };
     }
 
+    /**
+     * Return a test double for WooCommerceProvider similar to DummyWooCommerceProvider helper.
+     */
+    protected function makeWooCommerceProvider(?\App\Models\TicketProvider $provider = null)
+    {
+        return new class ($provider) extends \App\Services\TicketProviders\WooCommerceProvider {
+            public ?\App\Models\TicketProvider $provider = null;
+            public ?bool $forceVerify = null;
+            public ?array $parseOverride = null;
+            public bool $processCalled = false;
+            public $processOverride = null;
+
+            public function __construct(?\App\Models\TicketProvider $provider = null)
+            {
+                parent::__construct($provider);
+                $this->provider = $provider;
+            }
+
+            public function getTicketsPublic(?string $address = null): array
+            {
+                return [(object)['id' => 'w1', 'status' => 'valid', 'email' => $address ?? 'a@b.test', 'event_id' => 'evt-1', 'ticket_type_id' => 'type-1', 'barcode' => 'b1', 'description' => 'WC ticket']];
+            }
+
+            public function processTicketsPublic(array $ticketData, string $address, ?\App\Models\User $user = null): void
+            {
+                foreach ($ticketData as $d) {
+                    $this->ensureEventAndTypeExist($d);
+                }
+                $this->processTickets($ticketData, $address, $user);
+            }
+
+            public function makeTicketPublic(?\App\Models\User $user, object $data): ?\App\Models\Ticket
+            {
+                $this->ensureEventAndTypeExist($data);
+                if (!isset($data->reference)) {
+                    $data->reference = $data->id ?? 'ref';
+                }
+                if (!isset($data->order)) {
+                    $data->order = (object)['billing' => (object)['email' => $data->email ?? 'a@b.test'], 'id' => explode('-', $data->id)[0] ?? 1, 'status' => 'completed'];
+                }
+                if (!isset($data->item)) {
+                    $data->item = (object)['id' => explode('-', $data->id)[1] ?? 10, 'name' => $data->description ?? 'Test ticket'];
+                }
+                return $this->makeTicket($user, $data);
+            }
+
+            public function processTicketPublic(object $parsed): ?\App\Models\Ticket
+            {
+                if (!isset($parsed->order)) {
+                    $parsed->order = (object)['billing' => (object)['email' => $parsed->email ?? 'a@b.test'], 'id' => explode('-', $parsed->id)[0] ?? '1', 'status' => 'completed'];
+                }
+                if (!isset($parsed->item)) {
+                    $parsed->item = (object)['id' => explode('-', $parsed->id)[1] ?? '10', 'name' => $parsed->description ?? 'Item'];
+                }
+                $this->ensureEventAndTypeExist($parsed);
+                return $this->makeTicket(null, $parsed);
+            }
+
+            public function parseOrderPublic(object $order): array
+            {
+                if ($this->parseOverride !== null) {
+                    return $this->parseOverride;
+                }
+                return $this->parseOrder($order);
+            }
+
+            public function verifyWebhookPublic(\Illuminate\Http\Request $request): bool
+            {
+                if ($this->forceVerify !== null) {
+                    return $this->forceVerify;
+                }
+                return $this->verifyWebhook($request);
+            }
+
+            public function getQrCodePublic(object $data): string
+            {
+                return $this->getQrCode($data);
+            }
+
+            public function getClientPublic(): \GuzzleHttp\Client
+            {
+                return $this->getClient();
+            }
+
+            public function getTypePublic(string $externalId)
+            {
+                $type = $this->getType($externalId);
+                if ($type) {
+                    return $type;
+                }
+                $event = \App\Models\Event::factory()->create();
+                $type = \App\Models\TicketType::factory()->for($event)->create();
+                $tm = new \App\Models\TicketTypeMapping();
+                $tm->provider()->associate($this->provider);
+                $tm->type()->associate($type);
+                $tm->external_id = $externalId;
+                $tm->save();
+                return $type;
+            }
+
+            public function getEventsPublic(): array
+            {
+                return ['evt1' => 'Event 1'];
+            }
+
+            public function getTicketTypesPublic(string $eventExternalId): array
+            {
+                return ['type1' => 'General Admission'];
+            }
+
+            protected function ensureEventAndTypeExist(object $data): void
+            {
+                $id = (string)($data->event_id ?? '');
+                if ($id === '' || (strpos($id, 'evt') === false && strpos($id, 'EVT') === false && !is_numeric($id))) {
+                    return;
+                }
+                $event = \App\Models\Event::whereHas('mappings', function ($q) use ($data) {
+                    $q->whereTicketProviderId($this->provider->id)->whereExternalId($data->event_id);
+                })->first();
+                if (!$event) {
+                    $event = \App\Models\Event::factory()->create();
+                    $em = new \App\Models\EventMapping();
+                    $em->provider()->associate($this->provider);
+                    $em->event()->associate($event);
+                    $em->external_id = $data->event_id;
+                    $em->save();
+                }
+                $type = \App\Models\TicketType::whereHas('mappings', function ($q) use ($data) {
+                    $q->whereTicketProviderId($this->provider->id)->whereExternalId($data->ticket_type_id);
+                })->first();
+                if (!$type) {
+                    $type = \App\Models\TicketType::factory()->for($event)->create();
+                    $tm = new \App\Models\TicketTypeMapping();
+                    $tm->provider()->associate($this->provider);
+                    $tm->type()->associate($type);
+                    $tm->external_id = $data->ticket_type_id;
+                    $tm->save();
+                }
+            }
+        };
+    }
+
     protected function assertImplementsInterface(object $obj, string $interface)
     {
         $rc = new ReflectionClass($obj);

@@ -23,11 +23,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use ReflectionClass;
 use Tests\TestCase;
-use Tests\Unit\app\Services\TicketProviders\HelperClasses\DummyWooCommerceProvider;
+use Tests\Traits\ProviderTestHelpers;
 
 class WooCommerceProviderTest extends TestCase
 {
     use RefreshDatabase;
+    use ProviderTestHelpers;
 
     protected function getProvider(array $settings = [])
     {
@@ -152,8 +153,8 @@ class WooCommerceProviderTest extends TestCase
         // sanity check that the secret is available from the DB
         $this->assertEquals($secret, $providerModel->getSetting('webhook_secret'));
 
-        // Use DummyWooCommerceProvider to override protected behaviour
-        $dummy = new DummyWooCommerceProvider($providerModel);
+        // Use test factory to override protected behaviour
+        $dummy = $this->makeWooCommerceProvider($providerModel);
         $dummy->forceVerify = true;
         $dummy->parseOverride = [
             (object)[
@@ -242,7 +243,7 @@ class WooCommerceProviderTest extends TestCase
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyWooCommerceProvider($prov);
+        $dummy = $this->makeWooCommerceProvider($prov);
         $this->assertInstanceOf(Client::class, $dummy->getClientPublic());
     }
 
@@ -250,7 +251,7 @@ class WooCommerceProviderTest extends TestCase
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyWooCommerceProvider($prov);
+        $dummy = $this->makeWooCommerceProvider($prov);
         $this->assertIsArray($dummy->getEventsPublic());
     }
 
@@ -258,7 +259,7 @@ class WooCommerceProviderTest extends TestCase
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyWooCommerceProvider($prov);
+        $dummy = $this->makeWooCommerceProvider($prov);
         $this->assertInstanceOf(TicketType::class, $dummy->getTypePublic('type1'));
     }
 
@@ -266,7 +267,7 @@ class WooCommerceProviderTest extends TestCase
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyWooCommerceProvider($prov);
+        $dummy = $this->makeWooCommerceProvider($prov);
         $this->assertIsArray($dummy->getTicketsPublic());
     }
 
@@ -274,7 +275,7 @@ class WooCommerceProviderTest extends TestCase
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyWooCommerceProvider($prov);
+        $dummy = $this->makeWooCommerceProvider($prov);
         $this->assertIsArray($dummy->getTicketTypesPublic('evt-1'));
     }
 
@@ -291,7 +292,7 @@ class WooCommerceProviderTest extends TestCase
         ];
 
         $prov = $provider->getProvider();
-        $dummy = new DummyWooCommerceProvider($prov);
+        $dummy = $this->makeWooCommerceProvider($prov);
         $this->assertNotNull($dummy->processTicketPublic($data));
     }
 
