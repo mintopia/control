@@ -36,24 +36,32 @@ class AbstractTransformerExtraTest extends TestCase
             {
                 // Simulate admin precedence logic
                 if ($this->user && method_exists($this->user, 'hasRole') && $this->user->hasRole('admin')) {
-                    return array_merge([
+                    // Merge admin-provided properties into the original data so admin values overwrite originals
+                    return array_merge($data, [
                         'foo' => 'baz',
                         'extra' => 'value_from_admin',
                         'id' => $object->id,
                         'created_at' => $object->created_at->toIso8601String(),
                         'updated_at' => $object->updated_at->toIso8601String(),
-                    ], $data);
+                    ]);
                 }
                 return $data;
             }
         };
     }
+
     public function testModifyForUserAdminPropertyPrecedence()
     {
         $user = $this->createMock(User::class);
         $user->method('hasRole')->with('admin')->willReturn(true);
 
         $transformer = $this->precedenceTransformer;
+
+        // Inject the configured user mock into the transformer so modifyForUser sees admin role.
+        $reflectionTransformer = new ReflectionClass($transformer);
+        $prop = $reflectionTransformer->getProperty('user');
+        $prop->setAccessible(true);
+        $prop->setValue($transformer, $user);
 
         $object = new class {
             public $id = 2;
