@@ -23,10 +23,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use ReflectionClass;
 use Tests\TestCase;
+use Tests\Traits\ProviderTestHelpers;
 
 class TicketTailorProviderTest extends TestCase
 {
     use RefreshDatabase;
+    use ProviderTestHelpers;
 
     protected function getProvider(array $settings = [])
     {
@@ -193,7 +195,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
 
         // No secret configured -> verifyWebhook should return true
         $request = Request::create('/webhook', 'POST', [], [], [], [], json_encode(['payload' => []]));
@@ -208,7 +210,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->getProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
 
         $data = (object)[
             'id' => 'x1',
@@ -365,7 +367,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
         $this->assertInstanceOf(Client::class, $dummy->getClientPublic());
     }
 
@@ -373,7 +375,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
         $this->assertInstanceOf(TicketType::class, $dummy->getTypePublic('type1'));
     }
 
@@ -381,7 +383,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
         $this->assertIsArray($dummy->getEventsPublic());
     }
 
@@ -389,7 +391,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
         $this->assertIsArray($dummy->getTicketsPublic());
     }
 
@@ -397,7 +399,7 @@ class TicketTailorProviderTest extends TestCase
     {
         $provider = $this->createProvider();
         $prov = $provider->getProvider();
-        $dummy = new DummyTicketTailorProvider($prov);
+        $dummy = $this->makeTicketTailorProvider($prov);
         $this->assertIsArray($dummy->getTicketTypesPublic('evt-1'));
     }
 
