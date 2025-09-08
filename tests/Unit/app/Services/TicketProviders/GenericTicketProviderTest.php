@@ -227,6 +227,25 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals('Base URL', $mapping['endpoint']->name);
     }
 
+    public function testConfigMappingStructureAndValidation()
+    {
+        $provider = $this->provider;
+        $mapping = $provider->configMapping();
+
+        // mapping entries should be objects with expected keys
+        $this->assertIsArray($mapping);
+        $this->assertIsObject($mapping['apikey']);
+        $this->assertIsObject($mapping['endpoint']);
+
+        // validation strings must match the implementation contract
+        $this->assertEquals('required|string', $mapping['apikey']->validation);
+        $this->assertEquals('required|string', $mapping['endpoint']->validation);
+
+        // apikey should be marked encrypted; endpoint should not have an encrypted flag
+        $this->assertTrue(isset($mapping['apikey']->encrypted) && $mapping['apikey']->encrypted);
+        $this->assertFalse(property_exists($mapping['endpoint'], 'encrypted'));
+    }
+
     public function testProcessWebhookCallsProcessTicketAndReturnsTrue()
     {
         $provider = $this->provider;
