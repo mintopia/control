@@ -91,7 +91,7 @@ class TicketTailorProviderTest extends TestCase
         $provider = $this->getProvider(['webhook_secret' => 'secret']);
         $timestamp = now()->timestamp;
         $header = "t={$timestamp},v1=invalidsignature";
-        $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], 'body');
+        $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_TICKETTAILOR_WEBHOOK_SIGNATURE' => $header], 'body');
         try {
             $this->callProtected($provider, 'verifyWebhook', [$request]);
             $this->fail('Expected TicketProviderWebhookException was not thrown');
@@ -107,7 +107,7 @@ class TicketTailorProviderTest extends TestCase
         $body = 'body';
         $signature = hash_hmac('sha256', $timestamp . $body, 'secret');
         $header = "t={$timestamp},v1={$signature}";
-        $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], $body);
+        $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_TICKETTAILOR_WEBHOOK_SIGNATURE' => $header], $body);
         try {
             $this->callProtected($provider, 'verifyWebhook', [$request]);
             $this->fail('Expected TicketProviderWebhookException was not thrown');
@@ -123,7 +123,7 @@ class TicketTailorProviderTest extends TestCase
         $body = 'body';
         $signature = hash_hmac('sha256', $timestamp . $body, 'secret');
         $header = "t={$timestamp},v1={$signature}";
-        $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], $body);
+        $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_TICKETTAILOR_WEBHOOK_SIGNATURE' => $header], $body);
         $this->assertTrue($this->callProtected($provider, 'verifyWebhook', [$request]));
     }
 
@@ -138,7 +138,7 @@ class TicketTailorProviderTest extends TestCase
         $request = Request::create('/webhook', 'POST', [], [], [], ['HTTP_tickettailor-webhook-signature' => $header], $body);
 
         // Create an anonymous subclass that overrides processTicket to record invocation
-        $mock = new class ($prov) extends TicketTailorProvider {
+        $mock = new class($prov) extends TicketTailorProvider {
             public bool $wasCalled = false;
 
             public function __construct(?TicketProvider $provider = null)
@@ -258,7 +258,7 @@ class TicketTailorProviderTest extends TestCase
         ];
 
         // Use an anonymous provider subclass to override protected methods instead of mocking them
-        $mock = new class ($prov) extends TicketTailorProvider {
+        $mock = new class($prov) extends TicketTailorProvider {
             public array $stubTickets = [];
 
             public function __construct(?TicketProvider $provider = null)
@@ -322,7 +322,7 @@ class TicketTailorProviderTest extends TestCase
         ];
 
         // @var TicketTailorProvider $mock
-        $mock = new class ($prov) extends TicketTailorProvider {
+        $mock = new class($prov) extends TicketTailorProvider {
             public array $stubTickets = [];
 
             public function __construct(?TicketProvider $provider = null)

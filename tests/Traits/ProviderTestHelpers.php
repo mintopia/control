@@ -18,9 +18,7 @@ trait ProviderTestHelpers
     protected function makeSocialProvider(): SocialProviderContract
     {
         return new class implements SocialProviderContract {
-            public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null)
-            {
-            }
+            public function __construct(?SocialProvider $provider = null, ?string $redirectUrl = null) {}
             public function configMapping(): array
             {
                 return ['client_id' => ['name' => 'Client ID', 'validation' => 'required|string', 'value' => 'dummy-client-id']];
@@ -42,7 +40,7 @@ trait ProviderTestHelpers
 
     protected function makeSocialProviderVariant(?\App\Models\SocialProvider $provider = null): \App\Services\SocialProviders\AbstractSocialProvider
     {
-        return new class ($provider) extends \App\Services\SocialProviders\AbstractSocialProvider {
+        return new class($provider) extends \App\Services\SocialProviders\AbstractSocialProvider {
             protected string $name = 'Dummy Social';
             protected string $code = 'dummy';
             protected string $socialiteProviderCode = 'dummy';
@@ -61,7 +59,7 @@ trait ProviderTestHelpers
 
     protected function makeTicketProvider(?TicketProvider $model = null): TicketProviderContract
     {
-        return new class ($model) extends \App\Services\TicketProviders\GenericTicketProvider {
+        return new class($model) extends \App\Services\TicketProviders\GenericTicketProvider {
             // expose provider model publicly for tests that inspect $provider->provider
             public ?\App\Models\TicketProvider $provider = null;
 
@@ -103,7 +101,7 @@ trait ProviderTestHelpers
      */
     protected function makeTicketTailorProvider(?\App\Models\TicketProvider $provider = null)
     {
-        return new class ($provider) extends \App\Services\TicketProviders\TicketTailorProvider {
+        return new class($provider) extends \App\Services\TicketProviders\TicketTailorProvider {
             public ?\App\Models\TicketProvider $provider = null;
 
             public function __construct(?\App\Models\TicketProvider $provider = null)
@@ -163,7 +161,7 @@ trait ProviderTestHelpers
      */
     protected function makeWooCommerceProvider(?\App\Models\TicketProvider $provider = null)
     {
-        return new class ($provider) extends \App\Services\TicketProviders\WooCommerceProvider {
+        return new class($provider) extends \App\Services\TicketProviders\WooCommerceProvider {
             public ?\App\Models\TicketProvider $provider = null;
             public ?bool $forceVerify = null;
             public ?array $parseOverride = null;
@@ -176,78 +174,8 @@ trait ProviderTestHelpers
                 $this->provider = $provider;
             }
 
-            public function getTicketsPublic(?string $address = null): array
-            {
-                return [(object)['id' => 'w1', 'status' => 'valid', 'email' => $address ?? 'a@b.test', 'event_id' => 'evt-1', 'ticket_type_id' => 'type-1', 'barcode' => 'b1', 'description' => 'WC ticket']];
-            }
-
-            public function processTicketsPublic(array $ticketData, string $address, ?\App\Models\User $user = null): void
-            {
-                foreach ($ticketData as $d) {
-                    $this->ensureEventAndTypeExist($d);
-                }
-                $this->processTickets($ticketData, $address, $user);
-            }
-
-            public function makeTicketPublic(?\App\Models\User $user, object $data): ?\App\Models\Ticket
-            {
-                $this->ensureEventAndTypeExist($data);
-                if (!isset($data->reference)) {
-                    $data->reference = $data->id ?? 'ref';
-                }
-                if (!isset($data->order)) {
-                    $data->order = (object)['billing' => (object)['email' => $data->email ?? 'a@b.test'], 'id' => explode('-', $data->id)[0] ?? 1, 'status' => 'completed'];
-                }
-                if (!isset($data->item)) {
-                    $data->item = (object)['id' => explode('-', $data->id)[1] ?? 10, 'name' => $data->description ?? 'Test ticket'];
-                }
-                return $this->makeTicket($user, $data);
-            }
-
-            public function processTicketPublic(object $parsed): ?\App\Models\Ticket
-            {
-                if (!isset($parsed->order)) {
-                    $parsed->order = (object)['billing' => (object)['email' => $parsed->email ?? 'a@b.test'], 'id' => explode('-', $parsed->id)[0] ?? '1', 'status' => 'completed'];
-                }
-                if (!isset($parsed->item)) {
-                    $parsed->item = (object)['id' => explode('-', $parsed->id)[1] ?? '10', 'name' => $parsed->description ?? 'Item'];
-                }
-                $this->ensureEventAndTypeExist($parsed);
-                return $this->makeTicket(null, $parsed);
-            }
-
-            public function parseOrderPublic(object $order): array
-            {
-                if ($this->parseOverride !== null) {
-                    return $this->parseOverride;
-                }
-                return $this->parseOrder($order);
-            }
-
-            public function verifyWebhookPublic(\Illuminate\Http\Request $request): bool
-            {
-                if ($this->forceVerify !== null) {
-                    return $this->forceVerify;
-                }
-                return $this->verifyWebhook($request);
-            }
-
-
-            public function getTypePublic(string $externalId)
-            {
-                $type = $this->getType($externalId);
-                if ($type) {
-                    return $type;
-                }
-                $event = \App\Models\Event::factory()->create();
-                $type = \App\Models\TicketType::factory()->for($event)->create();
-                $tm = new \App\Models\TicketTypeMapping();
-                $tm->provider()->associate($this->provider);
-                $tm->type()->associate($type);
-                $tm->external_id = $externalId;
-                $tm->save();
-                return $type;
-            }
+            // Tests should use ReflectionHelpers::callProtected to invoke protected
+            // provider methods (for example: $this->callProtected($dummy, 'getTickets', [$addr])).
 
             // No public wrapper methods here; tests should use callProtected when
             // they need to invoke protected provider methods.
