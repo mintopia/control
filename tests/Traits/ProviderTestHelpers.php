@@ -74,27 +74,6 @@ trait ProviderTestHelpers
                 $this->provider = $provider;
             }
 
-            // public wrappers to access protected functionality from tests
-            public function makeTicketPublic(?\App\Models\User $user, object $data): ?\App\Models\Ticket
-            {
-                return $this->makeTicket($user, $data);
-            }
-
-            public function processTicketPublic(object $data): ?\App\Models\Ticket
-            {
-                return $this->processTicket($data);
-            }
-
-            public function getTicketsPublic(?string $address = null): array
-            {
-                return $this->getTickets($address);
-            }
-
-            public function getClientPublic(): \GuzzleHttp\Client
-            {
-                return $this->getClient();
-            }
-
             public function configMapping(): array
             {
                 return [
@@ -133,89 +112,9 @@ trait ProviderTestHelpers
                 $this->provider = $provider;
             }
 
-            public function verifyWebhookPublic(\Illuminate\Http\Request $request): bool
-            {
-                return $this->verifyWebhook($request);
-            }
-
-            public function processTicketPublic(object $data): ?\App\Models\Ticket
-            {
-                // ensure event and ticket type mappings exist for test data
-                $this->ensureEventAndTypeExist($data);
-                // ensure barcode exists to avoid undefined property in makeTicket
-                if (!isset($data->barcode)) {
-                    $data->barcode = $data->reference ?? ($data->id ?? 'ref');
-                }
-                return $this->processTicket($data);
-            }
-
-            public function makeTicketPublic(?\App\Models\User $user, object $data): ?\App\Models\Ticket
-            {
-                // Ensure fixtures exist so makeTicket() can succeed
-                $this->ensureEventAndTypeExist($data);
-                if (!isset($data->barcode)) {
-                    $data->barcode = $data->reference ?? ($data->id ?? 'ref');
-                }
-                return $this->makeTicket($user, $data);
-            }
-
-            public function getEventPublic(string $externalId)
-            {
-                $event = $this->getEvent($externalId);
-                if ($event) {
-                    return $event;
-                }
-                $event = \App\Models\Event::factory()->create();
-                $em = new \App\Models\EventMapping();
-                $em->provider()->associate($this->provider);
-                $em->event()->associate($event);
-                $em->external_id = $externalId;
-                $em->save();
-                return $event;
-            }
-
-            public function getTypePublic(string $externalId)
-            {
-                $type = $this->getType($externalId);
-                if ($type) {
-                    return $type;
-                }
-                $event = \App\Models\Event::factory()->create();
-                $type = \App\Models\TicketType::factory()->for($event)->create();
-                $tm = new \App\Models\TicketTypeMapping();
-                $tm->provider()->associate($this->provider);
-                $tm->type()->associate($type);
-                $tm->external_id = $externalId;
-                $tm->save();
-                return $type;
-            }
-
-            public function getQrCodePublic(object $data): string
-            {
-                return $this->getQrCode($data);
-            }
-
-            public function getClientPublic(): \GuzzleHttp\Client
-            {
-                return $this->getClient();
-            }
-
-            public function getTicketsPublic(?string $address = null): array
-            {
-                // avoid calling the real HTTP API in unit tests
-                return [(object)['id' => 't1', 'status' => 'valid', 'email' => $address ?? 'a@b.test', 'event_id' => 'evt-1', 'ticket_type_id' => 'type-1', 'barcode' => 'b1', 'description' => 'Test']];
-            }
-
-            public function getTicketTypesPublic(string $eventExternalId): array
-            {
-                // Return a simple static mapping for tests to avoid HTTP calls
-                return ['type1' => 'General Admission'];
-            }
-
-            public function getEventsPublic(): array
-            {
-                return ['evt1' => 'Event 1'];
-            }
+            // Tests should call protected helpers via ReflectionHelpers::callProtected.
+            // The helper ensureEventAndTypeExist remains implemented below so protected
+            // methods that rely on DB fixtures will work when invoked via callProtected.
 
             /**
              * Ensure there is an Event and TicketType with mappings for the provider so
@@ -333,15 +232,6 @@ trait ProviderTestHelpers
                 return $this->verifyWebhook($request);
             }
 
-            public function getQrCodePublic(object $data): string
-            {
-                return $this->getQrCode($data);
-            }
-
-            public function getClientPublic(): \GuzzleHttp\Client
-            {
-                return $this->getClient();
-            }
 
             public function getTypePublic(string $externalId)
             {
@@ -359,15 +249,8 @@ trait ProviderTestHelpers
                 return $type;
             }
 
-            public function getEventsPublic(): array
-            {
-                return ['evt1' => 'Event 1'];
-            }
-
-            public function getTicketTypesPublic(string $eventExternalId): array
-            {
-                return ['type1' => 'General Admission'];
-            }
+            // No public wrapper methods here; tests should use callProtected when
+            // they need to invoke protected provider methods.
 
             protected function ensureEventAndTypeExist(object $data): void
             {
