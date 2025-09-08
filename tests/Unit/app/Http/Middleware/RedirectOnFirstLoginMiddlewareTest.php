@@ -3,6 +3,7 @@
 namespace Tests\Unit\app\Http\Middleware;
 
 use App\Http\Middleware\RedirectOnFirstLoginMiddleware;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -10,15 +11,27 @@ use Tests\TestCase;
 
 class RedirectOnFirstLoginMiddlewareTest extends TestCase
 {
+    use RefreshDatabase;
+
+    /** @var RedirectOnFirstLoginMiddleware */
+    protected $middleware;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // create an anonymous subclass instance to avoid relying on helper files
+        $this->middleware = new class () extends RedirectOnFirstLoginMiddleware {
+        };
+    }
+
     public function testCanInstantiateRedirectOnFirstLoginMiddleware()
     {
-        $middleware = new HelperClasses\RedirectOnFirstLoginMiddlewareStub();
-        $this->assertInstanceOf(RedirectOnFirstLoginMiddleware::class, $middleware);
+        $this->assertInstanceOf(RedirectOnFirstLoginMiddleware::class, $this->middleware);
     }
 
     public function testHandleRedirectsIfFirstLogin()
     {
-        $middleware = new HelperClasses\RedirectOnFirstLoginMiddlewareStub();
+        $middleware = $this->middleware;
         $mockUser = (object)['first_login' => true];
         $request = Request::create('/', 'GET');
         // Use a user resolver to provide the mocked user without mocking Request methods
@@ -34,7 +47,7 @@ class RedirectOnFirstLoginMiddlewareTest extends TestCase
 
     public function testHandleCallsNextIfNotFirstLogin()
     {
-        $middleware = new HelperClasses\RedirectOnFirstLoginMiddlewareStub();
+        $middleware = $this->middleware;
         $mockUser = (object)['first_login' => false];
         $request = Request::create('/', 'GET');
         $request->setUserResolver(function () use ($mockUser) {
@@ -53,7 +66,7 @@ class RedirectOnFirstLoginMiddlewareTest extends TestCase
 
     public function testHandleWithNoUserDoesNotRedirect()
     {
-        $middleware = new HelperClasses\RedirectOnFirstLoginMiddlewareStub();
+        $middleware = $this->middleware;
         $request = Request::create('/', 'GET');
         $request->setUserResolver(function () {
             return null;
@@ -71,7 +84,7 @@ class RedirectOnFirstLoginMiddlewareTest extends TestCase
 
     public function testHandleWithUserWithoutFirstLoginPropertyDoesNotRedirect()
     {
-        $middleware = new HelperClasses\RedirectOnFirstLoginMiddlewareStub();
+        $middleware = $this->middleware;
         $mockUser = (object)[];
         $request = Request::create('/', 'GET');
         $request->setUserResolver(function () use ($mockUser) {
