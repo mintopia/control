@@ -6,9 +6,9 @@ on:
     branches:
       - master
       - develop
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
+#    paths-ignore:
+#      - '**.md'
+#      - 'docs/**'
   push:
     branches:
       - master
