@@ -248,7 +248,7 @@ class GenericTicketProviderTest extends TestCase
     public function testProcessWebhookCallsProcessTicketAndReturnsTrue()
     {
         $provider = $this->provider;
-        $mock = new class($provider->provider) extends GenericTicketProvider {
+        $mock = new class ($provider->provider) extends GenericTicketProvider {
             public function __construct(?TicketProvider $p = null)
             {
                 parent::__construct($p);
