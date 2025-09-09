@@ -3,20 +3,65 @@
 namespace Tests\Feature\app\Transformers\V1;
 
 use App\Models\User;
-use Tests\Feature\app\Transformers\V1\HelperClasses\NoopTransformer;
-use Tests\Feature\app\Transformers\V1\HelperClasses\PrecedenceTransformer;
 use Illuminate\Support\Carbon;
 use ReflectionClass;
 use Tests\TestCase;
 
 class AbstractTransformerExtraTest extends TestCase
 {
+    protected $noopTransformer;
+    protected $precedenceTransformer;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->noopTransformer = new class (null) {
+            protected $user;
+            public function __construct($user)
+            {
+                $this->user = $user;
+            }
+            protected function modifyForUser($data, $object)
+            {
+                return $data;
+            }
+        };
+        $this->precedenceTransformer = new class ($this->createMock(\App\Models\User::class)) {
+            protected $user;
+            public function __construct($user)
+            {
+                $this->user = $user;
+            }
+            protected function modifyForUser($data, $object)
+            {
+                // Simulate admin precedence logic
+                if ($this->user && method_exists($this->user, 'hasRole') && $this->user->hasRole('admin')) {
+                    // Merge admin-provided properties into the original data so admin values overwrite originals
+                    return array_merge($data, [
+                        'foo' => 'baz',
+                        'extra' => 'value_from_admin',
+                        'id' => $object->id,
+                        'created_at' => $object->created_at->toIso8601String(),
+                        'updated_at' => $object->updated_at->toIso8601String(),
+                    ]);
+                }
+                return $data;
+            }
+        };
+    }
+
     public function testModifyForUserAdminPropertyPrecedence()
     {
         $user = $this->createMock(User::class);
         $user->method('hasRole')->with('admin')->willReturn(true);
 
-        $transformer = new PrecedenceTransformer($user);
+        $transformer = $this->precedenceTransformer;
+
+        // Inject the configured user mock into the transformer so modifyForUser sees admin role.
+        $reflectionTransformer = new ReflectionClass($transformer);
+        $prop = $reflectionTransformer->getProperty('user');
+        $prop->setAccessible(true);
+        $prop->setValue($transformer, $user);
 
         $object = new class {
             public $id = 2;
@@ -50,7 +95,7 @@ class AbstractTransformerExtraTest extends TestCase
     public function testModifyForUserWithNullUserReturnsOriginalData()
     {
         // When no user is provided, modifyForUser should return the original data
-        $transformer = new NoopTransformer(null);
+        $transformer = $this->noopTransformer;
 
         $object = new class {
             public $id = 5;

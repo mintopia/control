@@ -12,7 +12,7 @@ class LinkedAccountTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_can_delete_false_when_only_account()
+    public function testCanDeleteFalseWhenOnlyAccount()
     {
         $user = User::factory()->create();
         $provider = SocialProvider::factory()->create(['auth_enabled' => true]);
@@ -20,7 +20,7 @@ class LinkedAccountTest extends TestCase
         $this->assertFalse($acc->canDelete());
     }
 
-    public function test_can_delete_true_when_provider_not_auth()
+    public function testCanDeleteTrueWhenProviderNotAuth()
     {
         $user = User::factory()->create();
         $provider = SocialProvider::factory()->create(['auth_enabled' => false]);
@@ -30,7 +30,7 @@ class LinkedAccountTest extends TestCase
         $this->assertTrue($acc->canDelete());
     }
 
-    public function test_can_delete_requires_other_auth_provider()
+    public function testCanDeleteRequiresOtherAuthProvider()
     {
         $user = User::factory()->create();
         $authProv = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'auth1']);

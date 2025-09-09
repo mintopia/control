@@ -14,13 +14,13 @@ class ClanTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_get_route_key_name_is_code()
+    public function testGetRouteKeyNameIsCode()
     {
         $c = new Clan();
         $this->assertEquals('code', $c->getRouteKeyName());
     }
 
-    public function test_is_member_returns_true_and_false()
+    public function testIsMemberReturnsTrueAndFalse()
     {
         $clan = Clan::factory()->create();
         $user = User::factory()->create();
@@ -31,7 +31,7 @@ class ClanTest extends TestCase
         $this->assertTrue($clan->isMember($user));
     }
 
-    public function test_add_user_with_string_role_and_invalid_role()
+    public function testAddUserWithStringRoleAndInvalidRole()
     {
         $clan = Clan::factory()->create();
         $user = User::factory()->create();
@@ -47,7 +47,7 @@ class ClanTest extends TestCase
         $clan->addUser(User::factory()->create(), 'does-not-exist');
     }
 
-    public function test_add_user_accepts_role_object_and_returns_existing()
+    public function testAddUserAcceptsRoleObjectAndReturnsExisting()
     {
         $clan = Clan::factory()->create();
         $user = User::factory()->create();
@@ -62,20 +62,23 @@ class ClanTest extends TestCase
         $this->assertEquals($membership->id, $membership2->id);
     }
 
-    public function test_generate_code_contains_dash_and_length()
+    public function testGenerateCodeContainsDashAndLength()
     {
         $clan = Clan::factory()->create();
         $code = $clan->generateCode();
         $this->assertMatchesRegularExpression('/^[A-Z0-9]{4}-[A-Z0-9]{4}$/i', $code);
     }
 
-    public function test_to_string_name_via_dummy_exposes_name()
+    public function testProtectedFunctionToStringName()
     {
-        // Use a tiny dummy subclass to expose the protected toStringName method
-        $dummy = new HelperClasses\DummyClan();
-        $dummy->name = 'My Clan Name';
-        $this->assertEquals('My Clan Name', $dummy->exposeToString());
+        $clan = new Clan();
+        $clan->name = 'My Clan Name';
+
+        $reflection = new \ReflectionClass($clan);
+        $method = $reflection->getMethod('toStringName');
+        $method->setAccessible(true);
+        $result = $method->invoke($clan);
+
+        $this->assertEquals($clan->name, $result);
     }
 }
-
-// Small helper class inside this test file to expose protected toStringName()

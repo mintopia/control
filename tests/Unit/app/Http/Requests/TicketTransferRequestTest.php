@@ -50,8 +50,7 @@ class TicketTransferRequestTest extends TestCase
             $called = true;
             $this->assertEquals('The transfer code is invalid', $message);
         };
-        $bound = Closure::bind($closure, $request, get_class($request));
-        $bound('code', 'NOPE', $fail);
+        $closure->call($request, 'code', 'NOPE', $fail);
         $this->assertTrue($called, 'Fail closure was not called for invalid transfer code');
     }
 
@@ -86,8 +85,7 @@ class TicketTransferRequestTest extends TestCase
             $called = true;
             $this->assertEquals('It is not possible to transfer this ticket', $message);
         };
-        $bound = Closure::bind($closure, $request, get_class($request));
-        $bound('code', $ticket->transfer_code, $fail);
+        $closure->call($request, 'code', $ticket->transfer_code, $fail);
         $this->assertTrue($called, 'Fail closure was not called for non-transferable ticket');
     }
 
@@ -120,8 +118,7 @@ class TicketTransferRequestTest extends TestCase
             $called = true;
             $this->assertEquals('You already have the ticket in your account', $message);
         };
-        $bound = Closure::bind($closure, $request, get_class($request));
-        $bound('code', $ticket->transfer_code, $fail);
+        $closure->call($request, 'code', $ticket->transfer_code, $fail);
         $this->assertTrue($called, 'Fail closure was not called when user already owns ticket');
     }
 
@@ -161,8 +158,7 @@ class TicketTransferRequestTest extends TestCase
         $fail = function ($message) use (&$called) {
             $called = true;
         };
-        $bound = Closure::bind($closure, $request, get_class($request));
-        $bound('code', $ticket->transfer_code, $fail);
+        $closure->call($request, 'code', $ticket->transfer_code, $fail);
         $this->assertFalse($called, 'Fail closure was called for a valid transfer when admin should bypass draft filter');
     }
 }

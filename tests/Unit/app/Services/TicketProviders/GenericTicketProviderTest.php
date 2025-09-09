@@ -21,11 +21,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use ReflectionClass;
 use Tests\TestCase;
-use Tests\Unit\app\Services\TicketProviders\HelperClasses\DummyGenericTicketProvider;
+use Tests\Traits\ProviderTestHelpers;
 
 class GenericTicketProviderTest extends TestCase
 {
     use RefreshDatabase;
+    use ProviderTestHelpers;
 
     protected $provider;
 
@@ -65,12 +66,10 @@ class GenericTicketProviderTest extends TestCase
             ]);
         }
         // Return a test helper that exposes protected methods
-        return new DummyGenericTicketProvider($ticketProvider);
+        return $this->makeTicketProvider($ticketProvider);
     }
 
-    // --- Extra tests merged from GenericTicketProviderExtraTest.php ---
-
-    public function test_make_ticket_returns_null_when_event_missing()
+    public function testMakeTicketReturnsNullWhenEventMissing()
     {
         $provider = $this->createProvider();
         $data = (object)[
@@ -82,10 +81,10 @@ class GenericTicketProviderTest extends TestCase
             'reference' => 'ref1',
         ];
 
-        $this->assertNull($provider->makeTicketPublic(null, $data));
+        $this->assertNull($this->callProtected($provider, 'makeTicket', [null, $data]));
     }
 
-    public function test_make_ticket_returns_null_when_type_missing()
+    public function testMakeTicketReturnsNullWhenTypeMissing()
     {
         $provider = $this->createProvider();
         $event = Event::factory()->create();
@@ -100,10 +99,10 @@ class GenericTicketProviderTest extends TestCase
             'reference' => 'ref1',
         ];
 
-        $this->assertNull($provider->makeTicketPublic(null, $data));
+        $this->assertNull($this->callProtected($provider, 'makeTicket', [null, $data]));
     }
 
-    public function test_make_ticket_creates_ticket_when_event_and_type_exist_and_links_user()
+    public function testMakeTicketCreatesTicketWhenEventAndTypeExistAndLinksUser()
     {
         $provider = $this->createProvider();
         $user = User::factory()->create();
@@ -126,7 +125,7 @@ class GenericTicketProviderTest extends TestCase
             'reference' => 'ref2',
         ];
 
-        $ticket = $provider->makeTicketPublic(null, $data);
+        $ticket = $this->callProtected($provider, 'makeTicket', [null, $data]);
         $this->assertInstanceOf(Ticket::class, $ticket);
         $this->assertEquals('t2', $ticket->external_id);
         // reload relations/columns from DB to be sure associations persisted
@@ -140,7 +139,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals($user->id, $ticket->user->id);
     }
 
-    public function test_get_tickets_pages_until_hasMore_is_false()
+    public function testGetTicketsPagesUntilHasMoreIsFalse()
     {
         $provider = $this->createProvider([
             'endpoint' => 'https://api.example.test',
@@ -158,21 +157,21 @@ class GenericTicketProviderTest extends TestCase
 
         $mock = new MockHandler([$resp1, $resp2]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
 
         $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
         $prop->setValue($provider, $client);
 
-        $tickets = $provider->getTicketsPublic(null);
+        $tickets = $this->callProtected($provider, 'getTickets', [null]);
         // Current implementation resets the page buffer each loop and returns the last page only
         $this->assertCount(1, $tickets);
         $this->assertArrayNotHasKey('1', $tickets);
         $this->assertArrayHasKey('2', $tickets);
     }
 
-    public function test_sync_tickets_removes_voided_and_adds_missing()
+    public function testGetTicketsFetchesFromApiAndPages()
     {
         $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
 
@@ -190,7 +189,7 @@ class GenericTicketProviderTest extends TestCase
 
         $mock = new MockHandler([$resp]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
         $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
@@ -214,9 +213,10 @@ class GenericTicketProviderTest extends TestCase
     }
 
 
-    public function test_config_mapping_returns_expected_array()
+    public function testConfigMappingReturnsExpectedArray()
     {
-        $provider = $this->provider;
+        // Instantiate the provider directly to test the public configMapping method
+        $provider = new GenericTicketProvider();
         $mapping = $provider->configMapping();
 
         $this->assertArrayHasKey('apikey', $mapping);
@@ -226,7 +226,26 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals('Base URL', $mapping['endpoint']->name);
     }
 
-    public function test_process_webhook_calls_process_ticket_and_returns_true()
+    public function testConfigMappingStructureAndValidation()
+    {
+        $provider = new GenericTicketProvider();
+        $mapping = $provider->configMapping();
+
+        // mapping entries should be objects with expected keys
+        $this->assertIsArray($mapping);
+        $this->assertIsObject($mapping['apikey']);
+        $this->assertIsObject($mapping['endpoint']);
+
+        // validation strings must match the implementation contract
+        $this->assertEquals('required|string', $mapping['apikey']->validation);
+        $this->assertEquals('required|string', $mapping['endpoint']->validation);
+
+        // apikey should be marked encrypted; endpoint should not have an encrypted flag
+        $this->assertTrue(isset($mapping['apikey']->encrypted) && $mapping['apikey']->encrypted);
+        $this->assertFalse(property_exists($mapping['endpoint'], 'encrypted'));
+    }
+
+    public function testProcessWebhookCallsProcessTicketAndReturnsTrue()
     {
         $provider = $this->provider;
         $mock = new class ($provider->provider) extends GenericTicketProvider {
@@ -245,7 +264,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertTrue($mock->processWebhook($request));
     }
 
-    public function test_get_events_returns_cached_data()
+    public function testGetEventsReturnsCachedData()
     {
         $provider = $this->provider;
         $key = "ticketproviders.{$provider->provider->id}.{$provider->provider->cache_prefix}.events";
@@ -254,7 +273,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals(['evt1' => 'Event 1'], $events);
     }
 
-    public function test_get_events_fetches_from_api_and_caches()
+    public function testGetEventsFetchesFromApiAndCaches()
     {
         $provider = $this->createProvider([
             'apikey' => 'key',
@@ -272,7 +291,7 @@ class GenericTicketProviderTest extends TestCase
         ]));
         $mock = new MockHandler([$mockResponse]);
         $handlerStack = HandlerStack::create($mock);
-        $guzzleClient = new Client(['handler' => $handlerStack]);
+        $guzzleClient = new Client(['handler' => $handlerStack, 'base_uri' => 'https://api.example.test']);
 
         // Set the Guzzle client onto the provider (bypass visibility via reflection)
         $providerReflection = new ReflectionClass($provider);
@@ -288,7 +307,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals($events, $cached);
     }
 
-    public function test_get_ticket_types_returns_cached_data()
+    public function testGetTicketTypesReturnsCachedData()
     {
         $provider = $this->provider;
         $eventId = 'evt-1';
@@ -298,7 +317,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals(['type1' => 'VIP'], $types);
     }
 
-    public function test_get_ticket_types_fetches_from_api_and_caches()
+    public function testGetTicketTypesFetchesFromApiAndCaches()
     {
         $provider = $this->createProvider([
             'apikey' => 'key',
@@ -317,7 +336,7 @@ class GenericTicketProviderTest extends TestCase
         ]));
         $mock = new MockHandler([$mockResponse]);
         $handlerStack = HandlerStack::create($mock);
-        $guzzleClient = new Client(['handler' => $handlerStack]);
+        $guzzleClient = new Client(['handler' => $handlerStack, 'base_uri' => 'https://api.example.test']);
 
         $providerReflection = new ReflectionClass($provider);
         $clientProp = $providerReflection->getProperty('client');
@@ -332,7 +351,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals($types, $cached);
     }
 
-    public function test_process_ticket()
+    public function testProcessTicket()
     {
         $provider = $this->createProvider();
 
@@ -363,12 +382,12 @@ class GenericTicketProviderTest extends TestCase
             'reference' => 'ref1',
         ];
 
-        $result = $provider->processTicketPublic($data);
+        $result = $this->callProtected($provider, 'processTicket', [$data]);
         $this->assertInstanceOf(Ticket::class, $result);
         $this->assertDatabaseHas('tickets', ['external_id' => 't1']);
     }
 
-    public function test_process_ticket_deletes_existing_when_voided()
+    public function testProcessTicketDeletesExistingWhenVoided()
     {
         $provider = $this->createProvider();
 
@@ -386,13 +405,13 @@ class GenericTicketProviderTest extends TestCase
             'email' => 'nobody@example.com',
         ];
 
-        $result = $provider->processTicketPublic($data);
+        $result = $this->callProtected($provider, 'processTicket', [$data]);
 
         // The DB row should have been deleted
         $this->assertDatabaseMissing('tickets', ['external_id' => 'del-me']);
     }
 
-    public function test_process_ticket_returns_null_when_event_missing()
+    public function testProcessTicketReturnsNullWhenEventMissing()
     {
         $provider = $this->createProvider();
 
@@ -405,11 +424,11 @@ class GenericTicketProviderTest extends TestCase
             'email' => 'foo@example.com',
         ];
 
-        $result = $provider->processTicketPublic($data);
+        $result = $this->callProtected($provider, 'processTicket', [$data]);
         $this->assertNull($result, 'processTicket should return null when the event mapping is missing');
     }
 
-    public function test_sync_tickets_deletes_voided_ticket()
+    public function testSyncTicketsDeletesVoidedTicket()
     {
         $provider = $this->createProvider(['apikey' => 'key', 'endpoint' => 'https://api.example.test']);
 
@@ -425,7 +444,7 @@ class GenericTicketProviderTest extends TestCase
 
         $mock = new MockHandler([$resp]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
         $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
@@ -436,7 +455,7 @@ class GenericTicketProviderTest extends TestCase
         $this->assertDatabaseMissing('tickets', ['external_id' => 'voided1']);
     }
 
-    public function test_process_ticket_returns_existing_when_not_voided()
+    public function testProcessTicketReturnsExistingWhenNotVoided()
     {
         $provider = $this->createProvider();
 
@@ -453,12 +472,12 @@ class GenericTicketProviderTest extends TestCase
             'email' => 'nobody@example.com',
         ];
 
-        $result = $provider->processTicketPublic($data);
+        $result = $this->callProtected($provider, 'processTicket', [$data]);
         $this->assertInstanceOf(Ticket::class, $result);
         $this->assertDatabaseHas('tickets', ['external_id' => 'keep-me']);
     }
 
-    public function test_sync_tickets_assigns_user_when_emailaddress_provided()
+    public function testSyncTicketsAssignsUserWhenEmailaddressProvided()
     {
         $provider = $this->createProvider(['endpoint' => 'https://api.example.test', 'apikey' => 'key']);
 
@@ -483,7 +502,7 @@ class GenericTicketProviderTest extends TestCase
 
         $mock = new MockHandler([$resp]);
         $handler = HandlerStack::create($mock);
-        $client = new Client(['handler' => $handler]);
+        $client = new Client(['handler' => $handler, 'base_uri' => 'https://api.example.test']);
         $ref = new ReflectionClass($provider);
         $prop = $ref->getProperty('client');
         $prop->setAccessible(true);
@@ -497,9 +516,9 @@ class GenericTicketProviderTest extends TestCase
         $this->assertEquals($user->id, $existing->user_id);
     }
 
-    public function test_get_client()
+    public function testGetClient()
     {
         $provider = $this->createProvider();
-        $this->assertInstanceOf(Client::class, $provider->getClientPublic());
+        $this->assertInstanceOf(Client::class, $this->callProtected($provider, 'getClient'));
     }
 }

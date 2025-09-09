@@ -26,16 +26,16 @@ class SocialProviderControllerTest extends TestCase
     public function testUpdatePersistsSettingsAndProviderFields()
     {
         $prov = SocialProvider::factory()->create(['supports_auth' => true, 'can_be_renamed' => true]);
-        $c = new SocialProviderController();
+        $c = $this->app->make(SocialProviderController::class);
 
-        // create provider settings
-        $s1 = new ProviderSetting();
-        $s1->provider()->associate($prov);
-        $s1->name = 'Opt';
-        $s1->code = 'opt1';
-        $s1->type = SettingType::stBoolean;
-        $s1->value = true;
-        $s1->save();
+        // create provider setting via factory
+        ProviderSetting::factory()->create([
+            'provider_id' => $prov->id,
+            'name' => 'Opt',
+            'code' => 'opt1',
+            'type' => SettingType::stBoolean,
+            'value' => true,
+        ]);
 
         $req = SocialProviderUpdateRequest::create('/', 'POST', ['enabled' => 0, 'auth_enabled' => 1, 'name' => 'New', 'opt1' => 0]);
         $resp = $c->update($req, $prov);
@@ -47,16 +47,16 @@ class SocialProviderControllerTest extends TestCase
     public function testBooleanSettingIsClearedWhenMissingFromRequest()
     {
         $prov = SocialProvider::factory()->create(['supports_auth' => true, 'can_be_renamed' => true]);
-        $c = new SocialProviderController();
+        $c = $this->app->make(SocialProviderController::class);
 
         // create provider setting that is boolean and initially true
-        $s1 = new ProviderSetting();
-        $s1->provider()->associate($prov);
-        $s1->name = 'AutoOpt';
-        $s1->code = 'auto_opt';
-        $s1->type = SettingType::stBoolean;
-        $s1->value = true;
-        $s1->save();
+        ProviderSetting::factory()->create([
+            'provider_id' => $prov->id,
+            'name' => 'AutoOpt',
+            'code' => 'auto_opt',
+            'type' => SettingType::stBoolean,
+            'value' => true,
+        ]);
 
         // build request that does NOT include 'auto_opt' so the elseif branch should run
         $req = SocialProviderUpdateRequest::create('/', 'POST', ['enabled' => 1, 'auth_enabled' => 0, 'name' => 'KeepName']);

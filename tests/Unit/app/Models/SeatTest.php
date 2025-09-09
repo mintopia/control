@@ -211,7 +211,7 @@ class SeatTest extends TestCase
         $this->assertTrue($seat->canPick($user));
     }
 
-    public function testCanPickWithMultipleTickets_firstNonMatchingReturnsFalse()
+    public function testCanPickWithMultipleTicketsFirstNonMatchingReturnsFalse()
     {
         $seat = new Seat();
         $seat->disabled = 0;
@@ -249,10 +249,16 @@ class SeatTest extends TestCase
         $this->assertFalse($seat->canPick($user));
     }
 
-    public function testProtectedToStringNameReturnsLabel()
+    public function testProtectedFunctionToStringName()
     {
-        $dummy = new HelperClasses\DummySeat();
-        $dummy->label = 'A1';
-        $this->assertEquals('A1', $dummy->toStringNamePublic());
+        $seat = new Seat();
+        $seat->label = 'A1';
+
+        $reflection = new \ReflectionClass($seat);
+        $method = $reflection->getMethod('toStringName');
+        $method->setAccessible(true);
+        $result = $method->invoke($seat);
+
+        $this->assertEquals($seat->label, $result);
     }
 }

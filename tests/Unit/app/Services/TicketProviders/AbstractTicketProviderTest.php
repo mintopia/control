@@ -5,19 +5,48 @@ namespace Tests\Unit\app\Services\TicketProviders;
 use App\Enums\SettingType;
 use App\Models\ProviderSetting;
 use App\Models\TicketProvider;
+use App\Services\TicketProviders\AbstractTicketProvider;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use ReflectionClass;
+use ReflectionMethod;
 use Tests\TestCase;
-use Tests\Unit\app\Services\TicketProviders\HelperClasses\DummyTicketProvider;
 
 class AbstractTicketProviderTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_config_mapping_returns_expected_array()
+    protected function makeProviderInstance($providerModel = null, array $overrides = [])
     {
-        $provider = new DummyTicketProvider();
+        $class = new class ($providerModel) extends AbstractTicketProvider {
+            protected string $name = 'Dummy Provider';
+            protected string $code = 'dummy';
+
+            public function __construct($provider = null)
+            {
+                parent::__construct($provider);
+            }
+        };
+
+        // Apply overrides via reflection if provided
+        if (!empty($overrides)) {
+            $rc = new ReflectionClass($class);
+            foreach ($overrides as $prop => $value) {
+                if ($rc->hasProperty($prop)) {
+                    $p = $rc->getProperty($prop);
+                    $p->setAccessible(true);
+                    $p->setValue($class, $value);
+                }
+            }
+        }
+
+        return $class;
+    }
+
+    public function testConfigMappingReturnsExpectedArray()
+    {
+        $provider = $this->makeProviderInstance();
         $mapping = $provider->configMapping();
 
         $this->assertArrayHasKey('apikey', $mapping);
@@ -26,9 +55,9 @@ class AbstractTicketProviderTest extends TestCase
         $this->assertEquals('Webhook Secret', $mapping['webhook_secret']->name);
     }
 
-    public function test_install_creates_ticket_provider_and_settings()
+    public function testInstallCreatesTicketProviderAndSettings()
     {
-        $provider = new DummyTicketProvider();
+        $provider = $this->makeProviderInstance();
         $ticketProvider = $provider->install();
 
         $this->assertInstanceOf(TicketProvider::class, $ticketProvider);
@@ -40,9 +69,9 @@ class AbstractTicketProviderTest extends TestCase
         $this->assertContains('webhook_secret', $settings);
     }
 
-    public function test_install_does_not_duplicate_provider()
+    public function testInstallDoesNotDuplicateProvider()
     {
-        $provider = new DummyTicketProvider();
+        $provider = $this->makeProviderInstance();
         $first = $provider->install();
         $second = $provider->install();
 
@@ -50,13 +79,13 @@ class AbstractTicketProviderTest extends TestCase
         $this->assertCount(1, TicketProvider::whereCode('dummy')->get());
     }
 
-    public function test_install_settings_updates_existing_settings()
+    public function testInstallSettingsUpdatesExistingSettings()
     {
-        $provider = new DummyTicketProvider();
+        $provider = $this->makeProviderInstance();
         $ticketProvider = TicketProvider::factory()->create([
             'name' => 'Dummy Provider',
             'code' => 'dummy',
-            'provider_class' => DummyTicketProvider::class,
+            'provider_class' => AbstractTicketProvider::class,
         ]);
         $providerSetting = ProviderSetting::factory()->create([
             'provider_type' => TicketProvider::class,
@@ -64,48 +93,52 @@ class AbstractTicketProviderTest extends TestCase
             'code' => 'apikey',
             'name' => 'Old Name',
         ]);
-        $provider = new DummyTicketProvider($ticketProvider);
+        // Create provider instance bound to the created model
+        $provider = $this->makeProviderInstance($ticketProvider);
         $provider->installSettings();
 
         $providerSetting->refresh();
         $this->assertEquals('API Key', $providerSetting->name);
     }
 
-    public function test_process_webhook_returns_true()
+    public function testProcessWebhookReturnsTrue()
     {
-        $provider = new DummyTicketProvider();
+        $provider = $this->makeProviderInstance();
         $request = Request::create('/webhook', 'POST');
         $this->assertTrue($provider->processWebhook($request));
     }
 
-    public function test_get_events_returns_empty_array()
+    public function testGetEventsReturnsEmptyArray()
     {
-        $provider = new DummyTicketProvider();
+        $provider = $this->makeProviderInstance();
         $this->assertEquals([], $provider->getEvents());
     }
 
-    public function test_get_ticket_types_returns_empty_array()
+    public function testGetTicketTypesReturnsEmptyArray()
     {
-        $provider = new DummyTicketProvider();
+        $provider = $this->makeProviderInstance();
         $this->assertEquals([], $provider->getTicketTypes('event-id'));
     }
 
-    public function test_sync_tickets_does_nothing()
+    public function testSyncTicketsDoesNothing()
     {
-        $provider = new DummyTicketProvider();
+        $provider = $this->makeProviderInstance();
         $this->assertNull($provider->syncTickets('test@example.com'));
     }
 
-    public function test_sync_all_tickets_does_nothing()
+    public function testSyncAllTicketsDoesNothing()
     {
-        $provider = new DummyTicketProvider();
+        $provider = $this->makeProviderInstance();
         $this->assertNull($provider->syncAllTickets(null));
     }
 
-    public function test_install_settings_sets_initial_value()
+    public function testInstallSettingsSetsInitialValue()
     {
         // Create an anonymous subclass that provides a default value in the config mapping
-        $provider = new class extends DummyTicketProvider {
+        $provider = new class extends AbstractTicketProvider {
+            protected string $name = 'Dummy Provider';
+            protected string $code = 'dummy';
+
             public function configMapping(): array
             {
                 return [
@@ -128,13 +161,13 @@ class AbstractTicketProviderTest extends TestCase
         $this->assertEquals('INIT_KEY', $setting->value);
     }
 
-    public function test_install_settings_does_not_save_when_no_changes()
+    public function testInstallSettingsDoesNotSaveWhenNoChanges()
     {
         // Create provider model and a setting that already matches the config mapping
         $ticketProvider = TicketProvider::factory()->create([
             'name' => 'Dummy Provider',
             'code' => 'dummy',
-            'provider_class' => DummyTicketProvider::class,
+            'provider_class' => AbstractTicketProvider::class,
         ]);
         $providerSetting = ProviderSetting::factory()->create([
             'provider_type' => TicketProvider::class,
@@ -153,7 +186,7 @@ class AbstractTicketProviderTest extends TestCase
         $providerSetting->updated_at = $past;
         $providerSetting->save();
 
-        $provider = new DummyTicketProvider($ticketProvider);
+        $provider = $this->makeProviderInstance($ticketProvider);
         $provider->installSettings();
 
         $providerSetting->refresh();

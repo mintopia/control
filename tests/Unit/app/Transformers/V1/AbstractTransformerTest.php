@@ -3,15 +3,29 @@
 namespace Tests\Unit\app\Transformers\V1;
 
 use App\Models\User;
+use App\Transformers\V1\AbstractTransformer;
+use Illuminate\Support\Carbon;
+use Closure;
 use ReflectionClass;
 use ReflectionMethod;
 use Tests\TestCase;
-use Tests\Unit\app\Transformers\V1\HelperClasses\DummyObject;
-use Tests\Unit\app\Transformers\V1\HelperClasses\DummyTransformer;
-use Tests\Unit\app\Transformers\V1\HelperClasses\DummyTransformer2;
 
 class AbstractTransformerTest extends TestCase
 {
+    protected Closure $makeObject;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->makeObject = function () {
+            return (object) [
+                'id' => 1,
+                'created_at' => Carbon::parse('2022-01-01T00:00:00Z'),
+                'updated_at' => Carbon::parse('2022-01-02T00:00:00Z'),
+            ];
+        };
+    }
+
     protected function invokeMethod($object, $method, array $parameters = [])
     {
         $reflection = new ReflectionClass($object);
@@ -24,8 +38,9 @@ class AbstractTransformerTest extends TestCase
     {
         $user = $this->createMock(User::class);
         $user->method('hasRole')->willReturn(false);
-        $transformer = new DummyTransformer($user);
-        $object = new DummyObject();
+        $transformer = new class ($user) extends AbstractTransformer {
+        };
+        $object = ($this->makeObject)();
         $data = ['foo' => 'bar'];
         $result = $this->invokeMethod($transformer, 'modifyForUser', [$data, $object]);
         $this->assertEquals($data, $result);
@@ -35,8 +50,13 @@ class AbstractTransformerTest extends TestCase
     {
         $user = $this->createMock(User::class);
         $user->method('hasRole')->with('admin')->willReturn(true);
-        $transformer = new DummyTransformer($user);
-        $object = new DummyObject();
+        $transformer = new class ($user) extends AbstractTransformer {
+            protected function getAdminProperties(object $object): array
+            {
+                return ['admin' => true];
+            }
+        };
+        $object = ($this->makeObject)();
         $data = ['foo' => 'bar'];
         $result = $this->invokeMethod($transformer, 'modifyForUser', [$data, $object]);
         $this->assertArrayHasKey('id', $result);
@@ -49,9 +69,14 @@ class AbstractTransformerTest extends TestCase
 
     public function testGetAdminPropertiesDirectly()
     {
-        $transformer = new DummyTransformer($this->createMock(User::class));
-        $object = new DummyObject();
-        $m = new ReflectionMethod(DummyTransformer::class, 'getAdminPropertiesPublic');
+        $transformer = new class ($this->createMock(User::class)) extends AbstractTransformer {
+            protected function getAdminProperties(object $object): array
+            {
+                return ['admin' => true];
+            }
+        };
+        $object = ($this->makeObject)();
+        $m = new ReflectionMethod(get_class($transformer), 'getAdminProperties');
         $m->setAccessible(true);
         $result = $m->invoke($transformer, $object);
         $this->assertIsArray($result);
@@ -62,10 +87,13 @@ class AbstractTransformerTest extends TestCase
     // Manually added test to check getAdminPropertiesPublic
     public function testGetAdminPropertiesReturnsEmptyList()
     {
-        $transformer = new DummyTransformer2($this->createMock(User::class));
-        $object = new DummyObject();
+        $transformer = new class ($this->createMock(User::class)) extends AbstractTransformer {
+        };
+        $object = ($this->makeObject)();
 
-        $result = $transformer->getAdminPropertiesPublic($object);
+        $m = new ReflectionMethod(AbstractTransformer::class, 'getAdminProperties');
+        $m->setAccessible(true);
+        $result = $m->invoke($transformer, $object);
         $this->assertEquals($result, []);
     }
 }

@@ -526,7 +526,7 @@ class SeatingPlanControllerTest extends TestCase
     }
 
     // Single-purpose: when !$seat->canPick($ticket->user) is true
-    public function testSelect_ShortCircuitsWhenSeatNotPickable()
+    public function testSelectShortCircuitsWhenSeatNotPickable()
     {
         $user = User::factory()->create();
         // Event in future but seat disabled -> canPick should be false
@@ -551,7 +551,7 @@ class SeatingPlanControllerTest extends TestCase
     }
 
     // Single-purpose: when $ticket->seat is true (old seat should be disassociated)
-    public function testSelect_ReassignsOldSeatWhenTicketHasSeat()
+    public function testSelectReassignsOldSeatWhenTicketHasSeat()
     {
         $user = User::factory()->create();
         $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);
@@ -578,7 +578,7 @@ class SeatingPlanControllerTest extends TestCase
     }
 
     // Single-purpose: when $ticket->seat is false (assign new seat)
-    public function testSelect_AssignsSeatWhenTicketHasNoSeat()
+    public function testSelectAssignsSeatWhenTicketHasNoSeat()
     {
         $user = User::factory()->create();
         $event = Event::factory()->create(['ends_at' => now()->addDay(), 'seating_locked' => false]);

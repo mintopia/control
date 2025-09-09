@@ -31,7 +31,7 @@ class AppServiceProviderTest extends TestCase
         }
     }
 
-    public function test_blade_setting_directive_is_registered()
+    public function testBladeSettingDirectiveIsRegistered()
     {
         // Ensure no existing directive conflicts
         $this->clearBladeDirectives();
@@ -48,7 +48,7 @@ class AppServiceProviderTest extends TestCase
         $this->assertStringContainsString('App\\Models\\Setting::fetch', $result);
     }
 
-    public function test_blade_setting_directive_returns_default_when_setting_not_found()
+    public function testBladeSettingDirectiveReturnsDefaultWhenSettingNotFound()
     {
         // Ensure no existing directive conflicts
         $this->clearBladeDirectives();
@@ -66,7 +66,7 @@ class AppServiceProviderTest extends TestCase
         $this->assertStringContainsString('Default Value', $result);
     }
 
-    public function test_view_composer_sets_theme_and_dark_mode()
+    public function testViewComposerSetsThemeAndDarkMode()
     {
         // Create a real theme in the database so Theme::whereActive(true)->first() returns it
         Theme::factory()->create([

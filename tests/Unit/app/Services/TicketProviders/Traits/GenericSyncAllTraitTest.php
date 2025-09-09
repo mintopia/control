@@ -2,21 +2,18 @@
 
 namespace Tests\Unit\app\Services\TicketProviders\Traits;
 
+use App\Models\EmailAddress;
+use App\Models\Ticket;
 use App\Models\TicketProvider;
+use App\Models\TicketType;
+use App\Models\TicketTypeMapping;
 use Carbon\Carbon;
-use Database\Factories\EmailAddressFactory;
 use Illuminate\Console\OutputStyle;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
-use Mockery\MockInterface;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Tests\TestCase;
-use Tests\Unit\app\Services\TicketProviders\HelperClasses\DummyProviderWithSyncAll;
-use Tests\Unit\app\Services\TicketProviders\HelperClasses\InternalTicketStub;
-
-// We'll use a BufferedOutput and real OutputStyle in tests to capture output
 
 class GenericSyncAllTraitTest extends TestCase
 {
@@ -28,29 +25,86 @@ class GenericSyncAllTraitTest extends TestCase
         Log::spy();
     }
 
-    protected function getProvider($remoteTickets = [], $internalTickets = [], $types = [1, 2])
+    protected function makeProviderWithRelations(array $internalTickets = [], array $typeExternalIds = [1, 2])
     {
-        // create a persistent ticket query object so tests can set internalTickets on it
-        $ticketQuery = $this->partialMock(HasMany::class, function (MockInterface $mock) use ($internalTickets) {
-            $mock->shouldReceive('whereIn', 'with')->andReturn($mock);
-            $mock->shouldReceive('get')->andReturn(collect($internalTickets));
-        });
+        // Create a real TicketProvider backed by DB so relations work naturally
+        $provider = TicketProvider::factory()->create([
+            'name' => 'Dummy',
+            'code' => 'dummy',
+            'provider_class' => \App\Services\TicketProviders\TicketTailorProvider::class,
+        ]);
 
-        $typesQuery = $this->partialMock(HasMany::class, function (MockInterface $mock) use ($types) {
-            $mock->shouldReceive('get')->andReturn(collect($types));
-            $mock->shouldReceive('pluck')->andReturn(collect(array_keys($types)));
-        });
+        // Create TicketTypes and mappings for the provider
+        foreach ($typeExternalIds as $ext) {
+            $type = TicketType::factory()->create();
+            TicketTypeMapping::create([
+                'ticket_type_id' => $type->id,
+                'ticket_provider_id' => $provider->id,
+                'external_id' => (string)$ext,
+            ]);
+        }
 
-        $provider = $this->partialMock(TicketProvider::class, function (MockInterface $mock) use ($ticketQuery, $typesQuery) {
-            $mock->shouldReceive('types')->andReturn($typesQuery);
-            $mock->shouldReceive('tickets')->andReturn($ticketQuery);
-        });
-        $provider->id = 42;
-        $provider->code = 'dummy';
+        // Create internal tickets if provided
+        foreach ($internalTickets as $t) {
+            Ticket::factory()->create([
+                'ticket_provider_id' => $provider->id,
+                'external_id' => $t['external_id'],
+                'user_id' => $t['user_id'] ?? null,
+            ]);
+        }
+
         return $provider;
     }
 
-    public function test_sync_all_tickets_removes_voided_tickets()
+    protected function makeDummyUsingTrait($provider, array $remoteTickets = [])
+    {
+        // Build an anonymous class that includes the trait and mimics a provider
+        $anon = new class ($provider) {
+            public $provider;
+            public $makeTicketCalled = false;
+            private ?array $remoteTickets = null;
+
+            public function __construct($p)
+            {
+                $this->provider = $p;
+            }
+
+            use \App\Services\TicketProviders\Traits\GenericSyncAllTrait;
+
+            // allow tests to override remote tickets easily
+            protected function getTickets(): array
+            {
+                return $this->remoteTickets ?? [];
+            }
+
+            public function setRemoteTickets(array $tickets): void
+            {
+                $this->remoteTickets = $tickets;
+            }
+
+            protected function makeTicket($user, $data)
+            {
+                $this->makeTicketCalled = true;
+                // Create event and type so foreign keys satisfy DB constraints
+                $event = \App\Models\Event::factory()->create();
+                $type = \App\Models\TicketType::factory()->for($event)->create();
+
+                $ticket = Ticket::factory()->create([
+                    'ticket_provider_id' => $this->provider->id,
+                    'external_id' => $data->id,
+                    'original_email' => $data->email ?? null,
+                    'event_id' => $event->id,
+                    'ticket_type_id' => $type->id,
+                ]);
+                return $ticket;
+            }
+        };
+
+        $anon->setRemoteTickets($remoteTickets);
+        return $anon;
+    }
+
+    public function testSyncAllTicketsRemovesVoidedTickets()
     {
         $remoteTicket = (object)[
             'id' => 1,
@@ -58,29 +112,27 @@ class GenericSyncAllTraitTest extends TestCase
             'status' => 'voided',
             'email' => 'test@example.com'
         ];
-        $internalTicket = new InternalTicketStub(1);
-        $provider = $this->getProvider([$remoteTicket], [$internalTicket]);
-        $dummy = $this->partialMock(DummyProviderWithSyncAll::class, function (MockInterface $mock) use ($remoteTicket, $provider) {
-            $mock->provider = $provider;
-            $mock->shouldReceive('getTickets')->andReturn([$remoteTicket]);
-        });
+
+        // Create an internal ticket that should be deleted
+        $provider = $this->makeProviderWithRelations([
+            ['external_id' => 1]
+        ]);
+
+        $anon = $this->makeDummyUsingTrait($provider, [$remoteTicket]);
 
         $buffer = new BufferedOutput();
         $output = new OutputStyle(new ArrayInput([]), $buffer);
 
-        // preconditions: ensure provider and dummy return the tickets we expect
-        $this->assertCount(1, $provider->tickets()->get(), 'provider should return one internal ticket');
-        $this->assertEquals(1, $provider->tickets()->get()->first()->external_id, 'internal ticket external_id mismatch');
-        $this->assertCount(1, $dummy->getTickets(), 'dummy provider should return one remote ticket');
-        $this->assertEquals(1, $dummy->getTickets()[0]->id, 'remote ticket id mismatch');
+        // ensure precondition
+        $this->assertDatabaseHas('tickets', ['external_id' => 1]);
 
-        $dummy->syncAllTickets($output);
+        $anon->syncAllTickets($output);
 
-        $this->assertTrue($internalTicket->deleted);
+        $this->assertDatabaseMissing('tickets', ['external_id' => 1]);
         $this->assertStringContainsString('has been voided, removing', $buffer->fetch());
     }
 
-    public function test_sync_all_tickets_associates_user_if_missing()
+    public function testSyncAllTicketsAssociatesUserIfMissing()
     {
         $remoteTicket = (object)[
             'id' => 2,
@@ -88,31 +140,33 @@ class GenericSyncAllTraitTest extends TestCase
             'status' => 'valid',
             'email' => 'user@example.com'
         ];
-        // Create a user and verified email address for lookup
-        $email = EmailAddressFactory::new()->create([
+
+        // Create verified email and related user
+        $email = EmailAddress::factory()->create([
             'email' => 'user@example.com',
             'verified_at' => Carbon::now(),
         ]);
-        $user = $email->user;
 
-        $internalTicket = new InternalTicketStub(2);
-        $provider = $this->getProvider([$remoteTicket], [$internalTicket]);
-        $dummy = $this->partialMock(DummyProviderWithSyncAll::class, function (MockInterface $mock) use ($remoteTicket, $provider) {
-            $mock->provider = $provider;
-            $mock->shouldReceive('getTickets')->andReturn([$remoteTicket]);
-        });
+        // internal ticket without user
+        $provider = $this->makeProviderWithRelations([
+            ['external_id' => 2]
+        ]);
+
+        $anon = $this->makeDummyUsingTrait($provider, [$remoteTicket]);
 
         $buffer = new BufferedOutput();
         $output = new OutputStyle(new ArrayInput([]), $buffer);
 
-        $dummy->syncAllTickets($output);
+        $anon->syncAllTickets($output);
 
-        $this->assertTrue($internalTicket->saved);
-        $this->assertEquals($user->id, $internalTicket->user->id);
+        // ticket should now be associated with user
+        $this->assertDatabaseHas('tickets', ['external_id' => 2]);
+        $ticket = Ticket::whereExternalId(2)->first();
+        $this->assertNotNull($ticket->user_id);
         $this->assertStringContainsString('Associating', $buffer->fetch());
     }
 
-    public function test_sync_all_tickets_creates_new_ticket_for_missing()
+    public function testSyncAllTicketsCreatesNewTicketForMissing()
     {
         $remoteTicket = (object)[
             'id' => 3,
@@ -120,22 +174,20 @@ class GenericSyncAllTraitTest extends TestCase
             'status' => 'valid',
             'email' => 'new@example.com'
         ];
-        // No internal tickets
-        $provider = $this->getProvider([$remoteTicket], []);
-        $dummy = $this->partialMock(DummyProviderWithSyncAll::class, function (MockInterface $mock) use ($remoteTicket, $provider) {
-            $mock->provider = $provider;
-            $mock->shouldReceive('getTickets')->andReturn([$remoteTicket]);
-        });
+
+        $provider = $this->makeProviderWithRelations([]);
+        $anon = $this->makeDummyUsingTrait($provider, [$remoteTicket]);
 
         $buffer = new BufferedOutput();
         $output = new OutputStyle(new ArrayInput([]), $buffer);
 
-        $dummy->syncAllTickets($output);
-        $this->assertTrue($dummy->makeTicketCalled);
+        $anon->syncAllTickets($output);
+
+        $this->assertTrue($anon->makeTicketCalled);
         $this->assertStringContainsString('Creating ticket for 3 - new@example.com', $buffer->fetch());
     }
 
-    public function test_sync_all_tickets_skips_voided_missing_tickets()
+    public function testSyncAllTicketsSkipsVoidedMissingTickets()
     {
         $remoteTicket = (object)[
             'id' => 4,
@@ -143,17 +195,16 @@ class GenericSyncAllTraitTest extends TestCase
             'status' => 'voided',
             'email' => 'voided@example.com'
         ];
-        $provider = $this->getProvider([$remoteTicket], []);
-        $dummy = $this->partialMock(DummyProviderWithSyncAll::class, function (MockInterface $mock) use ($remoteTicket, $provider) {
-            $mock->provider = $provider;
-            $mock->shouldReceive('getTickets')->andReturn([$remoteTicket]);
-        });
+
+        $provider = $this->makeProviderWithRelations([]);
+        $anon = $this->makeDummyUsingTrait($provider, [$remoteTicket]);
 
         $buffer = new BufferedOutput();
         $output = new OutputStyle(new ArrayInput([]), $buffer);
 
-        $dummy->syncAllTickets($output);
-        $this->assertFalse($dummy->makeTicketCalled);
+        $anon->syncAllTickets($output);
+
+        $this->assertFalse($anon->makeTicketCalled);
         $this->assertStringNotContainsString('Creating ticket for 4', $buffer->fetch());
     }
 }

@@ -129,11 +129,17 @@ class EventTest extends TestCase
         $this->assertEquals($provider->id, $result[0]->provider->id);
     }
 
-    public function testProtectedToStringNameReturnsCode()
+    public function testProtectedFunctionToStringName()
     {
-        $dummy = new HelperClasses\DummyEvent();
-        $dummy->code = 'EVT-1';
-        $this->assertEquals('EVT-1', $dummy->toStringNamePublic());
+        $event = new Event();
+        $event->code = 'EVT-1';
+
+        $reflection = new \ReflectionClass($event);
+        $method = $reflection->getMethod('toStringName');
+        $method->setAccessible(true);
+        $result = $method->invoke($event);
+
+        $this->assertEquals($event->code, $result);
     }
 
     public function testGetAvailableEventMappingsIncludesUsedWhenExistingProvided()

@@ -20,10 +20,16 @@ class ClanRoleTest extends TestCase
         $this->assertInstanceOf(HasMany::class, $role->members());
     }
 
-    public function testProtectedToStringNameReturnsCode()
+    public function testProtectedFunctionToStringName()
     {
-        $dummy = new HelperClasses\DummyClanRole();
-        $dummy->code = 'leader';
-        $this->assertEquals('leader', $dummy->toStringNamePublic());
+        $clanRole = new ClanRole();
+        $clanRole->code = 'clanRole-1';
+
+        $reflection = new \ReflectionClass($clanRole);
+        $method = $reflection->getMethod('toStringName');
+        $method->setAccessible(true);
+        $result = $method->invoke($clanRole);
+
+        $this->assertEquals($clanRole->code, $result);
     }
 }

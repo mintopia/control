@@ -9,31 +9,31 @@ use function app\makePermalink;
 
 class HelpersTest extends TestCase
 {
-    public function test_makePermalink_basic()
+    public function testMakePermalinkBasic()
     {
         $this->assertEquals('hello-world', makePermalink('Hello World'));
     }
 
-    public function test_makePermalink_removes_special_characters()
+    public function testMakePermalinkRemovesSpecialCharacters()
     {
         $this->assertEquals('abc-123', makePermalink('ABC!@# 123'));
     }
 
-    public function test_makePermalink_truncates_to_128_chars()
+    public function testMakePermalinkTruncatesTo128Chars()
     {
         $input = str_repeat('a', 130);
         $output = makePermalink($input);
         $this->assertEquals(128, strlen($output));
     }
 
-    public function test_makeCode_default_length()
+    public function testMakeCodeDefaultLength()
     {
         $code = makeCode();
         $this->assertEquals(6, strlen($code));
         $this->assertMatchesRegularExpression('/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/', $code);
     }
 
-    public function test_makeCode_custom_length()
+    public function testMakeCodeCustomLength()
     {
         $code = makeCode(10);
         $this->assertEquals(10, strlen($code));

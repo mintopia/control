@@ -9,7 +9,4 @@
 
     <arg value="np"/>
     <rule ref="PSR12"/>
-    <rule ref="PSR1.Methods.CamelCapsMethodName.NotCamelCaps">
-        <exclude-pattern>tests/*</exclude-pattern>
-    </rule>
 </ruleset>

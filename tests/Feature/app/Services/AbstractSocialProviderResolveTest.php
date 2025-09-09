@@ -3,7 +3,7 @@
 namespace Tests\Feature\app\Services;
 
 use App\Models\SocialProvider;
-use Tests\Feature\app\Services\HelperClasses\ResolveDummyProvider;
+use App\Services\SocialProviders\AbstractSocialProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use ReflectionClass;
@@ -13,10 +13,40 @@ class AbstractSocialProviderResolveTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_constructor_keeps_explicit_redirect_url()
+    protected \Closure $makeResolveProvider;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->makeResolveProvider = function (\App\Models\SocialProvider $prov, ?string $redirectUrl = null) {
+            return new class ($prov, $redirectUrl) extends AbstractSocialProvider {
+                protected string $name = 'Resolve Dummy';
+                protected string $code = 'resolve_dummy_test';
+                protected string $socialiteProviderCode = 'resolve_dummy_code';
+
+                protected function updateAccount(\App\Models\LinkedAccount $account, $remoteUser): void
+                {
+                    // no-op
+                }
+            };
+        };
+    }
+
+    protected function makeResolveProvider(\App\Models\SocialProvider $prov, ?string $redirectUrl = null)
+    {
+        $factory = $this->makeResolveProvider;
+        if (!is_callable($factory)) {
+            throw new \RuntimeException('makeResolveProvider closure not initialized');
+        }
+
+        return $factory($prov, $redirectUrl);
+    }
+
+    public function testConstructorKeepsExplicitRedirectUrl()
     {
         $prov = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'rd_x']);
-        $svc = new ResolveDummyProvider($prov, 'https://example.test/custom');
+        $svc = $this->makeResolveProvider($prov, 'https://example.test/custom');
 
         $ref = new ReflectionClass($svc);
         $p = $ref->getProperty('redirectUrl');
@@ -24,11 +54,11 @@ class AbstractSocialProviderResolveTest extends TestCase
         $this->assertEquals('https://example.test/custom', $p->getValue($svc));
     }
 
-    public function test_resolve_sets_login_return_when_guest_and_auth_enabled()
+    public function testResolveSetsLoginReturnWhenGuestAndAuthEnabled()
     {
         Auth::shouldReceive('guest')->andReturn(true);
         $prov = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'rd_guest']);
-        $svc = new ResolveDummyProvider($prov);
+        $svc = $this->makeResolveProvider($prov);
 
         $ref = new ReflectionClass($svc);
         $p = $ref->getProperty('redirectUrl');
@@ -39,11 +69,11 @@ class AbstractSocialProviderResolveTest extends TestCase
         $this->assertStringContainsString('resolve_dummy_test', $val);
     }
 
-    public function test_resolve_sets_linkedaccounts_when_not_guest()
+    public function testResolveSetsLinkedaccountsWhenNotGuest()
     {
         Auth::shouldReceive('guest')->andReturn(false);
         $prov = SocialProvider::factory()->create(['auth_enabled' => true, 'code' => 'rd_not_guest']);
-        $svc = new ResolveDummyProvider($prov);
+        $svc = $this->makeResolveProvider($prov);
 
         $ref = new ReflectionClass($svc);
         $p = $ref->getProperty('redirectUrl');

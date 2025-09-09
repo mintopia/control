@@ -21,3 +21,4 @@ yarn-error.log
 /html-coverage
 clover.xml
 coverage.txt
+.github/copilot-instructions.md

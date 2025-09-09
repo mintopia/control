@@ -4,7 +4,6 @@ namespace Tests\Feature\app\Services;
 
 use App\Models\ProviderSetting;
 use App\Models\SocialProvider;
-use Tests\Feature\app\Services\HelperClasses\InstallDummyProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,11 +11,25 @@ class AbstractSocialProviderInstallTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_install_creates_provider_and_settings()
-    {
-        $providerSvc = new InstallDummyProvider();
+    protected $providerSvc;
 
-        $installed = $providerSvc->install();
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Inline dummy provider setup
+        $this->providerSvc = new class extends \App\Services\SocialProviders\AbstractSocialProvider {
+            protected string $name = 'Install Dummy';
+            protected string $code = 'install_dummy_test_fixed';
+            protected string $socialiteProviderCode = 'install_dummy_code';
+            protected function updateAccount(\App\Models\LinkedAccount $account, $remoteUser): void
+            {
+            }
+        };
+    }
+
+    public function testInstallCreatesProviderAndSettings()
+    {
+        $installed = $this->providerSvc->install();
 
         $this->assertInstanceOf(SocialProvider::class, $installed);
         $this->assertDatabaseHas('social_providers', ['code' => $installed->code]);
@@ -31,9 +44,9 @@ class AbstractSocialProviderInstallTest extends TestCase
         $this->assertTrue((bool)$secret->encrypted);
     }
 
-    public function test_install_idempotent_on_existing_provider()
+    public function testInstallIdempotentOnExistingProvider()
     {
-        $svc = new InstallDummyProvider();
+        $svc = $this->providerSvc;
         $code = 'install_dummy_test_fixed';
 
         // Create an existing provider

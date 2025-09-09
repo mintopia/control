@@ -11,7 +11,7 @@ class ProviderSettingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_build_sort_query_scopes_to_provider()
+    public function testBuildSortQueryScopesToProvider()
     {
         $prov = SocialProvider::factory()->create(['code' => 'psprov']);
         $ps = ProviderSetting::factory()->create(['provider_id' => $prov->id, 'provider_type' => get_class($prov), 'code' => 'x']);
@@ -20,7 +20,7 @@ class ProviderSettingTest extends TestCase
         $this->assertStringContainsString('where', $query->toSql());
     }
 
-    public function test_provider_relation_returns_provider()
+    public function testProviderRelationReturnsProvider()
     {
         $prov = SocialProvider::factory()->create(['code' => 'psprov2']);
         $ps = ProviderSetting::factory()->create(['provider_id' => $prov->id, 'provider_type' => get_class($prov), 'code' => 'y']);
@@ -28,7 +28,7 @@ class ProviderSettingTest extends TestCase
         $this->assertEquals($prov->id, $ps->provider->id);
     }
 
-    public function test_is_required_detects_required_in_validation()
+    public function testIsRequiredDetectsRequiredInValidation()
     {
         $ps = new ProviderSetting();
         $ps->validation = 'required|string';

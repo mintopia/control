@@ -10,6 +10,16 @@ use Tests\TestCase;
 
 class EmailVerifyRequestTest extends TestCase
 {
+    /** @var EmailVerifyRequest */
+    protected $request;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // create an anonymous subclass to avoid relying on HelperClasses stub
+        $this->request = new class () extends EmailVerifyRequest {
+        };
+    }
     public function testAuthorizeReturnsTrue()
     {
         $request = new EmailVerifyRequest();
@@ -35,7 +45,7 @@ class EmailVerifyRequestTest extends TestCase
 
     public function testCodeRuleClosurePassesIfNoException()
     {
-        $request = new HelperClasses\EmailVerifyRequestStub();
+        $request = $this->request;
         $mockEmail = $this->getMockBuilder(EmailAddress::class)
             ->onlyMethods(['checkCode'])
             ->getMock();
@@ -57,7 +67,7 @@ class EmailVerifyRequestTest extends TestCase
 
     public function testCodeRuleClosureFailsOnException()
     {
-        $request = new HelperClasses\EmailVerifyRequestStub();
+        $request = $this->request;
         $mockEmail = $this->getMockBuilder(EmailAddress::class)
             ->onlyMethods(['checkCode'])
             ->getMock();
