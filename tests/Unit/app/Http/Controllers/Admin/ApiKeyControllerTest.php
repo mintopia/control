@@ -52,6 +52,17 @@ class ApiKeyControllerTest extends TestCase
         $this->assertStringStartsWith('ctrl_', $plaintext);
     }
 
+    public function test_created_returns_view_with_api_key()
+    {
+        $key = ApiKey::factory()->create();
+        $controller = new ApiKeyController;
+
+        $response = $controller->created($key);
+
+        $this->assertInstanceOf(View::class, $response);
+        $this->assertEquals($key->id, $response->getData()['apikey']->id);
+    }
+
     public function test_edit_returns_view()
     {
         $key = ApiKey::factory()->create();
