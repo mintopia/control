@@ -49,7 +49,9 @@ class ApiKeyGuard implements Guard
             return null;
         }
 
-        ApiKey::where('id', $key->id)->update(['last_used_at' => Carbon::now()]);
+        $now = Carbon::now();
+        ApiKey::where('id', $key->id)->update(['last_used_at' => $now]);
+        $key->last_used_at = $now;
 
         return $this->user = $key;
     }
@@ -69,10 +71,12 @@ class ApiKeyGuard implements Guard
         return $this->user !== null;
     }
 
-    public function setUser(Authenticatable $user): void
+    public function setUser(Authenticatable $user): static
     {
         $this->user = $user;
         $this->resolved = true;
+
+        return $this;
     }
 
     protected function bearerToken(): ?string

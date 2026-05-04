@@ -75,6 +75,23 @@ class ApiKeyGuardTest extends TestCase
         $this->assertNotNull($apiKey->fresh()->last_used_at);
     }
 
+    public function test_in_memory_key_last_used_at_is_updated_after_auth()
+    {
+        $plaintext = '';
+        ApiKey::factory()->withPlaintext(function ($p) use (&$plaintext) {
+            $plaintext = $p;
+        })->create(['last_used_at' => null]);
+
+        $request = Request::create('/test', 'GET');
+        $request->headers->set('Authorization', "Bearer {$plaintext}");
+
+        $guard = new ApiKeyGuard($request);
+        $resolved = $guard->user();
+
+        $this->assertNotNull($resolved);
+        $this->assertNotNull($resolved->last_used_at, 'last_used_at on the returned model should be populated');
+    }
+
     public function test_caches_resolved_key_across_multiple_calls()
     {
         $plaintext = '';
