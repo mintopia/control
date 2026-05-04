@@ -2,10 +2,11 @@
 
 namespace Tests\Unit\app\Transformers\V1;
 
+use App\Models\ApiKey;
 use App\Models\User;
 use App\Transformers\V1\AbstractTransformer;
-use Illuminate\Support\Carbon;
 use Closure;
+use Illuminate\Support\Carbon;
 use ReflectionClass;
 use ReflectionMethod;
 use Tests\TestCase;
@@ -31,26 +32,27 @@ class AbstractTransformerTest extends TestCase
         $reflection = new ReflectionClass($object);
         $method = $reflection->getMethod($method);
         $method->setAccessible(true);
+
         return $method->invokeArgs($object, $parameters);
     }
 
-    public function testModifyForUserReturnsDataForNonAdmin()
+    public function test_modify_for_user_returns_data_for_non_admin()
     {
         $user = $this->createMock(User::class);
         $user->method('hasRole')->willReturn(false);
-        $transformer = new class ($user) extends AbstractTransformer {
-        };
+        $transformer = new class($user) extends AbstractTransformer {};
         $object = ($this->makeObject)();
         $data = ['foo' => 'bar'];
         $result = $this->invokeMethod($transformer, 'modifyForUser', [$data, $object]);
         $this->assertEquals($data, $result);
     }
 
-    public function testModifyForUserReturnsAdminData()
+    public function test_modify_for_user_returns_admin_data()
     {
         $user = $this->createMock(User::class);
         $user->method('hasRole')->with('admin')->willReturn(true);
-        $transformer = new class ($user) extends AbstractTransformer {
+        $transformer = new class($user) extends AbstractTransformer
+        {
             protected function getAdminProperties(object $object): array
             {
                 return ['admin' => true];
@@ -67,9 +69,10 @@ class AbstractTransformerTest extends TestCase
         $this->assertEquals('2022-01-02T00:00:00+00:00', $result['updated_at']);
     }
 
-    public function testGetAdminPropertiesDirectly()
+    public function test_get_admin_properties_directly()
     {
-        $transformer = new class ($this->createMock(User::class)) extends AbstractTransformer {
+        $transformer = new class($this->createMock(User::class)) extends AbstractTransformer
+        {
             protected function getAdminProperties(object $object): array
             {
                 return ['admin' => true];
@@ -85,15 +88,41 @@ class AbstractTransformerTest extends TestCase
     }
 
     // Manually added test to check getAdminPropertiesPublic
-    public function testGetAdminPropertiesReturnsEmptyList()
+    public function test_get_admin_properties_returns_empty_list()
     {
-        $transformer = new class ($this->createMock(User::class)) extends AbstractTransformer {
-        };
+        $transformer = new class($this->createMock(User::class)) extends AbstractTransformer {};
         $object = ($this->makeObject)();
 
         $m = new ReflectionMethod(AbstractTransformer::class, 'getAdminProperties');
         $m->setAccessible(true);
         $result = $m->invoke($transformer, $object);
         $this->assertEquals($result, []);
+    }
+
+    public function test_modify_for_user_returns_admin_data_when_api_key_provided()
+    {
+        $apiKey = new ApiKey;
+        $transformer = new class(null, $apiKey) extends AbstractTransformer {};
+        $object = ($this->makeObject)();
+        $data = ['foo' => 'bar'];
+        $result = $this->invokeMethod($transformer, 'modifyForUser', [$data, $object]);
+
+        $this->assertEquals('bar', $result['foo']);
+        $this->assertEquals(1, $result['id']);
+        $this->assertEquals('2022-01-01T00:00:00+00:00', $result['created_at']);
+        $this->assertEquals('2022-01-02T00:00:00+00:00', $result['updated_at']);
+    }
+
+    public function test_is_admin_context_returns_true_when_api_key_provided()
+    {
+        $apiKey = new ApiKey;
+        $transformer = new class(null, $apiKey) extends AbstractTransformer {};
+        $this->assertTrue($this->invokeMethod($transformer, 'isAdminContext', []));
+    }
+
+    public function test_is_admin_context_returns_false_when_no_user_or_api_key()
+    {
+        $transformer = new class extends AbstractTransformer {};
+        $this->assertFalse($this->invokeMethod($transformer, 'isAdminContext', []));
     }
 }

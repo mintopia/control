@@ -32,6 +32,11 @@ abstract class AbstractTransformer extends TransformerAbstract
         );
     }
 
+    /**
+     * Returns true when the caller should receive the admin-equivalent payload.
+     * Any ApiKey is treated as admin-equivalent because the apikey guard already
+     * rejects disabled keys before they reach a transformer.
+     */
     protected function isAdminContext(): bool
     {
         if ($this->apiKey !== null) {
