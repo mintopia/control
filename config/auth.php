@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\ApiKey;
+use App\Models\User;
+
 return [
 
     /*
@@ -40,6 +43,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'apikey' => [
+            'driver' => 'apikey',
+            'provider' => 'apikeys',
+        ],
     ],
 
     /*
@@ -62,7 +69,12 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\User::class,
+            'model' => User::class,
+        ],
+
+        'apikeys' => [
+            'driver' => 'eloquent',
+            'model' => ApiKey::class,
         ],
 
         // 'users' => [

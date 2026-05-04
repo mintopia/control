@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Auth\ApiKeyGuard;
 use App\Models\User;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
@@ -33,6 +35,10 @@ class AuthServiceProvider extends ServiceProvider
         });
         Gate::define('anyPrivilegedRole', function (User $user) {
             return $user->hasRole('manager') || $user->hasRole('admin');
+        });
+
+        Auth::extend('apikey', function ($app, $name, array $config) {
+            return new ApiKeyGuard($app['request']);
         });
     }
 }
