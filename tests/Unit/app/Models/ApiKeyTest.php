@@ -3,9 +3,9 @@
 namespace Tests\Unit\app\Models;
 
 use App\Models\ApiKey;
+use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class ApiKeyTest extends TestCase
@@ -60,7 +60,7 @@ class ApiKeyTest extends TestCase
         $this->assertTrue($apiKey->enabled);
     }
 
-    public function test_hashed_returns_model_by_plaintext()
+    public function test_find_by_plaintext_returns_model_and_null_for_miss()
     {
         [$apiKey, $plaintext] = ApiKey::generate('A');
 

@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Database\Factories\ApiKeyFactory;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -25,6 +25,24 @@ class ApiKey extends Model implements AuthenticatableContract
     use HasFactory;
 
     public const PREFIX = 'ctrl_';
+
+    /**
+     * Return empty string so the Authenticatable trait does not attempt to
+     * read a non-existent remember_token column from the api_keys table.
+     */
+    public function getRememberTokenName(): string
+    {
+        return '';
+    }
+
+    /**
+     * Return empty string so the Authenticatable trait does not attempt to
+     * read a non-existent password column from the api_keys table.
+     */
+    public function getAuthPasswordName(): string
+    {
+        return '';
+    }
 
     protected $fillable = [
         'name',
@@ -61,6 +79,10 @@ class ApiKey extends Model implements AuthenticatableContract
         return [$key, $plaintext];
     }
 
+    /**
+     * Look up an API key by its plaintext form. Does NOT filter by `enabled`;
+     * the caller is responsible for that check (the guard does so).
+     */
     public static function findByPlaintext(string $plaintext): ?self
     {
         return self::where('key_hash', hash('sha256', $plaintext))->first();
