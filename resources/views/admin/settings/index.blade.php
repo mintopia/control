@@ -121,6 +121,21 @@
             </div>
             <div class="card mb-4">
                 <div class="card-header">
+                    <h3 class="card-title">API Keys</h3>
+
+                    <a class="btn btn-primary ms-auto" href="{{ route('admin.settings.apikeys.index') }}">
+                        <i class="icon ti ti-key"></i>
+                        Manage API Keys
+                    </a>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-0">
+                        API keys grant read access to the admin API endpoints used by external integrations.
+                    </p>
+                </div>
+            </div>
+            <div class="card mb-4">
+                <div class="card-header">
                     <h3 class="card-title">Discord Integration</h3>
                 </div>
                 @if($discordProvider && $discordProvider->getSetting('client_id') && $discordProvider->getSetting('client_secret') && $discordProvider->getSetting('token'))
