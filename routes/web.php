@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ApiKeyController;
 use App\Http\Controllers\Admin\ClanController as AdminClanController;
 use App\Http\Controllers\Admin\ClanMembershipController as AdminClanMembershipController;
 use App\Http\Controllers\Admin\EmailAddressController as AdminEmailAddressController;
@@ -8,8 +9,8 @@ use App\Http\Controllers\Admin\EventMappingController;
 use App\Http\Controllers\Admin\HomeController as AdminHomeController;
 use App\Http\Controllers\Admin\LinkedAccountController as AdminLinkedAccountController;
 use App\Http\Controllers\Admin\SeatController as AdminSeatController;
-use App\Http\Controllers\Admin\SeatGroupController;
 use App\Http\Controllers\Admin\SeatGroupAssignmentController;
+use App\Http\Controllers\Admin\SeatGroupController;
 use App\Http\Controllers\Admin\SeatingPlanController as AdminSeatingPlanController;
 use App\Http\Controllers\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Admin\SocialProviderController;
@@ -31,11 +32,9 @@ use App\Http\Controllers\WebhookController;
 use App\Http\Middleware\RedirectOnFirstLoginMiddleware;
 use Illuminate\Support\Facades\Route;
 
-
 // Always available
 Route::get('logout', [UserController::class, 'logout'])->name('logout');
 Route::any('webhooks/tickets/{ticketprovider:code}', [WebhookController::class, 'tickets'])->name('webhooks.tickets');
-
 
 // Authenticated routes
 Route::middleware('auth:sanctum')->group(function () {
@@ -94,12 +93,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('tickets', [TicketController::class, 'index'])->name('tickets.index');
         Route::post('tickets/transfer', [TicketController::class, 'transfer'])->name('tickets.transfer');
-        Route::middleware(['can:see,ticket', 'can:update,ticket'])->group(function() {
+        Route::middleware(['can:see,ticket', 'can:update,ticket'])->group(function () {
             Route::resource('tickets', TicketController::class)->only(['show', 'update']);
         });
 
         Route::get('seating', [SeatingPlanController::class, 'index'])->name('seatingplans.index');
-        Route::middleware('can:see,event')->group(function() {
+        Route::middleware('can:see,event')->group(function () {
             Route::get('seating/{event}', [SeatingPlanController::class, 'show'])->name('seatingplans.show');
             Route::get('seating/{event}/tickets/{ticket}/unseat', [SeatingPlanController::class, 'unseat'])->name('seatingplans.unseat')->scopeBindings();
             Route::get('seating/{event}/tickets/{ticket}', [SeatingPlanController::class, 'show'])->name('seatingplans.choose')->scopeBindings();
@@ -156,11 +155,14 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::get('settings/ticketproviders/{provider}/sync', [TicketProviderController::class, 'sync'])->name('settings.ticketproviders.sync');
                 Route::get('settings/socialproviders/{provider}/edit', [SocialProviderController::class, 'edit'])->name('settings.socialproviders.edit');
                 Route::match(['PUT', 'PATCH'], 'settings/socialproviders/{provider}', [SocialProviderController::class, 'update'])->name('settings.socialproviders.update');
-                Route::prefix('settings')->name('settings.')->group(function() {
+                Route::prefix('settings')->name('settings.')->group(function () {
                     Route::get('discord', [AdminSettingController::class, 'addDiscord'])->name('discord');
                     Route::get('discord/return', [AdminSettingController::class, 'addDiscordReturn'])->name('discord_return');
                     Route::resource('themes', ThemeController::class)->except(['index', 'show']);
                     Route::get('themes/{theme}/delete', [ThemeController::class, 'delete'])->name('themes.delete');
+                    Route::resource('apikeys', ApiKeyController::class)->except(['show']);
+                    Route::get('apikeys/{apikey}/created', [ApiKeyController::class, 'created'])->name('apikeys.created');
+                    Route::get('apikeys/{apikey}/delete', [ApiKeyController::class, 'delete'])->name('apikeys.delete');
                 });
 
                 Route::get('tickets/import', [AdminTicketController::class, 'import'])->name('tickets.import');
@@ -183,20 +185,20 @@ Route::middleware('auth:sanctum')->group(function () {
                 Route::get('users/{user}/emails/{email}', [AdminEmailAddressController::class, 'delete'])->name('users.emails.delete')->scopeBindings();
             });
 
-            //Manager routes
+            // Manager routes
             Route::resource('events', AdminEventController::class)->only([
-                'index', 'show'
+                'index', 'show',
             ]);
             Route::get('events/{event}/seats', [AdminEventController::class, 'seats'])->name('events.seats');
             Route::get('events/{event}/seats/{ticket}/unseat', [AdminEventController::class, 'unseat'])->name('events.seats.unseat')->scopeBindings();
             Route::get('events/{event}/seats/{ticket}/pick/{seat}', [AdminEventController::class, 'pickseat'])->name('events.seats.pick');
 
             Route::resource('clans', AdminClanController::class)->only([
-                'index', 'show'
+                'index', 'show',
             ]);
 
             Route::resource('users', AdminUserController::class)->only([
-                'index', 'show'
+                'index', 'show',
             ]);
         });
     });
