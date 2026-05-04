@@ -2,20 +2,23 @@
 
 namespace App\Transformers\V1;
 
+use App\Models\ApiKey;
 use App\Models\User;
 use League\Fractal\TransformerAbstract;
 
 abstract class AbstractTransformer extends TransformerAbstract
 {
-    public function __construct(protected ?User $user = null)
-    {
-    }
+    public function __construct(
+        protected ?User $user = null,
+        protected ?ApiKey $apiKey = null,
+    ) {}
 
     protected function modifyForUser(array $data, object $object): array
     {
-        if (!$this->user || !$this->user->hasRole('admin')) {
+        if (! $this->isAdminContext()) {
             return $data;
         }
+
         return array_merge(
             [
                 'id' => $object->id,
@@ -27,6 +30,15 @@ abstract class AbstractTransformer extends TransformerAbstract
                 'updated_at' => $object->updated_at->toIso8601String(),
             ]
         );
+    }
+
+    protected function isAdminContext(): bool
+    {
+        if ($this->apiKey !== null) {
+            return true;
+        }
+
+        return $this->user !== null && $this->user->hasRole('admin');
     }
 
     protected function getAdminProperties(object $object): array
