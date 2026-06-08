@@ -4,7 +4,7 @@
 
 @section('breadcrumbs')
     @include('admin.apikeys._breadcrumbs')
-    <li class="breadcrumb-item active"><a href="{{ route('admin.settings.apikeys.delete', $apikey->id) }}">Delete</a></li>
+    <li class="breadcrumb-item active"><a href="{{ route('admin.apikeys.delete', $apikey->id) }}">Delete</a></li>
 @endsection
 
 @section('content')
@@ -13,7 +13,7 @@
     </div>
 
     <div class="col-md-6 offset-md-3">
-        <form action="{{ route('admin.settings.apikeys.destroy', $apikey->id) }}" method="post" class="card">
+        <form action="{{ route('admin.apikeys.destroy', $apikey->id) }}" method="post" class="card">
             <div class="card-status-top bg-danger"></div>
             {{ csrf_field() }}
             {{ method_field('DELETE') }}
@@ -27,7 +27,7 @@
             </div>
             <div class="card-footer text-end">
                 <div class="d-flex">
-                    <a href="{{ route('admin.settings.apikeys.index') }}" class="btn btn-link">Cancel</a>
+                    <a href="{{ route('admin.apikeys.index') }}" class="btn btn-link">Cancel</a>
                     <button type="submit" class="btn btn-danger ms-auto">Delete</button>
                 </div>
             </div>

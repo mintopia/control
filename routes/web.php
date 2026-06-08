@@ -160,10 +160,10 @@ Route::middleware('auth:sanctum')->group(function () {
                     Route::get('discord/return', [AdminSettingController::class, 'addDiscordReturn'])->name('discord_return');
                     Route::resource('themes', ThemeController::class)->except(['index', 'show']);
                     Route::get('themes/{theme}/delete', [ThemeController::class, 'delete'])->name('themes.delete');
-                    Route::resource('apikeys', ApiKeyController::class)->except(['show']);
-                    Route::get('apikeys/{apikey}/created', [ApiKeyController::class, 'created'])->name('apikeys.created');
-                    Route::get('apikeys/{apikey}/delete', [ApiKeyController::class, 'delete'])->name('apikeys.delete');
                 });
+
+                Route::resource('apikeys', ApiKeyController::class)->except(['show']);
+                Route::get('apikeys/{apikey}/delete', [ApiKeyController::class, 'delete'])->name('apikeys.delete');
 
                 Route::get('tickets/import', [AdminTicketController::class, 'import'])->name('tickets.import');
                 Route::post('tickets/import', [AdminTicketController::class, 'importShow'])->name('tickets.import.show');

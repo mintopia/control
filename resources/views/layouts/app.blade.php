@@ -109,6 +109,7 @@
                                 <a class="dropdown-item" href="{{ route('admin.events.index') }}">Events</a>
                                 @can('admin')
                                     <a class="dropdown-item" href="{{ route('admin.tickets.index') }}">Tickets</a>
+                                    <a class="dropdown-item" href="{{ route('admin.apikeys.index') }}">API Keys</a>
                                     <a class="dropdown-item" href="{{ route('admin.settings.index') }}">Settings</a>
                                 @endcan
                             </div>

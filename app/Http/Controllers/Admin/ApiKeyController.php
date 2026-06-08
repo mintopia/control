@@ -31,17 +31,10 @@ class ApiKeyController extends Controller
         [$apiKey, $plaintext] = ApiKey::generate($request->input('name'));
 
         $request->session()->flash('apiKeyPlaintext', $plaintext);
+        $request->session()->flash('apiKeyName', $apiKey->name);
+        $request->session()->flash('apiKeyLastFour', $apiKey->last_four);
 
-        return response()
-            ->redirectToRoute('admin.settings.apikeys.created', $apiKey->id)
-            ->with('successMessage', 'The API key has been created');
-    }
-
-    public function created(ApiKey $apikey)
-    {
-        return view('admin.apikeys.created', [
-            'apikey' => $apikey,
-        ]);
+        return redirect()->route('admin.apikeys.index');
     }
 
     public function edit(ApiKey $apikey)
@@ -58,7 +51,7 @@ class ApiKeyController extends Controller
         $apikey->save();
 
         return response()
-            ->redirectToRoute('admin.settings.apikeys.index')
+            ->redirectToRoute('admin.apikeys.index')
             ->with('successMessage', 'The API key has been updated');
     }
 
@@ -74,7 +67,7 @@ class ApiKeyController extends Controller
         $apikey->delete();
 
         return response()
-            ->redirectToRoute('admin.settings.apikeys.index')
+            ->redirectToRoute('admin.apikeys.index')
             ->with('successMessage', 'The API key has been deleted');
     }
 }

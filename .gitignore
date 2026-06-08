@@ -1,3 +1,4 @@
+/.dev
 /.phpunit.cache
 /node_modules
 /public/build
