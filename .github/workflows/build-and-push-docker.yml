@@ -47,6 +47,7 @@ jobs:
           tags: |
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'master') }}
             type=raw,value=develop,enable=${{ github.ref == format('refs/heads/{0}', 'develop') }}
+            type=ref,event=branch,enable=${{ github.event_name == 'workflow_dispatch' }}
             type=semver,pattern={{version}}
 
       - name: Build and push Docker image
