@@ -207,6 +207,29 @@ class TicketControllerTest extends TestCase
         $this->assertSame([$back->id, $front->id], $desc->pluck('id')->all());
     }
 
+    public function testIndexSeatSortKeepsUnseatedTickets()
+    {
+        $user = User::factory()->create();
+        $event = Event::factory()->create(['draft' => false, 'starts_at' => now(), 'ends_at' => now()->addHour()]);
+
+        $frontRow = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id]);
+        $backRow = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id]);
+        $unseated = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id]);
+
+        Seat::factory()->create(['ticket_id' => $frontRow->id, 'row' => 1, 'number' => 1, 'label' => '1-1']);
+        Seat::factory()->create(['ticket_id' => $backRow->id, 'row' => 2, 'number' => 5, 'label' => '2-5']);
+
+        $tickets = $this->indexResponse($user, ['order' => 'seat', 'order_direction' => 'asc'])->getData()['tickets'];
+        $ids = $tickets->pluck('id')->all();
+
+        $this->assertCount(3, $tickets);
+        $this->assertContains($unseated->id, $ids);
+
+        $frontPosition = array_search($frontRow->id, $ids);
+        $backPosition = array_search($backRow->id, $ids);
+        $this->assertLessThan($backPosition, $frontPosition);
+    }
+
     public function testIndexSortsByEventStartsAt()
     {
         $user = User::factory()->create();
