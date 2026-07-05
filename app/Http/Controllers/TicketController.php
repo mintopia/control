@@ -21,13 +21,52 @@ class TicketController extends Controller
             });
         }
 
+        $sortable = ['reference', 'type', 'seat', 'event'];
+        $order = in_array($request->input('order'), $sortable, true)
+            ? $request->input('order')
+            : 'event';
+
+        $direction = strtolower((string) $request->input('order_direction'));
+        if (!in_array($direction, ['asc', 'desc'], true)) {
+            $direction = $order === 'event' ? 'desc' : 'asc';
+        }
+
+        switch ($order) {
+            case 'reference':
+                $query->orderBy('tickets.reference', $direction);
+                break;
+            case 'type':
+                $query->join('ticket_types', 'tickets.ticket_type_id', '=', 'ticket_types.id')
+                    ->orderBy('ticket_types.name', $direction);
+                break;
+            case 'seat':
+                $query->leftJoin('seats', 'seats.ticket_id', '=', 'tickets.id')
+                    ->orderBy('seats.row', $direction)
+                    ->orderBy('seats.number', $direction);
+                break;
+            case 'event':
+            default:
+                $query->join('events', 'tickets.event_id', '=', 'events.id')
+                    ->orderBy('events.starts_at', $direction);
+                break;
+        }
+
+        $params = [
+            'order' => $order,
+            'order_direction' => $direction,
+        ];
+
         $tickets = $query->with(['event' => function ($query) {
             $query->orderBy('starts_at', 'DESC');
         }, 'type', 'seat'])
-            ->paginate();
+            ->select('tickets.*')
+            ->orderBy('tickets.id')
+            ->paginate()
+            ->appends($params);
 
         return view('tickets.index', [
             'tickets' => $tickets,
+            'params' => $params,
         ]);
     }
 
