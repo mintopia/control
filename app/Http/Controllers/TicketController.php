@@ -12,8 +12,8 @@ class TicketController extends Controller
 {
     public function index(TicketIndexRequest $request)
     {
-        $order = $request->validated('order');
-        $direction = $request->validated('order_direction');
+        $order = $request->input('order', 'event');
+        $direction = $request->input('order_direction', $order === 'event' ? 'desc' : 'asc');
 
         $query = $request
             ->user()

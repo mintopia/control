@@ -43,4 +43,22 @@ class TicketSortingTest extends TestCase
         $response->assertOk();
         $response->assertSeeInOrder(['AAA-001', 'ZZZ-999']);
     }
+
+    public function testTicketsPageRejectsUnknownOrderColumn()
+    {
+        $user = User::factory()->create(['first_login' => false]);
+
+        $response = $this->actingAs($user)->get(route('tickets.index', ['order' => 'bogus']));
+
+        $response->assertSessionHasErrors('order');
+    }
+
+    public function testTicketsPageRejectsUnknownOrderDirection()
+    {
+        $user = User::factory()->create(['first_login' => false]);
+
+        $response = $this->actingAs($user)->get(route('tickets.index', ['order_direction' => 'sideways']));
+
+        $response->assertSessionHasErrors('order_direction');
+    }
 }

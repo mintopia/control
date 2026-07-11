@@ -236,31 +236,6 @@ class TicketControllerTest extends TestCase
         $this->assertSame([$oldTicket->id, $newTicket->id], $asc->pluck('id')->all());
     }
 
-    public function testIndexInvalidOrderFallsBackToNewestEventFirst()
-    {
-        $user = User::factory()->create();
-        $oldEvent = Event::factory()->create(['draft' => false, 'starts_at' => now()->subDays(5), 'ends_at' => now()->subDays(5)->addHour()]);
-        $newEvent = Event::factory()->create(['draft' => false, 'starts_at' => now()->addDays(5), 'ends_at' => now()->addDays(5)->addHour()]);
-        $oldTicket = Ticket::factory()->create(['event_id' => $oldEvent->id, 'user_id' => $user->id]);
-        $newTicket = Ticket::factory()->create(['event_id' => $newEvent->id, 'user_id' => $user->id]);
-
-        $tickets = $this->indexResponse($user, ['order' => 'bogus', 'order_direction' => 'desc'])->getData()['tickets'];
-
-        $this->assertSame([$newTicket->id, $oldTicket->id], $tickets->pluck('id')->all());
-    }
-
-    public function testIndexInvalidDirectionFallsBackToAscending()
-    {
-        $user = User::factory()->create();
-        $event = Event::factory()->create(['draft' => false, 'starts_at' => now(), 'ends_at' => now()->addHour()]);
-        $a = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id, 'reference' => 'AAA-001']);
-        $z = Ticket::factory()->create(['event_id' => $event->id, 'user_id' => $user->id, 'reference' => 'ZZZ-999']);
-
-        $tickets = $this->indexResponse($user, ['order' => 'reference', 'order_direction' => 'sideways'])->getData()['tickets'];
-
-        $this->assertSame([$a->id, $z->id], $tickets->pluck('id')->all());
-    }
-
     public function testIndexPaginationPreservesSort()
     {
         $user = User::factory()->create();
@@ -282,7 +257,6 @@ class TicketControllerTest extends TestCase
         $request->setUserResolver(function () use ($user) {
             return $user;
         });
-        $request->setContainer($this->app)->validateResolved();
 
         return (new TicketController())->index($request);
     }

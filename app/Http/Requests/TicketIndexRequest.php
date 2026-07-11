@@ -31,28 +31,8 @@ class TicketIndexRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'order' => ['required', Rule::in(self::SORTABLE)],
-            'order_direction' => ['required', Rule::in(['asc', 'desc'])],
+            'order' => ['nullable', Rule::in(self::SORTABLE)],
+            'order_direction' => ['nullable', Rule::in(['asc', 'desc'])],
         ];
-    }
-
-    /**
-     * Coerce missing or unrecognised sort parameters to sensible defaults, so a
-     * bad query string still renders the page rather than failing validation.
-     */
-    protected function prepareForValidation(): void
-    {
-        $order = $this->input('order');
-        $order = in_array($order, self::SORTABLE, true) ? $order : 'event';
-
-        $direction = strtolower((string) $this->input('order_direction'));
-        if (!in_array($direction, ['asc', 'desc'], true)) {
-            $direction = $order === 'event' ? 'desc' : 'asc';
-        }
-
-        $this->merge([
-            'order' => $order,
-            'order_direction' => $direction,
-        ]);
     }
 }
