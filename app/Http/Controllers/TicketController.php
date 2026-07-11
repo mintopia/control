@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TicketIndexRequest;
 use App\Http\Requests\TicketTransferRequest;
 use App\Models\Setting;
 use App\Models\Ticket;
@@ -9,8 +10,11 @@ use Illuminate\Http\Request;
 
 class TicketController extends Controller
 {
-    public function index(Request $request)
+    public function index(TicketIndexRequest $request)
     {
+        $order = $request->input('order', 'event');
+        $direction = $request->input('order_direction', $order === 'event' ? 'desc' : 'asc');
+
         $query = $request
             ->user()
             ->tickets();
@@ -21,13 +25,40 @@ class TicketController extends Controller
             });
         }
 
-        $tickets = $query->with(['event' => function ($query) {
-            $query->orderBy('starts_at', 'DESC');
-        }, 'type', 'seat'])
-            ->paginate();
+        switch ($order) {
+            case 'reference':
+                $query->orderBy('reference', $direction);
+                break;
+            case 'type':
+                $query->withAggregate('type', 'name')
+                    ->orderBy('type_name', $direction);
+                break;
+            case 'seat':
+                $query->withAggregate('seat', 'row')
+                    ->withAggregate('seat', 'number')
+                    ->orderBy('seat_row', $direction)
+                    ->orderBy('seat_number', $direction);
+                break;
+            case 'event':
+            default:
+                $query->withAggregate('event', 'starts_at')
+                    ->orderBy('event_starts_at', $direction);
+                break;
+        }
+
+        $params = [
+            'order' => $order,
+            'order_direction' => $direction,
+        ];
+
+        $tickets = $query->with(['event', 'type', 'seat'])
+            ->orderBy('id')
+            ->paginate()
+            ->appends($params);
 
         return view('tickets.index', [
             'tickets' => $tickets,
+            'params' => $params,
         ]);
     }
 
