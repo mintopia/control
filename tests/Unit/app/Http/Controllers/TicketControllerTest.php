@@ -3,6 +3,7 @@
 namespace Tests\Unit\app\Http\Controllers;
 
 use App\Http\Controllers\TicketController;
+use App\Http\Requests\TicketIndexRequest;
 use App\Http\Requests\TicketTransferRequest;
 use App\Models\Event;
 use App\Models\Seat;
@@ -34,14 +35,7 @@ class TicketControllerTest extends TestCase
         $ticketForDraft = Ticket::factory()->create(['event_id' => Event::factory()->create(['draft' => true, 'starts_at' => now(), 'ends_at' => now()->addHour()])->id, 'user_id' => $user->id]);
         $ticketForLive = Ticket::factory()->create(['event_id' => Event::factory()->create(['draft' => false, 'starts_at' => now(), 'ends_at' => now()->addHour()])->id, 'user_id' => $user->id]);
 
-        $this->actingAs($user);
-        $controller = new TicketController();
-        $request = Request::create('/', 'GET');
-        $request->setUserResolver(function () use ($user) {
-            return $user;
-        });
-
-        $response = $controller->index($request);
+        $response = $this->indexResponse($user);
         $this->assertInstanceOf(View::class, $response);
         $data = $response->getData();
         $tickets = $data['tickets'];
@@ -283,12 +277,13 @@ class TicketControllerTest extends TestCase
     private function indexResponse(User $user, array $query = []): View
     {
         $this->actingAs($user);
-        $controller = new TicketController();
-        $request = Request::create('/', 'GET', $query);
+
+        $request = TicketIndexRequest::create('/', 'GET', $query);
         $request->setUserResolver(function () use ($user) {
             return $user;
         });
+        $request->setContainer($this->app)->validateResolved();
 
-        return $controller->index($request);
+        return (new TicketController())->index($request);
     }
 }
