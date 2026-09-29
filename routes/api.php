@@ -21,7 +21,8 @@ Route::prefix('v1')->name('api.v1.')->middleware('auth:sanctum')->group(function
         ->middleware('can:see,event')
         ->scoped();
     Route::resource('events', EventController::class)
-        ->only(['index', 'show'])
-        ->middleware('can:see,event')
-        ->scoped();
+        ->only(['index']);
+    Route::resource('events', EventController::class)
+        ->only(['show'])
+        ->middleware('can:see,event');
 });
