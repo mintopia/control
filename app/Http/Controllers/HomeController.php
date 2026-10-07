@@ -23,7 +23,7 @@ class HomeController extends Controller
             }, 'type', 'seat'])
             ->paginate();
 
-        $query = Event::where('starts_at', '>=', Carbon::now());
+        $query = Event::where('ends_at', '>=', Carbon::now());
         if (!$request->user()->hasRole('admin')) {
             $query->whereDraft(false);
         }
