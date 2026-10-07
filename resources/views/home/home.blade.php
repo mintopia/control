@@ -41,7 +41,7 @@
                                     </td>
                                     <td>
                                         @if ($ticket->canPickSeat())
-                                            <a href="{{ route('seatingplans.show', $ticket->event->code) }}">
+                                            <a href="{{ route('seatingplans.show', $ticket->event->code, $ticket) }}">
                                                 {{ $ticket->seat->label ?? 'Choose Seat' }}
                                             </a>
                                         @else
