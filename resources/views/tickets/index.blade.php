@@ -27,10 +27,10 @@
                     <table class="table table-vcenter card-table">
                         <thead>
                         <tr>
-                            <th>Reference</th>
-                            <th>Type</th>
-                            <th>Seat</th>
-                            <th>Event</th>
+                            <th>@include('partials._sortheader', ['title' => 'Reference', 'field' => 'reference'])</th>
+                            <th>@include('partials._sortheader', ['title' => 'Type', 'field' => 'type'])</th>
+                            <th>@include('partials._sortheader', ['title' => 'Seat', 'field' => 'seat'])</th>
+                            <th>@include('partials._sortheader', ['title' => 'Event', 'field' => 'event', 'direction' => 'desc'])</th>
                             <th class="w-1"></th>
                         </tr>
                         </thead>
