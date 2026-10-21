@@ -24,18 +24,6 @@ class LaravelPassportProvider extends AbstractSocialProvider
         }
     }
 
-    protected function getSocialiteProvider()
-    {
-        $config = new Config(
-            $this->provider->getSetting('client_id'),
-            $this->provider->getSetting('client_secret'),
-            $this->redirectUrl,
-            ['host' =>  $this->provider->getSetting('host')]
-        );
-        return Socialite::buildProvider(Provider::class, $config->get())
-            ->setConfig($config)->with(['prompt' => 'none']);
-    }
-
     public function configMapping(): array
     {
         return array_merge(
@@ -47,6 +35,18 @@ class LaravelPassportProvider extends AbstractSocialProvider
                 ],
             ],
         );
+    }
+
+    protected function getSocialiteProvider()
+    {
+        $config = new Config(
+            $this->provider->getSetting('client_id'),
+            $this->provider->getSetting('client_secret'),
+            $this->redirectUrl,
+            ['host' => $this->provider->getSetting('host')]
+        );
+        return Socialite::buildProvider(Provider::class, $config->get())
+            ->setConfig($config)->with(['prompt' => 'none']);
     }
 
     protected function updateAccount(LinkedAccount $account, $remoteUser): void

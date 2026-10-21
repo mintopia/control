@@ -23,13 +23,22 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Safely obtain the current user id (can be null when running unit tests)
+        $ignoreId = optional($this->user())->id;
+
+        // Build the unique rule and only apply ignore when we have an id to ignore.
+        $uniqueNickname = Rule::unique('users', 'nickname');
+        if ($ignoreId) {
+            $uniqueNickname = $uniqueNickname->ignore($ignoreId);
+        }
+
         return [
             'nickname' => [
                 'required',
                 'string',
                 'max:255',
                 'min:2',
-                Rule::unique('users', 'nickname')->ignore($this->user()->id),
+                $uniqueNickname,
             ],
             'name' => 'required|string|max:255|min:4',
         ];

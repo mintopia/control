@@ -2,11 +2,7 @@
 
 namespace App\Providers;
 
-use App\Models\Setting;
-use App\Models\SocialProvider;
 use App\Models\Theme;
-use App\Services\DiscordApi;
-use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
@@ -29,13 +25,13 @@ class AppServiceProvider extends ServiceProvider
         });
 
         view()->composer(['layouts.app', 'layouts.login'], function ($view) {
-                $currentTheme = Theme::whereActive(true)->first();
-                $darkMode = false;
+            $currentTheme = Theme::whereActive(true)->first();
+            $darkMode = false;
             if ($currentTheme) {
                 $darkMode = $currentTheme->dark_mode;
             }
-                $view->with('currentTheme', $currentTheme);
-                $view->with('darkMode', $darkMode);
+            $view->with('currentTheme', $currentTheme);
+            $view->with('darkMode', $darkMode);
         });
     }
 }

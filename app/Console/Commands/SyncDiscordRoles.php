@@ -2,13 +2,11 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Event;
 use App\Models\LinkedAccount;
 use App\Models\SocialProvider;
 use App\Models\TicketType;
 use App\Models\User;
 use App\Services\DiscordApi;
-use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 

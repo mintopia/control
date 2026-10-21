@@ -22,7 +22,7 @@ class TicketController extends Controller
         }
 
         $tickets = $query->with(['event' => function ($query) {
-                $query->orderBy('starts_at', 'DESC');
+            $query->orderBy('starts_at', 'DESC');
         }, 'type', 'seat'])
             ->paginate();
 

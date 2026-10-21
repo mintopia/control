@@ -9,6 +9,7 @@ use App\Models\Setting;
 use App\Models\SocialProvider;
 use App\Models\Theme;
 use App\Models\TicketProvider;
+use Exception;
 
 class SettingController extends Controller
 {
@@ -45,22 +46,32 @@ class SettingController extends Controller
         return response()->redirectToRoute('admin.settings.index')->with('successMessage', 'Settings have been updated');
     }
 
-    public function add_discord()
+    public function addDiscord()
     {
-        $provider = SocialProvider::whereCode('discord')->first()->getProvider(route('admin.settings.discord_return'));
+        $provider = $this->getDiscordProvider();
         return $provider->addBotToServer();
     }
 
-    public function add_discord_return()
+    /**
+     * Return an instance of the configured Discord provider.
+     * Extracted so tests can override or call provider retrieval directly.
+     */
+    protected function getDiscordProvider(?string $redirectUrl = null)
+    {
+        $redirect = $redirectUrl ?? route('admin.settings.discord_return');
+        return SocialProvider::whereCode('discord')->first()->getProvider($redirect);
+    }
+
+    public function addDiscordReturn()
     {
         $serverName = Setting::whereCode('discord.server.name')->first();
         $serverId = Setting::whereCode('discord.server.id')->first();
         try {
-            $response = SocialProvider::whereCode('discord')->first()->getProvider(route('admin.settings.discord_return'))->bot();
+            $response = $this->callDiscordBot();
             $serverName->value = $response->accessTokenResponseBody['guild']['name'];
             $serverId->value = $response->accessTokenResponseBody['guild']['id'];
             return response()->redirectToRoute('admin.settings.index')->with('successMessage', "Link to {{ $serverName->value }} has been successful");
-        } catch (\Exception $ex) {
+        } catch (Exception $ex) {
             $serverName->value = null;
             $serverId->value = null;
             return response()->redirectToRoute('admin.settings.index')->with('errorMessage', "Unable to link to Discord server");
@@ -68,5 +79,15 @@ class SettingController extends Controller
             $serverName->save();
             $serverId->save();
         }
+    }
+
+    /**
+     * Call the provider bot() flow and return the response object.
+     * Extracted so tests can stub or call this method directly.
+     */
+    protected function callDiscordBot(?string $redirectUrl = null)
+    {
+        $provider = $this->getDiscordProvider($redirectUrl);
+        return $provider->bot();
     }
 }

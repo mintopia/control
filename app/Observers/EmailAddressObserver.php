@@ -11,41 +11,13 @@ class EmailAddressObserver
      */
     public function created(EmailAddress $emailAddress): void
     {
+        $user = $emailAddress->user;
+        if ($emailAddress->user === null) {
+            return;
+        }
         if ($emailAddress->user->primaryEmail === null) {
             $emailAddress->user->primaryEmail()->associate($emailAddress);
-            $emailAddress->user->save();
+            $user->save();
         }
-    }
-
-    /**
-     * Handle the EmailAddress "updated" event.
-     */
-    public function updated(EmailAddress $emailAddress): void
-    {
-        //
-    }
-
-    /**
-     * Handle the EmailAddress "deleted" event.
-     */
-    public function deleted(EmailAddress $emailAddress): void
-    {
-        //
-    }
-
-    /**
-     * Handle the EmailAddress "restored" event.
-     */
-    public function restored(EmailAddress $emailAddress): void
-    {
-        //
-    }
-
-    /**
-     * Handle the EmailAddress "force deleted" event.
-     */
-    public function forceDeleted(EmailAddress $emailAddress): void
-    {
-        //
     }
 }

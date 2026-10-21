@@ -6,6 +6,7 @@ use App\Exceptions\TicketProviderWebhookException;
 use App\Models\EmailAddress;
 use App\Models\Event;
 use App\Models\Ticket;
+use App\Models\TicketProvider;
 use App\Models\TicketType;
 use App\Models\User;
 use App\Services\TicketProviders\Traits\GenericSyncAllTrait;
@@ -26,6 +27,14 @@ class TicketTailorProvider extends AbstractTicketProvider
 
     protected string $name = 'Ticket Tailor';
     protected string $code = 'tickettailor';
+
+    /**
+     * Public getter for the provider property (for testing and cache key access)
+     */
+    public function getProvider(): ?TicketProvider
+    {
+        return $this->provider;
+    }
 
     public function configMapping(): array
     {
@@ -161,38 +170,6 @@ class TicketTailorProvider extends AbstractTicketProvider
         return "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={$data->barcode}";
     }
 
-    protected function getClient(): Client
-    {
-        if (!$this->client) {
-            $this->client = new Client([
-                'base_uri' => config('services.tickettailor.endpoint'),
-                'verify' => config('services.tickettailor.verifytls'),
-                'auth' => [$this->provider->getSetting('apikey'), '']
-            ]);
-        }
-        return $this->client;
-    }
-
-    protected function getTickets(?string $address = null): array
-    {
-        $query = [];
-        if ($address) {
-            $query['email'] = $address;
-        }
-        $tickets = [];
-        do {
-            $response = $this->getClient()->get('/v1/issued_tickets', [
-                'query' => $query,
-            ]);
-            $data = json_decode($response->getBody());
-            foreach ($data->data as $ticket) {
-                $query['starting_after'] = $ticket->id;
-                $tickets[$ticket->id] = $ticket;
-            }
-        } while ($data->links->next);
-        return $tickets;
-    }
-
     public function syncTickets(string|EmailAddress $email): void
     {
         $user = null;
@@ -249,6 +226,38 @@ class TicketTailorProvider extends AbstractTicketProvider
                 Log::info("{$this->provider} {$ticket} has been added for {$email}");
             }
         }
+    }
+
+    protected function getTickets(?string $address = null): array
+    {
+        $query = [];
+        if ($address) {
+            $query['email'] = $address;
+        }
+        $tickets = [];
+        do {
+            $response = $this->getClient()->get('/v1/issued_tickets', [
+                'query' => $query,
+            ]);
+            $data = json_decode($response->getBody());
+            foreach ($data->data as $ticket) {
+                $query['starting_after'] = $ticket->id;
+                $tickets[$ticket->id] = $ticket;
+            }
+        } while ($data->links->next);
+        return $tickets;
+    }
+
+    protected function getClient(): Client
+    {
+        if (!$this->client) {
+            $this->client = new Client([
+                'base_uri' => config('services.tickettailor.endpoint'),
+                'verify' => config('services.tickettailor.verifytls'),
+                'auth' => [$this->provider->getSetting('apikey'), '']
+            ]);
+        }
+        return $this->client;
     }
 
     public function getEvents(): array

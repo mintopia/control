@@ -16,22 +16,6 @@ class DiscordApi
     {
     }
 
-
-    protected function getClient(): Client
-    {
-        if (!$this->client) {
-            $config = [
-                'base_uri' => config('services.discord.endpoint', 'https://discord.com/api/'),
-                'verify' => config('services.discord.verifytls', true),
-                'headers' => [
-                    'Authorization' => "Bot {$this->provider->getSetting('token')}",
-                ]
-            ];
-            $this->client = new Client($config);
-        }
-        return $this->client;
-    }
-
     public function getRoles(): array
     {
         if ($this->roles !== null) {
@@ -52,6 +36,21 @@ class DiscordApi
             $this->roles[$role->id] = $role->name;
         }
         return $this->roles;
+    }
+
+    protected function getClient(): Client
+    {
+        if (!$this->client) {
+            $config = [
+                'base_uri' => config('services.discord.endpoint', 'https://discord.com/api/'),
+                'verify' => config('services.discord.verifytls', true),
+                'headers' => [
+                    'Authorization' => "Bot {$this->provider->getSetting('token')}",
+                ]
+            ];
+            $this->client = new Client($config);
+        }
+        return $this->client;
     }
 
     public function getMemberRoles(): array

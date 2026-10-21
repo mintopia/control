@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\DeleteRequest;
 use App\Http\Requests\Admin\SeatGroupUpdateRequest;
 use App\Models\Event;
-use App\Models\Seat;
 use App\Models\SeatGroup;
 use Illuminate\Http\Request;
 

@@ -59,7 +59,6 @@ class Kernel extends HttpKernel
      */
     protected $middlewareGroups = [
         'web' => [
-            MeasureRequest::class,
             EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
             StartSession::class,
@@ -69,7 +68,6 @@ class Kernel extends HttpKernel
         ],
 
         'api' => [
-            MeasureRequest::class,
             EnsureFrontendRequestsAreStateful::class,
             ThrottleRequests::class . ':api',
             SubstituteBindings::class,

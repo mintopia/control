@@ -46,7 +46,8 @@ class TicketTypeMappingController extends Controller
             }
         }
         if (!$mapping->name) {
-            $mapping->name = $mapping->ticket->name;
+            // fallback to the local ticket type name when external name not found
+            $mapping->name = $mapping->type->name;
         }
         $mapping->save();
     }

@@ -43,42 +43,32 @@ abstract class AbstractSocialProvider implements SocialProviderContract
         }
     }
 
-    public function configMapping(): array
-    {
-        return [
-            'client_id' => (object)[
-                'name' => 'Client ID',
-                'validation' => 'required|string',
-            ],
-            'client_secret' => (object)[
-                'name' => 'Client Secret',
-                'validation' => 'required|string',
-                'encrypted' => true,
-            ],
-        ];
-    }
-
     public function install(): SocialProvider
     {
         $this->provider = SocialProvider::whereCode($this->code)->first();
-        if (!$this->provider) {
-            $provider = new SocialProvider();
-            $this->provider = $provider;
-            $provider->name = $this->name;
-            $provider->code = $this->code;
-            $provider->provider_class = get_called_class();
-            $provider->supports_auth = $this->supportsAuth;
-            $provider->enabled = false;
-            $provider->auth_enabled = false;
-            $provider->can_be_renamed = $this->canBeRenamed;
-
-            DB::transaction(function () use ($provider) {
-                $provider->save();
-                $this->installSettings();
-            });
-
-            $provider->save();
+        if ($this->provider) {
+            // Ensure settings exist/are up-to-date for existing provider (idempotent)
+            $this->installSettings();
+            return $this->provider;
         }
+
+        $provider = new SocialProvider();
+        $this->provider = $provider;
+        $provider->name = $this->name;
+        $provider->code = $this->code;
+        $provider->provider_class = get_called_class();
+        $provider->supports_auth = $this->supportsAuth;
+        $provider->enabled = false;
+        $provider->auth_enabled = false;
+        $provider->can_be_renamed = $this->canBeRenamed;
+
+        DB::transaction(function () use ($provider) {
+            $provider->save();
+            $this->installSettings();
+        });
+
+        $provider->save();
+
         return $this->provider;
     }
 
@@ -102,6 +92,21 @@ abstract class AbstractSocialProvider implements SocialProviderContract
                 $setting->save();
             }
         }
+    }
+
+    public function configMapping(): array
+    {
+        return [
+            'client_id' => (object)[
+                'name' => 'Client ID',
+                'validation' => 'required|string',
+            ],
+            'client_secret' => (object)[
+                'name' => 'Client Secret',
+                'validation' => 'required|string',
+                'encrypted' => true,
+            ],
+        ];
     }
 
     public function redirect(): RedirectResponse
@@ -191,4 +196,7 @@ abstract class AbstractSocialProvider implements SocialProviderContract
         }
         return $localUser;
     }
+
+    // Subclasses should implement provider-specific account updates
+    abstract protected function updateAccount(LinkedAccount $account, $remoteUser): void;
 }

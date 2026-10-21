@@ -172,7 +172,6 @@ return [
         App\Providers\TelescopeServiceProvider::class,
         \SocialiteProviders\Manager\ServiceProvider::class,
         App\Providers\DiscordApiServiceProvider::class,
-        App\Providers\OpenTelemetryProvider::class,
     ])->toArray(),
 
     /*

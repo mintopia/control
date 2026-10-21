@@ -15,7 +15,8 @@ class RedirectOnFirstLoginMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user()->first_login) {
+        $user = $request->user();
+        if ($user && isset($user->first_login) && $user->first_login) {
             return response()->redirectToRoute('login.signup');
         }
         return $next($request);

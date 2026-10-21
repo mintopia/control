@@ -33,21 +33,6 @@ class SeatObserver
         }
     }
 
-    /**
-     * Handle the Seat "created" event.
-     */
-    public function created(Seat $seat): void
-    {
-        //
-    }
-
-    /**
-     * Handle the Seat "updated" event.
-     */
-    public function updated(Seat $seat): void
-    {
-        //
-    }
 
     /**
      * Handle the Seat "deleted" event.
@@ -55,21 +40,5 @@ class SeatObserver
     public function deleted(Seat $seat): void
     {
         $seat->plan->updateRevision();
-    }
-
-    /**
-     * Handle the Seat "restored" event.
-     */
-    public function restored(Seat $seat): void
-    {
-        //
-    }
-
-    /**
-     * Handle the Seat "force deleted" event.
-     */
-    public function forceDeleted(Seat $seat): void
-    {
-        //
     }
 }

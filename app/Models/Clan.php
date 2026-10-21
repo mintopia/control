@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use App\Models\Traits\ToString;
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 use InvalidArgumentException;
 
 use function App\makeCode;
@@ -18,20 +22,20 @@ use function App\makeCode;
  * @property string $name
  * @property string $code
  * @property string $invite_code
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClanMembership> $members
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * @property-read Collection<int, ClanMembership> $members
  * @property-read int|null $members_count
- * @method static \Illuminate\Database\Eloquent\Builder|Clan newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Clan newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|Clan query()
- * @method static \Illuminate\Database\Eloquent\Builder|Clan whereCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Clan whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Clan whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Clan whereInviteCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Clan whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|Clan whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @method static Builder|Clan newModelQuery()
+ * @method static Builder|Clan newQuery()
+ * @method static Builder|Clan query()
+ * @method static Builder|Clan whereCode($value)
+ * @method static Builder|Clan whereCreatedAt($value)
+ * @method static Builder|Clan whereId($value)
+ * @method static Builder|Clan whereInviteCode($value)
+ * @method static Builder|Clan whereName($value)
+ * @method static Builder|Clan whereUpdatedAt($value)
+ * @mixin Eloquent
  */
 class Clan extends Model
 {

@@ -25,7 +25,7 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
             }
 
             // Filter out the seating plan API
-            if ($entry->isRequest() && str_starts_with($entry->content['uri'], '/api/v1/')) {
+            if ($entry->isRequest() && isset($entry->content['uri']) && str_starts_with($entry->content['uri'], '/api/v1/')) {
                 return false;
             }
 
@@ -34,18 +34,16 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
             }
 
             return $entry->isReportableException() ||
-                   $entry->isFailedRequest() ||
-                   $entry->isFailedJob() ||
-                   $entry->isScheduledTask() ||
-                   $entry->hasMonitoredTag();
+                $entry->isFailedRequest() ||
+                $entry->isFailedJob() ||
+                $entry->isScheduledTask() ||
+                $entry->hasMonitoredTag();
         });
 
         Telescope::avatar(function (string $id, string $email) {
-            return User::find($id)->avatarUrl();
+            return $this->resolveAvatar($id, $email);
         });
     }
-
-
 
     /**
      * Prevent sensitive request details from being logged by Telescope.
@@ -63,6 +61,15 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
             'x-csrf-token',
             'x-xsrf-token',
         ]);
+    }
+
+    /**
+     * Resolve an avatar URL for Telescope given a user id and email.
+     */
+    protected function resolveAvatar(string $id, string $email): string
+    {
+        $user = User::find($id);
+        return $user ? $user->avatarUrl() : 'https://www.gravatar.com/avatar/' . md5(strtolower(trim($email)));
     }
 
     /**

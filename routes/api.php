@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\SeatingPlanController;
+use App\Http\Controllers\Api\V1\EventController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,4 +20,9 @@ Route::prefix('v1')->name('api.v1.')->middleware('auth:sanctum')->group(function
         ->only(['index', 'show'])
         ->middleware('can:see,event')
         ->scoped();
+    Route::resource('events', EventController::class)
+        ->only(['index']);
+    Route::resource('events', EventController::class)
+        ->only(['show'])
+        ->middleware('can:see,event');
 });

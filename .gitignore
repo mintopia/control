@@ -18,3 +18,7 @@ yarn-error.log
 /.idea
 /.vscode
 /docker-compose.override.yml
+/html-coverage
+clover.xml
+coverage.txt
+.github/copilot-instructions.md
